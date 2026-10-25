@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface{}, error) {
+func (p *Parser) ParseString(data any, schema *schema.Schema) (any, error) {
 	var s string
 	switch v := data.(type) {
 	case *string:
@@ -44,7 +44,13 @@ func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface
 		}
 	}
 
-	return s, validateString(s, schema, p.SkipValidationFormatKeyword)
+	err := validateString(s, schema, p.SkipValidationFormatKeyword)
+	if _, ok := data.(string); ok {
+		// return the original interface value: re-boxing s would allocate again
+		return data, err
+	}
+
+	return s, err
 }
 
 func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bool) error {

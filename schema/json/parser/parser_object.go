@@ -13,36 +13,32 @@ import (
 	"strings"
 )
 
-func (p *Parser) parseObject(data interface{}, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
-	var result *sortedmap.LinkedHashMap[string, interface{}]
-	var err error
-
-	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-		result, err = p.parseLinkedMap(m, s, evaluated)
-	} else {
-
-		v := reflect.ValueOf(data)
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
-
-		switch v.Kind() {
-		case reflect.Struct:
-			result, err = p.parseStruct(v, s, evaluated)
-		case reflect.Map:
-			result, err = p.parseMap(v, s, evaluated)
-		default:
-			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("invalid type, expected object but got %v", toType(data)),
-				Field:   "type",
-			}
-		}
+func (p *Parser) parseObject(data any, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, any]); ok {
+		return p.parseLinkedMap(m, s, evaluated)
+	} else if m, ok := data.(map[string]any); ok {
+		return p.parseStringMap(m, s, evaluated)
 	}
 
-	return result, err
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Pointer {
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		return p.parseStruct(v, s, evaluated)
+	case reflect.Map:
+		return p.parseMap(v, s, evaluated)
+	default:
+		return nil, &ErrorDetail{
+			Message: fmt.Sprintf("invalid type, expected object but got %v", toType(data)),
+			Field:   "type",
+		}
+	}
 }
 
-func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
+func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, any], s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
 	obj := sortedmap.NewLinkedHashMap()
 	var err ErrorList
 
@@ -139,7 +135,7 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 	return obj, nil
 }
 
-func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
+func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
 	t := v.Type()
 	obj := sortedmap.NewLinkedHashMap()
 	for i := 0; i < v.NumField(); i++ {
@@ -167,6 +163,101 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[st
 	valErr := p.validateObject(obj, s)
 	if valErr != nil {
 		return nil, valErr
+	}
+
+	return obj, nil
+}
+
+func (p *Parser) parseStringMap(v map[string]any, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
+	obj := sortedmap.NewLinkedHashMap()
+	var err ErrorList
+
+	if s.HasProperties() {
+		for it := s.Properties.Iter(); it.Next(); {
+			name := it.Key()
+			prop := it.Value()
+			o, found := v[name]
+			if !found {
+				if prop != nil && prop.Default != nil {
+					obj.Set(name, prop.Default)
+					evaluated[name] = true
+				}
+				continue
+			}
+			d, valErr := p.parse(o, prop)
+			if valErr != nil {
+				err = append(err, wrapErrorDetail(valErr, &ErrorDetail{
+					Field: name,
+				}))
+			}
+			obj.Set(name, d)
+			evaluated[name] = true
+		}
+	}
+
+	if len(s.PatternProperties) > 0 {
+		for key, value := range v {
+			if match, pErr := p.ValidatePatternProperty(key, value, s.PatternProperties); pErr != nil {
+				err = append(err, wrapErrorDetail(pErr, &ErrorDetail{
+					Field: "patternProperties",
+				}))
+			} else if match {
+				obj.Set(key, value)
+				evaluated[key] = true
+			}
+		}
+	}
+
+	if !s.IsFreeForm() {
+		var additionalProps []string
+		for name, o := range v {
+			if _, found := obj.Get(name); !found {
+				if s.AdditionalProperties.IsFalse() {
+					if !p.ValidateAdditionalProperties {
+						continue
+					}
+					additionalProps = append(additionalProps, name)
+					continue
+				}
+
+				d, valErr := p.parse(o, s.AdditionalProperties)
+				if valErr != nil {
+					err = append(err, wrapErrorDetail(valErr, &ErrorDetail{
+						Field: fmt.Sprintf("additionalProperties/%s", name),
+					}))
+				}
+				obj.Set(name, d)
+				evaluated[name] = true
+			}
+		}
+		if len(additionalProps) > 0 {
+			sort.Strings(additionalProps)
+			for _, prop := range additionalProps {
+				err = append(err,
+					&ErrorDetail{
+						Field:   "additionalProperties",
+						Message: fmt.Sprintf("property '%s' not defined and the schema does not allow additional properties", prop),
+					})
+			}
+		}
+	} else {
+		for name, val := range v {
+			if _, found := obj.Get(name); !found {
+				if e, ok := val.(Exportable); ok {
+					val = e.Export()
+				}
+				obj.Set(name, val)
+			}
+		}
+	}
+
+	valErr := p.validateObject(obj, s)
+	if valErr != nil {
+		err = append(err, *valErr...)
+	}
+
+	if len(err) > 0 {
+		return obj, &err
 	}
 
 	return obj, nil
@@ -274,7 +365,7 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 	return obj, nil
 }
 
-func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema) *ErrorList {
+func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, any], s *schema.Schema) *ErrorList {
 	var err ErrorList
 
 	if s.MinProperties != nil && obj.Len() < *s.MinProperties {
@@ -379,7 +470,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 	return nil
 }
 
-func (p *Parser) ValidatePatternProperty(name string, value interface{}, patternProperties map[string]*schema.Schema) (bool, error) {
+func (p *Parser) ValidatePatternProperty(name string, value any, patternProperties map[string]*schema.Schema) (bool, error) {
 	for pattern, s := range patternProperties {
 		regex, err := regexp.Compile(pattern)
 		if err != nil {
