@@ -48,12 +48,12 @@ func TestApp_AddKafka(t *testing.T) {
 						Host:     ":9092",
 						Protocol: "kafka",
 						Title:    "Mokapi Default Broker",
-						Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+						Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
 					},
 					ki.Servers.Lookup("mokapi").Value)
 
 				require.Len(t, hook.Entries, 1)
-				require.Equal(t, "no servers defined in AsyncAPI spec — using default Mokapi broker for cluster 'foo'", hook.Entries[0].Message)
+				require.Equal(t, "kafka: using implicit default broker for 'foo' (inferred from bindings)", hook.Entries[0].Message)
 			},
 		},
 		{

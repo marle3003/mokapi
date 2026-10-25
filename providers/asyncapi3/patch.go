@@ -1,5 +1,7 @@
 package asyncapi3
 
+import "maps"
+
 func (c *Config) Patch(patch *Config) {
 	c.patchInfo(patch)
 	c.patchServer(patch)
@@ -96,7 +98,7 @@ func (s *Server) patch(patch *Server) {
 	}
 
 	if s.Bindings != nil {
-		s.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+		s.Bindings.patch(patch.Bindings)
 	} else {
 		s.Bindings = patch.Bindings
 	}
@@ -151,7 +153,7 @@ func (c *Channel) patch(patch *Channel) {
 	}
 
 	if c.Bindings != nil {
-		c.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+		c.Bindings.patch(patch.Bindings)
 	} else {
 		c.Bindings = patch.Bindings
 	}
@@ -170,6 +172,12 @@ func (o *Operation) patch(patch *Operation) {
 	if len(patch.Description) > 0 {
 		o.Description = patch.Description
 	}
+	if o.Bindings != nil {
+		o.Bindings.patch(patch.Bindings)
+	} else {
+		o.Bindings = patch.Bindings
+	}
+
 }
 
 func (r *MessageRef) patch(patch *MessageRef) {
@@ -213,7 +221,7 @@ func (m *Message) patch(patch *Message) {
 		m.Headers.Patch(patch.Headers)
 	}
 	if m.Bindings != nil {
-		m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+		m.Bindings.patch(patch.Bindings)
 	} else {
 		m.Bindings = patch.Bindings
 	}
@@ -299,9 +307,7 @@ func (b *BrokerBindings) Patch(patch BrokerBindings) {
 }
 
 func (t *TopicBindings) Patch(patch TopicBindings) {
-	for k, v := range patch.configs {
-		t.configs[k] = v
-	}
+	maps.Copy(t.configs, patch.configs)
 
 	if patch.Partitions != 0 {
 		t.Partitions = patch.Partitions
@@ -323,10 +329,23 @@ func (t *TopicBindings) Patch(patch TopicBindings) {
 }
 
 func (m *KafkaMessageBinding) Patch(patch KafkaMessageBinding) {
-	if m.Key == nil {
-		m.Key = patch.Key
+	if m.Key != nil {
+		m.Key.Patch(patch.Key)
 	} else {
-		// todo
-		//m.Key.Patch(patch.Key)
+		m.Key = patch.Key
+	}
+}
+
+func (o *KafkaOperationBinding) Patch(patch KafkaOperationBinding) {
+	if o.ClientId != nil {
+		o.ClientId.Patch(patch.ClientId)
+	} else {
+		o.ClientId = patch.ClientId
+	}
+
+	if o.GroupId != nil {
+		o.GroupId.Patch(patch.GroupId)
+	} else {
+		o.GroupId = patch.GroupId
 	}
 }

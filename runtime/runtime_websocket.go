@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -195,8 +194,10 @@ func (c *WebsocketInfo) update(reader dynamic.Reader) {
 		}
 	}
 
-	if cfg.Servers.Len() == 0 {
-		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi server for service '%s'", cfg.Info.Name)
+	a := cfg.Analyze()
+	k := a.Usage("ws")
+	if len(k.Servers) == 0 {
+		log.Infof("websocket: using implicit default server for '%s' (inferred from bindings)", cfg.Info.Name)
 		if cfg.Servers == nil {
 			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
@@ -231,23 +232,6 @@ func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx := monitor.NewWebsocketContext(r.Context(), h.Websocket)
 
 	h.next.ServeHTTP(rw, r.WithContext(ctx))
-}
-
-func HasWebsocketServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	cfg, ok := IsAsyncApiConfig(c)
-	if !ok {
-		return nil, false
-	}
-	for it := cfg.Servers.Iter(); it.Next(); {
-		s := it.Value()
-		if s.Value == nil {
-			continue
-		}
-		if strings.ToLower(s.Value.Protocol) == "ws" {
-			return cfg, true
-		}
-	}
-	return cfg, false
 }
 
 func getWebsocketConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
@@ -291,4 +275,30 @@ func (s *WebsocketStore) Len() int {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	return len(s.infos)
+}
+
+type WebsocketMode int
+
+const (
+	WebsocketNone WebsocketMode = iota
+	// WebsocketExplicit Server with protocol ws available
+	WebsocketExplicit
+	// WebsocketImplicit no servers, Websocket derived from bindings
+	WebsocketImplicit
+)
+
+func ShouldStartWebsocket(c *dynamic.Config) (*asyncapi3.Config, WebsocketMode) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, WebsocketNone
+	}
+	a := cfg.Analyze()
+	k := a.Usage("ws")
+	switch {
+	case len(k.Servers) > 0:
+		return cfg, WebsocketExplicit
+	case !a.HasServers && len(k.Channels) > 0:
+		return cfg, WebsocketImplicit
+	}
+	return cfg, WebsocketNone
 }

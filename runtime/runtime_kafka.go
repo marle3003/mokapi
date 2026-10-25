@@ -15,7 +15,6 @@ import (
 	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -91,9 +90,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 	name := cfg.Info.Name
 	ki, ok := s.infos[name]
 	if !ok {
-		log.Debugf("starting Kafka Store with topics: %v", len(cfg.Channels))
 		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
-		log.Debugf("end Kafka Store with topics: %v", len(cfg.Channels))
 		ki.Config = cfg
 		s.infos[cfg.Info.Name] = ki
 	}
@@ -198,8 +195,10 @@ func (c *KafkaInfo) update(reader dynamic.Reader) {
 		}
 	}
 
-	if cfg.Servers.Len() == 0 {
-		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
+	a := cfg.Analyze()
+	k := a.Usage("kafka")
+	if len(k.Servers) == 0 {
+		log.Infof("kafka: using implicit default broker for '%s' (inferred from bindings)", cfg.Info.Name)
 		if cfg.Servers == nil {
 			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
@@ -208,7 +207,7 @@ func (c *KafkaInfo) update(reader dynamic.Reader) {
 				Host:     ":9092",
 				Protocol: "kafka",
 				Title:    "Mokapi Default Broker",
-				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+				Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
 			},
 		})
 	}
@@ -285,23 +284,6 @@ func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
 	}
 }
 
-func HasKafkaBroker(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	cfg, ok := IsAsyncApiConfig(c)
-	if !ok {
-		return nil, false
-	}
-	for it := cfg.Servers.Iter(); it.Next(); {
-		s := it.Value()
-		if s.Value == nil {
-			continue
-		}
-		if strings.ToLower(s.Value.Protocol) == "kafka" {
-			return cfg, true
-		}
-	}
-	return cfg, false
-}
-
 func (s *KafkaStore) Len() int {
 	if s == nil {
 		return 0
@@ -310,4 +292,30 @@ func (s *KafkaStore) Len() int {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	return len(s.infos)
+}
+
+type KafkaMode int
+
+const (
+	KafkaNone KafkaMode = iota
+	// KafkaExplicit Server with protocol kafka
+	KafkaExplicit
+	// KafkaImplicit no servers, Kafka derived from bindings
+	KafkaImplicit
+)
+
+func ShouldStartKafka(c *dynamic.Config) (*asyncapi3.Config, KafkaMode) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, KafkaNone
+	}
+	a := cfg.Analyze()
+	k := a.Usage("kafka")
+	switch {
+	case len(k.Servers) > 0:
+		return cfg, KafkaExplicit
+	case !a.HasServers && len(k.Channels) > 0:
+		return cfg, KafkaImplicit
+	}
+	return cfg, KafkaNone
 }

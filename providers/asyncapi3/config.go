@@ -10,6 +10,17 @@ import (
 // DefaultContentType set default: https://github.com/asyncapi/spec/issues/319
 const DefaultContentType = "application/json"
 
+var supportedProtocols = []string{"kafka", "mqtt", "ws"}
+
+type mockability int
+
+const (
+	mockable mockability = iota
+	notMockableNoContent
+	notMockableUnsupportedServers
+	notMockableNoSupportedBindings
+)
+
 type Config struct {
 	Version string `yaml:"asyncapi" json:"asyncapi"`
 	Id      string `yaml:"id,omitempty" json:"id,omitempty"`
@@ -104,41 +115,26 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (c *Config) HasKafkaServer() bool {
-	if c == nil {
-		return false
-	}
-	for it := c.Servers.Iter(); it.Next(); {
-		server := it.Value()
-		if server.Value.Protocol == "kafka" {
-			return true
+func (c *Config) Mockability() dynamic.Mockability {
+	a := c.Analyze()
+	for _, u := range a.Protocols {
+		if len(u.Servers) > 0 || (!a.HasServers && len(u.Channels) > 0) {
+			return dynamic.Mockability{}
 		}
 	}
-	return false
-}
 
-func (c *Config) HasMqttServer() bool {
-	if c == nil {
-		return false
-	}
-	for it := c.Servers.Iter(); it.Next(); {
-		server := it.Value()
-		if server.Value.Protocol == "mqtt" {
-			return true
+	switch {
+	case a.HasServers:
+		return dynamic.Mockability{
+			Level:  dynamic.MockabilityInfo,
+			Reason: "contains only unsupported servers",
 		}
-	}
-	return false
-}
-
-func (c *Config) HasWebsocketServer() bool {
-	if c == nil {
-		return false
-	}
-	for it := c.Servers.Iter(); it.Next(); {
-		server := it.Value()
-		if server.Value.Protocol == "ws" {
-			return true
+	case a.HasChannels:
+		return dynamic.Mockability{
+			Level:  dynamic.MockabilityWarn,
+			Reason: "has no servers and no supported bindings; it will not be served",
 		}
+	default:
+		return dynamic.Mockability{}
 	}
-	return false
 }

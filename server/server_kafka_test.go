@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -397,10 +398,67 @@ func TestKafkaServer_Update(t *testing.T) {
 				require.Equal(t, "bar", r.Topics[0].Name)
 			},
 		},
+		{
+			name: "no server and no bindings",
+			test: func(t *testing.T, m *server.KafkaManager) {
+				port := try.GetFreePort()
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
+							),
+						),
+					),
+				)
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				err := cfg.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				m.UpdateConfig(dynamic.ConfigEvent{Config: c})
+
+				client := kafkatest.NewClient(addr, "test")
+				_, err = client.Metadata(0, &metaData.Request{})
+				require.ErrorContains(t, err, "connection refused")
+			},
+		},
+		{
+			name: "no server but channel has kafka bindings",
+			test: func(t *testing.T, m *server.KafkaManager) {
+				addr := "127.0.0.1:9092"
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
+							),
+						),
+						asyncapi3test.WithKafkaChannelBindingFrom(map[string]any{}),
+					),
+				)
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				err := cfg.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				h := test.NewGlobal()
+
+				m.UpdateConfig(dynamic.ConfigEvent{Config: c})
+
+				client := kafkatest.NewClient(addr, "test")
+				r, err := client.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Topics, 1)
+				require.Equal(t, "foo", r.Topics[0].Name)
+
+				require.Equal(t, "kafka: using implicit default broker for 'foo' (inferred from bindings)", h.Entries[0].Message)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
 			m := server.NewKafkaManager(nil, runtime.New(cfg, &dynamictest.Reader{}))

@@ -14,7 +14,6 @@ import (
 	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -195,8 +194,10 @@ func (c *MqttInfo) update(reader dynamic.Reader) {
 		}
 	}
 
-	if cfg.Servers.Len() == 0 {
-		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
+	a := cfg.Analyze()
+	k := a.Usage("mqtt")
+	if len(k.Servers) == 0 {
+		log.Infof("mqtt: using implicit default broker for '%s' (inferred from bindings)", cfg.Info.Name)
 		if cfg.Servers == nil {
 			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
@@ -234,30 +235,12 @@ func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	h.next.ServeMessage(rw, req)
 }
 
-func HasMqttServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	cfg, ok := IsAsyncApiConfig(c)
-	if !ok {
-		return nil, false
-	}
-	for it := cfg.Servers.Iter(); it.Next(); {
-		s := it.Value()
-		if s.Value == nil {
-			continue
-		}
-		if strings.ToLower(s.Value.Protocol) == "mqtt" {
-			return cfg, true
-		}
-	}
-	return cfg, false
-}
-
 func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	if _, ok := c.Data.(*asyncapi3.Config); ok {
 		return c.Data.(*asyncapi3.Config), nil
-	} else {
-		old := c.Data.(*asyncApi.Config)
-		return old.Convert()
 	}
+	old := c.Data.(*asyncApi.Config)
+	return old.Convert()
 }
 
 func (s *MqttStore) updateEventStore(k *MqttInfo) {
@@ -292,4 +275,30 @@ func (s *MqttStore) Len() int {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	return len(s.infos)
+}
+
+type MqttMode int
+
+const (
+	MqttNone MqttMode = iota
+	// MqttExplicit Server with protocol mqtt available
+	MqttExplicit
+	// MqttImplicit no servers, MQTT derived from bindings
+	MqttImplicit
+)
+
+func ShouldStartMqtt(c *dynamic.Config) (*asyncapi3.Config, MqttMode) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, MqttNone
+	}
+	a := cfg.Analyze()
+	k := a.Usage("mqtt")
+	switch {
+	case len(k.Servers) > 0:
+		return cfg, MqttExplicit
+	case !a.HasServers && len(k.Channels) > 0:
+		return cfg, MqttImplicit
+	}
+	return cfg, MqttNone
 }

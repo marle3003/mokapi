@@ -1,6 +1,7 @@
 package asyncapi3test
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 )
@@ -40,6 +41,23 @@ func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 			c.Bindings = &asyncapi3.ChannelBindings{}
 		}
 		c.Bindings.Kafka = bindings
+	}
+}
+
+func WithKafkaChannelBindingFrom(cfg map[string]any) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		if c.Bindings == nil {
+			c.Bindings = &asyncapi3.ChannelBindings{}
+		}
+
+		b, err := json.Marshal(cfg)
+		if err != nil {
+			panic(err)
+		}
+		err = json.Unmarshal(b, &c.Bindings.Kafka)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
