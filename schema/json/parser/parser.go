@@ -133,7 +133,7 @@ func (p *Parser) parse(data any, s *schema.Schema) (any, error) {
 		if p.ConvertToSortedMap {
 			v = m
 		} else {
-			v = m.ToMap()
+			v = m.Map()
 		}
 	}
 

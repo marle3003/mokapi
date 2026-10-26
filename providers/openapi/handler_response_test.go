@@ -70,7 +70,7 @@ func TestHandler_Response(t *testing.T) {
 			name:   "object with null property",
 			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))), "application/json"),
 			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
-				res.Data = map[string]interface{}{"foo": nil}
+				res.Data = map[string]any{"foo": nil}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
@@ -113,7 +113,7 @@ func TestHandler_Response(t *testing.T) {
 			name:   "application/octet-stream with object",
 			config: getConfig(schematest.New("object"), "application/octet-stream"),
 			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
-				res.Data = map[string]interface{}{"foo": "bar"}
+				res.Data = map[string]any{"foo": "bar"}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
@@ -127,7 +127,7 @@ func TestHandler_Response(t *testing.T) {
 			name:   "no content defined should send empty response body",
 			config: getConfig(nil, ""),
 			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
-				res.Data = map[string]interface{}{"foo": "bar"}
+				res.Data = map[string]any{"foo": "bar"}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
@@ -139,7 +139,7 @@ func TestHandler_Response(t *testing.T) {
 				evt := eh.GetEvents(events.NewTraits())
 				require.Len(t, evt, 1)
 				data := evt[0].Data.(*openapi.HttpLog)
-				require.Equal(t, "", data.Response.Body)
+				require.Nil(t, data.Response.Body)
 				require.Equal(t, "", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
 			},
@@ -162,7 +162,11 @@ func TestHandler_Response(t *testing.T) {
 				evt := eh.GetEvents(events.NewTraits())
 				require.Len(t, evt, 1)
 				data := evt[0].Data.(*openapi.HttpLog)
-				require.Equal(t, "foo", data.Response.Body)
+				require.Equal(t, &openapi.BodyPreview{
+					Body:      "foo",
+					Size:      3,
+					Truncated: false,
+				}, data.Response.Body)
 				require.Equal(t, "text/plain", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
 			},
@@ -179,7 +183,7 @@ func TestHandler_Response(t *testing.T) {
 					)))
 			}(),
 			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
-				res.Headers = map[string]interface{}{"foo": "bar"}
+				res.Headers = map[string]any{"foo": "bar"}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)

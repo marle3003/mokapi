@@ -17,6 +17,9 @@ let modalInstance: Modal | null = null
 
 const { dashboard } = useDashboard()
 const downloadUrl = computed(() => {
+    if (!isLiveMode.value) {
+        return '/demo/bruno.yaml'
+    }
     if (!dashboard.value) {
         return ''
     }
@@ -61,7 +64,7 @@ function copyToClipboard(event: MouseEvent) {
             }, 2000)
         })
         .catch(err => {
-            console.error('Fehler beim Kopieren: ', err)
+            console.error('failed to copy: ', err)
         })
 }
 </script>
@@ -75,16 +78,12 @@ function copyToClipboard(event: MouseEvent) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div v-if="!isLiveMode" class="alert alert-primary py-2 px-3 mb-3 small" role="alert">
-                        This is a demo dashboard — OpenAPI exports aren't available here.
-                        <a href="/docs/get-started/installation" >Install Mokapi</a> to try this with your own API.
-                    </div>
                     <p class="text-muted small mb-3">
                         <a href="https://www.usebruno.com" target="_blank" rel="noopener">Bruno</a>
                         is a free, open-source, Git-friendly API client — think Postman, but your
                         collections are just files you can version alongside your code.
                     </p>
-                    <div v-if="isLiveMode">
+                    <div>
                         <div class="row mb-3">
                             <label for="bruno-base-url" class="col-3 col-form-label col-form-label-sm">
                                 Base URL
@@ -102,6 +101,7 @@ function copyToClipboard(event: MouseEvent) {
                                     id="bruno-base-url"
                                     class="form-control form-control-sm"
                                     v-model="baseUrl"
+                                    :disabled="!isLiveMode"
                                 >
                             </div>
                         </div>
@@ -118,7 +118,7 @@ function copyToClipboard(event: MouseEvent) {
                                 ></i>
                             </label>
                             <div class="col">
-                                <select class="form-select form-select-sm" v-model="folderArrangement" id="bruno-folder-arrangment">
+                                <select class="form-select form-select-sm" v-model="folderArrangement" id="bruno-folder-arrangment" :disabled="!isLiveMode">
                                     <option value="tags" selected>Tags</option>
                                     <option value="paths">Paths</option>
                                 </select>
@@ -137,7 +137,7 @@ function copyToClipboard(event: MouseEvent) {
                                 ></i>
                             </label>
                             <div class="col">
-                                <select class="form-select form-select-sm" v-model="itemName" id="bruno-item-name">
+                                <select class="form-select form-select-sm" v-model="itemName" id="bruno-item-name" :disabled="!isLiveMode">
                                     <option value="summary" selected>Summary</option>
                                     <option value="path">Path</option>
                                 </select>

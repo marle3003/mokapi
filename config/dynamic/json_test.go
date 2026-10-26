@@ -173,10 +173,10 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "number to interface{}",
+			name: "number to any",
 			test: func(t *testing.T) {
 				var v struct {
-					Value interface{}
+					Value any
 				}
 				err := UnmarshalJSON([]byte(`{"value": 12}`), &v)
 				require.NoError(t, err)
@@ -199,22 +199,22 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			name: "interface with array",
 			test: func(t *testing.T) {
 				var v struct {
-					Values interface{}
+					Values any
 				}
 				err := UnmarshalJSON([]byte(`{"values": [1,2,3,4]}`), &v)
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{float64(1), float64(2), float64(3), float64(4)}, v.Values)
+				require.Equal(t, []any{float64(1), float64(2), float64(3), float64(4)}, v.Values)
 			},
 		},
 		{
 			name: "interface with object",
 			test: func(t *testing.T) {
 				var v struct {
-					Value interface{}
+					Value any
 				}
 				err := UnmarshalJSON([]byte(`{"value": { "foo": "bar" }}`), &v)
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v.Value)
+				require.Equal(t, map[string]any{"foo": "bar"}, v.Value)
 			},
 		},
 		{

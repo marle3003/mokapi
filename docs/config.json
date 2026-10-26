@@ -59,6 +59,11 @@
                 "label": "Dashboard",
                 "source": "http/dashboard.md",
                 "path": "/docs/http/dashboard"
+              },
+              {
+                "label": "Export Bruno",
+                "source": "http/export-bruno.md",
+                "path": "/docs/http/export-bruno"
               }
             ]
           },

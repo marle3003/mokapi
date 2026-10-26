@@ -43,8 +43,8 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
-	cfg, ok := runtime.HasKafkaBroker(e.Config)
-	if !ok {
+	cfg, mode := runtime.ShouldStartKafka(e.Config)
+	if cfg == nil || mode == runtime.KafkaNone {
 		if cfg == nil || m.clusters == nil {
 			return
 		}
@@ -53,7 +53,7 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Kafka.Get(cfg.Info.Name)
-	if e.Event == dynamic.Delete || info != nil && !info.HasKafkaServer() {
+	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)

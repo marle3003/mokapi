@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io"
 	"maps"
 	"mokapi/lib"
 	"mokapi/providers/openapi"
@@ -305,18 +304,18 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 	entry.Info(msg)
 	http.Error(w, formatMessageForResponse(msg), status)
 
-	body, _ := io.ReadAll(r.Body)
+	body, _ := openapi.ReadAllBody(r)
 	l := &openapi.HttpLog{
 		Request: &openapi.HttpRequestLog{
 			Method:      r.Method,
 			Url:         lib.GetUrl(r),
 			ContentType: r.Header.Get("Content-Type"),
-			Body:        string(body),
+			Body:        openapi.NewBodyPreviewFromBytes(body),
 		},
 		Response: &openapi.HttpResponseLog{
 			Headers:    map[string]string{"Content-Type": w.Header().Get("Content-Type")},
 			StatusCode: status,
-			Body:       msg,
+			Body:       &openapi.BodyPreview{Body: msg},
 			Size:       len([]byte(msg)),
 		},
 		ClientIP: lib.ClientIP(r),

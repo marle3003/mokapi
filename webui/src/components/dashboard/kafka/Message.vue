@@ -10,6 +10,7 @@ import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { usePrettyText } from "@/composables/usePrettyText";
 import Actions from '../Actions.vue'
 import MessageHeaderTable from './MessageHeaderTable.vue'
+import { formatKey } from "@/composables/kafka.ts";
 
 const route = useRoute();
 const { dashboard } = useDashboard()
@@ -138,7 +139,7 @@ function key(key: KafkaValue | null): string {
     return ''
   }
   if (key.value) {
-    return key.value
+    return formatKey(key.value)
   }
   if (key.binary) {
     return fromBinary(key.binary)

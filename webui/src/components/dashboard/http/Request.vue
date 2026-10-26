@@ -88,7 +88,7 @@ const hasActions = computed(() => {
                     <http-parameters :parameters="eventData.request.parameters!" v-if="eventData.request.parameters" :operation="operation"></http-parameters>
                     <div  v-if="eventData.request.body">
                         <p class="label mt-4">Body</p>
-                        <http-body :content-type="eventData.request.contentType" :body="eventData.request.body"></http-body>
+                        <http-body :content-type="eventData.request.contentType" :preview="eventData.request.body"></http-body>
                     </div>
                 </div>
             </section>
@@ -99,7 +99,7 @@ const hasActions = computed(() => {
                     <h2 id="response" class="card-title text-center">Response</h2>
                     <http-header :headers="eventData.response.headers"></http-header>
                     <p class="label">Body</p>
-                    <http-body :content-type="getResponseContentType()" :body="eventData.response.body"></http-body>
+                    <http-body :content-type="getResponseContentType()" :preview="eventData.response.body"></http-body>
                 </div>
             </section>
         </div>

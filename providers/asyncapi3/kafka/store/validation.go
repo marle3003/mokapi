@@ -81,20 +81,11 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 	}
 
 	if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil && isKeySchemaValidationEnabled(channel) {
-		var keyParser encoding.Parser
-		switch s := msg.Bindings.Kafka.Key.Value.(type) {
-		case *schema.Schema:
-			keyParser = &parser.Parser{Schema: s}
-		case *asyncapi3.AvroRef:
-			keyParser = &avro.Parser{Schema: s.Schema}
-		default:
-			log.Errorf("unsupported key type: %T", msg.Bindings.Kafka.Key.Value)
-		}
-
-		if keyParser != nil {
-			v.key = &schemaValidator{
-				parser: keyParser,
-			}
+		p, err := msg.Bindings.Kafka.Key.GetParser("", asyncapi3.WithStringConversion())
+		if err != nil {
+			log.Errorf("kafka key of message '%s': %v", msg.Name, err)
+		} else {
+			v.key = &schemaValidator{parser: p}
 		}
 	}
 

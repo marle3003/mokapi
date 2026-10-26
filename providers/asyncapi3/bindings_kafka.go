@@ -83,6 +83,18 @@ func (b *BrokerBindings) Configs() map[string]any {
 	return b.configs
 }
 
+func (m *KafkaMessageBinding) IsSet() bool {
+	return m.Key != nil || m.SchemaIdLocation != "" || m.SchemaIdPayloadEncoding != ""
+}
+
+func (t *TopicBindings) IsSet() bool {
+	return t.configs != nil
+}
+
+func (o *KafkaOperationBinding) IsSet() bool {
+	return o.ClientId != nil || o.GroupId != nil
+}
+
 func (b *BrokerBindings) marshal() map[string]any {
 	m := map[string]any{}
 	if b.LogRetentionBytes > 0 {
@@ -231,7 +243,7 @@ func (t *TopicBindings) unmarshal(m map[string]any) error {
 	return nil
 }
 
-func getMs(m map[string]interface{}, baseKey string) (int64, error) {
+func getMs(m map[string]any, baseKey string) (int64, error) {
 	key := baseKey + ".ms"
 	if i, err := getInt64(m, key); err != nil {
 		return 0, fmt.Errorf("invalid %s: %w", key, err)
@@ -256,7 +268,7 @@ func getMs(m map[string]interface{}, baseKey string) (int64, error) {
 	return 0, nil
 }
 
-func getInt(m map[string]interface{}, keys ...string) (int, error) {
+func getInt(m map[string]any, keys ...string) (int, error) {
 	i := getValue(m, keys...)
 	if i != nil {
 		switch v := i.(type) {
@@ -271,7 +283,7 @@ func getInt(m map[string]interface{}, keys ...string) (int, error) {
 	return 0, nil
 }
 
-func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
+func getInt64(m map[string]any, keys ...string) (int64, error) {
 	i := getValue(m, keys...)
 	if i != nil {
 		switch v := i.(type) {
@@ -288,7 +300,7 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 	return 0, nil
 }
 
-func getBool(m map[string]interface{}, keys ...string) (bool, error) {
+func getBool(m map[string]any, keys ...string) (bool, error) {
 	i := getValue(m, keys...)
 	if i != nil {
 		switch v := i.(type) {
@@ -301,14 +313,14 @@ func getBool(m map[string]interface{}, keys ...string) (bool, error) {
 	return true, nil
 }
 
-func getValue(m map[string]interface{}, keys ...string) interface{} {
+func getValue(m map[string]any, keys ...string) any {
 	for _, key := range keys {
 		if i, ok := m[key]; ok {
 			return i
 		}
 	}
 	if v, ok := m["topicConfiguration"]; ok {
-		tc, ok := v.(map[string]interface{})
+		tc, ok := v.(map[string]any)
 		if ok {
 			return getValue(tc, keys...)
 		}

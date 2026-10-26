@@ -6,23 +6,30 @@ import (
 	"reflect"
 )
 
-func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[int]bool) (interface{}, error) {
+func (p *Parser) ParseArray(data any, s *schema.Schema, evaluated map[int]bool) (any, error) {
+	if a, ok := data.([]any); ok {
+		return p.parseArray(len(a), func(i int) any { return a[i] }, s, evaluated)
+	}
 	arr := reflect.ValueOf(data)
-	if arr.Kind() == reflect.Ptr {
+	if arr.Kind() == reflect.Pointer {
 		arr = arr.Elem()
 	}
 	if arr.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("expected array but got: %v", ToString(data))
 	}
-	var err ErrorList
-	result := make([]interface{}, 0)
-	contains := 0
-	for i := 0; i < arr.Len(); i++ {
-		errItem := ErrorDetail{Field: fmt.Sprintf("items/%d", i)}
+	return p.parseArray(arr.Len(), func(i int) any { return arr.Index(i).Interface() }, s, evaluated)
+}
 
-		o := arr.Index(i)
+func (p *Parser) parseArray(n int, at func(i int) any, s *schema.Schema, evaluated map[int]bool) (any, error) {
+	var err ErrorList
+	result := make([]any, 0, n)
+	contains := 0
+	for i := range n {
+		errItem := ErrorDetail{}
+
+		o := at(i)
 		if s.PrefixItems != nil && i < len(s.PrefixItems) {
-			v, errItems := p.parse(o.Interface(), s.PrefixItems[i])
+			v, errItems := p.parse(o, s.PrefixItems[i])
 			if errItems != nil {
 				errItem.append(errItems)
 			} else {
@@ -30,7 +37,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 			}
 			evaluated[i] = true
 		} else if s.Items != nil {
-			v, errItems := p.parse(o.Interface(), s.Items)
+			v, errItems := p.parse(o, s.Items)
 			if errItems != nil {
 				errItem.append(errItems)
 			} else {
@@ -38,16 +45,17 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 			}
 			evaluated[i] = true
 		} else {
-			result = append(result, o.Interface())
+			result = append(result, o)
 		}
 
 		if s.Contains != nil {
-			if _, errContains := p.parse(o.Interface(), s.Contains); errContains == nil {
+			if _, errContains := p.parse(o, s.Contains); errContains == nil {
 				contains++
 			}
 		}
 
 		if len(errItem.Errors) > 0 {
+			errItem.Field = fmt.Sprintf("items/%d", i)
 			err = append(err, &errItem)
 		}
 	}
@@ -93,7 +101,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 	}
 
 	if s.UniqueItems != nil && *s.UniqueItems {
-		var unique []interface{}
+		var unique []any
 		for i, item := range result {
 			for _, u := range unique {
 				if compare(item, u) {

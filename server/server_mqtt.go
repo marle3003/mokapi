@@ -32,8 +32,8 @@ func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager 
 }
 
 func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
-	cfg, ok := runtime.HasMqttServer(e.Config)
-	if !ok {
+	cfg, mode := runtime.ShouldStartMqtt(e.Config)
+	if cfg == nil || mode == runtime.MqttNone {
 		if cfg == nil || m.clusters == nil {
 			return
 		}
@@ -42,7 +42,7 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Mqtt.Get(cfg.Info.Name)
-	if e.Event == dynamic.Delete && !info.HasMqttServer() {
+	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)

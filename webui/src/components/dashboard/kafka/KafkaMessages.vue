@@ -7,6 +7,7 @@ import { useLocalStorage } from '@/composables/local-storage'
 import { usePrettyText } from '@/composables/usePrettyText'
 import { usePageSize } from '@/composables/paging'
 import Paging from '../Paging.vue'
+import { formatKey } from '@/composables/kafka.ts'
 
 const { format } = usePrettyDates()
 const { fromBinary } = usePrettyText()
@@ -158,9 +159,9 @@ const showTopicColumn = computed(() => !props.topicName || isTemplateTopic.value
                     <td class="key">
                         <router-link v-if="!showTopicColumn" class="row-link"
                             @click.stop :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
-                            {{ msg.key }}
+                            {{ formatKey(msg.key) }}
                         </router-link>
-                        <span v-else>{{ msg.key }}</span>
+                        <span v-else>{{ formatKey(msg.key) }}</span>
                     </td>
                     <td class="message">{{ msg.value }}</td>
                     <td class="text-center">{{ format(msg.time) }}</td>

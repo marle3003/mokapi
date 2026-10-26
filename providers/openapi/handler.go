@@ -196,7 +196,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				log.Errorf("write HTTP body failed for %v: %v", r.URL.String(), err)
 			}
 			if logHttp != nil {
-				logHttp.Response.Body = response.Body
+				logHttp.Response.Body = NewBodyPreviewFromBytes([]byte(response.Body))
 				logHttp.Response.Size = len(response.Body)
 			}
 		}
@@ -254,7 +254,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		log.Errorf("write HTTP body failed for %v: %v", r.URL.String(), err)
 	}
 	if logHttp != nil {
-		logHttp.Response.Body = string(body)
+		logHttp.Response.Body = NewBodyPreviewFromBytes(body)
 		logHttp.Response.Size = len(body)
 	}
 }
@@ -386,7 +386,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	logHttp, ok := LogEventFromContext(r.Context())
 	if ok {
 		logHttp.Response.StatusCode = status
-		logHttp.Response.Body = message
+		logHttp.Response.Body = &BodyPreview{Body: message}
 		logHttp.Response.Size = len([]byte(message))
 		for k, v := range rw.Header() {
 			logHttp.Response.Headers[k] = strings.Join(v, ",")

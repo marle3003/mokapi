@@ -153,8 +153,6 @@ export function useDemoDashboard() {
             const data = ref<ServiceEventResult>({ items: [], page, size, total: 0 })
             const isLoading = ref<boolean>(true)
 
-            console.log(query)
-
             watchEffect(() => {
                 if (!db.data) {
                     return

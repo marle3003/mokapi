@@ -146,7 +146,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
+				require.Equal(t, map[string]any{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -161,7 +161,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
+				require.Equal(t, map[string]any{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -176,7 +176,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
+				require.Equal(t, map[string]any{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -190,7 +190,11 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "read request body failed: no matching content type defined")
-				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
+				require.Equal(t, &openapi.BodyPreview{
+					Body:      "<root><foo>bar</foo></root>",
+					Size:      27,
+					Truncated: false,
+				}, result.Raw)
 			},
 		},
 		{
@@ -234,7 +238,11 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "read request body 'application/json' failed: invalid json format: invalid character '<' looking for beginning of value")
-				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
+				require.Equal(t, &openapi.BodyPreview{
+					Body:      "<root><foo>bar</foo></root>",
+					Size:      27,
+					Truncated: false,
+				}, result.Raw)
 			},
 		},
 		{
@@ -266,7 +274,11 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "Unsupported Content-Type: application/xml\nThis operation only accepts: application/json\nPlease set the Content-Type header to one of the supported types.")
-				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
+				require.Equal(t, &openapi.BodyPreview{
+					Body:      "<root><foo>bar</foo></root>",
+					Size:      27,
+					Truncated: false,
+				}, result.Raw)
 			},
 		},
 		{
@@ -414,8 +426,8 @@ foobar
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"address": map[string]interface{}{
+				require.Equal(t, map[string]any{
+					"address": map[string]any{
 						"street": "3, Garden St",
 						"city":   "Hillsbery, UT",
 					},
@@ -454,7 +466,7 @@ foobar
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"profileImage": "foobar",
 				}, result.Value)
 			},
@@ -462,7 +474,6 @@ foobar
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			b, err := openapi.BodyFromRequest(tc.request(), tc.operation)
 			tc.test(t, b, err)
@@ -550,7 +561,7 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 			body: "name=Amy+Smith&fav_number=42",
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Amy Smith", "fav_number": int64(42)}, result.Value)
+				require.Equal(t, map[string]any{"name": "Amy Smith", "fav_number": int64(42)}, result.Value)
 			},
 		},
 		{
@@ -566,7 +577,7 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 			body: "array_name=value1&array_name=value2",
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"array_name": []interface{}{"value1", "value2"}}, result.Value)
+				require.Equal(t, map[string]any{"array_name": []any{"value1", "value2"}}, result.Value)
 			},
 		},
 		{
@@ -583,7 +594,7 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 			body: "array_name=value1,value2",
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"array_name": []interface{}{"value1", "value2"}}, result.Value)
+				require.Equal(t, map[string]any{"array_name": []any{"value1", "value2"}}, result.Value)
 			},
 		},
 		{
@@ -687,7 +698,7 @@ Content-Type: application/json
 `,
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"meta": map[string]interface{}{"name": "Amy Smith", "fav_number": int64(42)}}, result.Value)
+				require.Equal(t, map[string]any{"meta": map[string]any{"name": "Amy Smith", "fav_number": int64(42)}}, result.Value)
 			},
 		},
 		{
@@ -718,7 +729,7 @@ Bob
 `,
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"names": []interface{}{"Alice", "Bob"}}, result.Value)
+				require.Equal(t, map[string]any{"names": []any{"Alice", "Bob"}}, result.Value)
 			},
 		},
 		{
@@ -750,7 +761,7 @@ Bob
 `,
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"names": []interface{}{"Alice", "Bob"}}, result.Value)
+				require.Equal(t, map[string]any{"names": []any{"Alice", "Bob"}}, result.Value)
 			},
 		},
 		{

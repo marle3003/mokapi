@@ -34,8 +34,8 @@ func NewWebsocketManager(emitter common.EventEmitter, app *runtime.App) *Websock
 }
 
 func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
-	cfg, ok := runtime.HasWebsocketServer(e.Config)
-	if !ok {
+	cfg, mode := runtime.ShouldStartWebsocket(e.Config)
+	if cfg == nil || mode == runtime.WebsocketNone {
 		if cfg == nil || m.services == nil {
 			return
 		}
@@ -44,7 +44,7 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Websocket.Get(cfg.Info.Name)
-	if e.Event == dynamic.Delete && !info.HasWebsocketServer() {
+	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)

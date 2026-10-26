@@ -1,35 +1,38 @@
 package sortedmap
 
-import "container/list"
-
 type Iterator[K comparable, V any] struct {
-	next    *list.Element
-	current *list.Element
+	m   *LinkedHashMap[K, V]
+	i   int
+	key K
+	val V
 }
 
 func (i *Iterator[K, V]) Next() bool {
-	if i.next == nil {
+	if i.m == nil {
 		return false
 	}
-	i.current = i.next
-	i.next = i.next.Next()
-	return true
+	for i.i+1 < len(i.m.keys) {
+		i.i++
+		k := i.m.keys[i.i]
+		if v, ok := i.m.values[k]; ok {
+			i.key, i.val = k, v
+			return true
+		}
+	}
+	return false
 }
 
 func (i *Iterator[K, V]) Item() (K, V) {
-	if i.current == nil {
+	if i.m == nil || i.i < 0 {
 		panic("current is nil")
 	}
-	p := i.current.Value.(*pair[K, V])
-	return p.key, p.value
+	return i.key, i.val
 }
 
 func (i *Iterator[K, V]) Key() K {
-	k, _ := i.Item()
-	return k
+	return i.key
 }
 
 func (i *Iterator[K, V]) Value() V {
-	_, v := i.Item()
-	return v
+	return i.val
 }

@@ -197,9 +197,39 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 			log.Error(err)
 		}
 		app.UpdateConfig(e)
+		reportMockability(e)
 	})
 
 	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine), nil
+}
+
+var lastMockability = map[string]string{}
+
+func reportMockability(e dynamic.ConfigEvent) {
+	key := e.Config.Info.Key()
+	if e.Event == dynamic.Delete {
+		delete(lastMockability, key)
+		return
+	}
+	m, ok := e.Config.Data.(dynamic.Mockable)
+	if !ok {
+		return
+	}
+	r := m.Mockability()
+
+	// Only report when there is a change; otherwise, every reload will repeat the notification.
+	if lastMockability[key] == r.Reason {
+		return
+	}
+	lastMockability[key] = r.Reason
+
+	name := e.Config.Info.Path()
+	switch r.Level {
+	case dynamic.MockabilityInfo:
+		log.Infof("%s: %s", name, r.Reason)
+	case dynamic.MockabilityWarn:
+		log.Warnf("%s: %s", name, r.Reason)
+	}
 }
 
 func init() {

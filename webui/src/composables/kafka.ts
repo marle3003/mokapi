@@ -69,3 +69,16 @@ export function useChannel(service: MaybeRefOrGetter<KafkaService | undefined>, 
 
   return { channel, instance: info.value?.instance, topic }
 }
+
+export function formatKey(json: string | null | undefined): string {
+  if (json == null) return 'null'
+  try {
+    const v = JSON.parse(json)
+    if (typeof v === 'string') return v
+    if (v === null) return 'null'
+    if (typeof v === 'object') return JSON.stringify(v)
+    return String(v)   // number, boolean
+  } catch {
+    return json
+  }
+}

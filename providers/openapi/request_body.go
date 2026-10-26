@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,9 +15,12 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 )
+
+const defaultPreviewLimit = 256 << 10
 
 var defaultContentType = media.ParseContentType("application/octet-stream")
 
@@ -42,8 +46,8 @@ type RequestBody struct {
 }
 
 type Body struct {
-	Value interface{}
-	Raw   string
+	Value any
+	Raw   *BodyPreview
 }
 
 func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
@@ -61,7 +65,7 @@ func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
-func (r *RequestBodyRef) MarshalYAML() (interface{}, error) {
+func (r *RequestBodyRef) MarshalYAML() (any, error) {
 	if r.Value != nil {
 		return r.Value, nil
 	}
@@ -97,17 +101,26 @@ func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
 }
 
 func noMatch(r *http.Request, contentType media.ContentType, op *Operation) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, fmt.Errorf("read request body failed: %w", err)
 	}
 	supported := slices.Collect(maps.Keys(op.RequestBody.Value.Content))
 	errHttp := newHttpErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Type: %s\nThis operation only accepts: %s\nPlease set the Content-Type header to one of the supported types.", contentType.String(), strings.Join(supported, ", "))
-	return &Body{Raw: string(data)}, errHttp
+	return &Body{Raw: NewBodyPreviewFromBytes(data)}, errHttp
+}
+
+func ReadAllBody(r *http.Request) ([]byte, error) {
+	if r.ContentLength > 0 {
+		buf := bytes.NewBuffer(make([]byte, 0, r.ContentLength))
+		_, err := buf.ReadFrom(r.Body)
+		return buf.Bytes(), err
+	}
+	return io.ReadAll(r.Body)
 }
 
 func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +131,11 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 		}
 	}
 
-	return &Body{Raw: string(data)}, fmt.Errorf("no matching content type defined")
+	return &Body{Raw: NewBodyPreviewFromBytes(data)}, fmt.Errorf("no matching content type defined")
 }
 
 func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +161,7 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 
 func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
 	v, err := mt.ParseData(body, contentType)
-	return &Body{Value: v, Raw: string(body)}, err
+	return &Body{Value: v, Raw: NewBodyPreviewFromBytes(body)}, err
 }
 
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
@@ -258,7 +271,7 @@ type urlValueDecoder struct {
 	mt *MediaType
 }
 
-func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, error) {
+func (d urlValueDecoder) decode(propName string, val any) (any, error) {
 	values := val.([]string)
 
 	prop := d.mt.Schema.Properties.Get(propName)
@@ -277,7 +290,7 @@ func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, 
 	}
 }
 
-func (d urlValueDecoder) decodeArray(propName string, values []string) (interface{}, error) {
+func (d urlValueDecoder) decodeArray(propName string, values []string) (any, error) {
 	enc, ok := d.mt.Encoding[propName]
 	if !ok || enc.Explode {
 		return values, nil
@@ -292,7 +305,7 @@ func (d urlValueDecoder) decodeArray(propName string, values []string) (interfac
 	}
 }
 
-func (d urlValueDecoder) decodeObject(propName string, values []string) (interface{}, error) {
+func (d urlValueDecoder) decodeObject(propName string, values []string) (any, error) {
 	enc, ok := d.mt.Encoding[propName]
 	if !ok {
 		return nil, fmt.Errorf("behavior not specified for complex serialization without content-type: see https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/")
@@ -310,7 +323,7 @@ type multipartForm struct {
 	p  parser.Parser
 }
 
-func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) error {
+func (d multipartForm) decode(m map[string]any, part *multipart.Part) error {
 	name := part.FormName()
 	b, err := io.ReadAll(part)
 	if err != nil {
@@ -354,11 +367,11 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 	}
 
 	if prop.Type.IsArray() {
-		var arr []interface{}
+		var arr []any
 		if m[name] == nil {
-			arr = make([]interface{}, 0)
+			arr = make([]any, 0)
 		} else {
-			arr = m[name].([]interface{})
+			arr = m[name].([]any)
 		}
 		m[name] = append(arr, v)
 	} else {
@@ -373,4 +386,24 @@ func isDefaultContentType(mt media.ContentType) bool {
 		return true
 	}
 	return false
+}
+
+func NewBodyPreviewFromBytes(b []byte) *BodyPreview {
+	bp := &BodyPreview{Size: len(b)}
+	if len(b) <= defaultPreviewLimit {
+		bp.Body = string(b) // copy; small enough
+		return bp
+	}
+	cut := runeSafeCut(b, defaultPreviewLimit)
+	bp.Body = strings.ToValidUTF8(string(b[:cut]), "\uFFFD")
+	bp.Truncated = true
+	return bp
+}
+
+func runeSafeCut(b []byte, limit int) int {
+	cut := limit
+	for cut > 0 && !utf8.RuneStart(b[cut]) {
+		cut--
+	}
+	return cut
 }

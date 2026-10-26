@@ -101,7 +101,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"mokapi","host":":9092","protocol":"kafka","title":"Mokapi Default Broker","summary":"Automatically added broker because no servers are defined in the AsyncAPI spec"}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"mokapi","host":":9092","protocol":"kafka","title":"Mokapi Default Broker","summary":"Automatically added broker because no Kafka servers are defined in the AsyncAPI spec"}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`,
 		},
 		{
 			name: "get cluster with contact",
@@ -1072,7 +1072,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					h,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody("{\"asyncapi\":\"3.0.0\",\"info\":{\"title\":\"foo\"},\"defaultContentType\":\"application/json\",\"servers\":{\"mokapi\":{\"host\":\":9092\",\"title\":\"Mokapi Default Broker\",\"summary\":\"Automatically added broker because no servers are defined in the AsyncAPI spec\",\"protocol\":\"kafka\"}},\"channels\":{\"foo\":{\"bindings\":{}}}}"),
+					try.HasBody("{\"asyncapi\":\"3.0.0\",\"info\":{\"title\":\"foo\"},\"defaultContentType\":\"application/json\",\"servers\":{\"mokapi\":{\"host\":\":9092\",\"title\":\"Mokapi Default Broker\",\"summary\":\"Automatically added broker because no Kafka servers are defined in the AsyncAPI spec\",\"protocol\":\"kafka\"}},\"channels\":{\"foo\":{\"bindings\":{}}}}"),
 				)
 			},
 		},
@@ -1094,7 +1094,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					h,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody("asyncapi: 3.0.0\ninfo:\n  title: foo\ndefaultContentType: application/json\nservers:\n  mokapi:\n    host: :9092\n    title: Mokapi Default Broker\n    summary: Automatically added broker because no servers are defined in the AsyncAPI spec\n    protocol: kafka\nchannels:\n  foo:\n    bindings: {}\n"),
+					try.HasBody("asyncapi: 3.0.0\ninfo:\n  title: foo\ndefaultContentType: application/json\nservers:\n  mokapi:\n    host: :9092\n    title: Mokapi Default Broker\n    summary: Automatically added broker because no Kafka servers are defined in the AsyncAPI spec\n    protocol: kafka\nchannels:\n  foo:\n    bindings: {}\n"),
 				)
 			},
 		},

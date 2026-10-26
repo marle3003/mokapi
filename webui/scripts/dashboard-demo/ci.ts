@@ -5,6 +5,7 @@ import { driveMqtt } from './drive-mqtt.ts';
 import { driveWebsocket } from './drive-websocket.ts'
 import { driveMail } from './drive-mail.ts';
 import { driveLdap } from './drive-ldap.ts';
+import { collectBruno } from './bruno.ts';
 
 async function main() {
     try {
@@ -16,6 +17,7 @@ async function main() {
         await driveLdap();
 
         await collectDashboard();
+        await collectBruno();
 
     } catch (err) {
         console.error('❌ Failed to generate demo data')

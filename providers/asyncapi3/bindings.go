@@ -10,16 +10,21 @@ type ServerBindings struct {
 }
 
 type ChannelBindings struct {
-	Kafka     TopicBindings            `yaml:"kafka,omitempty" json:"kafka,omitempty"`
+	Kafka     TopicBindings            `yaml:"kafka" json:"kafka"`
+	Mqtt      MqttChannelBindings      `yaml:"mqtt" json:"mqtt"`
 	Websocket WebsocketChannelBindings `yaml:"ws" json:"ws"`
 }
 
 type OperationBindings struct {
-	Kafka KafkaOperationBinding `yaml:"kafka" json:"kafka"`
+	Kafka     KafkaOperationBinding      `yaml:"kafka" json:"kafka"`
+	Mqtt      MqttOperationBindings      `yaml:"mqtt" json:"mqtt"`
+	Websocket WebsocketOperationBindings `yaml:"ws" json:"ws"`
 }
 
 type MessageBinding struct {
-	Kafka KafkaMessageBinding `yaml:"kafka" json:"kafka"`
+	Kafka     KafkaMessageBinding      `yaml:"kafka" json:"kafka"`
+	Mqtt      MqttMessageBindings      `yaml:"mqtt" json:"mqtt"`
+	Websocket WebsocketMessageBindings `yaml:"ws" json:"ws"`
 }
 
 func (s *ServerBindings) MarshalJSON() ([]byte, error) {
@@ -39,7 +44,7 @@ func (s *ServerBindings) MarshalJSON() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (s *ServerBindings) MarshalYAML() (interface{}, error) {
+func (s *ServerBindings) MarshalYAML() (any, error) {
 	m := map[string]any{}
 
 	kafka := s.Kafka.marshal()
@@ -79,7 +84,7 @@ func (c *ChannelBindings) MarshalJSON() ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (c *ChannelBindings) MarshalYAML() (interface{}, error) {
+func (c *ChannelBindings) MarshalYAML() (any, error) {
 	m := map[string]any{}
 
 	kafka := c.Kafka.marshal()
@@ -92,4 +97,37 @@ func (c *ChannelBindings) MarshalYAML() (interface{}, error) {
 	}
 
 	return m, nil
+}
+
+func (s *ServerBindings) patch(patch *ServerBindings) {
+	if patch == nil {
+		return
+	}
+
+	s.Kafka.Patch(patch.Kafka)
+}
+
+func (c *ChannelBindings) patch(patch *ChannelBindings) {
+	if patch == nil {
+		return
+	}
+
+	c.Kafka.Patch(patch.Kafka)
+	c.Websocket.patch(patch.Websocket)
+}
+
+func (o *OperationBindings) patch(patch *OperationBindings) {
+	if patch == nil {
+		return
+	}
+
+	o.Kafka.Patch(patch.Kafka)
+}
+
+func (m *MessageBinding) patch(patch *MessageBinding) {
+	if patch == nil {
+		return
+	}
+
+	m.Kafka.Patch(patch.Kafka)
 }
