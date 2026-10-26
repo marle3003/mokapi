@@ -144,8 +144,7 @@ func (e *Encoder) ToJSON(r *Schema) ([]byte, error) {
 		v := reflect.ValueOf(r).Elem()
 		t := v.Type()
 		var err error
-		for i := 0; i < t.NumField(); i++ {
-			ft := t.Field(i)
+		for ft := range t.Fields() {
 			if !ft.IsExported() {
 				continue
 			}
@@ -197,13 +196,16 @@ func (e *Encoder) ToJSON(r *Schema) ([]byte, error) {
 				return nil, err
 			}
 
+			tag := ft.Tag.Get("json")
+			args := strings.Split(tag, ",")
+			name := args[0]
+			if name == "-" {
+				continue
+			}
+
 			if b.Len() > 1 {
 				b.Write([]byte{','})
 			}
-
-			tag := t.Field(i).Tag.Get("json")
-			args := strings.Split(tag, ",")
-			name := args[0]
 
 			b.WriteString(fmt.Sprintf(`"%v":`, name))
 			b.Write(bVal)

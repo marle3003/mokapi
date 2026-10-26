@@ -18,22 +18,22 @@ import (
 const toManyResults = "Your request matches multiple results. Please refine your parameters for a more precise selection."
 
 type schemaInfo struct {
-	Format string      `json:"format,omitempty"`
-	Schema interface{} `json:"schema,omitempty"`
+	Format string `json:"format,omitempty"`
+	Schema any    `json:"schema,omitempty"`
 }
 
 type requestExample struct {
 	Name         string
 	Path         []string
 	Format       string
-	Schema       interface{}
+	Schema       any
 	ContentTypes []string
 }
 
 type example struct {
-	ContentType string      `json:"contentType"`
-	Value       interface{} `json:"value"`
-	Error       string      `json:"error,omitempty"`
+	ContentType string `json:"contentType"`
+	Value       any    `json:"value"`
+	Error       string `json:"error,omitempty"`
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,7 @@ func (h *handler) getExampleByQuery(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func encodeExample(v interface{}, schema interface{}, schemaFormat string, contentTypes []string) ([]example, error) {
+func encodeExample(v any, schema any, schemaFormat string, contentTypes []string) ([]example, error) {
 	var examples []example
 	for _, str := range contentTypes {
 		ct := media.ParseContentType(str)
@@ -298,7 +298,7 @@ func (r *requestExample) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
+func unmarshal(raw json.RawMessage, format string) (any, error) {
 	var err error
 	if raw != nil {
 		switch {
@@ -348,8 +348,8 @@ func isOpenApi(format string) bool {
 	}
 }
 
-func getSpecs(app *runtime.App, spec, name string) []interface{} {
-	var results []interface{}
+func getSpecs(app *runtime.App, spec, name string) []any {
+	var results []any
 
 	switch spec {
 	case "openapi":

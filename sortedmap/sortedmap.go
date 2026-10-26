@@ -154,7 +154,7 @@ func (m *LinkedHashMap[K, V]) MarshalJSON() ([]byte, error) {
 		if buf.Len() > 1 {
 			buf.WriteString(",")
 		}
-		fmt.Fprintf(&buf, "\"%v\":", it.Key())
+		_, _ = fmt.Fprintf(&buf, "\"%v\":", it.Key())
 		value, err := json.Marshal(it.Value())
 		if err != nil {
 			return nil, err

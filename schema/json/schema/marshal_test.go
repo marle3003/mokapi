@@ -1,8 +1,10 @@
-package schema
+package schema_test
 
 import (
 	"encoding/json"
 	"mokapi/config/dynamic"
+	"mokapi/schema/json/schema"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,12 +13,12 @@ import (
 func TestRef_MarshalJSON(t *testing.T) {
 	testcases := []struct {
 		name string
-		s    *Schema
+		s    *schema.Schema
 		test func(t *testing.T, s string, err error)
 	}{
 		{
 			name: "empty type",
-			s:    &Schema{},
+			s:    &schema.Schema{},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "{}", s)
@@ -24,7 +26,15 @@ func TestRef_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "with type",
-			s:    &Schema{Type: Types{"string"}},
+			s:    &schema.Schema{Type: schema.Types{"string"}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":"string"}`, s)
+			},
+		},
+		{
+			name: "with sub",
+			s:    &schema.Schema{Type: schema.Types{"string"}, Sub: schematest.New("string")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"type":"string"}`, s)
@@ -46,15 +56,15 @@ func TestRef_MarshalJSON(t *testing.T) {
 func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 	testcases := []struct {
 		name string
-		s    func() *Schema
+		s    func() *schema.Schema
 		test func(t *testing.T, s string, err error)
 	}{
 		{
 			name: "recursion in property",
-			s: func() *Schema {
-				s := &Schema{
-					Reference:  dynamic.Reference[*Schema]{Ref: "foo"},
-					Properties: &Schemas{},
+			s: func() *schema.Schema {
+				s := &schema.Schema{
+					Reference:  dynamic.Reference[*schema.Schema]{Ref: "foo"},
+					Properties: &schema.Schemas{},
 				}
 				s.Properties.Set("foo", s)
 				return s
@@ -66,9 +76,9 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 		},
 		{
 			name: "recursion in array",
-			s: func() *Schema {
-				s := &Schema{
-					Reference: dynamic.Reference[*Schema]{Ref: "foo"},
+			s: func() *schema.Schema {
+				s := &schema.Schema{
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "foo"},
 				}
 				s.Items = s
 				return s
@@ -80,9 +90,9 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 		},
 		{
 			name: "recursion in contains",
-			s: func() *Schema {
-				s := &Schema{
-					Reference: dynamic.Reference[*Schema]{Ref: "foo"},
+			s: func() *schema.Schema {
+				s := &schema.Schema{
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "foo"},
 				}
 				s.Contains = s
 				return s
@@ -94,8 +104,8 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 		},
 		{
 			name: "definitions",
-			s: func() *Schema {
-				var s *Schema
+			s: func() *schema.Schema {
+				var s *schema.Schema
 				err := json.Unmarshal([]byte(`
 {
   "definitions": {
