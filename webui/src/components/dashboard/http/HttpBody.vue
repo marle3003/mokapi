@@ -5,18 +5,25 @@ import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
 const props = defineProps<{
     contentType: string,
-    body: string
+    preview?: HttpPreviewBody
 }>()
 
 const { formatLanguage } = usePrettyLanguage()
 
 const source = computed(() => {
-  return formatLanguage(props.body, props.contentType)
+  if (!props.preview) {
+    return ''
+  }
+  return formatLanguage(props.preview.body, props.contentType, props.preview.truncated)
 })
 </script>
 
 <template>
-  <source-view v-if="body" :source="{ preview: { content: source, contentType: contentType }}" :max-height="500"></source-view>
+  <source-view v-if="preview"
+    :source="{ preview: { content: source, contentType: contentType }}"
+    :size="preview.size" :truncated="preview.truncated"
+    :max-height="500">
+  </source-view>
   <div v-else>No body returned for response</div>
 </template>
 

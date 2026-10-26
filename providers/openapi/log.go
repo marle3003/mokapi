@@ -36,13 +36,19 @@ type HttpRequestLog struct {
 	Url         string          `json:"url"`
 	Parameters  []HttpParameter `json:"parameters,omitempty"`
 	ContentType string          `json:"contentType,omitempty"`
-	Body        string          `json:"body,omitempty"`
+	Body        *BodyPreview    `json:"body,omitempty"`
+}
+
+type BodyPreview struct {
+	Body      string `json:"body"`
+	Size      int    `json:"size"`
+	Truncated bool   `json:"truncated"`
 }
 
 type HttpResponseLog struct {
 	StatusCode int               `json:"statusCode"`
 	Headers    map[string]string `json:"headers,omitempty"`
-	Body       string            `json:"body"`
+	Body       *BodyPreview      `json:"body,omitempty"`
 	Size       int               `json:"size"`
 }
 

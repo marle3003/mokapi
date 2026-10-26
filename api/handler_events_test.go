@@ -579,7 +579,7 @@ func TestHandler_Events(t *testing.T) {
 								},
 								"url": "http://localhost/foo",
 							},
-							"response": map[string]any{"body": "", "size": float64(0), "statusCode": float64(0)},
+							"response": map[string]any{"size": float64(0), "statusCode": float64(0)},
 							"clientIP": "192.0.2.1",
 						},
 							m["data"])
@@ -638,7 +638,7 @@ func TestHandler_Events(t *testing.T) {
 								},
 								"url": "http://localhost/foo",
 							},
-							"response": map[string]any{"body": "", "size": float64(0), "statusCode": float64(0)},
+							"response": map[string]any{"size": float64(0), "statusCode": float64(0)},
 							"clientIP": "192.0.2.1",
 						},
 							m["data"])

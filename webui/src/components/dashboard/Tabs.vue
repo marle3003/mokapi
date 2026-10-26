@@ -155,11 +155,3 @@ function updateTabsResponsiveness() {
   </nav>
 
 </template>
-
-<style>
-.page-actions {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;   /* don't let it get squeezed when tabs wrap on narrow screens */
-}
-</style>

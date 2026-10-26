@@ -2,19 +2,22 @@ import { MIMEType } from 'whatwg-mimetype'
 import XmlFormatter from 'xml-formatter'
 
 export function usePrettyLanguage() {
-    function formatLanguage(s: string, contentType: string): string {
+    function formatLanguage(s: string, contentType: string, truncated?: boolean): string {
         if (!s){
             return s
         }
         const mimeType = new MIMEType(contentType)
         switch (mimeType.subtype){
             case 'json':
-                try{ 
+                if (!truncated) {
+                    try {
                     return JSON.stringify(JSON.parse(s), null, 2)
-                }catch {
-                    console.error("unable to parse json: "+s)
-                    return s
+                    } catch {
+                        console.error("unable to parse json: "+s)
+                        return s
+                    }
                 }
+                return prettyJson(s)
             case 'xml':
             case 'rss+xml':
                 return XmlFormatter(s, {collapseContent: true})
@@ -100,3 +103,73 @@ function toBinary(s: string) {
     }
     return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
   }
+
+  /**
+ * Pretty-prints JSON without parsing it.
+ * Works on truncated input (e.g. a body preview): the text is only
+ * re-indented, never validated. Whitespace outside of strings is dropped.
+ */
+export function prettyJson(s: string, indent = 2): string {
+  const pad = ' '.repeat(indent)
+  const out: string[] = []
+  let level = 0
+  let inString = false
+  let escaped = false
+
+  const newline = () => out.push('\n', pad.repeat(level))
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i]
+
+    if (inString) {
+      out.push(c)
+      if (escaped) escaped = false
+      else if (c === '\\') escaped = true
+      else if (c === '"') inString = false
+      continue
+    }
+
+    switch (c) {
+      case '"':
+        inString = true
+        out.push(c)
+        break
+      case '{':
+      case '[': {
+        // keep empty {} and [] on one line
+        let j = i + 1
+        while (j < s.length && /\s/.test(s[j])) j++
+        if (s[j] === (c === '{' ? '}' : ']')) {
+          out.push(c, s[j])
+          i = j
+          break
+        }
+        out.push(c)
+        level++
+        newline()
+        break
+      }
+      case '}':
+      case ']':
+        level = Math.max(0, level - 1)
+        newline()
+        out.push(c)
+        break
+      case ',':
+        out.push(c)
+        newline()
+        break
+      case ':':
+        out.push(': ')
+        break
+      case ' ':
+      case '\t':
+      case '\n':
+      case '\r':
+        break // drop original formatting
+      default:
+        out.push(c)
+    }
+  }
+  return out.join('')
+}

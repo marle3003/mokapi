@@ -78,13 +78,19 @@ declare interface HttpEventRequest {
     url: string
     contentType: string
     parameters?: HttpEventParameter[]
-    body: string
+    body?: HttpPreviewBody
 }
 
 declare interface HttpRequestBody {
     description: string
     contents: HttpMediaType[]
     required: boolean
+}
+
+declare interface HttpPreviewBody {
+    body: string
+    size: number
+    truncated: boolean
 }
 
 declare interface HttpResponse {
@@ -109,7 +115,7 @@ declare interface HttpEventParameter {
 
 declare interface HttpEventResponse {
     statusCode: number
-    body: string
+    body?: HttpPreviewBody
     size: number
     headers: HttpHeader
 }
