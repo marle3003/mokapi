@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,9 +15,12 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 )
+
+const defaultPreviewLimit = 256 << 10
 
 var defaultContentType = media.ParseContentType("application/octet-stream")
 
@@ -43,7 +47,7 @@ type RequestBody struct {
 
 type Body struct {
 	Value any
-	Raw   string
+	Raw   *BodyPreview
 }
 
 func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
@@ -97,17 +101,26 @@ func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
 }
 
 func noMatch(r *http.Request, contentType media.ContentType, op *Operation) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, fmt.Errorf("read request body failed: %w", err)
 	}
 	supported := slices.Collect(maps.Keys(op.RequestBody.Value.Content))
 	errHttp := newHttpErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Type: %s\nThis operation only accepts: %s\nPlease set the Content-Type header to one of the supported types.", contentType.String(), strings.Join(supported, ", "))
-	return &Body{Raw: string(data)}, errHttp
+	return &Body{Raw: NewBodyPreviewFromBytes(data)}, errHttp
+}
+
+func ReadAllBody(r *http.Request) ([]byte, error) {
+	if r.ContentLength > 0 {
+		buf := bytes.NewBuffer(make([]byte, 0, r.ContentLength))
+		_, err := buf.ReadFrom(r.Body)
+		return buf.Bytes(), err
+	}
+	return io.ReadAll(r.Body)
 }
 
 func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +131,11 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 		}
 	}
 
-	return &Body{Raw: string(data)}, fmt.Errorf("no matching content type defined")
+	return &Body{Raw: NewBodyPreviewFromBytes(data)}, fmt.Errorf("no matching content type defined")
 }
 
 func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*Body, error) {
-	data, err := io.ReadAll(r.Body)
+	data, err := ReadAllBody(r)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +161,7 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 
 func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
 	v, err := mt.ParseData(body, contentType)
-	return &Body{Value: v, Raw: string(body)}, err
+	return &Body{Value: v, Raw: NewBodyPreviewFromBytes(body)}, err
 }
 
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
@@ -373,4 +386,24 @@ func isDefaultContentType(mt media.ContentType) bool {
 		return true
 	}
 	return false
+}
+
+func NewBodyPreviewFromBytes(b []byte) *BodyPreview {
+	bp := &BodyPreview{Size: len(b)}
+	if len(b) <= defaultPreviewLimit {
+		bp.Body = string(b) // copy; small enough
+		return bp
+	}
+	cut := runeSafeCut(b, defaultPreviewLimit)
+	bp.Body = strings.ToValidUTF8(string(b[:cut]), "\uFFFD")
+	bp.Truncated = true
+	return bp
+}
+
+func runeSafeCut(b []byte, limit int) int {
+	cut := limit
+	for cut > 0 && !utf8.RuneStart(b[cut]) {
+		cut--
+	}
+	return cut
 }

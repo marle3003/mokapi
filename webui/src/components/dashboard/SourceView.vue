@@ -23,6 +23,8 @@ const props = withDefaults(defineProps<{
   hideContentType?: boolean
   hideHeader?: boolean
   readonly?: boolean
+  size?: number
+  truncated?: boolean
 }>(), { readonly: true })
 
 const preview = ref<HTMLElement>()
@@ -67,6 +69,10 @@ const lines = computed(() => {
 })
 
 const size = computed(() => {
+  if (props.size) {
+    return format(props.size)
+  }
+
   let content = props.source.preview?.content
   if (props.source.binary) {
     content = props.source.binary.content
@@ -236,7 +242,7 @@ watch(
       </div>
       <div class="info">
         <span style="" v-if="!hideContentType" aria-label="Content Type">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
-        <span aria-label="Lines of Code" v-if="!source.binary">{{ lines }} lines</span>
+        <span aria-label="Lines of Code" v-if="!source.binary">{{ lines }} lines {{ truncated ? '(truncated)' : '' }}</span>
         <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span>
         <span v-if="current?.data.description">{{ current?.data.description }}</span>

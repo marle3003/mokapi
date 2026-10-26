@@ -111,6 +111,7 @@
   position: fixed;
   top: 4rem;
   z-index: 10;
+  width: 100%;
   /*padding-right: 39px; /* 2rem + 7px margin of card */
 }
 .dashboard-tabs.demo {

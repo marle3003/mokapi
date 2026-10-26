@@ -290,7 +290,7 @@ func write(w http.ResponseWriter, data any) {
 	writeJsonBody(w, data)
 }
 
-func writeJsonBody(w http.ResponseWriter, v interface{}) {
+func writeJsonBody(w http.ResponseWriter, v any) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
