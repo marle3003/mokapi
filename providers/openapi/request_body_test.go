@@ -190,11 +190,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "read request body failed: no matching content type defined")
-				require.Equal(t, &openapi.BodyPreview{
-					Body:      "<root><foo>bar</foo></root>",
-					Size:      27,
-					Truncated: false,
-				}, result.Raw)
+				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
 		{
@@ -238,11 +234,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "read request body 'application/json' failed: invalid json format: invalid character '<' looking for beginning of value")
-				require.Equal(t, &openapi.BodyPreview{
-					Body:      "<root><foo>bar</foo></root>",
-					Size:      27,
-					Truncated: false,
-				}, result.Raw)
+				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
 		{
@@ -274,11 +266,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.EqualError(t, err, "Unsupported Content-Type: application/xml\nThis operation only accepts: application/json\nPlease set the Content-Type header to one of the supported types.")
-				require.Equal(t, &openapi.BodyPreview{
-					Body:      "<root><foo>bar</foo></root>",
-					Size:      27,
-					Truncated: false,
-				}, result.Raw)
+				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
 		{

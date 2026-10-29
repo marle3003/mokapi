@@ -150,7 +150,7 @@ export function useDemoDashboard() {
         getEvents(query?: EventQuery) {
             const page = query?.page ?? 1
             const size = query?.size ?? 25
-            const data = ref<ServiceEventResult>({ items: [], page, size, total: 0 })
+            const data = ref<ServiceEventPage>({ items: [], page, size, total: 0 })
             const isLoading = ref<boolean>(true)
 
             watchEffect(() => {

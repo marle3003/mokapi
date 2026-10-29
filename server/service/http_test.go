@@ -256,11 +256,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				require.Equal(t, "API", d.Api)
 				require.Equal(t, "/foo", d.Path)
 				require.Equal(t, map[string]string{"Content-Type": "text/plain; charset=utf-8", "Foo": "bar"}, d.Response.Headers)
-				require.Equal(t, &openapi.BodyPreview{
-					Body:      "Test Error",
-					Size:      0,
-					Truncated: false,
-				}, d.Response.Body)
+				require.Equal(t, "Test Error", d.Response.Body)
 			},
 		},
 		{

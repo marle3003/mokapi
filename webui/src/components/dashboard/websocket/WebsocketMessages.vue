@@ -47,7 +47,7 @@ const { adaptiveTruncate } = usePrettyText()
 const { formatAddress } = useWebsocket()
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
     [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -90,7 +90,7 @@ const messages = computed(() => {
     return result;
 })
 
-function eventData(event: ServiceEventInfo | null): WebsocketMessageInfo | null {
+function eventData(event: ServiceEvent | null): WebsocketMessageInfo | null {
     if (!event) {
         return null
     }

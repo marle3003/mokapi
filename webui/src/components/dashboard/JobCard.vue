@@ -22,7 +22,7 @@ interface Timer {
     hours: number, minutes: number, seconds: number
 }
 
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size ],
@@ -83,7 +83,7 @@ onUnmounted(() => {
     clearInterval(interval)
 })
 
-function eventData(event: ServiceEventInfo): JobExecution {
+function eventData(event: ServiceEvent): JobExecution {
     return <JobExecution>event.data
 }
 function formatTimer(timer: Timer) {

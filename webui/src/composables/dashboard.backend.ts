@@ -149,7 +149,7 @@ export const dashboard: Dashboard = {
 
        
         const res = useFetch(url)
-        const data = ref<ServiceEventResult>({ items: [], page: 1, size: 25, total: 0 })
+        const data = ref<ServiceEventPage>({ items: [], page: 1, size: 25, total: 0 })
 
         watchEffect(() => {
             if (!res.data){

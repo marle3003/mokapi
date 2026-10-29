@@ -249,10 +249,6 @@ func (e *JobExecution) Title() string {
 	return e.Tags["name"]
 }
 
-func (e *JobExecution) Info() any {
-	return e
-}
-
 func (e *JobExecution) Domain() string {
 	return "Job Execution"
 }

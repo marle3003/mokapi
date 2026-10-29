@@ -139,7 +139,7 @@ func TestHandler_Response(t *testing.T) {
 				evt := eh.GetEvents(events.NewTraits())
 				require.Len(t, evt, 1)
 				data := evt[0].Data.(*openapi.HttpLog)
-				require.Nil(t, data.Response.Body)
+				require.Equal(t, "", data.Response.Body)
 				require.Equal(t, "", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
 			},
@@ -162,11 +162,7 @@ func TestHandler_Response(t *testing.T) {
 				evt := eh.GetEvents(events.NewTraits())
 				require.Len(t, evt, 1)
 				data := evt[0].Data.(*openapi.HttpLog)
-				require.Equal(t, &openapi.BodyPreview{
-					Body:      "foo",
-					Size:      3,
-					Truncated: false,
-				}, data.Response.Body)
+				require.Equal(t, "foo", data.Response.Body)
 				require.Equal(t, "text/plain", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
 			},

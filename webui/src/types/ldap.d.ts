@@ -2,17 +2,9 @@ declare interface LdapService extends Service {
     server: string
 }
 
-declare interface LdapEventInfo {
-    operation: string
-    dn: string
-    criteria: string
-    status: string
-    duration: number
-}
-
 declare interface LdapEventData {
     request: LdapBindRequest | LdapUnbindRequest | LdapSearchRequest | LdapModifyRequest | LdapAddRequest | LdapDeleteRequest | LdapModifDNRequest | LdapCompareRequest
-    response: LdapSearchResponse | LdapResponse
+    response?: LdapSearchResponse | LdapResponse
     duration: number
     actions: Action[]
 }

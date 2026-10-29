@@ -24,7 +24,7 @@ const router = useRouter()
 const { format, duration } = usePrettyDates()
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels ],
@@ -46,7 +46,7 @@ watch(
 );
 
 
-function goToMail(evt: ServiceEventInfo, openInNewTab = false){
+function goToMail(evt: ServiceEvent, openInNewTab = false){
     const data = eventData(evt)
 
     const to = {
@@ -60,7 +60,7 @@ function goToMail(evt: ServiceEventInfo, openInNewTab = false){
         router.push(to)
     }
 }
-function eventData(event: ServiceEventInfo): SmtpEventInfo {
+function eventData(event: ServiceEvent): SmtpEventInfo {
     return <SmtpEventInfo>event.data
 }
 

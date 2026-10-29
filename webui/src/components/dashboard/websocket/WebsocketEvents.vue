@@ -28,7 +28,7 @@ const paging = reactive({
 })
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -49,7 +49,7 @@ watch(
   { immediate: true }
 );
 
-function eventData(event: ServiceEventInfo): WebsocketConnectionLog {
+function eventData(event: ServiceEvent): WebsocketConnectionLog {
   return event.data as WebsocketConnectionLog
 }
 function goToEvent(eventId: string, openInNewTab = false) {

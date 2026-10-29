@@ -6,7 +6,7 @@ import Delete from './Delete.vue'
 import ModifyDN from './ModifyDN.vue'
 import Compare from './Compare.vue'
 import { useRoute } from 'vue-router'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
 import Message from '@/components/Message.vue'
 import Loading from '@/components/Loading.vue'
@@ -14,24 +14,18 @@ import RequestInfoCard from './RequestInfoCard.vue'
 import Bind from './Bind.vue'
 
 const route = useRoute()
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 
-const event = ref<ServiceEvent | null>(null);
-const isLoading = ref<boolean>(true)
+const event = computed(() => res.value?.event.value)
+const isLoading = computed(() => res.value?.isLoading.value ?? true)
 
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res = db.getEvent(route.params.id as string);
+const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
 
-    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
-
-    onCleanup(() => {
-        stop()
-        res.close
-    });
-  },
-  { immediate: true }
-);
+watch(dashboard, (db, _, onCleanup) => {
+  const r = db.getEvent(route.params.id as string)
+  res.value = r
+  onCleanup(() => r.close())
+}, { immediate: true })
 
 const data = computed(() => {
     if (!event?.value) {

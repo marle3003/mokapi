@@ -85,8 +85,12 @@ func TestHandler_Events(t *testing.T) {
 						// ids are FIFO, events are LIFO
 						require.Equal(t, ids[2], data.Items[0].Id)
 						require.Equal(t, ids[1], data.Items[1].Id)
-						require.Equal(t, map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo3"}, data.Items[0].Data)
-						require.Equal(t, map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo2"}, data.Items[1].Data)
+
+						require.Contains(t, data.Items[0].Data, "request")
+						require.Contains(t, data.Items[0].Data, "response")
+
+						require.Contains(t, data.Items[1].Data, "request")
+						require.Contains(t, data.Items[1].Data, "response")
 					}),
 				)
 			},
@@ -149,17 +153,20 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 1)
-						require.Equal(t, []any{
+						require.Len(t, data.Items, 1)
+
+						require.Equal(t, evt1.Id, data.Items[0].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[0].Traits)
+						try.VerifySubset(t,
+							data.Items[0].Data,
 							map[string]any{
-								"id":     evt1.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt1.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo"},
+								"request":  map[string]any{"url": "http://localhost/foo"},
+								"response": map[string]any{"statusCode": float64(0)},
+								"duration": float64(0),
 							},
-						}, data["items"])
+						)
 					}),
 				)
 			},
@@ -183,23 +190,21 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 2)
-						require.Equal(t, []any{
-							map[string]any{
-								"id":     evt2.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt2.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo"},
-							},
-							map[string]any{
-								"id":     evt1.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt1.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo"},
-							},
-						}, data["items"])
+						require.Len(t, data.Items, 2)
+
+						require.Equal(t, evt2.Id, data.Items[0].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[0].Traits)
+						try.VerifySubset(t, data.Items[0].Data, map[string]any{
+							"request": map[string]any{"method": http.MethodPost},
+						})
+
+						require.Equal(t, evt1.Id, data.Items[1].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[1].Traits)
+						try.VerifySubset(t, data.Items[1].Data, map[string]any{
+							"request": map[string]any{"method": http.MethodGet},
+						})
 					}),
 				)
 			},
@@ -223,17 +228,15 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 1)
-						require.Equal(t, []any{
-							map[string]any{
-								"id":     evt2.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt2.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/bar"},
-							},
-						}, data["items"])
+						require.Len(t, data.Items, 1)
+
+						require.Equal(t, evt2.Id, data.Items[0].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[0].Traits)
+						try.VerifySubset(t, data.Items[0].Data, map[string]any{
+							"request": map[string]any{"url": "http://localhost/bar"},
+						})
 					}),
 				)
 			},
@@ -264,17 +267,15 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 1)
-						require.Equal(t, []any{
-							map[string]any{
-								"id":     evt2.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt2.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/bar"},
-							},
-						}, data["items"])
+						require.Len(t, data.Items, 1)
+
+						require.Equal(t, evt2.Id, data.Items[0].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[0].Traits)
+						try.VerifySubset(t, data.Items[0].Data, map[string]any{
+							"request": map[string]any{"url": "http://localhost/bar"},
+						})
 					}),
 				)
 			},
@@ -319,7 +320,8 @@ func TestHandler_Events(t *testing.T) {
 					}
 					m := items[index].(map[string]any)
 					d := m["data"].(map[string]any)
-					return int(d["statusCode"].(float64))
+					res := d["response"].(map[string]any)
+					return int(res["statusCode"].(float64))
 				}
 
 				tests := []struct {
@@ -406,17 +408,15 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 1)
-						require.Equal(t, []any{
-							map[string]any{
-								"id":     evt2.Id,
-								"traits": map[string]any{"namespace": "http"},
-								"time":   evt2.Time.Format(time.RFC3339Nano),
-								"data":   map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/bar"},
-							},
-						}, data["items"])
+						require.Len(t, data.Items, 1)
+
+						require.Equal(t, evt2.Id, data.Items[0].Id)
+						require.Equal(t, events.Traits{"namespace": "http"}, data.Items[0].Traits)
+						try.VerifySubset(t, data.Items[0].Data, map[string]any{
+							"request": map[string]any{"url": "http://localhost/bar"},
+						})
 					}),
 				)
 			},
@@ -455,13 +455,13 @@ func TestHandler_Events(t *testing.T) {
 					log.ClientIP = d.clientIP
 				}
 
-				getUrl := func(index int, items []any) string {
+				getUrl := func(index int, items []api.EventInfo) string {
 					if index >= len(items) {
 						return ""
 					}
-					m := items[index].(map[string]any)
-					d := m["data"].(map[string]any)
-					return d["url"].(string)
+					d := items[index].Data.(map[string]any)
+					req := d["request"].(map[string]any)
+					return req["url"].(string)
 				}
 
 				tests := []struct {
@@ -471,22 +471,20 @@ func TestHandler_Events(t *testing.T) {
 					{
 						url: "http://foo.api/api/events?traits[namespace]=http&http[clientIP]=127.0.0.1",
 						check: try.AssertBody(func(t *testing.T, body string) {
-							var data map[string]any
+							var data api.EventPage
 							require.NoError(t, json.Unmarshal([]byte(body), &data))
-							items := data["items"].([]any)
-							require.Len(t, items, 2)
-							require.Equal(t, "http://localhost/foo2", getUrl(0, items))
-							require.Equal(t, "http://localhost/foo1", getUrl(1, items))
+							require.Len(t, data.Items, 2)
+							require.Equal(t, "http://localhost/foo2", getUrl(0, data.Items))
+							require.Equal(t, "http://localhost/foo1", getUrl(1, data.Items))
 						}),
 					},
 					{
 						url: "http://foo.api/api/events?traits[namespace]=http&http[clientIP]=192.0.1.1/24",
 						check: try.AssertBody(func(t *testing.T, body string) {
-							var data map[string]any
+							var data api.EventPage
 							require.NoError(t, json.Unmarshal([]byte(body), &data))
-							items := data["items"].([]any)
-							require.Len(t, items, 1)
-							require.Equal(t, "http://localhost/foo3", getUrl(0, items))
+							require.Len(t, data.Items, 1)
+							require.Equal(t, "http://localhost/foo3", getUrl(0, data.Items))
 						}),
 					},
 				}
@@ -680,16 +678,6 @@ func TestHandler_Events(t *testing.T) {
 				}, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
 
-				getItemData := func(items []any, index int) map[string]any {
-					if index >= len(items) {
-						t.FailNow()
-					}
-					m := items[index].(map[string]any)
-					d, ok := m["data"]
-					require.True(t, ok, "data field not found for index %d", index)
-					return d.(map[string]any)
-				}
-
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/events",
@@ -699,17 +687,26 @@ func TestHandler_Events(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data map[string]any
+						var data api.EventPage
 						require.NoError(t, json.Unmarshal([]byte(body), &data))
-						require.Len(t, data["items"], 5)
-						items := data["items"].([]any)
+						require.Len(t, data.Items, 5)
 						// get the inserted order not LIFO
-						slices.Reverse(items)
-						require.Equal(t, map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo"}, getItemData(items, 0))
-						require.Equal(t, map[string]any{"topic": "topic", "deleted": false, "key": map[string]any{"binary": nil, "value": "foo"}, "message": map[string]any{"binary": nil, "value": "bar"}}, getItemData(items, 1))
-						require.Equal(t, map[string]any{"topic": "topic", "message": map[string]any{"binary": nil, "value": "foo"}}, getItemData(items, 2))
-						require.Equal(t, map[string]any{"channel": "channel", "client": map[string]any{"address": "", "header": nil, "id": "", "query": nil, "server": ""}, "direction": "", "message": map[string]any{"binary": nil, "value": "foo"}}, getItemData(items, 3))
-						require.Equal(t, map[string]any{"criteria": "bar", "dn": "foo", "duration": float64(10), "operation": "Search", "status": "ok"}, getItemData(items, 4))
+						slices.Reverse(data.Items)
+						try.VerifySubset(t, data.Items[0].Data, map[string]any{
+							"request": map[string]any{"url": "http://localhost/foo"},
+						})
+						try.VerifySubset(t, data.Items[1].Data, map[string]any{
+							"topic": "topic", "partition": float64(0),
+						})
+						try.VerifySubset(t, data.Items[2].Data, map[string]any{
+							"topic": "topic", "retain": false,
+						})
+						try.VerifySubset(t, data.Items[3].Data, map[string]any{
+							"channel": "channel",
+						})
+						try.VerifySubset(t, data.Items[4].Data, map[string]any{
+							"request": map[string]any{"operation": "Search"},
+						})
 					}),
 				)
 			},

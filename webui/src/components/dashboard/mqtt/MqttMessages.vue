@@ -43,7 +43,7 @@ const paging = reactive({
 const { format } = usePrettyDates()
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
     [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -65,7 +65,7 @@ watch(
 );
 watch(() => events.value, (events) => emit("loaded", events.length), { immediate: true })
 
-function eventData(event: ServiceEventInfo): MqttMessageInfo {
+function eventData(event: ServiceEvent): MqttMessageInfo {
     return event.data as MqttMessageInfo
 }
 

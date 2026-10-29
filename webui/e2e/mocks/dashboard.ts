@@ -39,7 +39,7 @@ export default async function() {
 
             const items = events.filter(x => match(x, query(req.query)))
             res.data = {
-                items: items.map(eventInfo).slice((page - 1) * size, page * size),
+                items: items.slice((page - 1) * size, page * size),
                 page: page,
                 size: size,
                 total: items.length
@@ -197,110 +197,6 @@ const events = [
     ...searches,
     ...jobs
 ]
-
-function eventInfo(event: ServiceEvent) {
-    const {data, ...info} = event
-    switch (event.traits.namespace) {
-        case 'http':
-            return {
-                ...info,
-                data: {
-                    url: event.data.request.url,
-                    statusCode: event.data.response.statusCode,
-                    duration: event.data.duration,
-                    deprecated: event.data.deprecated
-                }
-            }
-        case 'kafka':
-            switch (event.traits.type) {
-                case 'message':
-                   return {
-                    ...info,
-                    data: {
-                        topic: event.data.topic,
-                        key: event.data.key,
-                        message: event.data.message,
-                        deleted: event.data.deleted
-                    }
-                } 
-                case 'request':
-                    return event
-            }
-        case 'mqtt':
-            switch (event.traits.type) {
-                case 'message':
-                   return {
-                    ...info,
-                    data: {
-                        topic: event.data.topic,
-                        message: event.data.message
-                    }
-                } 
-                case 'request':
-                    return event
-            }
-        case 'websocket':
-            return event
-        case 'ldap':
-            return {
-                ...info,
-                data: {
-                    operation: event.data.request.operation,
-                    dn: dn(event),
-                    criteria: criteria(event),
-                    status: event.data.response.status ?? '-',
-                    duration: event.data.duration,
-                }
-            }
-        case 'mail':
-            return {
-                ...info,
-                data: {
-                    messageId: event.data.messageId,
-                    from: event.data.from,
-                    to: event.data.to,
-                    subject: event.data.subject,
-                    duration: event.data.duration
-                }
-            }
-        case 'job':
-            return event
-    }
-}
-
-function dn(e: ServiceEvent) {
-    switch (e.data.request.operation) {
-        case 'Bind':
-            return e.data.request.name;
-        case 'Search':
-            return e.data.request.baseDN
-        case 'Modify':
-        case 'Add':
-        case 'Delete':
-        case 'ModifyDN':
-        case 'Compare':
-            return e.data.request.dn
-    }
-}
-
-function criteria(e: ServiceEvent) {
-    switch (e.data.request.operation) {
-        case 'Search':
-            return e.data.request.filter
-        case 'Compare':
-            return `${e.data.request.attribute} == ${e.data.request.value}`
-        case 'Modify':
-            const result = []
-            for (const item of e.data.request.items) {
-                result.push(`${item.modification.toLocaleLowerCase()} ${item.attribute.type}`)
-            }
-            return result
-        case 'ModifyDN':
-            return e.data.request.newRdn
-        default:
-            undefined;
-    }
-}
 
 function query(q: Record<string, any>): Query {
     const result: Query = { labels: Object.keys(q.traits).map(x => ({ name: x, value: q.traits[x] })) }

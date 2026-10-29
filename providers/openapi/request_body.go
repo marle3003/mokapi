@@ -15,12 +15,10 @@ import (
 	"net/http"
 	"slices"
 	"strings"
-	"unicode/utf8"
+	"unsafe"
 
 	"gopkg.in/yaml.v3"
 )
-
-const defaultPreviewLimit = 256 << 10
 
 var defaultContentType = media.ParseContentType("application/octet-stream")
 
@@ -47,7 +45,7 @@ type RequestBody struct {
 
 type Body struct {
 	Value any
-	Raw   *BodyPreview
+	Raw   string
 }
 
 func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
@@ -107,7 +105,7 @@ func noMatch(r *http.Request, contentType media.ContentType, op *Operation) (*Bo
 	}
 	supported := slices.Collect(maps.Keys(op.RequestBody.Value.Content))
 	errHttp := newHttpErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Type: %s\nThis operation only accepts: %s\nPlease set the Content-Type header to one of the supported types.", contentType.String(), strings.Join(supported, ", "))
-	return &Body{Raw: NewBodyPreviewFromBytes(data)}, errHttp
+	return &Body{Raw: BytesToString(data)}, errHttp
 }
 
 func ReadAllBody(r *http.Request) ([]byte, error) {
@@ -131,7 +129,7 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 		}
 	}
 
-	return &Body{Raw: NewBodyPreviewFromBytes(data)}, fmt.Errorf("no matching content type defined")
+	return &Body{Raw: BytesToString(data)}, fmt.Errorf("no matching content type defined")
 }
 
 func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*Body, error) {
@@ -161,7 +159,7 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 
 func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
 	v, err := mt.ParseData(body, contentType)
-	return &Body{Value: v, Raw: NewBodyPreviewFromBytes(body)}, err
+	return &Body{Value: v, Raw: BytesToString(body)}, err
 }
 
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
@@ -388,22 +386,11 @@ func isDefaultContentType(mt media.ContentType) bool {
 	return false
 }
 
-func NewBodyPreviewFromBytes(b []byte) *BodyPreview {
-	bp := &BodyPreview{Size: len(b)}
-	if len(b) <= defaultPreviewLimit {
-		bp.Body = string(b) // copy; small enough
-		return bp
+// BytesToString returns a string that shares memory with b (no copy).
+// b MUST NOT be modified or reused afterward.
+func BytesToString(b []byte) string {
+	if len(b) == 0 {
+		return ""
 	}
-	cut := runeSafeCut(b, defaultPreviewLimit)
-	bp.Body = strings.ToValidUTF8(string(b[:cut]), "\uFFFD")
-	bp.Truncated = true
-	return bp
-}
-
-func runeSafeCut(b []byte, limit int) int {
-	cut := limit
-	for cut > 0 && !utf8.RuneStart(b[cut]) {
-		cut--
-	}
-	return cut
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }

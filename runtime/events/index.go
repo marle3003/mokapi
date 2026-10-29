@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/runtime/search"
 	"reflect"
 	"strings"
@@ -31,9 +32,7 @@ func (m *StoreManager) addToIndex(event *Event) {
 		data["_title"] = event.Data.Title()
 
 		if p, ok := event.Data.(IndexFieldsProvider); ok {
-			for k, v := range p.IndexFields() {
-				data[k] = v
-			}
+			maps.Copy(data, p.IndexFields())
 		}
 	}
 
