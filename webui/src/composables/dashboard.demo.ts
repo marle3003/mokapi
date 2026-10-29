@@ -81,10 +81,8 @@ export function useDemoDashboard() {
                     if (method && op.method != method) {
                         return false
                     }
-                    if (path && op.path != path) {
-                        return false
-                    }
-                    return true
+                    return !(path && op.path != path);
+
                 }) || []
                 isLoading.value = db.isLoading
             })

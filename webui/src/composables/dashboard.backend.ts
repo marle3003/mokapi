@@ -1,7 +1,14 @@
-import { reactive, ref, watchEffect } from "vue";
-import { transformPath, useFetch } from "./fetch";
-import type { Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult, EventQuery } from "@/types/dashboard";
-import { usePrettyLanguage } from "./usePrettyLanguage";
+import {reactive, ref, watchEffect} from "vue";
+import {transformPath, useFetch} from "./fetch";
+import type {
+    Dashboard,
+    EventQuery,
+    ExampleRequest,
+    ExampleResult,
+    MailboxMessagesResult,
+    MailboxResult
+} from "@/types/dashboard";
+import {usePrettyLanguage} from "./usePrettyLanguage";
 
 const { formatLanguage } = usePrettyLanguage();
 
@@ -175,8 +182,7 @@ export const dashboard: Dashboard = {
 
     getMetrics(type?: string) {
         const path = type ? `/api/metrics/${type}` : '/api/metrics'
-        const response = useFetch(path)
-        return response
+        return useFetch(path)
     },
 
     getExample(request: ExampleRequest) {
