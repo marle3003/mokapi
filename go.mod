@@ -9,7 +9,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.18.0
 	github.com/cbroglie/mustache v1.4.2
 	github.com/coder/websocket v1.8.15
-	github.com/dop251/goja v0.0.0-20261022125820-07c4b9d6265b
+	github.com/dop251/goja v0.0.0-20261028213108-85be1416108e
 	github.com/evanw/esbuild v0.28.2
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-co-op/gocron/v2 v2.22.0
@@ -57,7 +57,7 @@ require (
 	github.com/blevesearch/zapx/v17 v17.2.3 // indirect
 	github.com/cloudflare/circl v1.6.5 // indirect
 	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
-	github.com/dlclark/regexp2/v2 v2.8.1 // indirect
+	github.com/dlclark/regexp2/v2 v2.11.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.9.2 // indirect
