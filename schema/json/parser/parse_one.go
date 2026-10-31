@@ -2,18 +2,19 @@ package parser
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 )
 
-func (p *Parser) ParseOne(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
-	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+func (p *Parser) ParseOne(s *schema.Schema, data any, evaluated map[string]bool) (any, error) {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, any]); ok {
 		p2 := *p
 		p2.ValidateAdditionalProperties = true
 		return p2.parseOneObject(m, s, evaluated)
 	}
 
-	var result interface{}
+	var result any
 	validIndex := -1
 	for index, one := range s.OneOf {
 		next, err := p.parse(data, one)
@@ -39,8 +40,8 @@ func (p *Parser) ParseOne(s *schema.Schema, data interface{}, evaluated map[stri
 	return result, nil
 }
 
-func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
-	var result interface{}
+func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, any], s *schema.Schema, evaluated map[string]bool) (any, error) {
+	var result any
 	var err error
 	validIndex := -1
 	index := 0
@@ -60,18 +61,18 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 		}
 
 		eval := map[string]bool{}
-		var next *sortedmap.LinkedHashMap[string, interface{}]
-		next, err = p.parseObject(m, one, eval)
+		var next *sortedmap.LinkedHashMap[string, any]
+		next, err = p.parseObjectWithComposition(m, one, eval)
 		if err != nil {
 			continue
 		}
 
-		var v interface{}
+		var v any
 		v, err = p.evaluateUnevaluatedProperties(next, one, eval)
 		if err != nil {
 			continue
 		}
-		next = v.(*sortedmap.LinkedHashMap[string, interface{}])
+		next = v.(*sortedmap.LinkedHashMap[string, any])
 
 		if result != nil {
 			return nil, &ErrorDetail{
@@ -83,9 +84,7 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 		result = next
 		validIndex = index
 
-		for key, val := range eval {
-			evaluated[key] = val
-		}
+		maps.Copy(evaluated, eval)
 	}
 
 	if result == nil {
