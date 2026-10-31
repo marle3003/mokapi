@@ -15,15 +15,15 @@ import (
 func TestParser_ParseObject(t *testing.T) {
 	testcases := []struct {
 		name   string
-		data   interface{}
+		data   any
 		schema *schema.Schema
-		test   func(t *testing.T, v interface{}, err error)
+		test   func(t *testing.T, v any, err error)
 	}{
 		{
 			name:   "expect object but got integer",
 			data:   12,
 			schema: schematest.New("object"),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected object but got integer")
 			},
 		},
@@ -31,285 +31,285 @@ func TestParser_ParseObject(t *testing.T) {
 			name:   "null but not nullable",
 			data:   nil,
 			schema: schematest.New("object"),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected object but got null")
 			},
 		},
 		{
 			name:   "property invalid type",
-			data:   map[string]interface{}{"foo": 1234},
+			data:   map[string]any{"foo": 1234},
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "two properties invalid type",
-			data: map[string]interface{}{"foo": 1234, "bar": 1234},
+			data: map[string]any{"foo": 1234, "bar": 1234},
 			schema: schematest.New("object",
 				schematest.WithProperty("foo", schematest.New("string")),
 				schematest.WithProperty("bar", schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/foo/type: invalid type, expected string but got integer\n\t- #/bar/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "string property not present",
-			data: map[string]interface{}{},
+			data: map[string]any{},
 			schema: schematest.New("object",
 				schematest.WithProperty("foo", schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "property with default",
-			data: map[string]interface{}{},
+			data: map[string]any{},
 			schema: schematest.New("object",
 				schematest.WithProperty("foo", schematest.New("string", schematest.WithDefault("bar"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name: "pattern properties error",
-			data: map[string]interface{}{"S_25": 1234},
+			data: map[string]any{"S_25": 1234},
 			schema: schematest.New("object",
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/patternProperties/^S_/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "pattern properties",
-			data: map[string]interface{}{"S_25": "foo"},
+			data: map[string]any{"S_25": "foo"},
 			schema: schematest.New("object",
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"S_25": "foo"}, v)
+				require.Equal(t, map[string]any{"S_25": "foo"}, v)
 			},
 		},
 		{
 			name: "pattern properties with additional properties false should return error when not matching",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.New("object",
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 				schematest.WithFreeForm(false),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/additionalProperties: property 'foo' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
 			name: "pattern properties with additional properties valid",
-			data: map[string]interface{}{"S_123": "bar"},
+			data: map[string]any{"S_123": "bar"},
 			schema: schematest.New("object",
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 				schematest.WithFreeForm(false),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"S_123": "bar"}, v)
+				require.Equal(t, map[string]any{"S_123": "bar"}, v)
 			},
 		},
 		{
 			name: "additional properties true",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.New("object",
 				schematest.WithFreeForm(true),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name: "additional properties string error",
-			data: map[string]interface{}{"number2": 1234},
+			data: map[string]any{"number2": 1234},
 			schema: schematest.New("object",
 				schematest.WithProperty("number", schematest.New("number")),
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/additionalProperties/number2/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "additional properties string",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.New("object",
 				schematest.WithProperty("number", schematest.New("number")),
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name: "additional properties combination with properties and patternProperties",
-			data: map[string]interface{}{"builtin": 42},
+			data: map[string]any{"builtin": 42},
 			schema: schematest.New("object",
 				schematest.WithProperty("builtin", schematest.New("number")),
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 				schematest.WithPatternProperty("^I_", schematest.New("integer")),
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"builtin": float64(42)}, v)
+				require.Equal(t, map[string]any{"builtin": float64(42)}, v)
 			},
 		},
 		{
 			name: "additional properties combination with properties and patternProperties, not match regex but string",
-			data: map[string]interface{}{"keyword": "value"},
+			data: map[string]any{"keyword": "value"},
 			schema: schematest.New("object",
 				schematest.WithProperty("builtin", schematest.New("number")),
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 				schematest.WithPatternProperty("^I_", schematest.New("integer")),
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"keyword": "value"}, v)
+				require.Equal(t, map[string]any{"keyword": "value"}, v)
 			},
 		},
 		{
 			name: "additional properties combination with properties and patternProperties, must be a string",
-			data: map[string]interface{}{"keyword": 42},
+			data: map[string]any{"keyword": 42},
 			schema: schematest.New("object",
 				schematest.WithProperty("builtin", schematest.New("number")),
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 				schematest.WithPatternProperty("^I_", schematest.New("integer")),
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/additionalProperties/keyword/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "required string error",
-			data: map[string]interface{}{},
+			data: map[string]any{},
 			schema: schematest.New("object",
 				schematest.WithProperty("foo", schematest.New("string")),
 				schematest.WithRequired("foo")),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/required: required properties are missing: foo")
 			},
 		},
 		{
 			name: "required string but it is empty",
-			data: map[string]interface{}{"foo": ""},
+			data: map[string]any{"foo": ""},
 			schema: schematest.New("object",
 				schematest.WithProperty("foo", schematest.New("string")),
 				schematest.WithRequired("foo")),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": ""}, v)
+				require.Equal(t, map[string]any{"foo": ""}, v)
 			},
 		},
 		{
 			name: "propertyNames error",
-			data: map[string]interface{}{"1_foo": ""},
+			data: map[string]any{"1_foo": ""},
 			schema: schematest.New("object",
 				schematest.WithPropertyNames(schematest.NewTypes(nil, schematest.WithPattern("^[a-z]+"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/propertyNames/pattern: string '1_foo' does not match regex pattern '^[a-z]+'")
 			},
 		},
 		{
 			name: "propertyNames",
-			data: map[string]interface{}{"foo": ""},
+			data: map[string]any{"foo": ""},
 			schema: schematest.New("object",
 				schematest.WithPropertyNames(schematest.NewTypes(nil, schematest.WithPattern("^[a-z]+"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": ""}, v)
+				require.Equal(t, map[string]any{"foo": ""}, v)
 			},
 		},
 		{
 			name: "minProperties error",
-			data: map[string]interface{}{"foo": ""},
+			data: map[string]any{"foo": ""},
 			schema: schematest.New("object",
 				schematest.WithMinProperties(2),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/minProperties: property count 1 is less than minimum count of 2")
 			},
 		},
 		{
 			name: "minProperties",
-			data: map[string]interface{}{"foo": ""},
+			data: map[string]any{"foo": ""},
 			schema: schematest.New("object",
 				schematest.WithMinProperties(1),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": ""}, v)
+				require.Equal(t, map[string]any{"foo": ""}, v)
 			},
 		},
 		{
 			name: "maxProperties error",
-			data: map[string]interface{}{"foo": "", "bar": ""},
+			data: map[string]any{"foo": "", "bar": ""},
 			schema: schematest.New("object",
 				schematest.WithMaxProperties(1),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/maxProperties: property count 2 exceeds maximum count of 1")
 			},
 		},
 		{
 			name: "maxProperties",
-			data: map[string]interface{}{"foo": ""},
+			data: map[string]any{"foo": ""},
 			schema: schematest.New("object",
 				schematest.WithMaxProperties(1),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": ""}, v)
+				require.Equal(t, map[string]any{"foo": ""}, v)
 			},
 		},
 		{
 			name:   "const error",
-			schema: schematest.New("object", schematest.WithConst(map[string]interface{}{"foo": "bar"})),
-			data:   map[string]interface{}{"foo": "foobar"},
-			test: func(t *testing.T, v interface{}, err error) {
+			schema: schematest.New("object", schematest.WithConst(map[string]any{"foo": "bar"})),
+			data:   map[string]any{"foo": "foobar"},
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/const: value '{foo: foobar}' does not match const '{foo: bar}'")
 			},
 		},
 		{
 			name:   "const",
-			schema: schematest.New("object", schematest.WithConst(map[string]interface{}{"foo": "bar"})),
-			data:   map[string]interface{}{"foo": "bar"},
-			test: func(t *testing.T, v interface{}, err error) {
+			schema: schematest.New("object", schematest.WithConst(map[string]any{"foo": "bar"})),
+			data:   map[string]any{"foo": "bar"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name:   "dependentRequired error",
 			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
-			data:   map[string]interface{}{"foo": "foobar"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data:   map[string]any{"foo": "foobar"},
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/dependentRequired: dependencies for property 'foo' failed: missing required keys: bar.")
 			},
 		},
 		{
 			name:   "dependentRequired",
 			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
-			data:   map[string]interface{}{"foo": "foobar", "bar": 12},
-			test: func(t *testing.T, v interface{}, err error) {
+			data:   map[string]any{"foo": "foobar", "bar": 12},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "foobar", "bar": 12}, v)
+				require.Equal(t, map[string]any{"foo": "foobar", "bar": 12}, v)
 			},
 		},
 		{
@@ -322,8 +322,8 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "foobar"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "foobar"},
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/dependentSchemas/foo/required: required properties are missing: bar")
 			},
 		},
@@ -337,10 +337,10 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "foobar", "bar": "123"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "foobar", "bar": "123"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "foobar", "bar": "123"}, v)
+				require.Equal(t, map[string]any{"foo": "foobar", "bar": "123"}, v)
 			},
 		},
 		{
@@ -357,8 +357,8 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/then/bar/pattern: does not match schema: string 'abc' does not match regex pattern '[0-9]+'")
 			},
 		},
@@ -376,10 +376,10 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar2", "bar": "abc"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar2", "bar": "abc"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar2", "bar": "abc"}, v)
+				require.Equal(t, map[string]any{"foo": "bar2", "bar": "abc"}, v)
 			},
 		},
 		{
@@ -396,10 +396,10 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar", "bar": "123"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar", "bar": "123"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "123"}, v)
+				require.Equal(t, map[string]any{"foo": "bar", "bar": "123"}, v)
 			},
 		},
 		{
@@ -416,8 +416,8 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar2", "zzz": "abc"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar2", "zzz": "abc"},
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/else/zzz/pattern: does not match schema: string 'abc' does not match regex pattern '[0-9]+'")
 			},
 		},
@@ -435,10 +435,10 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
+				require.Equal(t, map[string]any{"foo": "bar", "bar": "abc"}, v)
 			},
 		},
 		{
@@ -455,13 +455,13 @@ func TestParser_ParseObject(t *testing.T) {
 					),
 				),
 			),
-			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
-			test: func(t *testing.T, v interface{}, err error) {
+			data: map[string]any{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
+				require.Equal(t, map[string]any{"foo": "bar", "bar": "abc"}, v)
 			},
 		},
-		/*{
+		{
 			name: "unevaluatedProperties",
 			schema: schematest.NewTypes(nil,
 				schematest.WithAllOf(
@@ -476,10 +476,10 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithUnevaluatedProperties(schematest.NewBool(false)),
 			),
 			data: map[string]any{"type": "residential", "city": "Washington"},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
-		},*/
+		},
 		{
 			name: "parse from JavaScript shared value",
 			schema: schematest.NewTypes(nil,
@@ -491,9 +491,9 @@ func TestParser_ParseObject(t *testing.T) {
 				v := vm.ToValue(map[string]any{"type": "residential"})
 				return mokapi.NewSharedValue(v, vm)
 			}(),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"type": "residential"}, v)
+				require.Equal(t, map[string]any{"type": "residential"}, v)
 			},
 		},
 		{
@@ -511,9 +511,9 @@ func TestParser_ParseObject(t *testing.T) {
 					Bar: "abc",
 				}
 			}(),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": "abc"}, v)
+				require.Equal(t, map[string]any{"bar": "abc"}, v)
 			},
 		},
 	}
@@ -527,7 +527,7 @@ func TestParser_ParseObject(t *testing.T) {
 			p := &parser.Parser{Schema: tc.schema, ValidateAdditionalProperties: true}
 
 			// test as map and as sorted map if data is a map
-			if m, ok := tc.data.(map[string]interface{}); ok {
+			if m, ok := tc.data.(map[string]any); ok {
 
 				t.Run("map", func(t *testing.T) {
 					v, err := p.Parse(tc.data)

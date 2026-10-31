@@ -2,12 +2,13 @@ package parser
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 )
 
-func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
-	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+func (p *Parser) ParseAll(s *schema.Schema, data any, evaluated map[string]bool) (any, error) {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, any]); ok {
 		return p.parseAllObject(m, s, evaluated)
 	}
 
@@ -38,7 +39,7 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[stri
 	return data, nil
 }
 
-func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
+func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, any], s *schema.Schema, evaluated map[string]bool) (any, error) {
 	r := sortedmap.NewLinkedHashMap()
 	err := ErrorList{}
 
@@ -58,7 +59,7 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 		}
 
 		eval := map[string]bool{}
-		obj, oneErr := p.parseObject(m, one, eval)
+		obj, oneErr := p.parseObjectWithComposition(m, one, eval)
 		if oneErr != nil {
 			err = append(err, wrapErrorDetail(oneErr, &ErrorDetail{Field: path}))
 			continue
@@ -69,7 +70,7 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 			err = append(err, wrapErrorDetail(unEvalErr, &ErrorDetail{Field: path}))
 			continue
 		}
-		obj = v.(*sortedmap.LinkedHashMap[string, interface{}])
+		obj = v.(*sortedmap.LinkedHashMap[string, any])
 
 		if obj != nil {
 			for it := obj.Iter(); it.Next(); {
@@ -80,9 +81,7 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 				}
 			}
 		}
-		for k, v := range eval {
-			evaluated[k] = v
-		}
+		maps.Copy(evaluated, eval)
 	}
 
 	if s.IsFreeForm() {
