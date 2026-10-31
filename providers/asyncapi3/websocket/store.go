@@ -82,7 +82,7 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 					Name:    path,
 					api:     s.cfg.Info.Name,
 					emitter: s.emitter,
-					cfg:     c,
+					Config:  c,
 					log:     s.log,
 					monitor: s.monitor,
 				}
@@ -218,10 +218,10 @@ func (s *Store) log(log events.EventData, traits events.Traits) {
 }
 
 func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
-	if ch.cfg.Bindings == nil {
+	if ch.Config.Bindings == nil {
 		return map[string]any{}, nil
 	}
-	s := ch.cfg.Bindings.Websocket.Query
+	s := ch.Config.Bindings.Websocket.Query
 	if s == nil {
 		return map[string]any{}, nil
 	}
@@ -229,7 +229,7 @@ func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
 
 	// AsyncAPI spec definition:
 	// A Schema object containing the definitions for each query parameter.
-	// This schema MUST be of type object and have a properties key.
+	// This schema MUST be of the type object and have a property key.
 	for name, values := range r.URL.Query() {
 		p := s.Properties.Get(name)
 		if p == nil {
@@ -248,10 +248,10 @@ func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
 }
 
 func parseHeader(r *http.Request, ch *Channel) (map[string]any, error) {
-	if ch.cfg.Bindings == nil {
+	if ch.Config.Bindings == nil {
 		return map[string]any{}, nil
 	}
-	s := ch.cfg.Bindings.Websocket.Headers
+	s := ch.Config.Bindings.Websocket.Headers
 	if s == nil {
 		return map[string]any{}, nil
 	}
@@ -259,7 +259,7 @@ func parseHeader(r *http.Request, ch *Channel) (map[string]any, error) {
 
 	// AsyncAPI spec definition:
 	// A Schema object containing the definitions for each query parameter.
-	// This schema MUST be of type object and have a properties key.
+	// This schema MUST be of the type object and have a property key.
 	for name, values := range r.Header {
 		// RFC7230 states header names are case-insensitive.
 		key, p := getPropertyIgnoreCase(name, s)

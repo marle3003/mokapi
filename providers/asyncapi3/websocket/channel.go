@@ -20,7 +20,7 @@ type Channel struct {
 	api     string
 	clients map[string]*Client
 	m       sync.RWMutex
-	cfg     *asyncapi3.Channel
+	Config  *asyncapi3.Channel
 	emitter engine.WebsocketEventEmitter
 	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
@@ -63,7 +63,7 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			Name:    name,
 			api:     s.cfg.Info.Name,
 			emitter: s.emitter,
-			cfg:     ch,
+			Config:  ch,
 			log:     s.log,
 			monitor: s.monitor,
 			params:  params,
@@ -85,7 +85,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		var msg any
 		var messageId string
 		validationErrors := make(map[string]string)
-		for id, m := range c.cfg.Messages {
+		for id, m := range c.Config.Messages {
 			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 				continue
 			}
@@ -102,7 +102,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 			}
 			validationErrors[id] = err.Error()
 		}
-		channelName := c.cfg.ResolveAddress()
+		channelName := c.Config.ResolveAddress()
 
 		l := messageLog(c, data, messageId, client, Send)
 		traits := events.NewTraits().
@@ -147,13 +147,14 @@ func (c *Channel) removeClient(client *Client) {
 	delete(c.clients, client.Id)
 }
 
-func (c *Channel) Broadcast(message any) {
+func (c *Channel) Broadcast(message any) error {
 	for _, c := range c.clients {
 		err := c.sendMessage(message)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (c *Channel) newConnectEvent(client *Client) *engine.WebsocketConnectEvent {

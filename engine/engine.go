@@ -16,19 +16,20 @@ import (
 type Options func(e *Engine)
 
 type Engine struct {
-	app         *runtime.App
-	scripts     map[string]*scriptHost
-	scheduler   Scheduler
-	logger      common.Logger
-	reader      dynamic.Reader
-	kafkaClient common.KafkaClient
-	mqttClient  common.MqttClient
-	m           sync.Mutex
-	loader      ScriptLoader
-	parallel    bool
-	cfgEvent    static.Event
-	store       *Store
-	EventHandler
+	app             *runtime.App
+	scripts         map[string]*scriptHost
+	scheduler       Scheduler
+	logger          common.Logger
+	reader          dynamic.Reader
+	kafkaClient     common.KafkaClient
+	mqttClient      common.MqttClient
+	websocketClient common.WebsocketClient
+	m               sync.Mutex
+	loader          ScriptLoader
+	parallel        bool
+	cfgEvent        static.Event
+	store           *Store
+	EventHandlerDispatcher
 }
 
 type Store struct {
@@ -38,17 +39,18 @@ type Store struct {
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
 	return &Engine{
-		app:         app,
-		scripts:     make(map[string]*scriptHost),
-		scheduler:   NewDefaultScheduler(),
-		logger:      newLogger(log.StandardLogger()),
-		reader:      reader,
-		kafkaClient: NewKafkaClient(app),
-		mqttClient:  NewMqttClient(app),
-		parallel:    parallel,
-		loader:      NewDefaultScriptLoader(config),
-		cfgEvent:    config.Event,
-		store:       &Store{data: make(map[string]any)},
+		app:             app,
+		scripts:         make(map[string]*scriptHost),
+		scheduler:       NewDefaultScheduler(),
+		logger:          newLogger(log.StandardLogger()),
+		reader:          reader,
+		kafkaClient:     NewKafkaClient(app),
+		mqttClient:      NewMqttClient(app),
+		websocketClient: NewWebsocketClient(app),
+		parallel:        parallel,
+		loader:          NewDefaultScriptLoader(config),
+		cfgEvent:        config.Event,
+		store:           &Store{data: make(map[string]any)},
 	}
 }
 

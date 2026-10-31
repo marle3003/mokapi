@@ -22,3 +22,24 @@ app.kafka().produce('topic', {}, { retry: {factor: 10}})
 // @ts-ignore
 app.kafka().produce('topic', {}, { retry: {factor: ''}})
 app.kafka().produceAsync('topic', {}).then(k => k.produce('topic', {}))
+
+app.kafka().topic('foo').message((m: KafkaEventMessage) => {
+    m.key = 'foo';
+    m.value = '';
+    // @ts-ignore
+    m.topic = 'foo';
+    m.schemaId = 123
+    // @ts-ignore
+    m.partition = 123
+    // @ts-ignore
+    m.offset = 123
+    // @ts-ignore
+    m.api = '';
+})
+
+app.kafka().api('title').topic('foo').message((m: KafkaEventMessage) => {})
+// @ts-ignore
+app.kafka().api(123).topic('foo').message((m: KafkaEventMessage) => {})
+app.api('title').kafka().topic('foo').message((m: KafkaEventMessage) => {})
+// @ts-ignore
+app.api(123).kafka().topic('foo').message((m: KafkaEventMessage) => {})

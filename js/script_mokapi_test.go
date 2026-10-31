@@ -313,7 +313,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "tags",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					r.Equal(t, "bar", args.Tags["foo"])
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -344,8 +344,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "run function",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -375,8 +375,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "return value default is false",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -397,8 +397,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "on error",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -425,8 +425,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					ShipDate: "2022-01-01",
 				}
 
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -454,8 +454,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					Ship_date: "2022-01-01",
 				}
 
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -479,8 +479,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				data := map[string]string{"foo": "bar"}
 
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -502,8 +502,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "logging and async",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var doFunc common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(

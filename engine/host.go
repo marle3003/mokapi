@@ -24,12 +24,6 @@ type Snapshotter interface {
 	Snapshot() any
 }
 
-type eventHandler struct {
-	handler  common.EventHandler
-	tags     map[string]string
-	priority int
-}
-
 type scriptHost struct {
 	name string
 
@@ -37,7 +31,6 @@ type scriptHost struct {
 
 	script common.Script
 	jobs   map[int]Job
-	events map[string][]*eventHandler
 	file   *dynamic.Config
 
 	eventLogger   func(level, message string)
@@ -52,7 +45,6 @@ func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
 	sh := &scriptHost{
 		name:   file.Info.Path(),
 		jobs:   make(map[int]Job),
-		events: make(map[string][]*eventHandler),
 		file:   file,
 		engine: engine,
 	}
@@ -180,23 +172,6 @@ func (sh *scriptHost) Cancel(jobId int) error {
 	}
 }
 
-func (sh *scriptHost) On(event string, handler common.EventHandler, args common.EventArgs) {
-	h := &eventHandler{
-		handler: handler,
-		tags: map[string]string{
-			"name":    sh.name,
-			"file":    sh.name,
-			"fileKey": sh.file.Info.Key(),
-			"event":   event,
-		},
-		priority: args.Priority,
-	}
-
-	maps.Copy(h.tags, args.Tags)
-
-	sh.events[event] = append(sh.events[event], h)
-}
-
 func (sh *scriptHost) close() {
 	sh.Lock()
 	defer sh.Unlock()
@@ -322,6 +297,10 @@ func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClien
 	}
 
 	return c
+}
+
+func (sh *scriptHost) WebsocketClient() common.WebsocketClient {
+	return sh.engine.websocketClient
 }
 
 func (sh *scriptHost) CanClose() bool {

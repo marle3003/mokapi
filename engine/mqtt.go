@@ -36,10 +36,6 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		ScriptFile: args.ScriptFile,
 	}
 
-	if args.Data != nil {
-
-	}
-
 	req := &mqtt.PublishRequest{
 		Topic: t.Name,
 		Data:  args.Value,

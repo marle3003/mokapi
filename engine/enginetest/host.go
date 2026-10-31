@@ -16,27 +16,28 @@ import (
 type Host struct {
 	CleanupFuncs []func()
 
-	OpenFileFunc       func(file, hint string) (string, string, error)
-	OpenFunc           func(file, hint string) (*dynamic.Config, error)
-	InfoFunc           func(args ...interface{})
-	WarnFunc           func(args ...interface{})
-	ErrorFunc          func(args ...interface{})
-	DebugFunc          func(args ...interface{})
-	EventLogger        func(level, message string)
-	IsLevelEnabledFunc func(level string) bool
-	HttpClientTest     *HttpClient
-	HttpClientFunc     func(opts common.HttpClientOptions) common.HttpClient
-	KafkaClientTest    *KafkaClient
-	MqttClientTest     *MqttClient
-	EveryFunc          func(every string, do func(), opt common.JobOptions)
-	CronFunc           func(every string, do func(), opt common.JobOptions)
+	OpenFileFunc        func(file, hint string) (string, string, error)
+	OpenFunc            func(file, hint string) (*dynamic.Config, error)
+	InfoFunc            func(args ...interface{})
+	WarnFunc            func(args ...interface{})
+	ErrorFunc           func(args ...interface{})
+	DebugFunc           func(args ...interface{})
+	EventLogger         func(level, message string)
+	IsLevelEnabledFunc  func(level string) bool
+	HttpClientTest      *HttpClient
+	HttpClientFunc      func(opts common.HttpClientOptions) common.HttpClient
+	KafkaClientTest     *KafkaClient
+	MqttClientTest      *MqttClient
+	WebsocketClientTest *WebsocketClient
+	EveryFunc           func(every string, do func(), opt common.JobOptions)
+	CronFunc            func(every string, do func(), opt common.JobOptions)
 
-	OnHttpFunc      func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs)
-	OnKafkaFunc     func(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs)
-	OnMqttFunc      func(filter common.MqttFilter, do common.EventHandler, args common.EventArgs)
-	OnWebsocketFunc func(filter common.WebsocketFilter, do common.EventHandler, args common.EventArgs)
-	OnMailFunc      func(filter common.MailFilter, do common.EventHandler, args common.EventArgs)
-	OnLdapFunc      func(filter common.LdapFilter, do common.EventHandler, args common.EventArgs)
+	OnHttpFunc      func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs)
+	OnKafkaFunc     func(filter common.KafkaFilter, do common.EventHandlerFunc, args common.EventArgs)
+	OnMqttFunc      func(filter common.MqttFilter, do common.EventHandlerFunc, args common.EventArgs)
+	OnWebsocketFunc func(filter common.WebsocketFilter, do common.EventHandlerFunc, args common.EventArgs)
+	OnMailFunc      func(filter common.MailFilter, do common.EventHandlerFunc, args common.EventArgs)
+	OnLdapFunc      func(filter common.LdapFilter, do common.EventHandlerFunc, args common.EventArgs)
 
 	FindFakerNodeFunc func(name string) *generator.Node
 	m                 sync.Mutex
@@ -133,37 +134,37 @@ func (h *Host) Cron(expr string, do func(), opt common.JobOptions) (int, error) 
 	return 0, nil
 }
 
-func (h *Host) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnHttp(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnHttpFunc != nil {
 		h.OnHttpFunc(filter, do, args)
 	}
 }
 
-func (h *Host) OnKafka(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnKafka(filter common.KafkaFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnKafkaFunc != nil {
 		h.OnKafkaFunc(filter, do, args)
 	}
 }
 
-func (h *Host) OnMqtt(filter common.MqttFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnMqtt(filter common.MqttFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnMqttFunc != nil {
 		h.OnMqttFunc(filter, do, args)
 	}
 }
 
-func (h *Host) OnWebsocket(filter common.WebsocketFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnWebsocket(filter common.WebsocketFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnWebsocketFunc != nil {
 		h.OnWebsocketFunc(filter, do, args)
 	}
 }
 
-func (h *Host) OnMail(filter common.MailFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnMail(filter common.MailFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnMailFunc != nil {
 		h.OnMailFunc(filter, do, args)
 	}
 }
 
-func (h *Host) OnLdap(filter common.LdapFilter, do common.EventHandler, args common.EventArgs) {
+func (h *Host) OnLdap(filter common.LdapFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if h.OnLdapFunc != nil {
 		h.OnLdapFunc(filter, do, args)
 	}
@@ -262,4 +263,16 @@ func mustParse(s string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+type WebsocketClient struct {
+	SendFunc func(args common.WebsocketSendArgs) (*common.WebsocketSendResult, error)
+}
+
+func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.WebsocketSendResult, error) {
+	return c.SendFunc(args)
+}
+
+func (h *Host) WebsocketClient() common.WebsocketClient {
+	return h.WebsocketClientTest
 }

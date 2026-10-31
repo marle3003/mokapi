@@ -49,3 +49,9 @@ func WithApp(app *runtime.App) Options {
 		e.app = app
 	}
 }
+
+func WithWebsocketClient(client common.WebsocketClient) Options {
+	return func(e *Engine) {
+		e.websocketClient = client
+	}
+}

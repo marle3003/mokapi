@@ -19,7 +19,7 @@ import (
 func TestModule_AppKafka(t *testing.T) {
 	type handler struct {
 		Filter  common.KafkaFilter
-		Execute common.EventHandler
+		Execute common.EventHandlerFunc
 	}
 
 	testcases := []struct {
@@ -263,7 +263,7 @@ m.app.kafka().produce('foo', { }, { retry: { maxRetryTime: '1s', initialRetryTim
 			reg.Enable(vm)
 
 			var handlers []handler
-			host.OnKafkaFunc = func(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs) {
+			host.OnKafkaFunc = func(filter common.KafkaFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				handlers = append(handlers, handler{
 					Filter:  filter,
 					Execute: do,

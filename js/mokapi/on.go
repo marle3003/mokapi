@@ -48,7 +48,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 	}
 }
 
-func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.EventLoop) common.EventHandler {
+func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.EventLoop) common.EventHandlerFunc {
 	return func(ctx *common.EventContext) (bool, error) {
 		origin, err := hashOf(ctx.Args)
 		if err != nil {
