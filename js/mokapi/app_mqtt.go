@@ -74,6 +74,9 @@ func (m *Mqtt) Publish(topic string, vMsg goja.Value, vArgs goja.Value) *Mqtt {
 
 func (m *Mqtt) PublishAsync(topic string, vMsg goja.Value, vArgs goja.Value) *goja.Promise {
 	p, resolve, reject := m.m.vm.NewPromise()
+
+	f := m.filter
+	f.Topic = topic
 	go func() {
 		defer func() {
 			r := recover()
@@ -84,8 +87,6 @@ func (m *Mqtt) PublishAsync(topic string, vMsg goja.Value, vArgs goja.Value) *go
 			}
 		}()
 
-		f := m.filter
-		f.Topic = topic
 		callback, result := publish(f, vMsg, vArgs, m.m.host.MqttClient(), m.m.vm)
 		m.m.loop.Run(func(vm *goja.Runtime) {
 			if callback != nil {

@@ -57,13 +57,6 @@ declare interface HttpParameter {
     schema?: Schema
 }
 
-declare interface HttpEventInfo {
-    url: string
-    statusCode: number
-    duration: number
-    deprecated: boolean
-}
-
 declare interface HttpEventData {
     request: HttpEventRequest
     response: HttpEventResponse
@@ -78,19 +71,13 @@ declare interface HttpEventRequest {
     url: string
     contentType: string
     parameters?: HttpEventParameter[]
-    body?: HttpPreviewBody
+    body?: string
 }
 
 declare interface HttpRequestBody {
     description: string
     contents: HttpMediaType[]
     required: boolean
-}
-
-declare interface HttpPreviewBody {
-    body: string
-    size: number
-    truncated: boolean
 }
 
 declare interface HttpResponse {
@@ -115,7 +102,7 @@ declare interface HttpEventParameter {
 
 declare interface HttpEventResponse {
     statusCode: number
-    body?: HttpPreviewBody
+    body?: string
     size: number
     headers: HttpHeader
 }

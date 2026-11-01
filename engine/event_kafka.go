@@ -1,83 +1,29 @@
 package engine
 
 import (
-	"cmp"
 	"mokapi/engine/common"
-	"slices"
-	"sync"
 )
 
-type KafkaEventHandler struct {
-	Filter  common.KafkaFilter
-	Execute common.EventHandler
-	Args    common.EventArgs
-}
+type KafkaEventHandler = eventHandler[common.KafkaFilter]
 
 type KafkaEventDispatcher struct {
-	handlers map[string][]*KafkaEventHandler
-	mu       sync.RWMutex
+	dispatcher[common.KafkaFilter]
 }
 
-func (e *KafkaEventDispatcher) Clear(key string) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	delete(e.handlers, key)
-}
-
-func (e *KafkaEventDispatcher) Has(key string) bool {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-
-	_, ok := e.handlers[key]
-	return ok
-}
-
-func (e *KafkaEventDispatcher) Register(key string, handler *KafkaEventHandler) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	if e.handlers == nil {
-		e.handlers = make(map[string][]*KafkaEventHandler)
-	}
-	e.handlers[key] = append(e.handlers[key], handler)
-}
-
-func (sh *scriptHost) OnKafka(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh, "kafka")
-	h := &KafkaEventHandler{
-		Filter:  filter,
-		Execute: do,
-		Args:    args,
-	}
-	sh.engine.KafkaEventDispatcher.Register(sh.name, h)
+func (sh *scriptHost) OnKafka(filter common.KafkaFilter, do common.EventHandlerFunc, args common.EventArgs) {
+	sh.engine.KafkaEventDispatcher.Register(sh.name, newEventHandler(sh, "kafka", filter, do, args))
 }
 
 func (e *KafkaEventDispatcher) EmitKafka(record *common.KafkaEventRecord) []*common.Action {
-	e.mu.RLock()
-	var ehs []*KafkaEventHandler
-	for _, h := range e.handlers {
-		ehs = append(ehs, h...)
-	}
-	e.mu.RUnlock()
-
-	slices.SortStableFunc(ehs, func(a, b *KafkaEventHandler) int { return -1 * cmp.Compare(a.Args.Priority, b.Args.Priority) })
-
-	var result []*common.Action
-
-	for _, eh := range ehs {
-		if !eh.match(record) {
-			continue
-		}
-		a := runEventHandler(eh.Execute, eh.Args, record)
-		if a != nil {
-			result = append(result, a)
-		}
-	}
-
-	return result
-}
-
-func (h *KafkaEventHandler) match(record *common.KafkaEventRecord) bool {
-	return true
+	return e.emit(emitOptions[common.KafkaFilter]{
+		shouldEmit: func(f common.KafkaFilter) bool {
+			if !matchesIfPresent(f.Api, record.Api) {
+				return false
+			}
+			if !matchesIfPresent(f.Topic, record.Topic) {
+				return false
+			}
+			return true
+		},
+	}, record)
 }

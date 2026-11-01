@@ -99,18 +99,10 @@ declare interface KafkaMember {
   partitions: { [topicName: string]: number[] };
 }
 
-declare type KafkaEventInfo =  KafkaMessageInfo | KafkaRequestLog
-
-declare interface KafkaMessageInfo {
-  topic: string
-  key: KafkaValue;
-  message: KafkaValue;
-  deleted: boolean
-}
-
 declare type KafkaEventData = KafkaMessageData | KafkaRequestLog
 
 declare interface KafkaMessageData {
+  topic: string;
   offset: number;
   key: KafkaValue;
   message: KafkaValue;

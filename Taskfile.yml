@@ -34,7 +34,14 @@ tasks:
   publish-mokapi:
     dir: npm/go-mokapi
     cmds:
-      - npm version {{.VERSION}}
+      - defer: git checkout -- package.json
+      - npm version {{.VERSION}} --allow-same-version
+      - npm pkg set "optionalDependencies.@go-mokapi/win32-x64={{.VERSION}}"
+      - npm pkg set "optionalDependencies.@go-mokapi/win32-arm64={{.VERSION}}"
+      - npm pkg set "optionalDependencies.@go-mokapi/linux-x64={{.VERSION}}"
+      - npm pkg set "optionalDependencies.@go-mokapi/linux-arm64={{.VERSION}}"
+      - npm pkg set "optionalDependencies.@go-mokapi/darwin-arm64={{.VERSION}}"
+      - npm pkg set "optionalDependencies.@go-mokapi/darwin-x64={{.VERSION}}"
       - npm publish --provenance
   publish-mokapi-windows-x64:
     deps: [ build-mokapi-windows-x64 ]

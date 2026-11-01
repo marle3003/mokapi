@@ -221,6 +221,7 @@ func TestStore(t *testing.T) {
 				cl := evt.Data.(*websocket.CloseLog)
 				require.Equal(t, "connection", evt.Traits.Get("type"))
 				require.Len(t, cl.Actions, 1)
+				require.Nil(t, cl.Actions[0].Error)
 				require.Equal(t, `close`, cl.Actions[0].Logs[0].Message)
 				require.Equal(t, `bye client`, cl.Actions[0].Logs[1].Message)
 

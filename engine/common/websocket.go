@@ -9,7 +9,9 @@ const (
 )
 
 type WebsocketFilter struct {
-	Type WebsocketEventType
+	Type    WebsocketEventType
+	Api     string
+	Channel string
 }
 
 type WebsocketEvent struct {
@@ -42,6 +44,7 @@ type WebsocketMessageEvent struct {
 }
 
 type WebsocketEventChannel struct {
+	Key     string                  `json:"key"`
 	Name    string                  `json:"name"`
 	Clients []*WebsocketEventClient `json:"clients"`
 	Params  map[string]string       `json:"params"`
@@ -57,7 +60,7 @@ type WebsocketEventClient struct {
 }
 
 type WebsocketChannelConn interface {
-	Broadcast(message any)
+	Broadcast(message any) error
 }
 
 type WebsocketClientConn interface {
@@ -80,14 +83,28 @@ func (c *WebsocketMessageEvent) Reply(message any) {
 	c.Conn.Send(message)
 }
 
-func (c *WebsocketConnectEvent) Broadcast(message any) {
-	c.Channel.Conn.Broadcast(message)
+func (c *WebsocketEvent) Broadcast(message any) error {
+	return c.Channel.Conn.Broadcast(message)
 }
 
-func (c *WebsocketCloseEvent) Broadcast(message any) {
-	c.Channel.Conn.Broadcast(message)
+func (c *WebsocketMessageEvent) Broadcast(message any) error {
+	return c.Channel.Conn.Broadcast(message)
 }
 
-func (c *WebsocketMessageEvent) Broadcast(message any) {
-	c.Channel.Conn.Broadcast(message)
+type WebsocketClient interface {
+	Send(args WebsocketSendArgs) (*WebsocketSendResult, error)
+}
+
+type WebsocketSendArgs struct {
+	Api         string
+	ChannelName string
+	Message     any
+	ScriptFile  string
+	Retry       RetryArgs
+}
+
+type WebsocketSendResult struct {
+	Api     string
+	Channel string
+	Message any
 }

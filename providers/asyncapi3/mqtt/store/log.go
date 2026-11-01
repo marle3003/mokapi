@@ -31,13 +31,6 @@ func (l *LogMessage) Title() string {
 	return l.Topic
 }
 
-func (l *LogMessage) Info() any {
-	return EventMqttInfo{
-		Topic:   l.Topic,
-		Message: l.Message,
-	}
-}
-
 type RequestLogEvent struct {
 	Api      string     `json:"api"`
 	Type     mqtt.Type  `json:"type"`
@@ -47,10 +40,6 @@ type RequestLogEvent struct {
 
 func (r *RequestLogEvent) Title() string {
 	return r.Request.Title()
-}
-
-func (r *RequestLogEvent) Info() any {
-	return r
 }
 
 type RequestLog interface {
@@ -68,10 +57,6 @@ type ConnectRequest struct {
 
 func (r *ConnectRequest) Title() string {
 	return "Connect"
-}
-
-func (r *ConnectRequest) Info() any {
-	return r
 }
 
 type PublishMessage struct {
@@ -95,10 +80,6 @@ func (r *SubscribeRequest) Title() string {
 	return "Subscribe"
 }
 
-func (r *SubscribeRequest) Info() any {
-	return r
-}
-
 type SubscribeTopic struct {
 	Name string `json:"name"`
 	QoS  byte   `json:"qos"`
@@ -114,10 +95,6 @@ type DisconnectRequest struct {
 
 func (r *DisconnectRequest) Title() string {
 	return "Disconnect"
-}
-
-func (r *DisconnectRequest) Info() any {
-	return r
 }
 
 func (s *Store) logRequest(req RequestLog, res any, ctx *mqtt.ClientContext) {

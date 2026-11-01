@@ -19,7 +19,7 @@ import (
 func TestModule_AppMqtt(t *testing.T) {
 	type handler struct {
 		Filter  common.MqttFilter
-		Execute common.EventHandler
+		Execute common.EventHandlerFunc
 	}
 
 	testcases := []struct {
@@ -220,7 +220,7 @@ m.app.mqtt().publish('foo', { }, { retry: { maxRetryTime: '1s', initialRetryTime
 			reg.Enable(vm)
 
 			var handlers []handler
-			host.OnMqttFunc = func(filter common.MqttFilter, do common.EventHandler, args common.EventArgs) {
+			host.OnMqttFunc = func(filter common.MqttFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				handlers = append(handlers, handler{
 					Filter:  filter,
 					Execute: do,

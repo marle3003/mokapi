@@ -24,8 +24,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "register event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 				_, err := vm.RunString(`
@@ -44,8 +44,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler with parameter",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -65,8 +65,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler changes params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -83,8 +83,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler does not change params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -101,8 +101,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler does not change params but uses track argument",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -119,8 +119,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler changes params but disables track",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -137,8 +137,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "dynamic track",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -171,8 +171,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "dynamic track using parameters",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -203,8 +203,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "dynamic track returning wrong type",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -230,8 +230,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -248,7 +248,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with tags",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var tags map[string]string
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					tags = args.Tags
 				}
 
@@ -284,7 +284,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with priority",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				priority := 0
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					priority = args.Priority
 				}
 
@@ -309,8 +309,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "async event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler common.EventHandler
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
@@ -708,8 +708,8 @@ m.on('http', (req, res) => {
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 			reg.Enable(vm)
 
-			var runEvent common.EventHandler
-			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			var runEvent common.EventHandlerFunc
+			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				runEvent = do
 			}
 			_, err = vm.RunString(tc.script)

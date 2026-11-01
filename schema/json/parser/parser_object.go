@@ -263,7 +263,7 @@ func (p *Parser) parseStringMap(v map[string]any, s *schema.Schema, evaluated ma
 	return obj, nil
 }
 
-func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
+func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
 	obj := sortedmap.NewLinkedHashMap()
 	var err ErrorList
 
@@ -496,4 +496,33 @@ func (p *Parser) ValidatePatternProperty(name string, value any, patternProperti
 		}
 	}
 	return false, nil
+}
+
+func (p *Parser) parseObjectWithComposition(m *sortedmap.LinkedHashMap[string, any], s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, any], error) {
+	obj, err := p.parseObject(m, s, evaluated)
+	if err != nil {
+		return nil, err
+	}
+
+	var v any = obj
+	if len(s.AnyOf) > 0 {
+		if v, err = p.ParseAny(s, v, evaluated); err != nil {
+			return nil, err
+		}
+	}
+	if len(s.AllOf) > 0 {
+		if v, err = p.ParseAll(s, v, evaluated); err != nil {
+			return nil, err
+		}
+	}
+	if len(s.OneOf) > 0 {
+		if v, err = p.ParseOne(s, v, evaluated); err != nil {
+			return nil, err
+		}
+	}
+
+	if r, ok := v.(*sortedmap.LinkedHashMap[string, any]); ok {
+		return r, nil
+	}
+	return obj, nil
 }

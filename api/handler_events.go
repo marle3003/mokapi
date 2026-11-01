@@ -367,6 +367,6 @@ func eventInfo(e events.Event) EventInfo {
 		Id:     e.Id,
 		Traits: e.Traits,
 		Time:   e.Time,
-		Data:   e.Data.Info(),
+		Data:   e.Data,
 	}
 }

@@ -165,7 +165,8 @@ func (suite *KafkaSuite) TestKafkaEventAndMetrics() {
 			require.NoError(t, err)
 			require.Len(t, data.Items, 2)
 			// first event does not define a header specification therefor header only contains binary
-			eventId = data.Items[1].Id
+			event := data.Items[1]
+			eventId = event.Id
 		}),
 	)
 

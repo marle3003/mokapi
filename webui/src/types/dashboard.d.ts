@@ -80,7 +80,7 @@ export interface KafkaTopicResult {
 }
 
 export interface EventsResult {
-    data: Ref<ServiceEventResult>
+    data: Ref<ServiceEventPage>
     close(): void
 }
 

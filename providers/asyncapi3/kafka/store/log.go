@@ -51,15 +51,6 @@ func (l *KafkaMessageLog) Title() string {
 	return string(l.Key.Binary)
 }
 
-func (l *KafkaMessageLog) Info() any {
-	return KafkaMessageInfo{
-		Topic:   l.Topic,
-		Key:     l.Key,
-		Message: l.Message,
-		Deleted: l.Deleted,
-	}
-}
-
 type headerIndex struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -148,10 +139,6 @@ func (l *KafkaRequestLogEvent) Title() string {
 	return l.Request.Title()
 }
 
-func (l *KafkaRequestLogEvent) Info() any {
-	return l
-}
-
 type KafkaRequest interface {
 	Title() string
 }
@@ -184,10 +171,6 @@ func (r *KafkaJoinGroupRequest) Title() string {
 	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }
 
-func (r *KafkaJoinGroupRequest) Info() any {
-	return r
-}
-
 type KafkaJoinGroupResponse struct {
 	KafkaResponseError
 	GenerationId int32    `json:"generationId"`
@@ -215,10 +198,6 @@ func (r *KafkaSyncGroupRequest) Title() string {
 	return fmt.Sprintf("SyncGroup %s", r.GroupName)
 }
 
-func (r *KafkaSyncGroupRequest) Info() any {
-	return r
-}
-
 type KafkaSyncGroupResponse struct {
 	KafkaResponseError
 	ProtocolType string                   `json:"protocolType"`
@@ -232,10 +211,6 @@ type KafkaListOffsetsRequest struct {
 
 func (r *KafkaListOffsetsRequest) Title() string {
 	return "ListOffsets"
-}
-
-func (r *KafkaListOffsetsRequest) Info() any {
-	return r
 }
 
 type KafkaListOffsetsRequestPartition struct {
@@ -268,10 +243,6 @@ func (r *KafkaFindCoordinatorRequest) Title() string {
 	return "FindCoordinator"
 }
 
-func (r *KafkaFindCoordinatorRequest) Info() any {
-	return r
-}
-
 type KafkaFindCoordinatorResponse struct {
 	KafkaResponseError
 	Host string `json:"host"`
@@ -288,10 +259,6 @@ type KafkaInitProducerIdRequest struct {
 
 func (r *KafkaInitProducerIdRequest) Title() string {
 	return "InitProducerId"
-}
-
-func (r *KafkaInitProducerIdRequest) Info() any {
-	return r
 }
 
 type KafkaInitProducerIdResponse struct {

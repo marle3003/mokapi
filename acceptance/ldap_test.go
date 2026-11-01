@@ -69,7 +69,7 @@ func (suite *LdapSuite) TestLog() {
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=ldap", suite.cfg.Api.Port),
 		nil,
 		try.HasStatusCode(http.StatusOK),
-		try.BodyContains(`"criteria":"(objectClass=user)"`),
+		try.BodyContains(`"filter":"(objectClass=user)"`),
 	)
 }
 

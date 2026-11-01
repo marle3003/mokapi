@@ -4,10 +4,12 @@ import { type PropType, computed, reactive, ref, watch } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePageSize } from '@/composables/paging';
+import { useLdap } from '@/composables/ldap';
 
 const props = defineProps({
     service: { type: Object as PropType<LdapService> },
 })
+const { targetDn, criteria } = useLdap()
 
 const labels = [{ name: 'namespace', value: 'ldap' }]
 if (props.service){
@@ -23,7 +25,7 @@ const router = useRouter()
 const { format, duration } = usePrettyDates()
 
 const { dashboard } = useDashboard();
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels ],
@@ -60,14 +62,8 @@ function goToEvent(eventId: string, openInNewTab = false){
         router.push(to)
     }
 }
-function eventData(event: ServiceEventInfo): LdapEventInfo {
-    return <LdapEventInfo>event.data
-}
-function criteria(value: string | string[]): string {
-    if (Array.isArray(value)) {
-        return value.join('<br />')
-    }
-    return value
+function eventData(event: ServiceEvent): LdapEventData {
+    return <LdapEventData>event.data
 }
 </script>
 
@@ -91,16 +87,16 @@ function criteria(value: string | string[]): string {
                         <tr v-for="event in events!" :key="event.id" @mouseup.left="goToEvent(event.id)" @mousedown.middle="goToEvent(event.id, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="{ name: getRouteName('ldapRequest').value, params: {id: event.id} }">
-                                    <span class="badge ldap operation" :class="eventData(event).operation.toLocaleLowerCase()">
-                                    {{ eventData(event).operation }}
+                                    <span class="badge ldap operation" :class="eventData(event).request.operation.toLocaleLowerCase()">
+                                    {{ eventData(event).request.operation }}
                                     </span>
                                 </router-link>
                             </td>
                             <td>
-                                {{ eventData(event).dn }}
+                                {{ targetDn(eventData(event)) }}
                             </td>
-                            <td v-html="criteria(eventData(event).criteria)"></td>
-                            <td class="text-center">{{ eventData(event).status ?? '-' }}</td>
+                            <td v-html="criteria(eventData(event))"></td>
+                            <td class="text-center">{{ eventData(event).response?.status ?? '-' }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>
                             <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                         </tr>

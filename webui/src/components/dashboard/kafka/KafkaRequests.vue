@@ -42,7 +42,7 @@ const paging = reactive({
 })
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -82,7 +82,7 @@ const requests = computed(() => {
   return result
 })
 
-function eventData(event: ServiceEventInfo): KafkaRequestLog {
+function eventData(event: ServiceEvent): KafkaRequestLog {
   return event.data as KafkaRequestLog
 }
 function goToRequest(eventId: string, openInNewTab = false) {

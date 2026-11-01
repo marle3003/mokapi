@@ -27,18 +27,11 @@ declare interface Label {
     value: string
 }
 
-declare interface ServiceEventResult {
-    items: ServiceEventInfo[]
+declare interface ServiceEventPage {
+    items: ServiceEvent[]
     page: number
     size: number
     total: number
-}
-
-declare interface ServiceEventInfo {
-    id: string
-    data: HttpEventInfo | KafkaEventInfo | MqttEventInfo | WebsocketEventInfo | SmtpEventInfo | LdapEventInfo | JobExecution | LogMessage
-    time: string
-    traits: Traits
 }
 
 declare interface ServiceEvent {

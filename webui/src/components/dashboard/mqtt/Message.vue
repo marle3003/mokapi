@@ -20,11 +20,11 @@ watch(() => dashboard.value,
   (db, _, onCleanup) => {
     const res = db.getEvent(route.params.id as string);
 
-    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
+    const stop = watch([res.event, res.isLoading], ([evt, loading]) => { event.value = evt; isLoading.value = loading }, { immediate: true })
 
     onCleanup(() => {
         stop()
-        res.close
+        res.close()
     });
   },
   { immediate: true }

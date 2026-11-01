@@ -53,7 +53,7 @@ func TestMokapi_On(t *testing.T) {
 			fnInfo: func(s string) {
 				log = s
 			},
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				called = true
 				_, err := do(&common.EventContext{})
 				require.NoError(t, err)
@@ -108,7 +108,7 @@ mustache.render("", {})
 type testHost struct {
 	common.Host
 	fnInfo   func(s string)
-	fnOnHttp func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs)
+	fnOnHttp func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -117,7 +117,7 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+func (th *testHost) OnHttp(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if th.fnOnHttp != nil {
 		th.fnOnHttp(filter, do, args)
 	}

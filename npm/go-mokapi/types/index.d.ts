@@ -9,6 +9,8 @@
  * https://mokapi.io/docs/javascript-api/overview
  */
 
+import "./global";
+
 /**
  * Attaches an event handler for the given event.
  *
@@ -364,7 +366,7 @@ export type MqttEventHandler = (message: MqttEventMessage) => void | Promise<voi
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
  */
 export interface MqttEventMessage {
-    /** The name of the API, matching the `info.title` field in the AsyncAPI specification */
+    /** The name of the API matching the `info.title` field in the AsyncAPI specification */
     readonly api: string;
 
     /**
@@ -372,7 +374,7 @@ export interface MqttEventMessage {
      */
     readonly topic: string;
 
-    /** Specifies whether message should be retained  */
+    /** Specifies whether a message should be retained  */
     retain: boolean;
 
     /** MQTT message value */
@@ -424,6 +426,9 @@ export interface MqttEventMessage {
 export type WebsocketEventHandler = (message: WebsocketEvent) => void | Promise<void>;
 
 export type WebsocketEvent = WebsocketEventConnect | WebsocketEventMessage | WebsocketEventClose;
+export type WebsocketConnectEventHandler = (event: WebsocketEventConnect) => void | Promise<void>;
+export type WebsocketMessageEventHandler = (event: WebsocketEventMessage) => void | Promise<void>;
+export type WebsocketCloseEventHandler = (event: WebsocketEventClose) => void | Promise<void>;
 
 /**
  * Base interface shared by all WebSocket events. Use the `type` field to
@@ -482,7 +487,7 @@ export interface WebsocketEventBase {
      * @example
      * on('websocket', function(event) {
      *   const userId = event.client.query['userId']
-     *   const token  = event.client.headers['authorization']
+     *   const token = event.client.headers['authorization']
      * })
      */
     readonly client: WebsocketClient;
@@ -612,6 +617,7 @@ export interface WebsocketEventMessage extends WebsocketEventBase {
  */
 export interface WebsocketEventConnect extends WebsocketEventBase {
     readonly type: 'connect'
+    reply(message: any): void;
 }
 
 /**
@@ -790,7 +796,17 @@ export interface WebsocketChannel {
      *
      * @example
      * on('websocket', function(event) {
-     *   console.log(event.channel.name) // e.g. "/chat"
+     *   console.log(event.channel.name) // e.g. "/chat/{roomId}"
+     * })
+     */
+    readonly key: string;
+
+    /**
+     * The resolved channel path for this specific connection instance.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.channel.name) // e.g. "/chat/general"
      * })
      */
     readonly name: string;
@@ -826,7 +842,7 @@ export interface WebsocketChannel {
 }
 
 /**
- * LdapEventHandler is a function that is executed when a LDAP search query is triggered.
+ * LdapEventHandler is a function executed when an LDAP search query is triggered.
  * @example
  * export default function() {
  *   on('ldap', function(request, response) {
@@ -1512,12 +1528,30 @@ export interface App {
      * }
      */
     mqtt(): MqttRouter
+
+    /**
+     * Returns a `WebsocketRouter` not bound to any specific API.
+     * Handlers registered here will run for all WebSocket APIs
+     * that match the given channel.
+     *
+     * Use this for cross-cutting concerns such as logging connections
+     * or broadcasting to a channel when only one WebSocket API is configured.
+     *
+     * When calling `send()` without an API scope, Mokapi searches all APIs
+     * for the given channel name. An error is returned if the channel is found
+     * in more than one API or in none — use `app.api('My API').websocket()`
+     * to scope the send to a specific API when ambiguity is possible.
+     *
+     * @returns A `WebsocketRouter` with no API scope.
+     * ...
+     */
+    websocket(): WebsocketRouter
 }
 
 /**
  * A scoped application context bound to a specific API by its `info.title`.
  *
- * Obtain an `ApiScope` via `app.api('My API')`. All handlers registered
+ * Get an `ApiScope` via `app.api('My API')`. All handlers registered
  * through this scope will only run for requests matched to the named API.
  *
  * @example
@@ -1631,12 +1665,50 @@ export interface ApiScope {
      * }
      */
     mqtt(): MqttRouter
+
+    /**
+     * Returns a `WebsocketRouter` scoped to this API.
+     *
+     * Handlers registered on this router will only run for WebSocket events
+     * that belong to the API identified by this scope's title,
+     * as defined in the AsyncAPI `info.title` field.
+     *
+     * Scoping is required when multiple WebSocket APIs define the same channel,
+     * to avoid a handler running for unintended APIs.
+     *
+     * @returns A `WebsocketRouter` bound to this API scope.
+     *
+     * @example
+     * // Handle connect events scoped to a specific WebSocket API
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Chat API').websocket()
+     *     .channel('/chat/{roomId}')
+     *       .connect((event) => {
+     *         event.client.send({ text: `Welcome to room ${event.channel.params['roomId']}!` })
+     *       })
+     * }
+     *
+     * @example
+     * // Two APIs with the same channel — scoping avoids conflicts
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Chat API').websocket()
+     *     .channel('/updates')
+     *       .message((event) => { console.log(`Chat: ${event.message}`) })
+     *
+     *   app.api('Notifications API').websocket()
+     *     .channel('/updates')
+     *       .message((event) => { console.log(`Notification: ${event.message}`) })
+     * }
+     */
+    websocket(): WebsocketRouter
 }
 
 /**
  * Registers and organizes HTTP event handlers by path, operation, and method.
  *
- * Obtain an `HttpRouter` via `app.http()` or `app.api('My API').http()`.
+ * Get an `HttpRouter` via `app.http()` or `app.api('My API').http()`.
  *
  * Two styles are supported:
  * - **Shorthand**: `router.get(path, handler)` — registers a handler directly for a path and method.
@@ -1716,7 +1788,7 @@ export interface HttpRouter {
      * Use this to register multiple method handlers under the same path
      * using method chaining, or to attach middleware via `.use()`.
      *
-     * The path must match the path template in the OpenAPI specification,
+     * The path must match the path template in the OpenAPI specification.
      * e.g. `/pets/{petId}`, not the absolute URL.
      *
      * @param path The OpenAPI path template, e.g. `/pets/{petId}`.
@@ -1780,7 +1852,7 @@ export interface HttpRouter {
      * Narrows this router to a specific API by title.
      *
      * This is an alternative to `app.api(title).http()` for cases where
-     * the router is already obtained and you want to further scope it.
+     * the router is already obtained, and you want to further scope it.
      *
      * @param title The API title as defined in `info.title` of the OpenAPI spec.
      * @returns A new `HttpRouter` scoped to the given API title.
@@ -1885,7 +1957,7 @@ export interface HttpRouter {
  * allowing multiple method handlers and middleware to be registered
  * via method chaining.
  *
- * Obtain an `HttpRoute` via `router.route(path)` or `router.operation(operationId)`.
+ * Get an `HttpRoute` via `router.route(path)` or `router.operation(operationId)`.
  *
  * All methods return `this`, enabling fluent chaining:
  * ```ts
@@ -2039,7 +2111,7 @@ export interface HttpRoute {
 /**
  * Registers and organizes Kafka message handlers and producers by topic.
  *
- * Obtain a `KafkaRouter` via `app.kafka()` or `app.api('My API').kafka()`.
+ * Get a `KafkaRouter` via `app.kafka()` or `app.api('My API').kafka()`.
  *
  * Two styles are supported:
  * - **Shorthand**: `router.produce(topic, message)` — produces directly to a named topic.
@@ -2068,6 +2140,26 @@ export interface HttpRoute {
  * }
  */
 export interface KafkaRouter {
+    /**
+     * Narrows this router to a specific API by title.
+     *
+     * This is an alternative to `app.api(title).kafka()` for cases where
+     * the router is already obtained, and you want to further scope it.
+     *
+     * @param title The API title as defined in `info.title` of the OpenAPI spec.
+     * @returns A new `KafkaRouter` scoped to the given API title.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.kafka().api('Order Events').topic('order-placed').message((msg) => {
+     *     res.data = []
+     *   })
+     * }
+     */
+    api(title: string): HttpRouter
+
+
     /**
      * Returns a `KafkaTopic` scoped to the given topic name.
      *
@@ -2140,7 +2232,7 @@ export interface KafkaRouter {
      * app.kafka().produce('order-placed', [
      *   { data: { id: 1 } },
      *   { data: { id: 2 } },
-     *   {}  // random generated value
+     *   {} // random generated value
      * ])
      */
     produce(topic: string, message: KafkaProduceMessage | KafkaProduceMessage[], opts?: KafkaProduceArgs): KafkaRouter
@@ -2358,7 +2450,7 @@ export interface KafkaProduceMessage {
      *
      * Use `data` instead if you want schema-based encoding and validation.
      * Use `value` when you need full control over the raw bytes written to Kafka,
-     * for example when testing consumers that expect a specific binary format.
+     * for example, when testing consumers that expect a specific binary format.
      *
      * @example
      * // Raw string
@@ -2515,7 +2607,7 @@ export interface KafkaMessageResult {
 
     /**
      * The key of the written Kafka message as a string.
-     * Reflects the key that was used for partitioning, whether explicitly
+     * Reflects the key used for partitioning, whether explicitly
      * set or randomly generated by Mokapi.
      */
     readonly key: string;
@@ -2615,7 +2707,7 @@ export interface Retry {
 /**
  * Registers and organizes MQTT message handlers and publishers by topic.
  *
- * Obtain an `MqttRouter` via `app.mqtt()` or `app.api('My API').mqtt()`.
+ * Get an `MqttRouter` via `app.mqtt()` or `app.api('My API').mqtt()`.
  *
  * Two styles are supported:
  * - **Shorthand**: `router.publish(message)` — publishes directly without topic scope.
@@ -2744,7 +2836,7 @@ export interface MqttRouter {
  * allowing message handlers and publishers to be registered
  * via method chaining.
  *
- * Obtain an `MqttTopicRouter` via `router.topic(name)`.
+ * Get an `MqttTopicRouter` via `router.topic(name)`.
  *
  * All methods return `this`, enabling fluent chaining:
  * ```ts
@@ -2889,7 +2981,7 @@ export interface MqttPublishMessage {
      *
      * Use `data` instead if you want schema-based encoding and validation.
      * Use `value` when you need full control over the raw bytes written to MQTT,
-     * for example when testing subscribers that expect a specific binary format.
+     * for example, when testing subscribers that expect a specific binary format.
      *
      * @example
      * // Raw string
@@ -2991,8 +3083,412 @@ export interface MqttPublishResult {
 
     /**
      * The payload of the published message as a string.
-     * Reflects the value that was written to the broker, whether
+     * Reflects the value written to the broker, whether
      * explicitly set or randomly generated by Mokapi.
      */
     readonly value: string;
+}
+
+/**
+ * Registers and organizes WebSocket event handlers and server-side sends by channel.
+ *
+ * Get a `WebsocketRouter` via `app.websocket()` or `app.api('My API').websocket()`.
+ *
+ * Two styles are supported:
+ * - **Shorthand**: `router.connect(handler)` — registers a handler for all channels.
+ * - **Scoped**: `router.channel(name).connect(handler)` — scopes handlers to a specific channel.
+ *
+ * Three lifecycle events are available:
+ * - `connect` — fired when a client establishes a connection.
+ * - `message` — fired when a client sends a message.
+ * - `close` — fired when a client disconnects.
+ *
+ * When multiple APIs share the same channel name, use `app.api()` to scope the router
+ * to a specific API title to avoid unintended matches.
+ *
+ * @example
+ * // Shorthand style — all channels
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Chat API').websocket()
+ *     .connect((event) => {
+ *       event.broadcast({ text: `${event.client.query['userId']} has joined` })
+ *     })
+ *     .message((event) => {
+ *       event.reply({ text: 'pong' })
+ *     })
+ * }
+ *
+ * @example
+ * // Scoped style — specific channel
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Chat API').websocket()
+ *     .channel('/chat/{roomId}')
+ *       .connect((event) => {
+ *         const room = event.channel.params['roomId']
+ *         event.client.send({ text: `Welcome to ${room}!` })
+ *       })
+ *       .message((event) => {
+ *         event.broadcast(event.message)
+ *       })
+ *       .close((event) => {
+ *         event.broadcast({ text: `${event.client.query['userId']} has left` })
+ *       })
+ * }
+ */
+export interface WebsocketRouter {
+    /**
+     * Narrows this router to a specific API by title.
+     *
+     * This is an alternative to `app.api(title).websocket()` for cases where
+     * the router is already obtained, and you want to further scope it.
+     *
+     * @param name The API title as defined in `info.title` of the AsyncAPI spec.
+     * @returns A new `WebsocketRouter` scoped to the given API title.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.websocket().api('Chat API').message((event) => {
+     *     event.reply({ text: 'pong' })
+     *   })
+     * }
+     */
+    api(name: string): WebsocketRouter
+
+    /**
+     * Returns a `WebsocketChannelRouter` scoped to the given channel name.
+     *
+     * Use this to register event handlers or send messages for a specific
+     * WebSocket channel using method chaining, without repeating the channel
+     * name on every call.
+     *
+     * The channel name must match the channel address defined in the
+     * AsyncAPI specification, e.g. `/chat/{roomId}`.
+     *
+     * @param name The channel name as defined in the AsyncAPI specification.
+     * @returns A `WebsocketChannelRouter` scoped to the given channel.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Chat API').websocket()
+     *     .channel('/chat/{roomId}')
+     *       .connect((event) => {
+     *         event.client.send({ text: 'Welcome!' })
+     *       })
+     *       .message((event) => {
+     *         event.broadcast(event.message)
+     *       })
+     * }
+     */
+    channel(name: string): WebsocketChannelRouter
+
+    /**
+     * Registers a handler for `connect` events across all channels.
+     *
+     * Called once when a client establishes a WebSocket connection.
+     * Use this to send a welcome message or notify other clients.
+     *
+     * Use `channel()` to scope the handler to a specific channel.
+     *
+     * @param handler The event handler to invoke on connect.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.websocket().connect((event) => {
+     *     event.broadcast({ text: `${event.client.query['userId']} has joined` })
+     *   })
+     * }
+     */
+    connect(handler: WebsocketConnectEventHandler, opts?: WebsocketEventArgs): WebsocketRouter
+
+    /**
+     * Registers a handler for `message` events across all channels.
+     *
+     * Called whenever a client sends a message. Use `event.reply()` to
+     * respond to the sender, or `event.broadcast()` to send to all clients.
+     *
+     * Use `channel()` to scope the handler to a specific channel.
+     *
+     * @param handler The event handler to invoke on each incoming message.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.websocket().message((event) => {
+     *     event.reply({ text: `Echo: ${event.message.text}` })
+     *   })
+     * }
+     */
+    message(handler: WebsocketMessageEventHandler, opts?: WebsocketEventArgs): WebsocketRouter
+
+    /**
+     * Registers a handler for `close` events across all channels.
+     *
+     * Called when a client disconnects, either by the client or the server.
+     * Use `event.closedBy` to determine who initiated the close.
+     *
+     * Use `channel()` to scope the handler to a specific channel.
+     *
+     * @param handler The event handler to invoke on close.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.websocket().close((event) => {
+     *     console.log(`Client disconnected: ${event.closedBy} — ${event.reason}`)
+     *   })
+     * }
+     */
+    close(handler: WebsocketCloseEventHandler, opts?: WebsocketEventArgs): WebsocketRouter
+
+    /**
+     * Sends a message to all clients currently connected to the given channel.
+     *
+     * Use this for server-initiated pushes outside of an event handler —
+     * for example, from a scheduled job or in response to an external event.
+     *
+     * When no API scope is set, Mokapi searches all APIs for the given channel name.
+     * An error is thrown if the channel is found in more than one API or in none.
+     * Use `app.api('My API').websocket().send()` to avoid ambiguity when
+     * multiple APIs define the same channel.
+     *
+     * @param channel The channel name to send to, as defined in the AsyncAPI specification.
+     * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * @param args Optional configuration including a result callback and retry settings.
+     * @throws Error if the channel is found in more than one API, or if no matching channel exists.
+     *
+     * @example
+     * // Safe when exactly one API defines this channel
+     * import { app, every } from 'mokapi'
+     * export default function() {
+     *   every('10s', () => {
+     *     app.websocket().send('/updates', { text: 'ping' })
+     *   })
+     * }
+     *
+     * @example
+     * // Explicit API scope avoids ambiguity when multiple APIs share the channel name
+     * import { app, every } from 'mokapi'
+     * export default function() {
+     *   every('10s', () => {
+     *     app.api('Chat API').websocket().send('/updates', { text: 'ping' })
+     *   })
+     * }
+     */
+    send(channel: string, message: any, args?: WebsocketSendArgs): void
+}
+
+/**
+ * Represents a single WebSocket channel within a `WebsocketRouter`,
+ * allowing event handlers and server-side sends to be registered
+ * via method chaining.
+ *
+ * Get a `WebsocketChannelRouter` via `router.channel(name)`.
+ *
+ * All event-registration methods return `this`, enabling fluent chaining:
+ * ```ts
+ * router.channel('/chat/{roomId}')
+ *   .connect(connectHandler)
+ *   .message(messageHandler)
+ *   .close(closeHandler)
+ * ```
+ *
+ * @example
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Chat API').websocket()
+ *     .channel('/chat/{roomId}')
+ *       .connect((event) => {
+ *         const room = event.channel.params['roomId']
+ *         event.client.send({ text: `Welcome to ${room}!` })
+ *       })
+ *       .message((event) => {
+ *         event.broadcast(event.message)
+ *       })
+ *       .close((event) => {
+ *         event.broadcast({ text: `${event.client.query['userId']} has left` })
+ *       })
+ * }
+ */
+export interface WebsocketChannelRouter {
+    /**
+     * Registers a handler for `connect` events on this channel.
+     *
+     * Called once when a client establishes a connection to this channel.
+     * Use `event.client.send()` to send a welcome message, or
+     * `event.broadcast()` to notify all connected clients.
+     *
+     * @param handler The event handler to invoke on connect.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketChannelRouter` instance for chaining.
+     *
+     * @example
+     * router.channel('/chat/{roomId}')
+     *   .connect((event) => {
+     *     event.client.send({ text: 'Welcome!' })
+     *   })
+     */
+    connect(handler: WebsocketConnectEventHandler, opts?: WebsocketEventArgs): WebsocketChannelRouter
+
+    /**
+     * Registers a handler for `message` events on this channel.
+     *
+     * Called whenever a client sends a message to this channel.
+     * Use `event.reply()` to respond to the sender, or
+     * `event.broadcast()` to send to all connected clients.
+     *
+     * @param handler The event handler to invoke on each incoming message.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketChannelRouter` instance for chaining.
+     *
+     * @example
+     * router.channel('/chat/{roomId}')
+     *   .message((event) => {
+     *     event.broadcast(event.message)
+     *   })
+     */
+    message(handler: WebsocketMessageEventHandler, opts?: WebsocketEventArgs): WebsocketChannelRouter
+
+    /**
+     * Registers a handler for `close` events on this channel.
+     *
+     * Called when a client disconnects from this channel.
+     * Use `event.closedBy` to determine who initiated the close
+     * and `event.reason` for the close explanation.
+     *
+     * @param handler The event handler to invoke on close.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `WebsocketChannelRouter` instance for chaining.
+     *
+     * @example
+     * router.channel('/chat/{roomId}')
+     *   .close((event) => {
+     *     event.broadcast({ text: `${event.client.query['userId']} has left` })
+     *   })
+     */
+    close(handler: WebsocketCloseEventHandler, opts?: WebsocketEventArgs): WebsocketChannelRouter
+
+    /**
+     * Sends a message to all clients currently connected to the given channel.
+     *
+     * Use this for server-initiated pushes outside of an event handler —
+     * for example, from a scheduled job or in response to an external event.
+     *
+     * When no API scope is set, Mokapi searches all APIs for the given channel name.
+     * An error is thrown if the channel is found in more than one API or in none.
+     * Use `app.api('My API').websocket().send()` to avoid ambiguity when
+     * multiple APIs define the same channel.
+     *
+     * @param channel The channel name to send to, as defined in the AsyncAPI specification.
+     * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * @param args Optional configuration including a result callback and retry settings.
+     * @throws Error if the channel is found in more than one API, or if no matching channel exists.
+     *
+     * @example
+     * // Safe when exactly one API defines this channel
+     * import { app, every } from 'mokapi'
+     * export default function() {
+     *   every('10s', () => {
+     *     app.websocket().send('/updates', { text: 'ping' })
+     *   })
+     * }
+     *
+     * @example
+     * // Explicit API scope avoids ambiguity when multiple APIs share the channel name
+     * import { app, every } from 'mokapi'
+     * export default function() {
+     *   every('10s', () => {
+     *     app.api('Chat API').websocket().send('/updates', { text: 'ping' })
+     *   })
+     * }
+     */
+    send(message: any, args?: WebsocketSendArgs): void
+}
+
+/**
+ * Optional configuration for `send()` on `WebsocketRouter` and `WebsocketChannelRouter`.
+ *
+ * Use `result` to inspect the outcome of a send operation.
+ * Use `retry` to configure retry behavior when the channel is not yet available.
+ *
+ * @example
+ * app.api('Chat API').websocket().send('/updates', { text: 'ping' }, {
+ *   result: (r) => console.log(`Sent to ${r.channel}: ${r.message}`)
+ * })
+ */
+export interface WebsocketSendArgs {
+    /**
+     * Callback invoked after the message has been successfully sent
+     * to all connected clients on the channel.
+     *
+     * @example
+     * app.api('Chat API').websocket()
+     *   .channel('/updates')
+     *   .send({ text: 'ping' }, {
+     *     result: (r) => {
+     *       console.log(r.api)      // e.g. 'Chat API'
+     *       console.log(r.channel)  // e.g. '/updates'
+     *       console.log(r.message)  // e.g. { text: 'ping' }
+     *     }
+     *   })
+     */
+    result?: (result: WebsocketSendResult) => void
+
+    /**
+     * Retry configuration applied when the script executes before the
+     * WebSocket channel is fully set up in Mokapi.
+     *
+     * Mokapi uses an exponential backoff strategy based on these settings.
+     * If all retries are exhausted, the send operation fails with an error.
+     *
+     * @example
+     * app.websocket().send('/updates', { text: 'ping' }, {
+     *   retry: { retries: 5, initialRetryTime: '1s' }
+     * })
+     */
+    retry?: Retry;
+}
+
+/**
+ * The result of a `send()` operation on a WebSocket channel.
+ *
+ * Contains the API, channel, and message that was sent.
+ * Received via the `result` callback in `WebsocketSendArgs`.
+ *
+ * @example
+ * app.api('Chat API').websocket().send('/updates', { text: 'ping' }, {
+ *   result: (r) => {
+ *     console.log(r.api)      // e.g. 'Chat API'
+ *     console.log(r.channel)  // e.g. '/updates'
+ *     console.log(r.message)  // e.g. { text: 'ping' }
+ *   }
+ * })
+ */
+export interface WebsocketSendResult {
+    /**
+     * The name of the WebSocket API (AsyncAPI `info.title`) where
+     * the message was sent.
+     */
+    readonly api: string;
+
+    /**
+     * The channel name where the message was sent,
+     * matching the channel address in the AsyncAPI specification.
+     */
+    readonly channel: string;
+
+    /**
+     * The message payload that was sent to the connected clients.
+     */
+    readonly message: any;
 }

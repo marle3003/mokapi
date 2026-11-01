@@ -12,15 +12,15 @@ import (
 func TestParser_ParseAll(t *testing.T) {
 	testcases := []struct {
 		name   string
-		data   interface{}
+		data   any
 		schema *schema.Schema
-		test   func(t *testing.T, v interface{}, err error)
+		test   func(t *testing.T, v any, err error)
 	}{
 		{
 			name:   "AllOf empty",
 			data:   12,
 			schema: schematest.NewAllOf(),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), v)
 			},
@@ -29,7 +29,7 @@ func TestParser_ParseAll(t *testing.T) {
 			name:   "AllOf with one matching type",
 			data:   12,
 			schema: schematest.NewAllOf(schematest.New("integer")),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), v)
 			},
@@ -41,7 +41,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer"),
 				schematest.New("integer", schematest.WithMaximum(12)),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), v)
 			},
@@ -53,7 +53,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer"),
 				schematest.NewTypes(nil),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), v)
 			},
@@ -65,7 +65,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer"),
 				schematest.New("integer", schematest.WithMaximum(11)),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/maximum: integer 12 exceeds maximum value of 11")
 			},
 		},
@@ -76,48 +76,48 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer"),
 				schematest.New("string"),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/type: invalid type, expected string but got integer")
 			},
 		},
 		{
 			name: "object with nil schema",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.NewAllOf(
 				nil,
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name: "object with empty schema",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.NewAllOf(
 				&schema.Schema{},
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+				require.Equal(t, map[string]any{"foo": "bar"}, v)
 			},
 		},
 		{
 			name: "object and integer",
-			data: map[string]interface{}{"foo": "bar"},
+			data: map[string]any{"foo": "bar"},
 			schema: schematest.NewAllOf(
 				schematest.New("integer"),
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/type: invalid type, expected integer but got object")
 			},
 		},
 		{
 			name: "AllOf with two objects",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"name": "carol",
 				"age":  28,
 			},
@@ -125,14 +125,14 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("name", schematest.New("string"))),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"age": int64(28), "name": "carol"}, v)
+				require.Equal(t, map[string]any{"age": int64(28), "name": "carol"}, v)
 			},
 		},
 		{
 			name: "AllOf with two objects, one defines a property without type",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"name": "carol",
 				"age":  28,
 			},
@@ -140,14 +140,14 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("name", schematest.New("string")), schematest.WithProperty("age", schematest.New(""))),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"age": int64(28), "name": "carol"}, v)
+				require.Equal(t, map[string]any{"age": int64(28), "name": "carol"}, v)
 			},
 		},
 		{
 			name: "AllOf with two objects free-form false",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"name": "foo",
 				"age":  28,
 			},
@@ -155,13 +155,13 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("name", schematest.New("string")), schematest.WithFreeForm(false)),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer")), schematest.WithFreeForm(false)),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 3:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'age' not defined and the schema does not allow additional properties\n\t\t- #/allOf/1/additionalProperties: property 'name' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
 			name: "AllOf with two objects free-form false and errors - error message should contain free-form=false",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"name": 12,
 				"age":  "28",
 			},
@@ -169,13 +169,13 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("name", schematest.New("string")), schematest.WithFreeForm(false)),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer")), schematest.WithFreeForm(false)),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 5:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/name/type: invalid type, expected string but got integer\n\t\t- #/allOf/0/additionalProperties: property 'age' not defined and the schema does not allow additional properties\n\t\t- #/allOf/1/age/type: invalid type, expected integer but got string\n\t\t- #/allOf/1/additionalProperties: property 'name' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
 			name: "unevaluatedProperties",
-			data: map[string]interface{}{
+			data: map[string]any{
 				"name": "carol",
 				"age":  28,
 			},
@@ -186,7 +186,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
 			),
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/unevaluatedProperties: property age not successfully evaluated and schema does not allow unevaluated properties")
 			},
 		},
@@ -202,16 +202,16 @@ func TestParser_ParseAll(t *testing.T) {
 						schematest.WithFreeForm(false),
 					),
 				),
-				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]any{"residential", "business"}))),
 				schematest.WithRequired("type"),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"city":           "Washington",
 				"state":          "DC",
 				"type":           "business",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
 			},
 		},
@@ -226,18 +226,18 @@ func TestParser_ParseAll(t *testing.T) {
 						schematest.WithRequired("street_address", "city", "state"),
 					),
 				),
-				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]any{"residential", "business"}))),
 				schematest.WithRequired("type"),
 				schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)}),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"street_address":                "1600 Pennsylvania Avenue NW",
 				"city":                          "Washington",
 				"state":                         "DC",
 				"type":                          "business",
 				"something that doesn't belong": "hi!",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- #/unevaluatedProperties: property something that doesn't belong not successfully evaluated and schema does not allow unevaluated properties")
 			},
 		},
@@ -252,17 +252,17 @@ func TestParser_ParseAll(t *testing.T) {
 						schematest.WithRequired("street_address", "city", "state"),
 					),
 				),
-				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]any{"residential", "business"}))),
 				schematest.WithRequired("type"),
 				schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)}),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"city":           "Washington",
 				"state":          "DC",
 				"type":           "business",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -277,20 +277,20 @@ func TestParser_ParseAll(t *testing.T) {
 						schematest.WithRequired("street_address", "city", "state"),
 					),
 				),
-				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]any{"residential", "business"}))),
 				schematest.WithRequired("type"),
 				schematest.WithUnevaluatedProperties(schematest.New("string")),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"street_address":                "1600 Pennsylvania Avenue NW",
 				"city":                          "Washington",
 				"state":                         "DC",
 				"type":                          "business",
 				"something that doesn't belong": "hi!",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"city": "Washington", "something that doesn't belong": "hi!", "state": "DC", "street_address": "1600 Pennsylvania Avenue NW", "type": "business"}, v)
+				require.Equal(t, map[string]any{"city": "Washington", "something that doesn't belong": "hi!", "state": "DC", "street_address": "1600 Pennsylvania Avenue NW", "type": "business"}, v)
 			},
 		},
 		{
@@ -308,14 +308,67 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.WithProperty("type", schematest.New("string", schematest.WithEnumValues("residential", "business"))),
 				schematest.WithRequired("type"),
 			),
-			data: map[string]interface{}{
+			data: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"city":           "Washington",
 				"state":          "DC",
 				"type":           "residential",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
+			},
+		},
+		{
+			name: "issue 1353",
+			/*
+				allOf:
+					- type: object
+					  properties:
+						status:
+							type: string
+					  required:
+						- status
+					- type: object
+					  oneOf:
+						- type: object
+						  properties:
+							output:
+								type: object
+								properties:
+									array:
+										type: array
+										minItems: 1
+			*/
+			schema: schematest.NewTypes(nil,
+				schematest.WithAllOf(
+					schematest.New("object",
+						schematest.WithProperty("status", schematest.New("string")),
+						schematest.WithRequired("status"),
+					),
+					schematest.New("object",
+						schematest.WithOneOf(
+							schematest.New("object",
+								schematest.WithProperty("output", schematest.New("object",
+									schematest.WithProperty("array",
+										schematest.New("array",
+											schematest.WithMinItems(1),
+										),
+									),
+								)),
+							),
+						),
+					),
+				),
+			),
+			data: map[string]any{
+				"status": "hello",
+				"output": map[string]any{
+					"array": []any{},
+				},
+			},
+			test: func(t *testing.T, v any, err error) {
+				require.Error(t, err)
+				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/oneOf/0/output/array/minItems: item count 0 is less than minimum count of 1")
 			},
 		},
 	}
@@ -339,7 +392,7 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 		schematest.WithProperty("street_address", schematest.New("string")),
 		schematest.WithProperty("country", schematest.NewTypes(nil,
 			schematest.WithDefault("United States of America"),
-			schematest.WithEnum([]interface{}{"United States of America", "Canada", "Netherlands"}),
+			schematest.WithEnum([]any{"United States of America", "Canada", "Netherlands"}),
 		)),
 		schematest.WithAllOf(
 			schematest.NewTypes(nil,
@@ -371,70 +424,70 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 
 	testcases := []struct {
 		name string
-		d    interface{}
-		test func(t *testing.T, v interface{}, err error)
+		d    any
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "USA",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"country":        "United States of America",
 				"postal_code":    "20500",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "no country",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"postal_code":    "20500",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "Canada",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "24 Sussex Drive",
 				"country":        "Canada",
 				"postal_code":    "K1M 1M4",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "Canada error",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "24 Sussex Drive",
 				"country":        "Canada",
 				"postal_code":    "10000",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/then/postal_code/pattern: does not match schema: string '10000' does not match regex pattern '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'")
 			},
 		},
 		{
 			name: "Netherlands",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "Adriaan Goekooplaan",
 				"country":        "Netherlands",
 				"postal_code":    "2517 JX",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "default error",
-			d: map[string]interface{}{
+			d: map[string]any{
 				"street_address": "1600 Pennsylvania Avenue NW",
 				"postal_code":    "K1M 1M4",
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/then/postal_code/pattern: does not match schema: string 'K1M 1M4' does not match regex pattern '[0-9]{5}(-[0-9]{4})?'")
 			},
 		},

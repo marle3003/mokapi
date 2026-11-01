@@ -6,46 +6,43 @@ import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import Actions from '../Actions.vue'
 import { useDashboard } from '@/composables/dashboard'
 
 const route = useRoute();
 const { dashboard } = useDashboard()
 
-const event = ref<ServiceEvent | null>(null);
-const isLoading = ref<boolean>(true)
-const operation = computed(() => {
-    if (!event.value) {
-        return undefined;
+const opsRes = shallowRef<ReturnType<typeof dashboard.value.getHttpOperations>>()
+
+watch(
+  () => {
+    const t = event.value?.traits
+    return [t?.name, t?.path, t?.method?.toLowerCase()] as const
+  },
+  ([name, path, method], _, onCleanup) => {
+    if (!name) {
+      opsRes.value = undefined
+      return
     }
-
-    const serviceName = event.value.traits.name
-    if (!serviceName) {
-        return undefined
-    }
-    const path = event.value.traits.path;
-    const method = event.value.traits.method?.toLocaleLowerCase();
-    const result = dashboard.value.getHttpOperations(serviceName, path, method)
-    if (!result.operations.value || result.operations.value.length === 0) {
-        return undefined
-    }
-    return result.operations.value[0]
-})
-
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res = db.getEvent(route.params.id as string);
-
-    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
-
-    onCleanup(() => {
-        stop()
-        res.close
-    });
+    const r = dashboard.value.getHttpOperations(name, path, method)
+    opsRes.value = r
+    onCleanup(() => r.close?.())
   },
   { immediate: true }
-);
+)
+
+const operation = computed(() => opsRes.value?.operations.value?.[0])
+
+const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
+const event = computed(() => res.value?.event.value)
+const isLoading = computed(() => res.value?.isLoading.value ?? true)
+
+watch(dashboard, (db, _, onCleanup) => {
+  const r = db.getEvent(route.params.id as string)
+  res.value = r
+  onCleanup(() => r.close())
+}, { immediate: true })
 
 const eventData = computed(() => {
     if (!event.value) {
@@ -88,7 +85,7 @@ const hasActions = computed(() => {
                     <http-parameters :parameters="eventData.request.parameters!" v-if="eventData.request.parameters" :operation="operation"></http-parameters>
                     <div  v-if="eventData.request.body">
                         <p class="label mt-4">Body</p>
-                        <http-body :content-type="eventData.request.contentType" :preview="eventData.request.body"></http-body>
+                        <http-body :content-type="eventData.request.contentType" :body="eventData.request.body" ></http-body>
                     </div>
                 </div>
             </section>
@@ -99,7 +96,7 @@ const hasActions = computed(() => {
                     <h2 id="response" class="card-title text-center">Response</h2>
                     <http-header :headers="eventData.response.headers"></http-header>
                     <p class="label">Body</p>
-                    <http-body :content-type="getResponseContentType()" :preview="eventData.response.body"></http-body>
+                    <http-body :content-type="getResponseContentType()" :body="eventData.response.body" :size="eventData.response.size"></http-body>
                 </div>
             </section>
         </div>

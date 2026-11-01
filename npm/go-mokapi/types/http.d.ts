@@ -1,5 +1,5 @@
 /**
- * Make GET request.
+ * Make a GET request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/get
  * @param url url - Request URL.
  * @param args args - Request arguments.
@@ -10,7 +10,7 @@
 export function get(url: string, args?: Args): Response;
 
 /**
- * Make POST request.
+ * Make a POST request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/post
  * @param url url - Request URL.
  * @param body body - Request body.
@@ -24,7 +24,7 @@ export function get(url: string, args?: Args): Response;
 export function post(url: string, body?: any, args?: Args): Response;
 
 /**
- * Make PUT request.
+ * Make a PUT request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/put
  * @param url url - Request URL.
  * @param body body - Request body.
@@ -38,7 +38,7 @@ export function post(url: string, body?: any, args?: Args): Response;
 export function put(url: string, body?: any, args?: Args): Response;
 
 /**
- * Make HEAD request.
+ * Make a HEAD request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/head
  * @param url url - Request URL.
  * @param args args - Request arguments.
@@ -49,7 +49,7 @@ export function put(url: string, body?: any, args?: Args): Response;
 export function head(url: string, args?: Args): Response;
 
 /**
- * Make PATCH request.
+ * Make a PATCH request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/patch
  * @param url url - Request URL.
  * @param body body - Request body.
@@ -61,7 +61,7 @@ export function head(url: string, args?: Args): Response;
 export function patch(url: string, body?: any, args?: Args): Response;
 
 /**
- * Make PATCH request.
+ * Make a PATCH request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/delete
  * @param url url - Request URL.
  * @param body body - Request body.
@@ -73,7 +73,7 @@ export function patch(url: string, body?: any, args?: Args): Response;
 export function del(url: string, body?: any, args?: Args): Response;
 
 /**
- * Make OPTIONS request.
+ * Make an OPTIONS request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/options
  * @param url url - Request URL.
  * @param body body - Request body.

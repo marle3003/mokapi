@@ -37,7 +37,7 @@ const paging = reactive({
 })
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const requests = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -58,7 +58,7 @@ watch(
   { immediate: true }
 );
 
-function eventData(event: ServiceEventInfo): MqttRequestLog {
+function eventData(event: ServiceEvent): MqttRequestLog {
   return event.data as MqttRequestLog
 }
 function goToRequest(eventId: string, openInNewTab = false) {

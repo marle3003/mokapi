@@ -115,7 +115,7 @@ const filters = computed<HttpEventFilter & { labels?: Label[] }>(() => {
 
 const router = useRouter()
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels, filters ],
@@ -229,7 +229,7 @@ onMounted(() => {
     }
 })
 
-function goToRequest(event: ServiceEventInfo, openInNewTab = false){
+function goToRequest(event: ServiceEvent, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
@@ -250,8 +250,8 @@ watch(filter, () => {
     localStorage.setItem(`http-requests-${getFilterCacheKey()}`, JSON.stringify(filter))
 })
 
-function eventData(event: ServiceEventInfo): HttpEventInfo{
-    return <HttpEventInfo>event.data
+function eventData(event: ServiceEvent): HttpEventData{
+    return <HttpEventData>event.data
 }
 
 const hasDeprecatedRequests = computed(() => {
@@ -500,10 +500,10 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             </td>
                             <td>
                                 <router-link @click.stop class="row-link" :to="{ name: getRouteName('httpRequest').value, params: {id: event.id} }">
-                                    {{ adaptiveTruncate(eventData(event).url, dynamicLimit) }}
+                                    {{ adaptiveTruncate(eventData(event).request.url, dynamicLimit) }}
                                 </router-link>
                             </td>
-                            <td class="text-center">{{ formatStatusCode(eventData(event).statusCode.toString()) }}</td>
+                            <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>
                             <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                         </tr>

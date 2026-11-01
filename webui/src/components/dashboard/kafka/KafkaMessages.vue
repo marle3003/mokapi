@@ -49,7 +49,7 @@ const paging = reactive({
 })
 
 const { dashboard } = useDashboard()
-const result = ref<ServiceEventResult | null>(null);
+const result = ref<ServiceEventPage | null>(null);
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels ],
@@ -104,8 +104,8 @@ const isTemplateTopic = computed(() => {
     return (topic?.instances?.length ?? -1) >= 0 && !props.instanceName
 })
 
-function eventData(event: ServiceEventInfo): KafkaMessageInfo {
-    return <KafkaMessageInfo>event.data
+function eventData(event: ServiceEvent): KafkaMessageData {
+    return <KafkaMessageData>event.data
 }
 
 function goToMessage(eventId: string, openInNewTab = false) {
@@ -124,7 +124,7 @@ function goToMessage(eventId: string, openInNewTab = false) {
         router.push(to)
     }
 }
-function key(data: KafkaMessageInfo): string {
+function key(data: KafkaMessageData): string {
     if (data.key.value) {
         return data.key.value
     }

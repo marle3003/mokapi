@@ -99,7 +99,7 @@ func TestMokapi_On(t *testing.T) {
 	t.Run("mokapi.on event", func(t *testing.T) {
 		called := false
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				called = true
 			},
 		}
@@ -117,9 +117,9 @@ mokapi.on("http", function() end)
 	})
 
 	t.Run("mokapi.on do returns true", func(t *testing.T) {
-		var fn common.EventHandler
+		var fn common.EventHandlerFunc
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -139,9 +139,9 @@ mokapi.on("http", function() return true end)
 	})
 
 	t.Run("mokapi.on do got error", func(t *testing.T) {
-		var fn common.EventHandler
+		var fn common.EventHandlerFunc
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -164,9 +164,9 @@ end)
 	})
 
 	t.Run("mokapi.on with parameters", func(t *testing.T) {
-		var fn common.EventHandler
+		var fn common.EventHandlerFunc
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -192,7 +192,7 @@ end)
 	t.Run("mokapi.on tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				m = args.Tags
 			},
 		}
@@ -210,9 +210,9 @@ mokapi.on("http", function() return true end, {tags = {tag1 = "foo", tag2 = "bar
 	})
 
 	t.Run("mokapi.on access variable", func(t *testing.T) {
-		var fn common.EventHandler
+		var fn common.EventHandlerFunc
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -237,9 +237,9 @@ return true end)
 	})
 
 	t.Run("mokapi.on two handlers", func(t *testing.T) {
-		var fns []common.EventHandler
+		var fns []common.EventHandlerFunc
 		host := &testHost{
-			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				fns = append(fns, do)
 			},
 		}
@@ -276,7 +276,7 @@ return true end)
 type testHost struct {
 	common.Host
 	fnInfo   func(s string)
-	fnOnHttp func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs)
+	fnOnHttp func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs)
 	fnEvery  func(every string, do func(), opt common.JobOptions) (int, error)
 }
 
@@ -286,7 +286,7 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+func (th *testHost) OnHttp(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 	if th.fnOnHttp != nil {
 		th.fnOnHttp(filter, do, args)
 	}

@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"net/textproto"
 	"strings"
+	"unicode/utf8"
 )
 
 const logKey = "http_log"
+const defaultBodyLimit = 1024 << 10
 
 type HttpLog struct {
 	Request    *HttpRequestLog  `json:"request"`
@@ -36,19 +38,13 @@ type HttpRequestLog struct {
 	Url         string          `json:"url"`
 	Parameters  []HttpParameter `json:"parameters,omitempty"`
 	ContentType string          `json:"contentType,omitempty"`
-	Body        *BodyPreview    `json:"body,omitempty"`
-}
-
-type BodyPreview struct {
-	Body      string `json:"body"`
-	Size      int    `json:"size"`
-	Truncated bool   `json:"truncated"`
+	Body        string          `json:"body,omitempty"`
 }
 
 type HttpResponseLog struct {
 	StatusCode int               `json:"statusCode"`
 	Headers    map[string]string `json:"headers,omitempty"`
-	Body       *BodyPreview      `json:"body,omitempty"`
+	Body       string            `json:"body,omitempty"`
 	Size       int               `json:"size"`
 }
 
@@ -125,19 +121,41 @@ func (l *HttpLog) Title() string {
 	return l.Request.Url
 }
 
-func (l *HttpLog) Info() any {
-	return HttpLogInfo{
-		Url:        l.Request.Url,
-		StatusCode: l.Response.StatusCode,
-		Duration:   l.Duration,
-		Deprecated: l.Deprecated,
-	}
-}
-
 func (l *HttpLog) IndexFields() map[string]any {
+	var req map[string]any
+	if l.Request != nil {
+		body := l.Request.Body
+		if len(l.Request.Body) > defaultBodyLimit {
+			body = truncate(l.Request.Body, defaultBodyLimit)
+		}
+
+		req = map[string]any{
+			"method":      l.Request.Method,
+			"url":         l.Request.Url,
+			"parameters":  l.Request.Parameters,
+			"contentType": l.Request.ContentType,
+			"body":        body,
+		}
+	}
+
+	var res map[string]any
+	if l.Response != nil {
+		body := l.Response.Body
+		if len(l.Response.Body) > defaultBodyLimit {
+			body = truncate(l.Response.Body, defaultBodyLimit)
+		}
+
+		res = map[string]any{
+			"statusCode": l.Response.StatusCode,
+			"headers":    l.Response.Headers,
+			"body":       body,
+			"size":       l.Response.Size,
+		}
+	}
+
 	m := map[string]any{
-		"request":  l.Request,
-		"response": l.Response,
+		"request":  req,
+		"response": res,
 	}
 	if l.Request != nil {
 		m["method"] = l.Request.Method
@@ -166,4 +184,14 @@ func getParsedHeaders(headers map[string]RequestParameterValue) map[string]bool 
 		result[textproto.CanonicalMIMEHeaderKey(k)] = true
 	}
 	return result
+}
+
+func truncate(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	for limit > 0 && !utf8.RuneStart(s[limit]) {
+		limit--
+	}
+	return s[:limit]
 }

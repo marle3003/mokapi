@@ -77,7 +77,8 @@ const size = computed(() => {
   if (props.source.binary) {
     content = props.source.binary.content
   }
-  return format(new Blob([content!]).size)
+  const size = new TextEncoder().encode(content).length;
+  return format(size)
 })
 
 const viewHeight = computed(() => {
