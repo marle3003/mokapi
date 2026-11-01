@@ -331,8 +331,8 @@
                     "path": "/docs/javascript-api/mokapi/eventhandler/kafkaeventmessage"
                   },
                   {
-                    "label": "KafkaEventMessage",
-                    "source": "javascript-api/mokapi/eventhandler/scheduledeventargs.md",
+                    "label": "ScheduledEventArgs",
+                    "source": "javascript-api/mokapi/eventhandler/kafkaeventmessage.md",
                     "path": "/docs/javascript-api/mokapi/eventhandler/scheduledeventargs"
                   }
                 ]
