@@ -2,6 +2,7 @@
 title: Develop and Test Real-Time Collaboration Locally With AsyncAPI, Mokapi, and Playwright
 description: Learn how to mock a real-time collaborative editor, using AsyncAPI and Mokapi. Covers presence, shared state, and conflict handling.
 subtitle: "This post uses one concrete example to show how Mokapi can support an event-driven application that talks over WebSockets: a small collaborative text editor, similar in spirit to a page in Confluence or Notion."
+tech: websocket
 ---
 
 # Develop and Test Real-Time Collaboration Locally With AsyncAPI, Mokapi, and Playwright

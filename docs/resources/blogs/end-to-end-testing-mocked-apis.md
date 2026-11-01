@@ -2,6 +2,7 @@
 title: End-to-End Testing with Mocked APIs in CI/CD
 description: Replace flaky external API dependencies in your test pipeline with Mokapi mocks. Faster runs, reliable results, zero external dependencies.
 subtitle: External APIs make tests slow, flaky, and fragile. Here's how to replace them with Mokapi mocks that are spec-validated, fully controllable, and ready to run anywhere.
+tags: ["CI/CD"]
 ---
 
 # End-to-End Testing with Mocked APIs in CI/CD
