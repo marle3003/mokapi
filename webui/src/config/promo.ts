@@ -8,7 +8,7 @@ export interface Promotion {
 export const promotions: Promotion[] = [ 
   {
     enabled: true,
-    discount: 30,
+    discount: 20,
     validFrom: '2025-11-11',
     validUntil: '2026-11-16', 
   },
