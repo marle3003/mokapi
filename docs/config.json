@@ -831,6 +831,12 @@
             "source": "resources/blogs/mock-payment-workflow.md",
             "path": "/resources/blogs/mocking-payment-service-mokapi-playwright",
             "hideNavigation": true
+          },
+          {
+            "label": "Mocking a Multi User Collaboration",
+            "source": "resources/blogs/mock-multi-user-document-collaboration.md",
+            "path": "/resources/blogs/mock-multi-user-document-collaboration",
+            "hideNavigation": true
           }
         ]
       }
