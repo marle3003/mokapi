@@ -9,6 +9,8 @@
  * https://mokapi.io/docs/javascript-api/overview
  */
 
+import "./global";
+
 /**
  * Attaches an event handler for the given event.
  *
