@@ -6,6 +6,12 @@ description: Send a single message to a Kafka topic.
 
 Sends a Kafka message to a Kafka topic.
 
+``` box=tip url=[See KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md)
+You can also produce messages with `app.kafka().produce( topic, message )` or
+`app.api('My API').kafka().topic('my-topic').produce( message )`. These variants support API scoping,
+method chaining and asynchronous producing with `produceAsync()`.
+```
+
 | Parameter       | Type   | Description                                                                                               |
 |-----------------|--------|-----------------------------------------------------------------------------------------------------------|
 | args (optional) | object | [ProduceArgs](/docs/javascript-api/mokapi-kafka/produceargs.md) object contains Kafka produce arguments   |

@@ -19,7 +19,9 @@ function getId(entry: DocEntry) {
   if (!s) {
     s = entry.label
   }
-  return s.replaceAll("/", "-").replaceAll(" ", "-")
+  // Prefix avoids collisions with ids used elsewhere on the page,
+  // e.g. a group labelled "app" would otherwise get id="app" like the Vue root element.
+  return 'nav' + (s.startsWith('/') ? '' : '-') + s.replaceAll("/", "-").replaceAll(" ", "-")
 }
 function hasChildren(entry: DocEntry) {
   if (entry.items) {

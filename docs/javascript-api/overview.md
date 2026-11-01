@@ -171,6 +171,7 @@ Provides core functions for scheduling jobs, handling events, and accessing envi
 
 | Functions                                                                             | Description                                                 |
 |---------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| [app](/docs/javascript-api/mokapi/app/overview.md)                                    | Registers handlers per protocol, path, topic or channel.    |
 | [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md)          | Schedules a periodic job using a cron expression.           |
 | [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                               | Returns a formatted date string.                            |
 | [env( name )](/docs/javascript-api/mokapi/env.md)                                     | Gets the value of an environment variable.                  |
