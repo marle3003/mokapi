@@ -160,8 +160,9 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var closedBy string
 		switch {
 		case status == websocket.StatusNormalClosure,
-			status == websocket.StatusGoingAway:
-			// client closed cleanly
+			status == websocket.StatusGoingAway,
+			status == websocket.StatusNoStatusRcvd:
+			// client closed
 			closedBy = "client"
 		case errors.Is(err, context.Canceled):
 			// we canceled it ourselves (e.g. spec reload), nothing to log
