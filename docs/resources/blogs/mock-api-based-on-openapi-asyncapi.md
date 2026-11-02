@@ -11,6 +11,7 @@ dashboard:
   - title: Scheduled Jobs
     description: A list of all scheduled tasks defined in your scripts, along with their execution history, status, and any output or errors.
     img: /blogs/dashboard-petstore-jobs.png
+tags: ["HTTP", "Kafka"]
 ---
 
 # Mock REST and Kafka APIs with OpenAPI & AsyncAPI Using Mokapi

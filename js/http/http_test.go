@@ -603,7 +603,7 @@ func TestHttp(t *testing.T) {
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{HttpClientFunc: tc.client}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
-			req, err := require.NewRegistry()
+			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/http", mod.Require)

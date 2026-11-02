@@ -417,7 +417,7 @@ func TestJsOpen(t *testing.T) {
 
 		e := enginetest.NewEngine(engine.WithReader(reader), engine.WithScriptLoader(
 			engine.ScriptLoaderFunc(func(file *dynamic.Config, host common.Host) (common.Script, error) {
-				registry, err := require.NewRegistry()
+				registry, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 				js.RegisterNativeModules(registry)
 

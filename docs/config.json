@@ -240,6 +240,11 @@
             "path": "/docs/javascript-api/modules"
           },
           {
+            "label": "TypeScript",
+            "source": "javascript-api/typescript.md",
+            "path": "/docs/javascript-api/typescript"
+          },
+          {
             "label": "globals",
             "items": [
               {
@@ -288,6 +293,61 @@
                 "path": "/docs/javascript-api/mokapi/marshal"
               },
               {
+                "label": "app",
+                "items": [
+                  {
+                    "label": "Overview",
+                    "source": "javascript-api/mokapi/app/overview.md",
+                    "path": "/docs/javascript-api/mokapi/app/overview"
+                  },
+                  {
+                    "label": "api",
+                    "source": "javascript-api/mokapi/app/api.md",
+                    "path": "/docs/javascript-api/mokapi/app/api"
+                  },
+                  {
+                    "label": "HttpRouter",
+                    "source": "javascript-api/mokapi/app/http-router.md",
+                    "path": "/docs/javascript-api/mokapi/app/http-router"
+                  },
+                  {
+                    "label": "HttpRoute",
+                    "source": "javascript-api/mokapi/app/http-route.md",
+                    "path": "/docs/javascript-api/mokapi/app/http-route"
+                  },
+                  {
+                    "label": "KafkaRouter",
+                    "source": "javascript-api/mokapi/app/kafka-router.md",
+                    "path": "/docs/javascript-api/mokapi/app/kafka-router"
+                  },
+                  {
+                    "label": "KafkaTopic",
+                    "source": "javascript-api/mokapi/app/kafka-topic.md",
+                    "path": "/docs/javascript-api/mokapi/app/kafka-topic"
+                  },
+                  {
+                    "label": "Kafka Produce Types",
+                    "source": "javascript-api/mokapi/app/kafka-produce.md",
+                    "path": "/docs/javascript-api/mokapi/app/kafka-produce"
+                  },
+                  {
+                    "label": "MqttRouter",
+                    "source": "javascript-api/mokapi/app/mqtt-router.md",
+                    "path": "/docs/javascript-api/mokapi/app/mqtt-router"
+                  },
+                  {
+                    "label": "WebsocketRouter",
+                    "source": "javascript-api/mokapi/app/websocket-router.md",
+                    "path": "/docs/javascript-api/mokapi/app/websocket-router"
+                  },
+                  {
+                    "label": "Retry",
+                    "source": "javascript-api/mokapi/app/retry.md",
+                    "path": "/docs/javascript-api/mokapi/app/retry"
+                  }
+                ]
+              },
+              {
                 "label": "EventHandler",
                 "items": [
                   {
@@ -326,7 +386,7 @@
                     "path": "/docs/javascript-api/mokapi/eventhandler/kafkaeventmessage"
                   },
                   {
-                    "label": "KafkaEventMessage",
+                    "label": "ScheduledEventArgs",
                     "source": "javascript-api/mokapi/eventhandler/scheduledeventargs.md",
                     "path": "/docs/javascript-api/mokapi/eventhandler/scheduledeventargs"
                   }
@@ -770,6 +830,12 @@
             "label": "Mocking a Payment Service with Mokapi",
             "source": "resources/blogs/mock-payment-workflow.md",
             "path": "/resources/blogs/mocking-payment-service-mokapi-playwright",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mocking a Multi User Collaboration",
+            "source": "resources/blogs/mock-multi-user-document-collaboration.md",
+            "path": "/resources/blogs/mock-multi-user-document-collaboration",
             "hideNavigation": true
           }
         ]

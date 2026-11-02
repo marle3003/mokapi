@@ -2157,7 +2157,7 @@ export interface KafkaRouter {
      *   })
      * }
      */
-    api(title: string): HttpRouter
+    api(title: string): KafkaRouter
 
 
     /**

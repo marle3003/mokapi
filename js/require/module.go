@@ -3,13 +3,14 @@ package require
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dop251/goja"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"net/url"
 	"path/filepath"
 	"slices"
+
+	"github.com/dop251/goja"
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -36,6 +37,10 @@ func (m *module) requireModule(modPath string) *goja.Object {
 	if len(modPath) == 0 {
 		panic(m.vm.ToValue("missing argument"))
 	}
+
+	original := modPath
+	modPath = m.registry.aliases.resolve(modPath)
+
 	cmp := m.getCurrentModulePath()
 
 	if loader, ok := m.registry.native[modPath]; ok {
@@ -67,7 +72,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		panic(m.vm.ToValue(fmt.Sprintf("loaded module %v contains error: %v", modPath, err)))
 	}
 
-	panic(m.vm.ToValue(fmt.Sprintf("module %v not found in %v", modPath, cmp)))
+	panic(m.vm.ToValue(fmt.Sprintf("module %v not found in %v", original, cmp)))
 }
 
 func (m *module) loadFileModule(modPath string) (*goja.Object, error) {

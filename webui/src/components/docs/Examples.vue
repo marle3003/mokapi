@@ -81,7 +81,13 @@ const filtered = computed(() => {
 
     const filtered = []
     for (const item of items.value) {
-       if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value === item.meta.tech || (tech.value === 'core' && !item.meta.tech))) {
+        const matchesType = type.value === 'all' || type.value === item.tag;
+        const matchesTech = tech.value === 'all' || 
+                    tech.value === item.meta.tech || 
+                    (tech.value === 'core' && !item.meta.tech);
+        const matchesTags = item.meta.tags?.filter(x => x.toLowerCase() === tech.value).length ?? 0 > 0
+
+       if (matchesType && (matchesTech || matchesTags)) {
         filtered.push(item)
        }
     }
@@ -98,6 +104,7 @@ const state = computed<{ [name: string]: boolean }>(() => {
         http:  isTechAvailable('http'),
         kafka: isTechAvailable('kafka'),
         mqtt: isTechAvailable('mqtt'),
+        websocket: isTechAvailable('websocket'),
         ldap: isTechAvailable('ldap'),
         mail: isTechAvailable('mail'),
         core: isTechAvailable('core')
@@ -182,6 +189,7 @@ function setType(s: string) {
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'mqtt' ? 'active' : ''" @click="tech = 'mqtt'" :disabled="!state.mqtt">MQTT</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'websocket' ? 'active' : ''" @click="tech = 'websocket'" :disabled="!state.websocket">Websocket</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'mail' ? 'active' : ''" @click="tech = 'mail'" :disabled="!state.mail">Mail</button>
                 </div>
@@ -199,6 +207,7 @@ function setType(s: string) {
                         <option value="http" :disabled="!state.http">HTTP</option>
                         <option value="kafka" :disabled="!state.kafka">Kafka</option>
                         <option value="mqtt" :disabled="!state.mqtt">MQTT</option>
+                        <option value="websocket" :disabled="!state.websocket">Websocket</option>
                         <option value="ldap" :disabled="!state.ldap">LDAP</option>
                         <option value="mail" :disabled="!state.mail">Mail</option>
                         <option value="core" :disabled="!state.core">Core</option>

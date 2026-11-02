@@ -3,6 +3,7 @@ title: Running Mokapi in a CI/CD Pipeline
 description: Step-by-step guide to running Mokapi in GitHub Actions to mock external APIs, validate contracts, and run reliable automated tests.
 subtitle: This tutorial walks through a complete working example of running Mokapi in GitHub Actions. You'll define a mock API with an OpenAPI spec, write a Node.js backend that calls it, add a Jest test suite, and wire everything together in a CI workflow. By the end, your tests will run against a spec-validated mock with no external dependencies.
 icon: bi-gear-wide-connected
+tags: ["CI/CD"]
 ---
 # Running Mokapi in a CI/CD Pipeline
 

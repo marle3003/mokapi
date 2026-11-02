@@ -192,7 +192,7 @@ func TestModule_Patch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 

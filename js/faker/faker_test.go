@@ -189,7 +189,7 @@ func TestModule(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)
 			r.NoError(t, err)
 

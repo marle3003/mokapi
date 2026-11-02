@@ -345,7 +345,7 @@ func TestModule_On(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 
@@ -695,7 +695,7 @@ m.on('http', (req, res) => {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 

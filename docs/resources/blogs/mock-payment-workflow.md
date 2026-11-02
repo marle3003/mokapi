@@ -5,6 +5,7 @@ subtitle: Most teams skip testing the checkout flow because they can't control a
 image:
   url: "/mock-api-payment-flow.png"
   alt: Diagram showing a shop checkout flow where Mokapi mocks both the payment provider API and a hosted payment page, with a Kafka topic carrying the payment result back to the shop backend.
+tech: http
 ---
 
 # Mocking a Payment API Service in Checkout Flows

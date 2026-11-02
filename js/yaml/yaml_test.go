@@ -1,8 +1,6 @@
 package yaml_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -11,6 +9,9 @@ import (
 	"mokapi/js/require"
 	"mokapi/js/yaml"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestYaml(t *testing.T) {
@@ -55,7 +56,7 @@ func TestYaml(t *testing.T) {
 			vm := goja.New()
 			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
-			req, err := require.NewRegistry()
+			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/yaml", yaml.Require)

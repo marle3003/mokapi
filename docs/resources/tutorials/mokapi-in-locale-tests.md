@@ -2,6 +2,7 @@
 title: "Using Mokapi for Local Testing (Jest, Manual Testing, and Debugging)"
 description: Learn to use Mokapi for local testing with Jest, manual testing, and debugging. Simulate mocked APIs without external dependencies.
 icon: bi-play-circle
+tech: core
 ---
 
 # Using Mokapi in Local Tests
