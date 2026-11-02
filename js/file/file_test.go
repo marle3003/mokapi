@@ -197,7 +197,7 @@ func TestModule_Open(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 
 			vm := goja.New()

@@ -3,6 +3,7 @@ package js
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/console"
 	"mokapi/js/encoding"
@@ -43,12 +44,14 @@ type Script struct {
 	file     *dynamic.Config
 	loop     *eventloop.EventLoop
 	registry *require.Registry
+	cfg      static.JavaScript
 }
 
-func New(file *dynamic.Config, host engine.Host) (*Script, error) {
+func New(file *dynamic.Config, host engine.Host, cfg static.JavaScript) (*Script, error) {
 	s := &Script{
 		host: host,
 		file: file,
+		cfg:  cfg,
 	}
 
 	var err error
@@ -166,7 +169,7 @@ func (s *Script) ensureRuntime() error {
 	s.loop = eventloop.New(s.runtime, s.host)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
-	registry, err := s.getRegistry()
+	registry, err := s.getRegistry(s.cfg.Modules.Aliases)
 	if err != nil {
 		return err
 	}
@@ -256,13 +259,13 @@ func uncapitalize(s string) string {
 	return strings.ToLower(s[0:1]) + s[1:]
 }
 
-func (s *Script) getRegistry() (*require.Registry, error) {
+func (s *Script) getRegistry(aliases map[string]string) (*require.Registry, error) {
 	if s.registry != nil {
 		return s.registry, nil
 	}
 
 	registryOne.Do(func() {
-		singletonRegistry, registryErr = require.NewRegistry()
+		singletonRegistry, registryErr = require.NewRegistry(aliases)
 		if registryErr != nil {
 			return
 		}

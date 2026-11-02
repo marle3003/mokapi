@@ -1,8 +1,6 @@
 package encoding_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -10,6 +8,9 @@ import (
 	"mokapi/js/eventloop"
 	"mokapi/js/require"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestBase64(t *testing.T) {
@@ -92,7 +93,7 @@ func TestBase64(t *testing.T) {
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
-			req, err := require.NewRegistry()
+			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/encoding", mod.Require)

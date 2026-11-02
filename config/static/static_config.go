@@ -24,12 +24,13 @@ type Config struct {
 	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-cert"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
 	Help             bool              `json:"-" yaml:"-" aliases:"h"`
-	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
+	GenerateSkeleton any               `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
 	Features         []string          `json:"-" yaml:"-" explode:"feature"`
 	Version          bool              `json:"-" yaml:"-" aliases:"v"`
 	Event            Event             `json:"event" yaml:"event"`
 	Certificates     CertificateStore  `json:"certificates" yaml:"certificates"`
 	DataGen          DataGen           `json:"data-gen" yaml:"data-gen" name:"data-gen"`
+	JavaScript       JavaScript        `json:"javascript" yaml:"javascript"`
 	Args             []string          `json:"args" yaml:"-" aliases:"args"` // positional arguments
 }
 
@@ -318,4 +319,12 @@ type McpServer struct {
 	Enabled bool   `yaml:"enabled" json:"enabled"`
 	Path    string `yaml:"path" json:"path"`
 	Port    int    `yaml:"port" json:"port"`
+}
+
+type JavaScript struct {
+	Modules JavaScriptModules `yaml:"modules" json:"modules"`
+}
+
+type JavaScriptModules struct {
+	Aliases map[string]string `yaml:"aliases" json:"aliases"`
 }
