@@ -46,7 +46,8 @@ main {
 }
 
 #app:has(header .promo-banner) {
-  --header-height: calc(4rem + 22px);
+  --promo-height: 22px;
+  --header-height: calc(4rem + var(--promo-height));
 }
 
 h1 {

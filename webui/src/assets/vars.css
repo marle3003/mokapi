@@ -1,5 +1,6 @@
 :root {
     --header-height: 4rem;
+    --promo-height: 0px;
  
     --color-background:       #161518;
     --color-background-mute:  #0f0e11;

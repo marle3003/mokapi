@@ -71,7 +71,7 @@ func TestMqtt(t *testing.T) {
 			vm := goja.New()
 			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
-			req, err := require.NewRegistry()
+			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/mqtt", mqtt.Require)

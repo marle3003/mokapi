@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -481,7 +482,7 @@ func TestModule_Shared(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 
@@ -508,7 +509,7 @@ export const store = shared.update('stored', (v) => v ?? [{ foo: 'bar' }]);
 		Raw: []byte(`import { store } from "store.js"
 
 `),
-	}, host)
+	}, host, static.JavaScript{})
 	r.NoError(t, err)
 	defer s1.Close()
 
@@ -519,7 +520,7 @@ export const store = shared.update('stored', (v) => v ?? [{ foo: 'bar' }]);
 		Info: dynamic.ConfigInfo{Url: try.MustUrl("script1.js")},
 		Raw: []byte(`import { store } from "store.js"
 `),
-	}, host)
+	}, host, static.JavaScript{})
 	r.NoError(t, err)
 	defer s2.Close()
 
@@ -530,7 +531,7 @@ export const store = shared.update('stored', (v) => v ?? [{ foo: 'bar' }]);
 		Info: dynamic.ConfigInfo{Url: try.MustUrl("script1.js")},
 		Raw: []byte(`import { store } from "store.js"
 `),
-	}, host)
+	}, host, static.JavaScript{})
 	r.NoError(t, err)
 	defer s3.Close()
 

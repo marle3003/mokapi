@@ -206,7 +206,7 @@ m.app.mqtt().publish('foo', { }, { retry: { maxRetryTime: '1s', initialRetryTime
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 

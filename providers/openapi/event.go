@@ -73,7 +73,7 @@ func NewEventRequest(r *http.Request, contentType media.ContentType, api string)
 	}
 
 	// Mokapi's goal is to provide better APIs.
-	// Therefore, we only add headers that are defined in the specification
+	// Therefore, we only add parameters that are defined in the specification
 	params, _ := FromContext(ctx)
 	setParam(req.Path, params.Path)
 	setParam(req.Query, params.Query)

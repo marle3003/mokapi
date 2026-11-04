@@ -362,7 +362,7 @@ export default function () {return data}
 			t.Parallel()
 
 			host := &enginetest.Host{}
-			registry, err := require.NewRegistry()
+			registry, err := require.NewRegistry(nil)
 			js.RegisterNativeModules(registry)
 			r.NoError(t, err)
 

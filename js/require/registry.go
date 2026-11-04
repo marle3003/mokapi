@@ -2,8 +2,6 @@ package require
 
 import (
 	"bytes"
-	"github.com/dop251/goja"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/compiler"
@@ -11,6 +9,9 @@ import (
 	"path/filepath"
 	"sync"
 	"text/template"
+
+	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 )
 
 type ModuleLoader func(vm *goja.Runtime, module *goja.Object)
@@ -29,17 +30,19 @@ type Registry struct {
 	native  map[string]ModuleLoader
 	modules map[string]*entry
 	scripts map[string]*entry
+	aliases aliasTable
 
 	compiler *compiler.Compiler
 
 	m sync.Mutex
 }
 
-func NewRegistry() (*Registry, error) {
+func NewRegistry(aliases map[string]string) (*Registry, error) {
 	reg := &Registry{
 		native:  map[string]ModuleLoader{},
 		modules: map[string]*entry{},
 		scripts: map[string]*entry{},
+		aliases: newAliasTable(aliases),
 	}
 	var err error
 	reg.compiler, err = compiler.New()
