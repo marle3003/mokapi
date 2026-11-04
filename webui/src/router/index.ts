@@ -432,6 +432,10 @@ const router = createRouter({
       component: () => import('@/views/Mqtt.vue')
     },
     {
+      path: '/websocket',
+      component: () => import('@/views/Websocket.vue')
+    },
+    {
       path: '/ldap',
       component: () => import('@/views/Ldap.vue')
     },
