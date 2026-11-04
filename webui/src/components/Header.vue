@@ -219,7 +219,7 @@ function isDashboardDisplayed() {
   <span class="d-none d-lg-inline">
     — support Mokapi with code in your heart and style on your sleeve.
   </span>
-  <a href="https://mokapi.myspreadshop.net" class="promo-link ms-1">Visit shop →</a>
+  <a href="https://mokapi.myspreadshop.com" class="promo-link ms-1">Visit shop →</a>
 </div>
     <nav class="navbar navbar-expand-lg" aria-label="Main">
       <div class="container-fluid">
