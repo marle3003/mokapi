@@ -13,6 +13,23 @@ import { useDashboard } from '@/composables/dashboard'
 const route = useRoute();
 const { dashboard } = useDashboard()
 
+const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
+const event = computed(() => res.value?.event.value)
+const isLoading = computed(() => res.value?.isLoading.value ?? true)
+
+watch(dashboard, (db, _, onCleanup) => {
+  const r = db.getEvent(route.params.id as string)
+  res.value = r
+  onCleanup(() => r.close())
+}, { immediate: true })
+
+const eventData = computed(() => {
+    if (!event.value) {
+        return undefined;
+    }
+    return <HttpEventData>event.value.data
+})
+
 const opsRes = shallowRef<ReturnType<typeof dashboard.value.getHttpOperations>>()
 
 watch(
@@ -33,23 +50,6 @@ watch(
 )
 
 const operation = computed(() => opsRes.value?.operations.value?.[0])
-
-const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
-const event = computed(() => res.value?.event.value)
-const isLoading = computed(() => res.value?.isLoading.value ?? true)
-
-watch(dashboard, (db, _, onCleanup) => {
-  const r = db.getEvent(route.params.id as string)
-  res.value = r
-  onCleanup(() => r.close())
-}, { immediate: true })
-
-const eventData = computed(() => {
-    if (!event.value) {
-        return undefined;
-    }
-    return <HttpEventData>event.value.data
-})
 
 function getResponseContentType(): string {
     if (!eventData.value?.response?.headers) {
