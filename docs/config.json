@@ -749,6 +749,12 @@
         },
         "items": [
           {
+            "label": "Mokapi Meets MSW: Reuse Your Browser Mocks as a Contract-Checked Mock Server",
+            "source": "resources/blogs/mokapi-meets-msw.md",
+            "path": "/resources/blogs/mokapi-meets-msw",
+            "hideNavigation": true
+          },
+          {
             "label": "Guard Your API Contracts: Catch Breaking Changes Before Production",
             "source": "resources/blogs/ensuring-api-contract-compliance-with-mokapi.md",
             "path": "/resources/blogs/guard-your-api-contracts",
