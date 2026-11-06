@@ -15,10 +15,13 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -491,6 +494,83 @@ func TestHttpTls(t *testing.T) {
 
 	require.Len(t, hook.Entries, 3)
 	require.Equal(t, fmt.Sprintf("processing HTTPS request GET https://localhost:%s/", port), hook.Entries[2].Message)
+}
+
+// TestHttpServer_ConcurrentAccess mimics parallel config updates while requests arrive: the
+// server must be safe for adding and removing services, asking whether it is empty and
+// dispatching requests at the same time.
+func TestHttpServer_ConcurrentAccess(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	sm := &events.StoreManager{}
+	sm.SetStore(20, events.NewTraits().WithNamespace("http"))
+	s := service.NewHttpServer(fmt.Sprintf("%v", try.GetFreePort()), sm)
+
+	u := mustParseUrl("http://localhost/foo")
+	const iterations = 200
+	operations := []func(){
+		func() {
+			err := s.AddOrUpdate(&service.HttpService{Url: u, Handler: &testHandler{}, Name: "foo"})
+			assert.NoError(t, err)
+		},
+		func() { s.RemoveUrl(u) },
+		func() { s.Remove("foo") },
+		func() { s.CanClose() },
+		func() {
+			req := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+			s.ServeHTTP(httptest.NewRecorder(), req)
+		},
+	}
+
+	var wg sync.WaitGroup
+	for _, op := range operations {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				op()
+			}
+		}()
+	}
+	wg.Wait()
+}
+
+// TestHttpServer_HandlerCanChangeServices verifies that a handler (e.g. a script reacting to a
+// request) may add or remove services without blocking, because the server must not hold its
+// lock while a handler runs.
+func TestHttpServer_HandlerCanChangeServices(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	sm := &events.StoreManager{}
+	sm.SetStore(20, events.NewTraits().WithNamespace("http"))
+	s := service.NewHttpServer(fmt.Sprintf("%v", try.GetFreePort()), sm)
+
+	u := mustParseUrl("http://localhost/foo")
+	err := s.AddOrUpdate(&service.HttpService{
+		Url: u,
+		Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
+			s.RemoveUrl(u)
+			rw.WriteHeader(http.StatusOK)
+			return nil
+		}},
+		Name: "foo",
+	})
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	rec := httptest.NewRecorder()
+	go func() {
+		defer close(done)
+		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil))
+	}()
+
+	select {
+	case <-done:
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.True(t, s.CanClose())
+	case <-time.After(5 * time.Second):
+		t.Fatal("handler blocked: server holds its lock while calling the handler")
+	}
 }
 
 func mustParseUrl(s string) *url.URL {
