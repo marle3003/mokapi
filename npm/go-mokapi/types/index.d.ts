@@ -2246,6 +2246,8 @@ export interface KafkaRouter {
      * If neither `value` nor `data` is set on a message, Mokapi generates
      * a random valid value based on the AsyncAPI schema definition.
      *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
+     *
      * @param topic The Kafka topic name to produce to.
      * @param message One or more messages to produce.
      * @param opts Optional configuration including a result callback and retry settings.
@@ -2344,6 +2346,8 @@ export interface KafkaTopic {
      *
      * If neither `value` nor `data` is set on a message, Mokapi generates
      * a random valid value based on the AsyncAPI schema definition.
+     *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
      *
      * @param message One or more messages to produce.
      * @param opts Optional configuration including a result callback and retry settings.
@@ -2814,6 +2818,8 @@ export interface MqttRouter {
      * If neither `value` nor `data` is set, Mokapi generates a random valid
      * value based on the AsyncAPI schema definition for the topic.
      *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
+     *
      * @param topic The MQTT topic name to publish to.
      * @param message The message to publish.
      * @param opts Optional configuration including a result callback and retry settings.
@@ -2908,6 +2914,8 @@ export interface MqttTopicRouter {
      *
      * If neither `value` nor `data` is set, Mokapi generates a random valid
      * value based on the AsyncAPI schema definition for this topic.
+     *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
      *
      * @param message The message to publish.
      * @param opts Optional configuration including a result callback and retry settings.
@@ -3301,6 +3309,8 @@ export interface WebsocketRouter {
      * Use `app.api('My API').websocket().sendAsync()` to avoid ambiguity when
      * multiple APIs define the same channel.
      *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
+     *
      * @param channel The channel name to send to, as defined in the AsyncAPI specification.
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
      * @param args Optional configuration including a result callback and retry settings.
@@ -3441,6 +3451,8 @@ export interface WebsocketChannelRouter {
      *
      * Use this when you need to await the send, for example to continue
      * only after the `result` callback has been invoked.
+     *
+     * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
      *
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
      * @param args Optional configuration including a result callback and retry settings.

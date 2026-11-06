@@ -61,6 +61,10 @@ Sends a message to all clients currently connected to a channel. Use it for serv
 messages outside an event handler, for example from a scheduled job. `send()` runs
 synchronously, `sendAsync()` returns a `Promise` you can `await`.
 
+`sendAsync()` reads the message and arguments when you call it, so changing the message afterwards doesn't
+affect what is sent. Invalid arguments, such as a `retry` of the wrong type, throw an error at the call.
+Client errors, such as an unknown channel, reject the promise, and so does an error thrown in the `result` callback.
+
 | Parameter       | Type   | Description                                                                     |
 |-----------------|--------|---------------------------------------------------------------------------------|
 | channel         | string | Channel name as defined in the AsyncAPI specification                           |

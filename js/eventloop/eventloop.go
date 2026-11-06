@@ -37,8 +37,8 @@ type EventLoop struct {
 
 	queueChan chan func()
 	stopChan  chan struct{}
-	running   bool
-	jobCount  int
+	running   atomic.Bool
+	jobCount  atomic.Int32
 
 	waitCond *sync.Cond
 	waitLock sync.Mutex
@@ -73,7 +73,7 @@ func goID() uint64 {
 }
 
 func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
-	if loop.running {
+	if loop.running.Load() {
 		loop.queueChan <- func() { fn(loop.vm) }
 	} else {
 		fn(loop.vm)
@@ -102,7 +102,7 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 		return fn(loop.vm)
 	}
 
-	if loop.running {
+	if loop.running.Load() {
 		var result goja.Value
 		var err error
 		done := make(chan struct{})
@@ -133,7 +133,7 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 		}
 
 		if p, ok := result.Export().(*goja.Promise); ok {
-			for p.State() == goja.PromiseStatePending && loop.running {
+			for p.State() == goja.PromiseStatePending && loop.running.Load() {
 				loop.wait()
 			}
 			if p.State() == goja.PromiseStateRejected {
@@ -150,7 +150,7 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 }
 
 func (loop *EventLoop) StartLoop() {
-	loop.running = true
+	loop.running.Store(true)
 	go func() {
 		atomic.StoreUint64(&loop.loopGoID, goID())
 	LOOP:
@@ -168,21 +168,21 @@ func (loop *EventLoop) StartLoop() {
 }
 
 func (loop *EventLoop) Stop() {
-	if loop.running {
+	if loop.running.Load() {
 		loop.stopChan <- struct{}{}
 	}
 }
 
 func (loop *EventLoop) HasJobs() bool {
-	return loop.jobCount > 0
+	return loop.jobCount.Load() > 0
 }
 
 func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
-	loop.jobCount++
+	loop.jobCount.Add(1)
 	delay, run := loop.getScheduledFunc(call)
 	t := &timeout{}
 	t.timer = time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
-		loop.jobCount--
+		loop.jobCount.Add(-1)
 		loop.queueChan <- run
 	})
 
@@ -191,11 +191,11 @@ func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
 
 func (loop *EventLoop) clearTimeout(t *timeout) {
 	t.timer.Stop()
-	loop.jobCount--
+	loop.jobCount.Add(-1)
 }
 
 func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
-	loop.jobCount++
+	loop.jobCount.Add(1)
 	v, run := loop.getScheduledFunc(call)
 	milliseconds := time.Duration(v) * time.Millisecond
 	// https://nodejs.org/api/timers.html#timers_setinterval_callback_delay_args
@@ -214,7 +214,7 @@ func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
 }
 
 func (loop *EventLoop) clearInterval(i *interval) {
-	loop.jobCount--
+	loop.jobCount.Add(-1)
 	close(i.stop)
 }
 
@@ -239,9 +239,9 @@ func (loop *EventLoop) getScheduledFunc(call goja.FunctionCall) (int64, func()) 
 func (loop *EventLoop) wait() {
 	loop.waitLock.Lock()
 	defer loop.waitLock.Unlock()
-	loop.jobCount++
+	loop.jobCount.Add(1)
 	loop.waitCond.Wait()
-	loop.jobCount--
+	loop.jobCount.Add(-1)
 }
 
 func (loop *EventLoop) wakeup() {

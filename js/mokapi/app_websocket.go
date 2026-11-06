@@ -111,104 +111,71 @@ func (w *WebsocketChannel) Close(do goja.Value, vArgs goja.Value) *WebsocketChan
 func (w *Websocket) Send(channelName string, vMsg goja.Value, vArgs goja.Value) *Websocket {
 	f := w.filter
 	f.Channel = channelName
-	callback, result := sendWebsocket(f, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
-	if callback != nil {
-		if err := callback(result); err != nil {
-			panic(w.m.vm.ToValue(err.Error()))
-		}
-	}
+	sendWebsocket(w.m, f, vMsg, vArgs)
 	return w
 }
 
 func (w *Websocket) SendAsync(channelName string, vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := w.m.vm.NewPromise()
 	f := w.filter
 	f.Channel = channelName
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				w.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		callback, result := sendWebsocket(f, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
-		w.m.loop.Run(func(vm *goja.Runtime) {
-			if callback != nil {
-				if err := callback(result); err != nil {
-					panic(vm.ToValue(err.Error()))
-				}
-			}
-			_ = resolve(w)
-		})
-	}()
-	return p
+	return sendWebsocketAsync(w.m, f, vMsg, vArgs, w)
 }
 
 func (w *WebsocketChannel) Send(vMsg goja.Value, vArgs goja.Value) *WebsocketChannel {
-	callback, result := sendWebsocket(w.filter, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
-	if callback != nil {
-		if err := callback(result); err != nil {
-			panic(w.m.vm.ToValue(err.Error()))
-		}
-	}
+	sendWebsocket(w.m, w.filter, vMsg, vArgs)
 	return w
 }
 
 func (w *WebsocketChannel) SendAsync(vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := w.m.vm.NewPromise()
-	f := w.filter
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				w.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		callback, result := sendWebsocket(f, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
-		w.m.loop.Run(func(vm *goja.Runtime) {
-			if callback != nil {
-				if err := callback(result); err != nil {
-					panic(vm.ToValue(err.Error()))
-				}
-			}
-			_ = resolve(w)
-		})
-	}()
-	return p
+	return sendWebsocketAsync(w.m, w.filter, vMsg, vArgs, w)
 }
 
-func sendWebsocket(filter common.WebsocketFilter, vMsg goja.Value, vArgs goja.Value, client common.WebsocketClient, vm *goja.Runtime) (WebsocketSendResultCallback, *common.WebsocketSendResult) {
-	defer func() {
-		r := recover()
-		if r != nil {
-			panic(vm.ToValue(fmt.Sprintf("%v", r)))
+func sendWebsocket(m *Module, filter common.WebsocketFilter, vMsg goja.Value, vArgs goja.Value) {
+	args, callback := prepareWebsocketSend(m.vm, filter, vMsg, vArgs)
+	result, err := m.host.WebsocketClient().Send(args)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	if callback != nil {
+		if err := callback(result); err != nil {
+			panic(m.vm.ToValue(err.Error()))
 		}
-	}()
+	}
+}
 
-	msg := vMsg.Export()
+// sendWebsocketAsync resolves the promise with self, like the synchronous variant returns it.
+func sendWebsocketAsync[T any](m *Module, filter common.WebsocketFilter, vMsg goja.Value, vArgs goja.Value, self T) *goja.Promise {
+	args, callback := prepareWebsocketSend(m.vm, filter, vMsg, vArgs)
+	client := m.host.WebsocketClient()
+	return util.RunAsync(m.vm, m.loop,
+		func() (*common.WebsocketSendResult, error) { return client.Send(args) },
+		func(result *common.WebsocketSendResult) (any, error) {
+			if callback != nil {
+				if err := callback(result); err != nil {
+					return nil, err
+				}
+			}
+			return self, nil
+		})
+}
+
+// prepareWebsocketSend converts message and arguments to plain Go values. It has to run on
+// the event loop because it reads from the goja runtime. Invalid input throws.
+func prepareWebsocketSend(vm *goja.Runtime, filter common.WebsocketFilter, vMsg goja.Value, vArgs goja.Value) (common.WebsocketSendArgs, WebsocketSendResultCallback) {
+	defer util.ThrowPanic(vm)
+
 	args, err := mapSendArgs(vArgs, vm)
 	if err != nil {
 		panic(vm.ToValue(err.Error()))
 	}
 
-	file := util.GetScriptFile(vm)
-	result, err := client.Send(common.WebsocketSendArgs{
+	return common.WebsocketSendArgs{
 		Api:         filter.Api,
 		ChannelName: filter.Channel,
-		Message:     msg,
-		ScriptFile:  file.Info.Key(),
+		Message:     vMsg.Export(),
+		ScriptFile:  util.GetScriptFile(vm).Info.Key(),
 		Retry:       args.Retry,
-	})
-	if err != nil {
-		panic(vm.ToValue(err.Error()))
-	}
-	return args.result, result
+	}, args.result
 }
 
 type WebsocketSendArgs struct {

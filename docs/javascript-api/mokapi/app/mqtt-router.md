@@ -62,6 +62,10 @@ export default function() {
 Publishes a message to the given topic. `publish()` runs synchronously, `publishAsync()`
 returns a `Promise` you can `await`.
 
+`publishAsync()` reads the message and options when you call it, so changing the message afterwards doesn't
+affect what is published. Invalid arguments throw an error at the call. Client errors reject the promise,
+and so does an error thrown in the `result` callback.
+
 | Parameter       | Type   | Description                                              |
 |-----------------|--------|----------------------------------------------------------|
 | topic           | string | MQTT topic name                                          |

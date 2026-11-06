@@ -63,92 +63,62 @@ func (k *KafkaTopic) Message(do goja.Value, vArgs goja.Value) *KafkaTopic {
 func (k *Kafka) Produce(topic string, vMsg goja.Value, vArgs goja.Value) *Kafka {
 	f := k.filter
 	f.Topic = topic
-	callback, result := produce(f, vMsg, vArgs, k.m.host.KafkaClient(), k.m.vm)
-	if callback != nil {
-		for _, r := range result.Messages {
-			if err := callback(r); err != nil {
-				panic(k.m.vm.ToValue(err.Error()))
-			}
-		}
-	}
+	produce(k.m, f, vMsg, vArgs)
 	return k
 }
 
 func (k *Kafka) ProduceAsync(topic string, vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := k.m.vm.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				k.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		f := k.filter
-		f.Topic = topic
-		callback, result := produce(f, vMsg, vArgs, k.m.host.KafkaClient(), k.m.vm)
-		k.m.loop.Run(func(vm *goja.Runtime) {
-			if callback != nil {
-				for _, r := range result.Messages {
-					if err := callback(r); err != nil {
-						panic(vm.ToValue(err.Error()))
-					}
-				}
-			}
-			_ = resolve(k)
-		})
-	}()
-	return p
+	f := k.filter
+	f.Topic = topic
+	return produceAsync(k.m, f, vMsg, vArgs, k)
 }
 
 func (k *KafkaTopic) Produce(vMsg goja.Value, vArgs goja.Value) *KafkaTopic {
-	callback, result := produce(k.filter, vMsg, vArgs, k.m.host.KafkaClient(), k.m.vm)
-	if callback != nil {
-		for _, r := range result.Messages {
-			if err := callback(r); err != nil {
-				panic(k.m.vm.ToValue(err.Error()))
-			}
-		}
-	}
+	produce(k.m, k.filter, vMsg, vArgs)
 	return k
 }
 
 func (k *KafkaTopic) ProduceAsync(vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := k.m.vm.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				k.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
+	return produceAsync(k.m, k.filter, vMsg, vArgs, k)
+}
 
-		callback, result := produce(k.filter, vMsg, vArgs, k.m.host.KafkaClient(), k.m.vm)
-		k.m.loop.Run(func(vm *goja.Runtime) {
+func produce(m *Module, filter common.KafkaFilter, vMsg goja.Value, vArgs goja.Value) {
+	args, callback := prepareKafkaProduce(m.vm, filter, vMsg, vArgs)
+	result, err := m.host.KafkaClient().Produce(args)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	if callback != nil {
+		for _, r := range result.Messages {
+			if err := callback(r); err != nil {
+				panic(m.vm.ToValue(err.Error()))
+			}
+		}
+	}
+}
+
+// produceAsync resolves the promise with self, like the synchronous variant returns it.
+func produceAsync[T any](m *Module, filter common.KafkaFilter, vMsg goja.Value, vArgs goja.Value, self T) *goja.Promise {
+	args, callback := prepareKafkaProduce(m.vm, filter, vMsg, vArgs)
+	client := m.host.KafkaClient()
+	return util.RunAsync(m.vm, m.loop,
+		func() (*common.KafkaProduceResult, error) { return client.Produce(args) },
+		func(result *common.KafkaProduceResult) (any, error) {
 			if callback != nil {
 				for _, r := range result.Messages {
 					if err := callback(r); err != nil {
-						panic(vm.ToValue(err.Error()))
+						return nil, err
 					}
 				}
 			}
-			_ = resolve(k)
+			return self, nil
 		})
-	}()
-	return p
 }
 
-func produce(filter common.KafkaFilter, vMsg goja.Value, vArgs goja.Value, client common.KafkaClient, vm *goja.Runtime) (KafkaProduceResultCallback, *common.KafkaProduceResult) {
-	defer func() {
-		r := recover()
-		if r != nil {
-			panic(vm.ToValue(fmt.Sprintf("%v", r)))
-		}
-	}()
+// prepareKafkaProduce converts messages and arguments to plain Go values. It has to run on
+// the event loop because it reads from the goja runtime. Invalid input throws.
+func prepareKafkaProduce(vm *goja.Runtime, filter common.KafkaFilter, vMsg goja.Value, vArgs goja.Value) (*common.KafkaProduceArgs, KafkaProduceResultCallback) {
+	defer util.ThrowPanic(vm)
 
 	msg, err := mapProduceMessages(vMsg, vm)
 	if err != nil {
@@ -159,20 +129,14 @@ func produce(filter common.KafkaFilter, vMsg goja.Value, vArgs goja.Value, clien
 		panic(vm.ToValue(err.Error()))
 	}
 
-	file := util.GetScriptFile(vm)
-	result, err := client.Produce(&common.KafkaProduceArgs{
+	return &common.KafkaProduceArgs{
 		Cluster:    filter.Api,
 		Topic:      filter.Topic,
 		Messages:   msg,
 		Retry:      args.Retry,
 		ClientId:   "mokapi-script",
-		ScriptFile: file.Info.Key(),
-	})
-	if err != nil {
-		panic(vm.ToValue(err.Error()))
-	}
-
-	return args.result, result
+		ScriptFile: util.GetScriptFile(vm).Info.Key(),
+	}, args.result
 }
 
 func mapProduceMessages(arg goja.Value, vm *goja.Runtime) ([]common.KafkaMessage, error) {

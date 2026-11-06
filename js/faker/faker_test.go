@@ -10,6 +10,7 @@ import (
 	"mokapi/js/require"
 	"mokapi/schema/json/generator"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/dop251/goja"
@@ -204,6 +205,92 @@ func TestModule(t *testing.T) {
 			reg.Enable(vm)
 
 			tc.test(t, vm, host)
+		})
+	}
+}
+
+func TestModule_FakeAsync(t *testing.T) {
+	testcases := []struct {
+		name   string
+		script string
+		state  string // "fulfilled" or "rejected"
+		result any    // exported value of the promise
+		thrown string // part of the exception when the call itself must throw
+	}{
+		{
+			name:   "resolves with the generated value",
+			script: `m.fakeAsync({ type: 'object', example: { foo: 'bar' } })`,
+			state:  "fulfilled",
+			result: map[string]any{"foo": "bar"},
+		},
+		{
+			name:   "invalid argument throws synchronously",
+			script: `m.fakeAsync('foo')`,
+			thrown: "expect object parameter but got: String",
+		},
+		{
+			name:   "without argument resolves with undefined",
+			script: `m.fakeAsync()`,
+			state:  "fulfilled",
+			result: nil,
+		},
+		{
+			name:   "invalid schema throws synchronously",
+			script: `m.fakeAsync({ type: 'object', properties: 12 })`,
+			thrown: "expected object, got number",
+		},
+		{
+			name: "uses the schema as it was at call time",
+			script: `(() => {
+				const schema = { type: 'object', example: { foo: 'bar' } }
+				const p = m.fakeAsync(schema)
+				schema.example = { foo: 'changed' }
+				return p
+			})()`,
+			state:  "fulfilled",
+			result: map[string]any{"foo": "bar"},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(11)
+
+			reg, err := require.NewRegistry(nil)
+			reg.RegisterNativeModule("faker", faker.Require)
+			r.NoError(t, err)
+
+			vm := goja.New()
+			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+			host := &enginetest.Host{}
+			loop := eventloop.New(vm, host)
+			loop.StartLoop()
+			defer loop.Stop()
+			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+			reg.Enable(vm)
+
+			type outcome struct {
+				state string
+				value any
+			}
+			settled := make(chan outcome, 1)
+			_, err = loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+				_ = vm.Set("settled", func(state string, v any) { settled <- outcome{state, v} })
+				return vm.RunString(`const m = require('faker');` + tc.script +
+					`.then(v => settled('fulfilled', v), e => settled('rejected', e))`)
+			})
+			if tc.thrown != "" {
+				r.ErrorContains(t, err, tc.thrown)
+				return
+			}
+			r.NoError(t, err)
+
+			select {
+			case o := <-settled:
+				r.Equal(t, outcome{tc.state, tc.result}, o)
+			case <-time.After(5 * time.Second):
+				t.Fatal("promise was not settled")
+			}
 		})
 	}
 }

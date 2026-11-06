@@ -71,6 +71,10 @@ export default function() {
 Produces one or more messages to the given topic. `produce()` runs synchronously,
 `produceAsync()` returns a `Promise` you can `await`.
 
+`produceAsync()` reads the messages and options when you call it, so changing a message afterwards doesn't
+affect what is produced. Invalid arguments throw an error at the call. Client errors, such as a broker error,
+reject the promise, and so does an error thrown in the `result` callback.
+
 | Parameter       | Type            | Description                                                                                   |
 |-----------------|-----------------|-----------------------------------------------------------------------------------------------|
 | topic           | string          | Kafka topic name                                                                              |

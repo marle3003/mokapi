@@ -30,4 +30,14 @@ export default function() {
             // Reply only to the sender with an ack
             event.reply({ status: 'ok' })
         })
+
+    app.websocket()
+        .channel('/async')
+        .message(async () => {
+            const msg = { text: 'hello' }
+            const sent = app.websocket().sendAsync('/async', msg)
+            // the message must be sent as it was at call time
+            msg.text = 'changed'
+            await sent
+        })
 }

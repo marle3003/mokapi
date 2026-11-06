@@ -30,7 +30,8 @@ export default function() {
 
 The methods behave like their counterparts on
 [KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md), but `produce()` and
-`produceAsync()` take no topic name.
+`produceAsync()` take no topic name. `produceAsync()` reads the messages when you call it.
+Invalid arguments throw an error at the call, and client errors reject the promise.
 
 ### Parameters
 

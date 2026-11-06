@@ -60,6 +60,27 @@ func (suite *WebsocketSuite) TestEcho() {
 	require.NotEmpty(suite.T(), msg["timestamp"])
 }
 
+// TestSendAsyncSendsSnapshotOfMessage verifies that sendAsync sends the message as it was at
+// call time, even if the script changes the message object right after the call.
+func (suite *WebsocketSuite) TestSendAsyncSendsSnapshotOfMessage() {
+	time.Sleep(2 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "http://localhost:22801/async", nil)
+	require.NoError(suite.T(), err)
+	defer c.CloseNow()
+
+	err = wsjson.Write(ctx, c, map[string]string{"text": "trigger"})
+	require.NoError(suite.T(), err)
+
+	var msg map[string]any
+	err = wsjson.Read(ctx, c, &msg)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "hello", msg["text"])
+}
+
 // TestBroadcast verifies that a message is delivered to all connected clients in the same room.
 func (suite *WebsocketSuite) TestBroadcast() {
 	time.Sleep(2 * time.Second)

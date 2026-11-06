@@ -63,85 +63,58 @@ func (m *MqttTopic) Message(do goja.Value, vArgs goja.Value) *MqttTopic {
 func (m *Mqtt) Publish(topic string, vMsg goja.Value, vArgs goja.Value) *Mqtt {
 	f := m.filter
 	f.Topic = topic
-	callback, result := publish(f, vMsg, vArgs, m.m.host.MqttClient(), m.m.vm)
-	if callback != nil {
-		if err := callback(result); err != nil {
-			panic(m.m.vm.ToValue(err.Error()))
-		}
-	}
+	publish(m.m, f, vMsg, vArgs)
 	return m
 }
 
 func (m *Mqtt) PublishAsync(topic string, vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := m.m.vm.NewPromise()
-
 	f := m.filter
 	f.Topic = topic
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				m.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		callback, result := publish(f, vMsg, vArgs, m.m.host.MqttClient(), m.m.vm)
-		m.m.loop.Run(func(vm *goja.Runtime) {
-			if callback != nil {
-				if err := callback(result); err != nil {
-					panic(vm.ToValue(err.Error()))
-				}
-			}
-			_ = resolve(m)
-		})
-	}()
-	return p
+	return publishAsync(m.m, f, vMsg, vArgs, m)
 }
 
 func (m *MqttTopic) Publish(vMsg goja.Value, vArgs goja.Value) *MqttTopic {
-	callback, result := publish(m.filter, vMsg, vArgs, m.m.host.MqttClient(), m.m.vm)
-	if callback != nil {
-		if err := callback(result); err != nil {
-			panic(m.m.vm.ToValue(err.Error()))
-		}
-	}
+	publish(m.m, m.filter, vMsg, vArgs)
 	return m
 }
 
 func (m *MqttTopic) PublishAsync(vMsg goja.Value, vArgs goja.Value) *goja.Promise {
-	p, resolve, reject := m.m.vm.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				m.m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		callback, result := publish(m.filter, vMsg, vArgs, m.m.host.MqttClient(), m.m.vm)
-		m.m.loop.Run(func(vm *goja.Runtime) {
-			if callback != nil {
-				if err := callback(result); err != nil {
-					panic(vm.ToValue(err.Error()))
-				}
-			}
-			_ = resolve(m)
-		})
-	}()
-	return p
+	return publishAsync(m.m, m.filter, vMsg, vArgs, m)
 }
 
-func publish(filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value, client common.MqttClient, vm *goja.Runtime) (MqttPublishResultCallback, *common.MqttPublishResult) {
-	defer func() {
-		r := recover()
-		if r != nil {
-			panic(vm.ToValue(fmt.Sprintf("%v", r)))
+func publish(m *Module, filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value) {
+	args, callback := prepareMqttPublish(m.vm, filter, vMsg, vArgs)
+	result, err := m.host.MqttClient().Publish(args)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	if callback != nil {
+		if err := callback(result); err != nil {
+			panic(m.vm.ToValue(err.Error()))
 		}
-	}()
+	}
+}
+
+// publishAsync resolves the promise with self, like the synchronous variant returns it.
+func publishAsync[T any](m *Module, filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value, self T) *goja.Promise {
+	args, callback := prepareMqttPublish(m.vm, filter, vMsg, vArgs)
+	client := m.host.MqttClient()
+	return util.RunAsync(m.vm, m.loop,
+		func() (*common.MqttPublishResult, error) { return client.Publish(args) },
+		func(result *common.MqttPublishResult) (any, error) {
+			if callback != nil {
+				if err := callback(result); err != nil {
+					return nil, err
+				}
+			}
+			return self, nil
+		})
+}
+
+// prepareMqttPublish converts message and arguments to plain Go values. It has to run on
+// the event loop because it reads from the goja runtime. Invalid input throws.
+func prepareMqttPublish(vm *goja.Runtime, filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value) (*common.MqttPublishArgs, MqttPublishResultCallback) {
+	defer util.ThrowPanic(vm)
 
 	msg, err := mapPublishMessage(vMsg.ToObject(vm))
 	if err != nil {
@@ -152,8 +125,7 @@ func publish(filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value, client
 		panic(vm.ToValue(err.Error()))
 	}
 
-	file := util.GetScriptFile(vm)
-	result, err := client.Publish(&common.MqttPublishArgs{
+	return &common.MqttPublishArgs{
 		Cluster:    filter.Api,
 		Topic:      filter.Topic,
 		Data:       msg.Data,
@@ -161,13 +133,8 @@ func publish(filter common.MqttFilter, vMsg goja.Value, vArgs goja.Value, client
 		Retain:     msg.Retain,
 		Retry:      args.Retry,
 		ClientId:   "mokapi-script",
-		ScriptFile: file.Info.Key(),
-	})
-	if err != nil {
-		panic(vm.ToValue(err.Error()))
-	}
-
-	return args.result, result
+		ScriptFile: util.GetScriptFile(vm).Info.Key(),
+	}, args.result
 }
 
 func mapPublishMessage(vMsg *goja.Object) (*common.MqttPublishArgs, error) {
