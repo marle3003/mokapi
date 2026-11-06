@@ -134,7 +134,6 @@ func (w *Websocket) SendAsync(channelName string, vMsg goja.Value, vArgs goja.Va
 			}
 		}()
 
-		sendWebsocket(w.filter, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
 		callback, result := sendWebsocket(f, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
 		w.m.loop.Run(func(vm *goja.Runtime) {
 			if callback != nil {
@@ -171,7 +170,6 @@ func (w *WebsocketChannel) SendAsync(vMsg goja.Value, vArgs goja.Value) *goja.Pr
 			}
 		}()
 
-		sendWebsocket(w.filter, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
 		callback, result := sendWebsocket(f, vMsg, vArgs, w.m.host.WebsocketClient(), w.m.vm)
 		w.m.loop.Run(func(vm *goja.Runtime) {
 			if callback != nil {
