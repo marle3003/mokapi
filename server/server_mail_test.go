@@ -14,6 +14,7 @@ import (
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
+	"net"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -46,6 +47,7 @@ func TestSmtp(t *testing.T) {
 						},
 					},
 				})
+				waitForPort(t, port)
 
 				err := smtptest.SendMail("from@foo.bar",
 					"rcipient@foo.bar",
@@ -73,6 +75,7 @@ func TestSmtp(t *testing.T) {
 						},
 					},
 				})
+				waitForPort(t, port)
 
 				err := smtptest.SendMail("from@foo.bar",
 					"rcipient@foo.bar",
@@ -117,6 +120,7 @@ func TestSmtp(t *testing.T) {
 						},
 					},
 				})
+				waitForPort(t, port2)
 
 				err := smtptest.SendMail("from@foo.bar",
 					"rcipient@foo.bar",
@@ -214,4 +218,16 @@ func TestSmtp(t *testing.T) {
 			tc.test(t, m)
 		})
 	}
+}
+
+func waitForPort(t *testing.T, port int) {
+	t.Helper()
+	try.WaitFor(t, func() bool {
+		conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+		if err != nil {
+			return false
+		}
+		_ = conn.Close()
+		return true
+	})
 }
