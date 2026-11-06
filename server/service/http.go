@@ -108,6 +108,9 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 }
 
 func (s *HttpServer) RemoveUrl(u *url.URL) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	hostname := u.Hostname()
 	if host, ok := s.handlers[hostname]; ok {
 		path := u.Path
@@ -165,6 +168,9 @@ func (s *HttpServer) Stop() {
 }
 
 func (s *HttpServer) CanClose() bool {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	return len(s.handlers) == 0
 }
 
@@ -190,8 +196,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	r = r.WithContext(context.WithValue(r.Context(), "logHttpRequestContext", &logHttpRequestContext{logged: false}))
 
 	var httpError *openapi.HttpError
-	if host, ok := s.handlers[hostname]; ok {
-		services := matchPath(host.Paths, r)
+	if services, ok := s.matchHost(hostname, r); ok {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -199,8 +204,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	}
 
 	// any host
-	if host, ok := s.handlers[""]; ok {
-		services := matchPath(host.Paths, r)
+	if services, ok := s.matchHost("", r); ok {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -208,8 +212,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	}
 
 	// try every host
-	for _, host := range s.handlers {
-		services := matchPath(host.Paths, r)
+	for _, services := range s.matchEveryHost(r) {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -224,6 +227,31 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 		StatusCode: http.StatusNotFound,
 		Message:    fmt.Sprintf("There was no service listening at %s", lib.GetUrl(r)),
 	}
+}
+
+// matchHost and matchEveryHost look up services under the read lock and return copies, so the
+// caller invokes the handlers without holding the lock. A handler (e.g. a script) may trigger
+// config changes that need the write lock.
+func (s *HttpServer) matchHost(hostname string, r *http.Request) (map[string][]*HttpService, bool) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	host, ok := s.handlers[hostname]
+	if !ok {
+		return nil, false
+	}
+	return matchPath(host.Paths, r), true
+}
+
+func (s *HttpServer) matchEveryHost(r *http.Request) []map[string][]*HttpService {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	var result []map[string][]*HttpService
+	for _, host := range s.handlers {
+		result = append(result, matchPath(host.Paths, r))
+	}
+	return result
 }
 
 func (s *HttpServer) serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.Request) *openapi.HttpError {

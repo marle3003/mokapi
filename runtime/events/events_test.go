@@ -3,6 +3,7 @@ package events_test
 import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -163,3 +164,27 @@ type index struct{}
 func (*index) Add(string, any) {}
 
 func (*index) Delete(string) {}
+
+// TestStoreManager_ConcurrentAccess mimics parallel config updates, which add and reset stores
+// while other goroutines read them.
+func TestStoreManager_ConcurrentAccess(t *testing.T) {
+	sm := events.NewStoreManager(nil)
+
+	operations := []func(){
+		func() { sm.SetStore(10, events.NewTraits().WithNamespace("http").WithName("foo")) },
+		func() { sm.ResetStores(events.NewTraits().WithNamespace("http").WithName("foo")) },
+		func() { sm.GetStores(events.NewTraits().WithNamespace("http")) },
+	}
+
+	var wg sync.WaitGroup
+	for _, op := range operations {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				op()
+			}
+		}()
+	}
+	wg.Wait()
+}
