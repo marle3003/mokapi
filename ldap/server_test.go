@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/try"
 	"testing"
+	"time"
 )
 
 func TestServer(t *testing.T) {
@@ -88,4 +89,38 @@ func newTestServer(h Handler) (*Server, Client) {
 	c := Client{Addr: addr}
 
 	return s, c
+}
+
+func TestServer_Close(t *testing.T) {
+	t.Run("close while serve starts is race-free", func(t *testing.T) {
+		for i := 0; i < 20; i++ {
+			s := &Server{Addr: "127.0.0.1:0"}
+
+			done := make(chan error, 1)
+			go func() { done <- s.ListenAndServe() }()
+			go s.Close()
+
+			select {
+			case err := <-done:
+				require.ErrorIs(t, err, ErrServerClosed)
+			case <-time.After(2 * time.Second):
+				t.Fatal("ListenAndServe did not return after Close")
+			}
+		}
+	})
+
+	t.Run("close before listen", func(t *testing.T) {
+		s := &Server{Addr: "127.0.0.1:0"}
+		s.Close()
+
+		done := make(chan error, 1)
+		go func() { done <- s.ListenAndServe() }()
+
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, ErrServerClosed)
+		case <-time.After(2 * time.Second):
+			t.Fatal("ListenAndServe did not return after Close")
+		}
+	})
 }

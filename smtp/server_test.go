@@ -11,6 +11,7 @@ import (
 	"mokapi/smtp"
 	"mokapi/try"
 	"testing"
+	"time"
 )
 
 func TestServer_Tls(t *testing.T) {
@@ -92,4 +93,38 @@ func TestServer_StartTls(t *testing.T) {
 	require.Equal(t, []string{
 		"[2 0 0] Starting TLS",
 	}, lines)
+}
+
+func TestServer_Close(t *testing.T) {
+	t.Run("close while serve starts is race-free", func(t *testing.T) {
+		for i := 0; i < 20; i++ {
+			s := &smtp.Server{Addr: "127.0.0.1:0"}
+
+			done := make(chan error, 1)
+			go func() { done <- s.ListenAndServe() }()
+			go s.Close()
+
+			select {
+			case err := <-done:
+				require.ErrorIs(t, err, smtp.ErrServerClosed)
+			case <-time.After(2 * time.Second):
+				t.Fatal("ListenAndServe did not return after Close")
+			}
+		}
+	})
+
+	t.Run("close before listen", func(t *testing.T) {
+		s := &smtp.Server{Addr: "127.0.0.1:0"}
+		s.Close()
+
+		done := make(chan error, 1)
+		go func() { done <- s.ListenAndServe() }()
+
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, smtp.ErrServerClosed)
+		case <-time.After(2 * time.Second):
+			t.Fatal("ListenAndServe did not return after Close")
+		}
+	})
 }
