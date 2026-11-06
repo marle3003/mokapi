@@ -243,7 +243,7 @@ func mapSendArgs(v goja.Value, vm *goja.Runtime) (*WebsocketSendArgs, error) {
 		case "result":
 			call, ok := goja.AssertFunction(jsObj.Get(propName))
 			if !ok {
-				return nil, fmt.Errorf("unexpected type for 'fake': expected function, got %s", util.JsType(jsObj.Get(propName)))
+				return nil, fmt.Errorf("unexpected type for 'send': expected function, got %s", util.JsType(jsObj.Get(propName)))
 			}
 			args.result = func(result *common.WebsocketSendResult) error {
 				_, err := call(goja.Undefined(), vm.ToValue(result))

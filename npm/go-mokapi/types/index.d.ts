@@ -3262,10 +3262,13 @@ export interface WebsocketRouter {
      * Use `app.api('My API').websocket().send()` to avoid ambiguity when
      * multiple APIs define the same channel.
      *
+     * Use `sendAsync()` if you need to await the result.
+     *
      * @param channel The channel name to send to, as defined in the AsyncAPI specification.
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
      * @param args Optional configuration including a result callback and retry settings.
      * @throws Error if the channel is found in more than one API, or if no matching channel exists.
+     * @returns This `WebsocketRouter` instance for chaining.
      *
      * @example
      * // Safe when exactly one API defines this channel
@@ -3285,7 +3288,33 @@ export interface WebsocketRouter {
      *   })
      * }
      */
-    send(channel: string, message: any, args?: WebsocketSendArgs): void
+    send(channel: string, message: any, args?: WebsocketSendArgs): WebsocketRouter
+
+    /**
+     * Sends a message to all clients currently connected to the given channel asynchronously.
+     *
+     * Use this when you need to await the send, for example to continue
+     * only after the `result` callback has been invoked.
+     *
+     * When no API scope is set, Mokapi searches all APIs for the given channel name.
+     * An error is thrown if the channel is found in more than one API or in none.
+     * Use `app.api('My API').websocket().sendAsync()` to avoid ambiguity when
+     * multiple APIs define the same channel.
+     *
+     * @param channel The channel name to send to, as defined in the AsyncAPI specification.
+     * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * @param args Optional configuration including a result callback and retry settings.
+     * @returns A `Promise` resolving to this `WebsocketRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default async function() {
+     *   await app.api('Chat API').websocket().sendAsync('/updates', { text: 'ping' }, {
+     *     result: (r) => console.log(`Sent to ${r.channel}`)
+     *   })
+     * }
+     */
+    sendAsync(channel: string, message: any, args?: WebsocketSendArgs): Promise<WebsocketRouter>
 }
 
 /**
@@ -3379,44 +3408,59 @@ export interface WebsocketChannelRouter {
     close(handler: WebsocketCloseEventHandler, opts?: WebsocketEventArgs): WebsocketChannelRouter
 
     /**
-     * Sends a message to all clients currently connected to the given channel.
+     * Sends a message to all clients currently connected to this channel.
      *
      * Use this for server-initiated pushes outside of an event handler —
      * for example, from a scheduled job or in response to an external event.
      *
-     * When no API scope is set, Mokapi searches all APIs for the given channel name.
-     * An error is thrown if the channel is found in more than one API or in none.
-     * Use `app.api('My API').websocket().send()` to avoid ambiguity when
+     * When no API scope is set, Mokapi searches all APIs for this channel name.
+     * Use `app.api('My API').websocket().channel(name)` to avoid ambiguity when
      * multiple APIs define the same channel.
      *
-     * @param channel The channel name to send to, as defined in the AsyncAPI specification.
+     * Use `sendAsync()` if you need to await the result.
+     *
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
      * @param args Optional configuration including a result callback and retry settings.
+     * @returns This `WebsocketChannelRouter` instance for chaining.
      * @throws Error if the channel is found in more than one API, or if no matching channel exists.
      *
      * @example
-     * // Safe when exactly one API defines this channel
      * import { app, every } from 'mokapi'
      * export default function() {
      *   every('10s', () => {
-     *     app.websocket().send('/updates', { text: 'ping' })
-     *   })
-     * }
-     *
-     * @example
-     * // Explicit API scope avoids ambiguity when multiple APIs share the channel name
-     * import { app, every } from 'mokapi'
-     * export default function() {
-     *   every('10s', () => {
-     *     app.api('Chat API').websocket().send('/updates', { text: 'ping' })
+     *     app.api('Chat API').websocket()
+     *       .channel('/updates')
+     *       .send({ text: 'ping' })
      *   })
      * }
      */
-    send(message: any, args?: WebsocketSendArgs): void
+    send(message: any, args?: WebsocketSendArgs): WebsocketChannelRouter
+
+    /**
+     * Sends a message to all clients currently connected to this channel asynchronously.
+     *
+     * Use this when you need to await the send, for example to continue
+     * only after the `result` callback has been invoked.
+     *
+     * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * @param args Optional configuration including a result callback and retry settings.
+     * @returns A `Promise` resolving to this `WebsocketChannelRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default async function() {
+     *   await app.api('Chat API').websocket()
+     *     .channel('/updates')
+     *     .sendAsync({ text: 'ping' }, {
+     *       result: (r) => console.log(`Sent to ${r.channel}`)
+     *     })
+     * }
+     */
+    sendAsync(message: any, args?: WebsocketSendArgs): Promise<WebsocketChannelRouter>
 }
 
 /**
- * Optional configuration for `send()` on `WebsocketRouter` and `WebsocketChannelRouter`.
+ * Optional configuration for `send()` and `sendAsync()` on `WebsocketRouter` and `WebsocketChannelRouter`.
  *
  * Use `result` to inspect the outcome of a send operation.
  * Use `retry` to configure retry behavior when the channel is not yet available.
@@ -3460,7 +3504,7 @@ export interface WebsocketSendArgs {
 }
 
 /**
- * The result of a `send()` operation on a WebSocket channel.
+ * The result of a `send()` or `sendAsync()` operation on a WebSocket channel.
  *
  * Contains the API, channel, and message that was sent.
  * Received via the `result` callback in `WebsocketSendArgs`.

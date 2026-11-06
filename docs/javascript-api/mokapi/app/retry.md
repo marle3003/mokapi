@@ -9,7 +9,7 @@ Scripts can run before Mokapi has fully set up a Kafka topic, MQTT topic or WebS
 
 - Kafka [`produce()` and `produceAsync()`](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproduceargs)
 - MQTT [`publish()` and `publishAsync()`](/docs/javascript-api/mokapi/app/mqtt-router.md#publish)
-- WebSocket [`send()`](/docs/javascript-api/mokapi/app/websocket-router.md#send)
+- WebSocket [`send()` and `sendAsync()`](/docs/javascript-api/mokapi/app/websocket-router.md#send)
 
 Mokapi waits with exponential backoff. The wait time before each retry is
 `min(initialRetryTime * factor^attempt, maxRetryTime)`. When all retries are exhausted, the

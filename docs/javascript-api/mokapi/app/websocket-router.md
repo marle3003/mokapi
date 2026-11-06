@@ -33,14 +33,15 @@ Three events are available:
 
 ## Methods
 
-| Method                                  | Returns                                         | Description                                          |
-|-----------------------------------------|-------------------------------------------------|------------------------------------------------------|
-| [`channel( name )`](#channel)           | [WebsocketChannelRouter](#websocketchannelrouter) | Returns a router for a single channel              |
-| `connect( handler, [opts] )`            | `WebsocketRouter`                               | Registers a handler for `connect` on all channels    |
-| `message( handler, [opts] )`            | `WebsocketRouter`                               | Registers a handler for `message` on all channels    |
-| `close( handler, [opts] )`              | `WebsocketRouter`                               | Registers a handler for `close` on all channels      |
-| [`send( channel, message, [args] )`](#send) | `void`                                      | Sends a message to all clients of a channel          |
-| `api( title )`                          | `WebsocketRouter`                               | Returns a router scoped to the given API             |
+| Method                                           | Returns                                           | Description                                                |
+|--------------------------------------------------|---------------------------------------------------|------------------------------------------------------------|
+| [`channel( name )`](#channel)                    | [WebsocketChannelRouter](#websocketchannelrouter) | Returns a router for a single channel                      |
+| `connect( handler, [opts] )`                     | `WebsocketRouter`                                 | Registers a handler for `connect` on all channels          |
+| `message( handler, [opts] )`                     | `WebsocketRouter`                                 | Registers a handler for `message` on all channels          |
+| `close( handler, [opts] )`                       | `WebsocketRouter`                                 | Registers a handler for `close` on all channels            |
+| [`send( channel, message, [args] )`](#send)      | `WebsocketRouter`                                 | Sends a message to all clients of a channel                |
+| [`sendAsync( channel, message, [args] )`](#send) | `Promise<WebsocketRouter>`                        | Sends a message to all clients of a channel asynchronously |
+| `api( title )`                                   | `WebsocketRouter`                                 | Returns a router scoped to the given API                   |
 
 ### Parameters
 
@@ -57,7 +58,8 @@ match the channel address in the AsyncAPI specification, for example `/chat/{roo
 ## send
 
 Sends a message to all clients currently connected to a channel. Use it for server-initiated
-messages outside an event handler, for example from a scheduled job.
+messages outside an event handler, for example from a scheduled job. `send()` runs
+synchronously, `sendAsync()` returns a `Promise` you can `await`.
 
 | Parameter       | Type   | Description                                                                     |
 |-----------------|--------|---------------------------------------------------------------------------------|
@@ -67,8 +69,8 @@ messages outside an event handler, for example from a scheduled job.
 
 ``` box=warning
 Without an API scope, Mokapi searches all APIs for the channel. `send()` throws an error if the
-channel exists in more than one API or in none. Use `app.api('My API').websocket().send()` to
-avoid this.
+channel exists in more than one API or in none, and `sendAsync()` rejects. Use
+`app.api('My API').websocket().send()` to avoid this.
 ```
 
 ```javascript
@@ -81,17 +83,30 @@ export default function() {
 }
 ```
 
+Using `sendAsync()`:
+
+```javascript
+import { app } from 'mokapi'
+
+export default async function() {
+    await app.api('Chat API').websocket().sendAsync('/updates', { text: 'ping' }, {
+        result: (r) => console.log(`Sent to ${r.channel}`)
+    })
+}
+```
+
 ## WebsocketChannelRouter
 
 Groups handlers for a single channel. The methods behave like those of `WebsocketRouter`, but
-only apply to this channel, and `send()` takes no channel name.
+only apply to this channel, and `send()` and `sendAsync()` take no channel name.
 
-| Method                          | Returns                  | Description                                         |
-|---------------------------------|--------------------------|-----------------------------------------------------|
-| `connect( handler, [opts] )`    | `WebsocketChannelRouter` | Registers a handler for `connect` on this channel   |
-| `message( handler, [opts] )`    | `WebsocketChannelRouter` | Registers a handler for `message` on this channel   |
-| `close( handler, [opts] )`      | `WebsocketChannelRouter` | Registers a handler for `close` on this channel     |
-| `send( message, [args] )`       | `void`                   | Sends a message to all clients of this channel      |
+| Method                         | Returns                           | Description                                                   |
+|--------------------------------|-----------------------------------|---------------------------------------------------------------|
+| `connect( handler, [opts] )`   | `WebsocketChannelRouter`          | Registers a handler for `connect` on this channel             |
+| `message( handler, [opts] )`   | `WebsocketChannelRouter`          | Registers a handler for `message` on this channel             |
+| `close( handler, [opts] )`     | `WebsocketChannelRouter`          | Registers a handler for `close` on this channel               |
+| `send( message, [args] )`      | `WebsocketChannelRouter`          | Sends a message to all clients of this channel                |
+| `sendAsync( message, [args] )` | `Promise<WebsocketChannelRouter>` | Sends a message to all clients of this channel asynchronously |
 
 ## Event Objects
 
@@ -119,5 +134,5 @@ Additional properties per event:
 
 | Name              | Type     | Description                                                                                          |
 |-------------------|----------|------------------------------------------------------------------------------------------------------|
-| result (optional) | function | Called after the message has been sent. The result contains `api`, `channel` and `message`.          |
+| result (optional) | function | Called after the message has been sent, before the `sendAsync()` promise resolves. The result contains `api`, `channel` and `message`.          |
 | retry (optional)  | object   | [Retry](/docs/javascript-api/mokapi/app/retry.md) settings, used when the channel is not yet available |

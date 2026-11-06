@@ -1,4 +1,4 @@
-import { app, WebsocketChannelRouter, WebsocketEventConnect, WebsocketEventMessage, WebsocketSendResult } from "mokapi";
+import { app, WebsocketChannelRouter, WebsocketEventConnect, WebsocketEventMessage, WebsocketRouter, WebsocketSendResult } from "mokapi";
 
 const channel: WebsocketChannelRouter = app.websocket().channel("foo");
 channel.send({ data: 123 });
@@ -31,3 +31,18 @@ app.websocket().send("channel", {}, {
     },
 });
 app.websocket().api("title").send("channel", {});
+
+async function sendAsync() {
+    const router: WebsocketRouter = await app.websocket().sendAsync("channel", {}, {
+        retry: { factor: 10 },
+        result: (r: WebsocketSendResult) => {
+            r.api;
+        },
+    });
+    const channelRouter: WebsocketChannelRouter = await app.websocket().channel("channel").sendAsync({});
+    // @ts-expect-error
+    await app.websocket().sendAsync({});
+}
+
+const routerAfterSend: WebsocketRouter = app.websocket().send("channel", {});
+const channelRouterAfterSend: WebsocketChannelRouter = app.websocket().channel("channel").send({});
