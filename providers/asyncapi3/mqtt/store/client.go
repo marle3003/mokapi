@@ -18,17 +18,18 @@ const (
 type Client struct {
 	Id                    string
 	Clean                 bool
-	Subscription          map[string]Subscription
 	SessionExpiryInterval int32
-	WillMessage           *Message
 	KeepAlive             int16
-	LastSeen              time.Time
-	State                 ClientState
 
-	ctx       *mqtt.ClientContext
-	messageId uint16
-	inflight  []*InflightMessage
-	m         sync.Mutex
+	// m guards everything below, publish requests reach a client from many connections
+	m            sync.Mutex
+	subscription map[string]Subscription
+	willMessage  *Message
+	lastSeen     time.Time
+	state        ClientState
+	ctx          *mqtt.ClientContext
+	messageId    uint16
+	inflight     []*InflightMessage
 }
 
 type Subscription struct {
@@ -46,7 +47,8 @@ type InflightMessage struct {
 }
 
 func (c *Client) publish(msg *Message) {
-	for _, sub := range c.Subscription {
+	ctx := c.context()
+	for _, sub := range c.subscriptions() {
 		if topicMatches(sub.Name, msg.Topic) {
 			effectiveQoS := min(msg.QoS, sub.QoS)
 
@@ -56,7 +58,7 @@ func (c *Client) publish(msg *Message) {
 				c.appendInflight(id, msg)
 			}
 
-			err := c.ctx.Send(&mqtt.Message{
+			err := ctx.Send(&mqtt.Message{
 				Header: &mqtt.Header{
 					Type:   mqtt.PUBLISH,
 					QoS:    effectiveQoS,
@@ -76,14 +78,79 @@ func (c *Client) publish(msg *Message) {
 }
 
 func (c *Client) Subscribe(topic string, qos byte) {
-	if c.Subscription == nil {
-		c.Subscription = map[string]Subscription{}
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	if c.subscription == nil {
+		c.subscription = map[string]Subscription{}
 	}
 
-	c.Subscription[topic] = Subscription{
+	c.subscription[topic] = Subscription{
 		Name: topic,
 		QoS:  qos,
 	}
+}
+
+// Unsubscribe reports whether the client was subscribed to topic.
+func (c *Client) Unsubscribe(topic string) bool {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	_, ok := c.subscription[topic]
+	delete(c.subscription, topic)
+	return ok
+}
+
+func (c *Client) subscriptions() []Subscription {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	subs := make([]Subscription, 0, len(c.subscription))
+	for _, sub := range c.subscription {
+		subs = append(subs, sub)
+	}
+	return subs
+}
+
+// Will returns the will message set on connect.
+func (c *Client) Will() *Message {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	return c.willMessage
+}
+
+func (c *Client) SetWill(msg *Message) {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	c.willMessage = msg
+}
+
+// attach binds the client to the connection it (re)connected with.
+func (c *Client) attach(ctx *mqtt.ClientContext, keepAlive int16) {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	c.ctx = ctx
+	c.KeepAlive = keepAlive
+	c.lastSeen = time.Now()
+}
+
+func (c *Client) checkSession(now time.Time) {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	if now.After(c.lastSeen.Add(time.Duration(c.KeepAlive) * time.Second)) {
+		c.state = ClientConnected
+	}
+}
+
+func (c *Client) context() *mqtt.ClientContext {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	return c.ctx
 }
 
 func (c *Client) ResendInflight(duration time.Duration) {
@@ -134,17 +201,20 @@ func (c *Client) nextMessageId() uint16 {
 }
 
 func (c *Client) Addr() string {
-	return c.ctx.Addr
+	return c.context().Addr
 }
 
 func (c *Client) ServerAddress() string {
-	return c.ctx.ServerAddress
+	return c.context().ServerAddress
 }
 
 func (c *Client) ProtocolVersion() byte {
-	return c.ctx.ProtocolVersion
+	return c.context().ProtocolVersion
 }
 
 func (c *Client) Alive() {
-	c.LastSeen = time.Now()
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	c.lastSeen = time.Now()
 }

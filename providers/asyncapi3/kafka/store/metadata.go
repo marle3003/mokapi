@@ -78,7 +78,7 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 			Name: t.Name,
 		}
 
-		for i := range t.Partitions {
+		for i := range t.NumPartitions() {
 			resTopic.Partitions = append(resTopic.Partitions, metaData.ResponsePartition{
 				PartitionIndex: int32(i),
 				LeaderId:       0,

@@ -236,16 +236,13 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 				),
-					&store.Group{
-						Name:  "foo",
-						State: store.PreparingRebalance,
-						Generation: &store.Generation{
-							Id:                 3,
-							Protocol:           "range",
-							LeaderId:           "",
-							RebalanceTimeoutMs: 0,
-						},
-						Commits: nil,
+					"foo",
+					store.PreparingRebalance,
+					&store.Generation{
+						Id:                 3,
+						Protocol:           "range",
+						LeaderId:           "",
+						RebalanceTimeoutMs: 0,
 					},
 				))
 				return app
@@ -261,16 +258,13 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 				),
-					&store.Group{
-						Name:  "foo",
-						State: store.PreparingRebalance,
-						Generation: &store.Generation{
-							Id:                 3,
-							Protocol:           "range",
-							LeaderId:           "",
-							RebalanceTimeoutMs: 0,
-						},
-						Commits: nil,
+					"foo",
+					store.PreparingRebalance,
+					&store.Generation{
+						Id:                 3,
+						Protocol:           "range",
+						LeaderId:           "",
+						RebalanceTimeoutMs: 0,
 					},
 				))
 				return app
@@ -286,11 +280,9 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 				),
-					&store.Group{
-						Name:    "foo",
-						State:   store.PreparingRebalance,
-						Commits: nil,
-					},
+					"foo",
+					store.PreparingRebalance,
+					nil,
 				))
 				return app
 			},
@@ -313,38 +305,23 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 				),
-					&store.Group{
-						Name:  "foo",
-						State: store.PreparingRebalance,
-						Generation: &store.Generation{
-							Id:                 3,
-							Protocol:           "range",
-							LeaderId:           "m1",
-							RebalanceTimeoutMs: 0,
-							Members: map[string]*store.Member{
-								"m1": {
-									Client: &kafka.ClientContext{
-										Addr:                  "192.168.0.100",
-										ClientId:              "client1",
-										ClientSoftwareName:    "mokapi",
-										ClientSoftwareVersion: "1.0",
-										Heartbeat:             mustTime("2024-04-22T15:04:05+07:00"),
-									},
-									Partitions: map[string][]int{"topic": {1, 2, 5}},
-								},
-								"m2": {
-									Client: &kafka.ClientContext{
-										Addr:                  "192.168.0.200",
-										ClientId:              "client2",
-										ClientSoftwareName:    "mokapi",
-										ClientSoftwareVersion: "1.0",
-										Heartbeat:             mustTime("2024-04-22T15:04:10+07:00"),
-									},
-									Partitions: map[string][]int{"topic": {3, 4, 6}},
-								},
+					"foo",
+					store.PreparingRebalance,
+					&store.Generation{
+						Id:                 3,
+						Protocol:           "range",
+						LeaderId:           "m1",
+						RebalanceTimeoutMs: 0,
+						Members: map[string]*store.Member{
+							"m1": {
+								Client:     newClientContext("192.168.0.100", "client1", "mokapi", "1.0", mustTime("2024-04-22T15:04:05+07:00")),
+								Partitions: map[string][]int{"topic": {1, 2, 5}},
+							},
+							"m2": {
+								Client:     newClientContext("192.168.0.200", "client2", "mokapi", "1.0", mustTime("2024-04-22T15:04:10+07:00")),
+								Partitions: map[string][]int{"topic": {3, 4, 6}},
 							},
 						},
-						Commits: nil,
 					},
 				))
 
@@ -1166,16 +1143,13 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 				),
-					&store.Group{
-						Name:  "group-1",
-						State: store.PreparingRebalance,
-						Generation: &store.Generation{
-							Id:                 3,
-							Protocol:           "range",
-							LeaderId:           "",
-							RebalanceTimeoutMs: 0,
-						},
-						Commits: nil,
+					"group-1",
+					store.PreparingRebalance,
+					&store.Generation{
+						Id:                 3,
+						Protocol:           "range",
+						LeaderId:           "",
+						RebalanceTimeoutMs: 0,
 					},
 				))
 				return app
@@ -1320,12 +1294,24 @@ func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
 	}
 }
 
-func getKafkaInfoWithGroup(config *asyncapi3.Config, group *store.Group) *runtime.KafkaInfo {
+func getKafkaInfoWithGroup(config *asyncapi3.Config, name string, state store.GroupState, generation *store.Generation) *runtime.KafkaInfo {
 	s := store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
-	g := s.GetOrCreateGroup(group.Name, &store.Broker{})
-	*g = *group
+	g := s.GetOrCreateGroup(name, &store.Broker{})
+	g.SetState(state)
+	g.SetGeneration(generation)
 	return &runtime.KafkaInfo{
 		Config: config,
 		Store:  s,
 	}
+}
+
+func newClientContext(addr, clientId, softwareName, softwareVersion string, heartbeat time.Time) *kafka.ClientContext {
+	c := &kafka.ClientContext{
+		Addr:                  addr,
+		ClientSoftwareName:    softwareName,
+		ClientSoftwareVersion: softwareVersion,
+	}
+	c.SetClientId(clientId)
+	c.SetHeartbeat(heartbeat)
+	return c
 }

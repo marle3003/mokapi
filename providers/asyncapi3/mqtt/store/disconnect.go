@@ -9,10 +9,11 @@ func (s *Store) disconnect(_ mqtt.MessageWriter, disconnect *mqtt.DisconnectRequ
 	}
 
 	if disconnect.Reason == mqtt.DisconnectWithWillMessage {
-		t := s.Topics[client.WillMessage.Topic]
-		t.Retained = client.WillMessage
+		will := client.Will()
+		t := s.Topics[will.Topic]
+		t.Retained = will
 		for _, c := range s.clients {
-			c.publish(client.WillMessage)
+			c.publish(will)
 		}
 	}
 	s.logRequest(&DisconnectRequest{Reason: disconnect.Reason}, nil, ctx)

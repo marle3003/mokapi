@@ -188,8 +188,8 @@ func (s *Server) getCloseChan() chan bool {
 
 func (s *Server) handleMessage(rw ResponseWriter, req *Request) {
 	client := ClientFromContext(req.Context)
-	client.Heartbeat = time.Now()
-	client.ClientId = req.Header.ClientId
+	client.SetHeartbeat(time.Now())
+	client.SetClientId(req.Header.ClientId)
 
 	s.Handler.ServeMessage(rw, req)
 }

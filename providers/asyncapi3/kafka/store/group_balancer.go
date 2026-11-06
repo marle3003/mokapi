@@ -5,6 +5,8 @@ import (
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
 	"mokapi/providers/asyncapi3"
+	"slices"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,6 +18,7 @@ type groupBalancer struct {
 	sync  chan syncdata
 	stop  chan bool
 
+	joinsMu sync.Mutex
 	joins   []joindata
 	config  asyncapi3.BrokerBindings
 	monitor *groupMonitor
@@ -64,6 +67,25 @@ func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings, monitor *gr
 	}
 }
 
+// joins are appended by the run loop and read by finishJoin on another goroutine.
+func (b *groupBalancer) resetJoins() {
+	b.joinsMu.Lock()
+	defer b.joinsMu.Unlock()
+	b.joins = make([]joindata, 0)
+}
+
+func (b *groupBalancer) addJoin(j joindata) {
+	b.joinsMu.Lock()
+	defer b.joinsMu.Unlock()
+	b.joins = append(b.joins, j)
+}
+
+func (b *groupBalancer) joinsSnapshot() []joindata {
+	b.joinsMu.Lock()
+	defer b.joinsMu.Unlock()
+	return slices.Clone(b.joins)
+}
+
 func (b *groupBalancer) Stop() {
 	b.stop <- true
 }
@@ -73,10 +95,10 @@ func (b *groupBalancer) run() {
 	var syncs []syncdata
 	var assigns map[string]*groupAssignment
 	prepareRebalance := func() {
-		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[PreparingRebalance])
+		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State()], states[PreparingRebalance])
 		// start a new rebalance
-		b.group.State = PreparingRebalance
-		b.joins = make([]joindata, 0)
+		b.group.SetState(PreparingRebalance)
+		b.resetJoins()
 		syncs = nil
 		assigns = nil
 		go b.finishJoin(stop)
@@ -90,17 +112,18 @@ func (b *groupBalancer) run() {
 	for {
 		select {
 		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
-			if b.group.Generation == nil {
-				b.group.State = Empty
+			generation := b.group.Generation()
+			if generation == nil {
+				b.group.SetState(Empty)
 				continue
 			}
-			if b.group.State != Stable {
+			if b.group.State() != Stable {
 				continue
 			}
 			now := time.Now().Add(gracePeriod)
-			for _, m := range b.group.Generation.Members {
-				if m.Client.Heartbeat.Add(time.Duration(m.SessionTimeout) * time.Millisecond).Before(now) {
-					log.Infof("kafka: consumer '%v' timed out in group '%v': last heartbeat %v", m.Client.ClientId, b.group.Name, m.Client.Heartbeat.Format(time.RFC822))
+			for _, m := range generation.Members {
+				if m.Client.Heartbeat().Add(time.Duration(m.SessionTimeout) * time.Millisecond).Before(now) {
+					log.Infof("kafka: consumer '%v' timed out in group '%v': last heartbeat %v", m.Client.ClientId(), b.group.Name, m.Client.Heartbeat().Format(time.RFC822))
 					prepareRebalance()
 				}
 			}
@@ -108,22 +131,33 @@ func (b *groupBalancer) run() {
 			stop <- true
 			return
 		case j := <-b.join:
-			if b.group.State == CompletingRebalance {
+			state := b.group.State()
+			if state == CompletingRebalance {
 				b.sendRebalanceInProgress(j.writer)
 				continue
 			}
-			if b.group.State == Stable || b.group.State == Empty {
+			if state == Stable || state == Empty {
 				prepareRebalance()
 			}
-			log.Infof("kafka: consumer '%v' is joining the group '%v' with session timeout %v", j.client.ClientId, b.group.Name, j.sessionTimeout)
-			b.joins = append(b.joins, j)
+			log.Infof("kafka: consumer '%v' is joining the group '%v' with session timeout %v", j.client.ClientId(), b.group.Name, j.sessionTimeout)
+			b.addJoin(j)
 		case s := <-b.sync:
 			switch {
 			case s.assigns != nil: // leader sync
 				assigns = s.assigns
 				syncs = append(syncs, s)
-				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Stable])
-				b.group.State = Stable
+				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State()], states[Stable])
+				b.group.SetState(Stable)
+				for memberName, assign := range assigns {
+					b.group.AssignPartitions(memberName, assign.topics)
+				}
+
+				if b.monitor != nil {
+					b.monitor.LastRebalancing(b.group.Name, time.Now())
+				}
+
+				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId(), b.group.Name)
+
 				for _, sync := range syncs {
 					memberName := sync.client.Member[b.group.Name]
 					assign := assigns[memberName]
@@ -138,17 +172,6 @@ func (b *groupBalancer) run() {
 					}()
 				}
 
-				for memberName, assign := range assigns {
-					for topicName, partitions := range assign.topics {
-						b.group.Generation.Members[memberName].Partitions[topicName] = partitions
-					}
-				}
-
-				if b.monitor != nil {
-					b.monitor.LastRebalancing(b.group.Name, time.Now())
-				}
-
-				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId, b.group.Name)
 			case assigns == nil: // waiting for leader
 				syncs = append(syncs, s)
 			default:
@@ -184,21 +207,20 @@ StopWaitingForConsumers:
 		}
 	}
 
+	joins := b.joinsSnapshot()
 	generation := b.group.NewGeneration()
-	if len(b.joins) == 0 {
-		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Empty])
-		b.group.State = Empty
+	if len(joins) == 0 {
+		b.group.SetGeneration(generation)
+		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State()], states[Empty])
+		b.group.SetState(Empty)
 		return
 	}
-
-	log.Infof("kafka group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[CompletingRebalance])
-	b.group.State = CompletingRebalance
 
 	counter := map[string]*protocoldata{
 		"": {counter: -1},
 	}
 	var protocol string
-	for _, j := range b.joins {
+	for _, j := range joins {
 		memberId := j.client.GetOrCreateMemberId(b.group.Name)
 		generation.Members[memberId] = newMember(j.client, j.sessionTimeout)
 
@@ -218,16 +240,21 @@ StopWaitingForConsumers:
 
 	generation.Protocol = protocol
 
-	leader := b.joins[0]
+	leader := joins[0]
 	generation.LeaderId = leader.client.Member[b.group.Name]
 	generation.RebalanceTimeoutMs = leader.rebalanceTimeout
-	members := make([]joinGroup.Member, 0, len(b.joins))
+	// publish the complete generation before any member learns about it
+	b.group.SetGeneration(generation)
+	log.Infof("kafka group %v state changed from %v to %v", b.group.Name, states[b.group.State()], states[CompletingRebalance])
+	b.group.SetState(CompletingRebalance)
+
+	members := make([]joinGroup.Member, 0, len(joins))
 	members = append(members, joinGroup.Member{
 		MemberId: generation.LeaderId,
 		MetaData: counter[protocol].metadata[generation.LeaderId],
 	})
 
-	for _, j := range b.joins[1:] {
+	for _, j := range joins[1:] {
 		memberId := j.client.Member[b.group.Name]
 		members = append(members, joinGroup.Member{
 			MemberId: memberId,

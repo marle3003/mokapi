@@ -1,10 +1,13 @@
 package directory
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
+	"slices"
+	"sync"
 )
 
 type LogInfo struct {
@@ -15,11 +18,26 @@ type LogInfo struct {
 	Duration  int64  `json:"duration"`
 }
 
+// SearchLog is pushed to the event store before the search has finished. The response is
+// filled while searching, so it is only changed through AddResult and SetStatus.
 type SearchLog struct {
-	Request  *SearchRequest   `json:"request"`
-	Response *SearchResponse  `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *SearchRequest
+	Response *SearchResponse
+	// m guards Response
+	m sync.Mutex
+}
+
+func (l *SearchLog) AddResult(result SearchResult) {
+	l.m.Lock()
+	defer l.m.Unlock()
+	l.Response.Results = append(l.Response.Results, result)
+}
+
+func (l *SearchLog) SetStatus(status string) {
+	l.m.Lock()
+	defer l.m.Unlock()
+	l.Response.Status = status
 }
 
 type SearchRequest struct {
@@ -49,8 +67,6 @@ func NewSearchLogEvent(r *ldap.SearchRequest, eh events.Handler, traits events.T
 	event := &SearchLog{
 		Request:  fromRequest(r),
 		Response: &SearchResponse{},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(event, traits.WithNamespace("ldap").With("operation", "search"))
 	return event
@@ -71,16 +87,14 @@ func fromRequest(r *ldap.SearchRequest) *SearchRequest {
 }
 
 type BindLog struct {
-	Request  *BindRequest     `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *BindRequest
+	Response *Response
 }
 
 type UnbindLog struct {
-	Request  *UnbindRequest   `json:"request"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request *UnbindRequest
 }
 
 type UnbindRequest struct {
@@ -96,10 +110,9 @@ type BindRequest struct {
 }
 
 type AddLog struct {
-	Request  *AddRequest      `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *AddRequest
+	Response *Response
 }
 
 type AddRequest struct {
@@ -132,8 +145,6 @@ func NewBindLogEvent(req *ldap.BindRequest, res *ldap.BindResponse, eh events.Ha
 			Status:  ldap.StatusText[res.Result],
 			Message: res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "bind"))
 	return l
@@ -165,8 +176,6 @@ func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, eh events.Handl
 			MatchedDn: res.MatchedDn,
 			Message:   res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "add"))
 
@@ -174,10 +183,9 @@ func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, eh events.Handl
 }
 
 type ModifyLog struct {
-	Request  *ModifyRequest   `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *ModifyRequest
+	Response *Response
 }
 
 type ModifyRequest struct {
@@ -214,8 +222,6 @@ func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, eh eve
 			MatchedDn: res.MatchedDn,
 			Message:   res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "modify"))
 
@@ -223,10 +229,9 @@ func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, eh eve
 }
 
 type DeleteLog struct {
-	Request  *DeleteRequest   `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *DeleteRequest
+	Response *Response
 }
 
 type DeleteRequest struct {
@@ -245,8 +250,6 @@ func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, eh eve
 			MatchedDn: res.MatchedDn,
 			Message:   res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "delete"))
 
@@ -254,10 +257,9 @@ func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, eh eve
 }
 
 type ModifyDNLog struct {
-	Request  *ModifyDNRequest `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *ModifyDNRequest
+	Response *Response
 }
 
 type ModifyDNRequest struct {
@@ -282,8 +284,6 @@ func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, 
 			MatchedDn: res.MatchedDn,
 			Message:   res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "modifydn"))
 
@@ -291,10 +291,9 @@ func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, 
 }
 
 type CompareLog struct {
-	Request  *CompareRequest  `json:"request"`
-	Response *Response        `json:"response"`
-	Duration int64            `json:"duration"`
-	Actions  []*common.Action `json:"actions"`
+	common.EventLog
+	Request  *CompareRequest
+	Response *Response
 }
 
 type CompareRequest struct {
@@ -316,8 +315,6 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh 
 			Status:  ldap.StatusText[res.ResultCode],
 			Message: res.Message,
 		},
-		Duration: 0,
-		Actions:  nil,
 	}
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "compare"))
 
@@ -337,11 +334,16 @@ func (l *SearchLog) Title() string {
 	return l.Request.Filter
 }
 
+// IndexFields returns a copy of the response, because the index reads it after the
+// lock is released while results may still be added.
 func (l *SearchLog) IndexFields() map[string]any {
+	l.m.Lock()
+	defer l.m.Unlock()
+	response := &SearchResponse{Status: l.Response.Status, Results: slices.Clone(l.Response.Results)}
 	m := map[string]any{
 		"operation":       l.Request.Operation,
 		"request":         l.Request,
-		"response":        l.Response,
+		"response":        response,
 		"metadata.baseDN": l.Request.BaseDN,
 	}
 	return m
@@ -373,4 +375,49 @@ func (l *DeleteLog) Title() string {
 
 func (l *AddLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *SearchLog) MarshalJSON() ([]byte, error) {
+	l.m.Lock()
+	defer l.m.Unlock()
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *BindLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *UnbindLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, nil)
+}
+
+func (l *AddLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *ModifyLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *DeleteLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *ModifyDNLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+func (l *CompareLog) MarshalJSON() ([]byte, error) {
+	return marshalLog(&l.EventLog, l.Request, l.Response)
+}
+
+// marshalLog is the JSON shape of all LDAP logs. The response is left out when it is nil
+// (unbind has none).
+func marshalLog(e *common.EventLog, request, response any) ([]byte, error) {
+	return json.Marshal(struct {
+		Request  any              `json:"request"`
+		Response any              `json:"response,omitempty"`
+		Duration int64            `json:"duration"`
+		Actions  []*common.Action `json:"actions"`
+	}{request, response, e.GetDuration(), e.GetActions()})
 }

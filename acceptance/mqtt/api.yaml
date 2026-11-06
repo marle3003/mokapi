@@ -17,6 +17,12 @@ channels:
     messages:
       TemperatureEvent:
         $ref: '#/components/messages/Temperature'
+  alertReading:
+    address: 'sensors/alerts'
+    description: Topic for forwarded temperature readings.
+    messages:
+      TemperatureEvent:
+        $ref: '#/components/messages/Temperature'
 
 operations:
   publishTemperature:

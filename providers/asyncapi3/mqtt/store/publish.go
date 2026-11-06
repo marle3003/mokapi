@@ -18,6 +18,9 @@ type PublishArgs struct {
 	SkipValidation bool
 }
 
+// Publish validates and emits the message to the JavaScript handlers before it
+// is retained and delivered. A handler may publish again (mqtt.publish), so
+// s.m is never held while the emitter runs.
 func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.PublishReason, error) {
 	msg := &Message{
 		Topic:  publish.Topic,
@@ -26,7 +29,10 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 		Retain: args.Retain,
 	}
 
-	topic, ok := s.Topic(msg.Topic)
+	s.m.Lock()
+	topic, ok := s.topic(msg.Topic)
+	apiName := s.cfg.Info.Name
+	s.m.Unlock()
 	if !ok {
 		return mqtt.TopicNameInvalid, fmt.Errorf("topic %s not found", msg.Topic)
 	}
@@ -41,7 +47,7 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 	}
 
 	evt := &engine.MqttMessageEvent{
-		Api:    s.cfg.Info.Name,
+		Api:    apiName,
 		Topic:  topic.Name,
 		Value:  string(msg.Data),
 		Retain: args.Retain,
@@ -57,22 +63,30 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 		args.Retain = evt.Retain
 	}
 
+	s.m.Lock()
 	if args.Retain {
-		topic.Retained = msg
+		// Update may have replaced the topic while the emitter ran
+		if current, ok := s.topic(msg.Topic); ok {
+			current.Retained = msg
+		}
 	}
+	clients := s.clientList()
+	s.m.Unlock()
 
 	go func() {
-		for _, client := range s.clients {
+		for _, client := range clients {
 			client.publish(msg)
 		}
 	}()
 
-	s.logMessage(messageId, topic, publish, actions, args)
+	s.logMessage(apiName, messageId, topic, publish, actions, args)
 	return mqtt.PublishSuccess, nil
 }
 
 func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool, ctx *mqtt.ClientContext) {
+	s.m.RLock()
 	client, ok := s.clients[ctx.ClientId]
+	s.m.RUnlock()
 	if !ok {
 		panic("unknown client")
 	}
@@ -110,8 +124,16 @@ func puback(rw mqtt.MessageWriter, payload *mqtt.PublishResponse) error {
 	})
 }
 
-func (s *Store) Topic(topic string) (*Topic, bool) {
-	if t, ok := s.Topics[topic]; ok {
+func (s *Store) Topic(name string) (*Topic, bool) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	return s.topic(name)
+}
+
+// topic creates topics lazily, the caller must hold s.m for writing.
+func (s *Store) topic(name string) (*Topic, bool) {
+	if t, ok := s.Topics[name]; ok {
 		return t, ok
 	}
 
@@ -126,7 +148,7 @@ func (s *Store) Topic(topic string) (*Topic, bool) {
 			continue
 		}
 
-		err := ch.Value.IsNameValid(topic)
+		err := ch.Value.IsNameValid(name)
 		if err != nil {
 			continue
 		}
@@ -135,17 +157,17 @@ func (s *Store) Topic(topic string) (*Topic, bool) {
 			s.Topics = make(map[string]*Topic)
 		}
 
-		t := &Topic{Name: topic, cfg: ch.Value}
-		s.Topics[topic] = t
+		t := &Topic{Name: name, cfg: ch.Value}
+		s.Topics[name] = t
 		return t, true
 	}
 
 	return nil, false
 }
 
-func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {
+func (s *Store) logMessage(apiName string, messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {
 	topicName := topic.cfg.ResolveAddress()
-	labels := []string{s.cfg.Info.Name, topicName}
+	labels := []string{apiName, topicName}
 	if topic.Name != topicName {
 		labels = append(labels, topic.Name)
 	}
@@ -156,7 +178,7 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 	traits := events.
 		NewTraits().
 		WithNamespace("mqtt").
-		WithName(s.cfg.Info.Name).
+		WithName(apiName).
 		With("topic", topicName).
 		With("type", "message").
 		With("clientId", args.ClientId)
@@ -172,7 +194,7 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 			Binary: publish.Data,
 		},
 		Retain:   args.Retain,
-		Api:      s.cfg.Info.Name,
+		Api:      apiName,
 		ClientId: args.ClientId,
 		Actions:  actions,
 	}, traits)

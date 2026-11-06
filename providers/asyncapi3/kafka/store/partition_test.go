@@ -162,7 +162,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
 		}}},
 	)
-	p.validator = &validator{
+	p.validator.Store(&validator{
 		validators: []recordValidator{
 			&messageValidator{
 				messageId: "message-foo-id",
@@ -171,7 +171,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 					contentType: "application/json",
 				},
 			},
-		}}
+		}})
 
 	wr, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
@@ -252,7 +252,7 @@ func TestPatition_Retention(t *testing.T) {
 	require.Equal(t, int64(2), p.Tail)
 
 	// rolling
-	p.addSegment()
+	p.addSegmentLocked()
 	require.Len(t, p.Segments, 2)
 	require.False(t, p.Segments[0].Closed.IsZero())
 
@@ -288,4 +288,33 @@ func TestPartition_Write_Producer_ClientId(t *testing.T) {
 	require.Len(t, wr.Records, 0)
 
 	require.Equal(t, "foo", logs[0].ClientId)
+}
+
+func TestPartition_Write_ActiveSegmentWasRemoved(t *testing.T) {
+	p := newPartition(
+		0,
+		[]*Broker{{Id: 1}},
+		func(log *KafkaMessageLog, traits events.Traits) {},
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
+		&Topic{Name: "foo"},
+	)
+	// the cleaner removed the active segment while an older one is still there
+	p.Segments[0] = newSegment(0)
+	p.ActiveSegment = 5
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := p.Write(kafka.RecordBatch{Records: []*kafka.Record{{Key: kafka.NewBytes([]byte("foo"))}}})
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("write is blocked")
+	}
+	require.Equal(t, int64(1), p.Offset())
+	require.Contains(t, p.Segments, int64(0))
+	require.Contains(t, p.Segments, p.ActiveSegment)
 }

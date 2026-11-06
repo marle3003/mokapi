@@ -270,7 +270,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", res.Topics[0].Partitions[0].ErrorMessage)
 
-				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, 1, len(hook.AllEntries()))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka: failed to write to topic 'foo': invalid producer clientId 'kafkatest' for topic foo: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
@@ -322,7 +322,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
 
-				require.Equal(t, 0, len(hook.Entries))
+				require.Equal(t, 0, len(hook.AllEntries()))
 			},
 		},
 		{
@@ -412,7 +412,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
 
-				require.Equal(t, 0, len(hook.Entries))
+				require.Equal(t, 0, len(hook.AllEntries()))
 
 				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 1)
@@ -478,7 +478,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "expected sequence number 0 but got 10", res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, "expected sequence number 0 but got 10", res.Topics[0].Partitions[0].RecordErrors[0].BatchIndexErrorMessage)
 
-				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, 1, len(hook.AllEntries()))
 				require.Equal(t, "kafka: failed to write to topic 'foo' partition 0: expected sequence number 0 but got 10", hook.LastEntry().Message)
 			},
 		},
@@ -536,7 +536,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "message sequence number already received: 0", res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, "message sequence number already received: 0", res.Topics[0].Partitions[0].RecordErrors[0].BatchIndexErrorMessage)
 
-				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, 1, len(hook.AllEntries()))
 				require.Equal(t, "kafka: failed to write to topic 'foo' partition 0: message sequence number already received: 0", hook.LastEntry().Message)
 			},
 		},

@@ -2,7 +2,9 @@ package kafka
 
 import (
 	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestClientContext_AddGroup(t *testing.T) {
@@ -50,9 +52,34 @@ func TestClientContext_GetOrCreateMemberId(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := &ClientContext{ClientId: tc.clientId}
+			ctx := &ClientContext{clientId: tc.clientId}
 			ctx.AddGroup(tc.groupName, "")
 			tc.test(t, ctx)
 		})
 	}
+}
+
+func TestClientContext_ConcurrentAccess(t *testing.T) {
+	ctx := &ClientContext{}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			ctx.SetHeartbeat(time.Now())
+			ctx.SetClientId("foo")
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			_ = ctx.Heartbeat()
+			_ = ctx.ClientId()
+		}
+	}()
+	wg.Wait()
+
+	require.Equal(t, "foo", ctx.ClientId())
+	require.False(t, ctx.Heartbeat().IsZero())
 }

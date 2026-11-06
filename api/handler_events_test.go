@@ -671,11 +671,12 @@ func TestHandler_Events(t *testing.T) {
 				require.NoError(t, err)
 				err = sm.Push(&websocket.MessageLog{Channel: "channel", Message: &websocket.LogValue{Value: "foo"}}, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
-				err = sm.Push(&directory.SearchLog{
+				searchLog := &directory.SearchLog{
 					Request:  &directory.SearchRequest{Operation: "Search", BaseDN: "foo", Filter: "bar"},
 					Response: &directory.SearchResponse{Status: "ok"},
-					Duration: int64(10),
-				}, events.NewTraits().WithNamespace("kafka"))
+				}
+				searchLog.SetDuration(10)
+				err = sm.Push(searchLog, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
 
 				try.Handler(t,

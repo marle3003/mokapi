@@ -49,6 +49,9 @@ func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, 
 }
 
 func (s *Store) Update(cfg *asyncapi3.Config) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.cfg = cfg
 
 	for address, ch := range cfg.Channels {
@@ -76,10 +79,17 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 }
 
 func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
+	ctx := mqtt.ClientFromContext(req.Context)
+
+	// A publish runs JavaScript handlers, which may publish themselves
+	// (mqtt.publish) and so re-enter the store. It must not hold s.m.
+	if msg, ok := req.Payload.(*mqtt.PublishRequest); ok {
+		s.publish(rw, msg, req.Header.QoS, req.Header.Retain, ctx)
+		return
+	}
+
 	s.m.Lock()
 	defer s.m.Unlock()
-
-	ctx := mqtt.ClientFromContext(req.Context)
 
 	switch msg := req.Payload.(type) {
 	case *mqtt.ConnectRequest:
@@ -88,8 +98,6 @@ func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 		s.disconnect(rw, msg, ctx)
 	case *mqtt.SubscribeRequest:
 		s.subscribe(rw, msg, ctx)
-	case *mqtt.PublishRequest:
-		s.publish(rw, msg, req.Header.QoS, req.Header.Retain, ctx)
 	case *mqtt.UnsubscribeRequest:
 		s.unsubscribe(rw, msg, ctx)
 	case *mqtt.PingRequest:
@@ -116,7 +124,7 @@ func (s *Store) startQoS() {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				for _, c := range s.clients {
+				for _, c := range s.Clients() {
 					c.ResendInflight(s.RetryInterval)
 				}
 			}
@@ -127,6 +135,14 @@ func (s *Store) startQoS() {
 }
 
 func (s *Store) Clients() []*Client {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	return s.clientList()
+}
+
+// clientList returns a snapshot, the caller must hold s.m.
+func (s *Store) clientList() []*Client {
 	var result []*Client
 	for _, c := range s.clients {
 		result = append(result, c)
@@ -157,8 +173,6 @@ func (s *Store) checkClientSession() {
 
 	now := time.Now()
 	for _, client := range s.clients {
-		if now.After(client.LastSeen.Add(time.Duration(client.KeepAlive) * time.Second)) {
-			client.State = ClientConnected
-		}
+		client.checkSession(now)
 	}
 }
