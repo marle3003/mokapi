@@ -749,6 +749,12 @@
         },
         "items": [
           {
+            "label": "Storybook Stories That Check Your OpenAPI Contract: Switch Between MSW and Mokapi",
+            "source": "resources/blogs/storybook-msw-mokapi.md",
+            "path": "/resources/blogs/storybook-msw-mokapi",
+            "hideNavigation": true
+          },
+          {
             "label": "Mokapi Meets MSW: Reuse Your Browser Mocks as a Contract-Checked Mock Server",
             "source": "resources/blogs/mokapi-meets-msw.md",
             "path": "/resources/blogs/mokapi-meets-msw",
