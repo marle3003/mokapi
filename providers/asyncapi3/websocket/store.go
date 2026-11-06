@@ -149,7 +149,7 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		With("channel", ch.Name).
 		With("type", "connection").
 		With("clientId", client.Id))
-	l.Actions = ch.runConnectEvent(client)
+	l.SetActions(ch.runConnectEvent(client))
 
 	errCh := make(chan error, 2)
 	go func() { errCh <- ch.readLoop(ctx, conn, client) }()

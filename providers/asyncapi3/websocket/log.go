@@ -1,8 +1,10 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
+	"sync"
 )
 
 type Direction string
@@ -12,16 +14,49 @@ const (
 	Send    Direction = "send"
 )
 
+// actionLog holds the actions of an event handler. A log is stored in the event store
+// before the handler has finished, so the actions are attached later while readers
+// (e.g. the dashboard API) may already access the log.
+type actionLog struct {
+	m       sync.Mutex
+	actions []*common.Action
+}
+
+func (l *actionLog) SetActions(actions []*common.Action) {
+	l.m.Lock()
+	defer l.m.Unlock()
+	l.actions = actions
+}
+
+func (l *actionLog) GetActions() []*common.Action {
+	l.m.Lock()
+	defer l.m.Unlock()
+	return l.actions
+}
+
 type MessageLog struct {
-	Channel   string           `json:"channel"`
-	Message   *LogValue        `json:"message"`
-	MessageId string           `json:"messageId"`
-	Direction Direction        `json:"direction"`
-	Client    ClientLog        `json:"client"`
-	Api       string           `json:"api"`
-	Actions   []*common.Action `json:"actions"`
+	actionLog
+	Channel   string
+	Message   *LogValue
+	MessageId string
+	Direction Direction
+	Client    ClientLog
+	Api       string
 	// [messageId]error
-	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
+	ValidationErrors map[string]string
+}
+
+func (l *MessageLog) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Channel          string            `json:"channel"`
+		Message          *LogValue         `json:"message"`
+		MessageId        string            `json:"messageId"`
+		Direction        Direction         `json:"direction"`
+		Client           ClientLog         `json:"client"`
+		Api              string            `json:"api"`
+		Actions          []*common.Action  `json:"actions"`
+		ValidationErrors map[string]string `json:"validationErrors,omitempty"`
+	}{l.Channel, l.Message, l.MessageId, l.Direction, l.Client, l.Api, l.GetActions(), l.ValidationErrors})
 }
 
 type MessageLogInfo struct {
@@ -75,11 +110,21 @@ func clientLog(c *Client) ClientLog {
 }
 
 type ConnectLog struct {
-	Type    string           `json:"type"`
-	Channel string           `json:"channel"`
-	Client  ClientLog        `json:"client"`
-	Api     string           `json:"api"`
-	Actions []*common.Action `json:"actions"`
+	actionLog
+	Type    string
+	Channel string
+	Client  ClientLog
+	Api     string
+}
+
+func (l *ConnectLog) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type    string           `json:"type"`
+		Channel string           `json:"channel"`
+		Client  ClientLog        `json:"client"`
+		Api     string           `json:"api"`
+		Actions []*common.Action `json:"actions"`
+	}{l.Type, l.Channel, l.Client, l.Api, l.GetActions()})
 }
 
 func connectLog(c *Channel, client *Client) *ConnectLog {

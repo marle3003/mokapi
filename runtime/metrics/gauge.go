@@ -9,6 +9,7 @@ import (
 type Gauge struct {
 	info  *Info
 	value float64
+	m     sync.Mutex
 }
 
 func NewGauge(opt ...Options) *Gauge {
@@ -22,10 +23,14 @@ func NewGauge(opt ...Options) *Gauge {
 }
 
 func (g *Gauge) Set(v float64) {
+	g.m.Lock()
+	defer g.m.Unlock()
 	g.value = v
 }
 
 func (g *Gauge) Value() float64 {
+	g.m.Lock()
+	defer g.m.Unlock()
 	return g.value
 }
 

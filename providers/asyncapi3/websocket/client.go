@@ -48,6 +48,14 @@ func (c *Client) sendMessage(message any) error {
 	}
 
 	l := messageLog(c.channel, data, messageId, c, Receive)
+	if err != nil {
+		b, _ := json.Marshal(message)
+		l.Message = &LogValue{
+			Value:  string(b),
+			Binary: b,
+		}
+		l.ValidationErrors = validationErrors
+	}
 
 	channelName := c.channel.Config.ResolveAddress()
 	traits := events.NewTraits().
@@ -69,12 +77,6 @@ func (c *Client) sendMessage(message any) error {
 
 	if err != nil {
 		c.channel.monitor.MessagesError.WithLabel(labels...).Add(1)
-		b, _ := json.Marshal(message)
-		l.Message = &LogValue{
-			Value:  string(b),
-			Binary: b,
-		}
-		l.ValidationErrors = validationErrors
 		return err
 	}
 
@@ -89,7 +91,7 @@ func (c *Client) sendMessage(message any) error {
 func (s *Store) Clients() []Client {
 	var clients []Client
 	for _, ch := range s.Channels {
-		for _, c := range ch.clients {
+		for _, c := range ch.connectedClients() {
 			clients = append(clients, *c)
 		}
 	}
