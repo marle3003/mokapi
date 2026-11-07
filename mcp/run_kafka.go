@@ -105,7 +105,7 @@ func (m *mokapi) getKafkaApi(name string) any {
 }
 
 func (k *Kafka) GetTopics() []TopicSummary {
-	var topics []TopicSummary
+	topics := []TopicSummary{}
 	for name, c := range k.info.Channels {
 		if c.Value == nil {
 			continue
@@ -246,7 +246,7 @@ func (t *Topic) Consume(partition int, startOffset int64, limit int) ([]KafkaRec
 		return nil, fmt.Errorf("partition '%d' not found", partition)
 	}
 
-	var records []KafkaRecord
+	records := []KafkaRecord{}
 	offset := startOffset
 	n := 0
 	for {

@@ -63,7 +63,7 @@ func (m *mokapi) getEvents(vTraits goja.Value, vLimit goja.Value) ([]any, error)
 		}
 		limit = int(vLimit.ToInteger())
 	}
-	var result []any
+	result := []any{}
 	for i, evt := range evts {
 		if i >= limit {
 			break

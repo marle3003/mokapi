@@ -37,7 +37,7 @@ func (m *mokapi) getLdapApi(name string) any {
 }
 
 func (l *LdapAPI) GetEntries() []LdapEntry {
-	var entries []LdapEntry
+	entries := []LdapEntry{}
 	if l.info.Entries == nil {
 		return entries
 	}
