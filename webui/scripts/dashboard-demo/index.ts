@@ -26,6 +26,7 @@ async function main() {
     } catch (err) {
         console.error('❌ Failed to generate demo data')
         console.error(err)
+        process.exitCode = 1
     } finally {
         await closeKafka();
         stopMokapi();
