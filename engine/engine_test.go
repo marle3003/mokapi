@@ -54,6 +54,31 @@ func TestEngine_Scheduler(t *testing.T) {
 			},
 		},
 		{
+			name: "run cron job immediately does not block (deadlock guard for the inline first run)",
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
+				done := make(chan error)
+				go func() {
+					done <- e.AddScript(newScript("test.js", `
+						import mokapi from 'mokapi'
+						export default function() {
+							mokapi.cron('0 0 1 1 *', function() {}, { skipImmediateFirstRun: false });
+						}
+					`))
+				}()
+
+				select {
+				case err := <-done:
+					r.NoError(t, err)
+				case <-time.After(5 * time.Second):
+					t.Fatal("registering a cron job with an immediate first run blocks")
+				}
+
+				r.Eventually(t, func() bool {
+					return len(sm.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))) == 1
+				}, 2*time.Second, 10*time.Millisecond)
+			},
+		},
+		{
 			name: "run job with name",
 			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `

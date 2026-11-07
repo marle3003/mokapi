@@ -302,12 +302,14 @@ func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
 }
 
 func getConfigKey(u *url.URL) string {
-	if u.Scheme == "file" || u.Host == "" {
+	// work on a copy: u is often the config's own URL, read concurrently via ConfigInfo.Key()
+	k := *u
+	if k.Scheme == "file" || k.Host == "" {
 		// Ensures the behavior is always the same for files,
 		// otherwise it is sometimes file:/ or file:///
-		u.OmitHost = true
+		k.OmitHost = true
 	}
-	return u.String()
+	return k.String()
 }
 
 func invokeListeners(e dynamic.ConfigEvent) {

@@ -31,6 +31,7 @@ type scriptHost struct {
 
 	script common.Script
 	jobs   map[int]Job
+	jobsMu sync.Mutex // guards jobs; separate from m, which close() holds while closing the script
 	file   *dynamic.Config
 
 	eventLogger   func(level, message string)
@@ -73,23 +74,28 @@ func (sh *scriptHost) Run() (err error) {
 	return sh.script.Run()
 }
 
+// Every and Cron are only called from the script's event loop (single caller). That keeps the
+// id allocation in Cron safe without holding jobsMu across scheduler.Cron, whose inline
+// immediate run would otherwise deadlock or invert the lock order with the scheduler's mutex.
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
-	id := len(sh.jobs)
+	// The scheduler may run the job immediately. Holding the lock until the job is
+	// registered makes the first run wait, so it can look up its own job.
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
 
+	id := len(sh.jobs)
 	do := sh.newJobFunc(handler, opt, every, id)
 	job, err := sh.engine.scheduler.Every(every, do, opt)
-
 	if err != nil {
 		return -1, err
 	}
 
 	sh.jobs[id] = job
-
 	return id, nil
 }
 
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
-	id := len(sh.jobs)
+	id := sh.nextJobId()
 
 	do := sh.newJobFunc(handler, opt, expr, id)
 	job, err := sh.engine.scheduler.Cron(expr, do, opt)
@@ -97,9 +103,24 @@ func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (
 		return -1, err
 	}
 
+	// must not hold jobsMu across scheduler.Cron: an immediate first run executes inline
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
 	sh.jobs[id] = job
-
 	return id, nil
+}
+
+func (sh *scriptHost) nextJobId() int {
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
+	return len(sh.jobs)
+}
+
+// job returns nil if the job is not registered (yet) or the host is closed.
+func (sh *scriptHost) job(id int) Job {
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
+	return sh.jobs[id]
 }
 
 func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string, id int) func() {
@@ -119,7 +140,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 	counter := 1
 
 	return func() {
-		job := sh.jobs[id]
+		job := sh.job(id)
 		var nextRun time.Time
 		if job != nil {
 			nextRun = job.NextRun()
@@ -164,23 +185,20 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 }
 
 func (sh *scriptHost) Cancel(jobId int) error {
-	if j, ok := sh.jobs[jobId]; !ok {
+	j := sh.job(jobId)
+	if j == nil {
 		return fmt.Errorf("job not defined")
-	} else {
-		sh.engine.scheduler.Remove(j)
-		return nil
 	}
+	sh.engine.scheduler.Remove(j)
+	return nil
 }
 
 func (sh *scriptHost) close() {
 	sh.Lock()
 	defer sh.Unlock()
 
-	if sh.jobs != nil {
-		for _, j := range sh.jobs {
-			sh.engine.scheduler.Remove(j)
-		}
-		sh.jobs = nil
+	for _, j := range sh.takeJobs() {
+		sh.engine.scheduler.Remove(j)
 	}
 
 	if sh.script != nil {
@@ -192,6 +210,21 @@ func (sh *scriptHost) close() {
 	}
 
 	sh.engine.Clear(sh.name)
+}
+
+// takeJobs empties the job registry and returns the jobs that were registered.
+func (sh *scriptHost) takeJobs() map[int]Job {
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
+	jobs := sh.jobs
+	sh.jobs = nil
+	return jobs
+}
+
+func (sh *scriptHost) hasJobs() bool {
+	sh.jobsMu.Lock()
+	defer sh.jobsMu.Unlock()
+	return len(sh.jobs) > 0
 }
 
 func (sh *scriptHost) AddCleanupFunc(f func()) {
@@ -307,7 +340,7 @@ func (sh *scriptHost) CanClose() bool {
 	if sh.script == nil {
 		return true
 	}
-	return !sh.engine.Has(sh.name) && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
+	return !sh.engine.Has(sh.name) && !sh.hasJobs() && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
 }
 
 func (sh *scriptHost) FindFakerNode(name string) *generator.Node {
