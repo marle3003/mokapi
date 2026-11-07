@@ -189,7 +189,14 @@ func (n *Node) Set(key string, val goja.Value) bool {
 			if err != nil {
 				return nil, err
 			}
-			return v.Export(), err
+
+			// v is a goja value, so it must be exported on the loop
+			var exported any
+			_, _ = n.m.loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
+				exported = v.Export()
+				return nil, nil
+			})
+			return exported, nil
 		}
 		n.restore = append(n.restore, func() {
 			n.origNode.Fake = old

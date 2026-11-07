@@ -99,7 +99,7 @@ func (m *mokapi) getHttpApi(name string) *OpenAPI {
 	return nil
 }
 func (o *OpenAPI) GetOperations() []OperationSummary {
-	var result []OperationSummary
+	result := []OperationSummary{}
 	if o.info.Paths == nil {
 		return result
 	}

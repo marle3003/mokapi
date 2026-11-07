@@ -79,7 +79,7 @@ func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.Ev
 		}
 
 		if args.isTrackSet {
-			return args.track(params...)
+			return trackOnLoop(loop, args, params)
 		}
 
 		newHashes, err := hashOf(ctx.Args)
@@ -89,6 +89,15 @@ func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.Ev
 
 		return haveChanges(origin, newHashes), nil
 	}
+}
+
+// trackOnLoop calls the track function on the loop, because it is a goja function.
+func trackOnLoop(loop *eventloop.EventLoop, args onArgs, params []goja.Value) (changed bool, err error) {
+	_, _ = loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
+		changed, err = args.track(params...)
+		return nil, nil
+	})
+	return
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {

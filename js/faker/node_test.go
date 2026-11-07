@@ -140,6 +140,28 @@ func TestNode(t *testing.T) {
 			},
 		},
 		{
+			name: "request path of the root value is an empty array",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "street" {
+						return street
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = (r) => { return r.path.length };
+				`)
+				r.NoError(t, err)
+				v, err := street.Fake(generator.NewRequest(nil, schematest.New("string"), nil))
+				r.NoError(t, err)
+				r.Equal(t, int64(0), v)
+			},
+		},
+		{
 			name: "change name",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				street := generator.NewNode("street")
@@ -331,11 +353,52 @@ func TestNode(t *testing.T) {
 				r.Equal(t, map[string]any{"foo": "bar"}, req.Context.Values)
 			},
 		},
+		{
+			name: "async fake function resolves",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node { return street }
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = async () => {
+						await new Promise(resolve => setTimeout(resolve, 10))
+						return { name: 'foo' }
+					}
+				`)
+				r.NoError(t, err)
+
+				v, err := street.Fake(&generator.Request{})
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"name": "foo"}, v)
+			},
+		},
+		{
+			name: "async fake function rejects",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node { return street }
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = async () => {
+						await new Promise(resolve => setTimeout(resolve, 10))
+						throw new Error('failed')
+					}
+				`)
+				r.NoError(t, err)
+
+				_, err = street.Fake(&generator.Request{})
+				r.EqualError(t, err, "Error: failed")
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			_ = gofakeit.Seed(11)
 
 			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)

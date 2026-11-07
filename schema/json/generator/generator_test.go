@@ -46,7 +46,7 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestFakeNotDefined(t *testing.T) {
-	gofakeit.Seed(1234567)
+	_ = gofakeit.Seed(1234567)
 
 	root := generator.FindByName(generator.RootName)
 	require.NotNil(t, root)
@@ -65,4 +65,24 @@ func TestFakeNotDefined(t *testing.T) {
 	v, err := generator.New(generator.NewRequest(nil, nil, nil))
 	require.NoError(t, err)
 	require.InDelta(t, -170715.30581115812, v, 0.000001)
+}
+
+func TestNewDefaultsNilPathToEmpty(t *testing.T) {
+	req := &generator.Request{Schema: schematest.New("string")}
+
+	_, err := generator.New(req)
+	require.NoError(t, err)
+	require.Equal(t, []string{}, req.Path)
+}
+
+func TestNewRequestDefaultsNilPathToEmpty(t *testing.T) {
+	req := generator.NewRequest(nil, schematest.New("string"), nil)
+
+	require.Equal(t, []string{}, req.Path)
+}
+
+func TestRequestWithDefaultsNilPathToEmpty(t *testing.T) {
+	req := generator.NewRequest([]string{"foo"}, schematest.New("string"), nil)
+
+	require.Equal(t, []string{}, req.WithPath(nil).Path)
 }

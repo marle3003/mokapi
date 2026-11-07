@@ -106,6 +106,28 @@ func TestModule(t *testing.T) {
 			},
 		},
 		{
+			name: "FakerTree: request path of the root value is an empty array",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+				v, err := vm.RunString(`
+					const m = require('faker')
+					const root = m.findByName('root')
+					root.children.unshift({
+						name: 'foo',
+						attributes: ['*'],
+						fake: (r) => "path length " + r.path.length
+					})
+					m.fake({type: 'string'})
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "path length 0", v.Export())
+			},
+		},
+		{
 			name: "FakerTree: dependsOn",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.FindFakerNodeFunc = func(name string) *generator.Node {
@@ -188,7 +210,7 @@ func TestModule(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			_ = gofakeit.Seed(11)
 
 			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)
@@ -254,7 +276,7 @@ func TestModule_FakeAsync(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			_ = gofakeit.Seed(11)
 
 			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)

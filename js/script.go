@@ -122,7 +122,11 @@ func (s *Script) RunDefault() (goja.Value, error) {
 		return nil, err
 	}
 
-	s.processObject(result)
+	// the result may be an object that is only safe to read on the loop
+	_, _ = s.loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
+		s.processObject(result)
+		return nil, nil
+	})
 	return result, nil
 }
 
