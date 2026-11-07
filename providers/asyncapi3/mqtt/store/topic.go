@@ -51,6 +51,9 @@ func (t *Topic) validate(value []byte) (messageId string, err error) {
 }
 
 func (s *Store) addSysTopic(name string, val string) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	t := &Topic{
 		Name: name,
 		Retained: &Message{
@@ -66,9 +69,13 @@ func (s *Store) addSysTopic(name string, val string) {
 }
 
 func (s *Store) updateSysTopic(name string, val string) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	t, ok := s.Topics[name]
 	if !ok {
 		panic(fmt.Sprintf("mqtt: sys topic '%s' not found", name))
 	}
-	t.Retained.Data = []byte(val)
+	// readers may still hold the previous message
+	t.Retained = &Message{Topic: name, Data: []byte(val), Retain: true}
 }

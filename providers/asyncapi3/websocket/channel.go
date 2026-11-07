@@ -2,12 +2,14 @@ package websocket
 
 import (
 	"context"
+	"maps"
 	engine "mokapi/engine/common"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/encoding"
+	"slices"
 	"sync"
 	"time"
 
@@ -20,7 +22,7 @@ type Channel struct {
 	api     string
 	clients map[string]*Client
 	m       sync.RWMutex
-	cfg     *asyncapi3.Channel
+	Config  *asyncapi3.Channel
 	emitter engine.WebsocketEventEmitter
 	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
@@ -63,7 +65,7 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			Name:    name,
 			api:     s.cfg.Info.Name,
 			emitter: s.emitter,
-			cfg:     ch,
+			Config:  ch,
 			log:     s.log,
 			monitor: s.monitor,
 			params:  params,
@@ -85,7 +87,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		var msg any
 		var messageId string
 		validationErrors := make(map[string]string)
-		for id, m := range c.cfg.Messages {
+		for id, m := range c.Config.Messages {
 			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 				continue
 			}
@@ -102,9 +104,12 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 			}
 			validationErrors[id] = err.Error()
 		}
-		channelName := c.cfg.ResolveAddress()
+		channelName := c.Config.ResolveAddress()
 
 		l := messageLog(c, data, messageId, client, Send)
+		if err != nil {
+			l.ValidationErrors = validationErrors
+		}
 		traits := events.NewTraits().
 			With("channel", channelName).
 			With("type", "message").
@@ -125,10 +130,9 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 
 		if err != nil {
 			c.monitor.MessagesError.WithLabel(labels...).Add(1)
-			l.ValidationErrors = validationErrors
 			return err
 		}
-		l.Actions = c.runMessageEvent(client, msg)
+		l.SetActions(c.runMessageEvent(client, msg))
 	}
 }
 
@@ -147,13 +151,21 @@ func (c *Channel) removeClient(client *Client) {
 	delete(c.clients, client.Id)
 }
 
-func (c *Channel) Broadcast(message any) {
-	for _, c := range c.clients {
+// connectedClients returns a snapshot, because clients connect and disconnect concurrently
+func (c *Channel) connectedClients() []*Client {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return slices.Collect(maps.Values(c.clients))
+}
+
+func (c *Channel) Broadcast(message any) error {
+	for _, c := range c.connectedClients() {
 		err := c.sendMessage(message)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
 }
 
 func (c *Channel) newConnectEvent(client *Client) *engine.WebsocketConnectEvent {

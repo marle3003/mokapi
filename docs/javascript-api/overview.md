@@ -19,6 +19,18 @@ This documentation explains:
 - Runtime environment limitations
 - Built-in modules
 
+````` box=tip title="Autocompletion in your editor"
+Install Mokapi's type definitions to get IntelliSense and type checking while
+writing scripts:
+
+```bash
+`npm install --save-dev @types/mokapi`
+```
+
+Need types that always match your Mokapi version? See
+[TypeScript & IntelliSense](./typescript.md).
+`````
+
 ## How JavaScript Is Used in Mokapi
 
 JavaScript can be used for tasks such as:
@@ -148,14 +160,6 @@ Mokapi resolves imports using the same algorithm as Node.js:
 > Module resolution only determines where Mokapi looks for the file.
   Runtime limitations still apply: modules that rely on Node.js or browser APIs may fail.
 
-## TypeScript Support
-
-``` box=tip url=[@types/mokapi on npm](https://www.npmjs.com/package/@types/mokapi)
-Mokapi provides TypeScript type definitions for its JavaScript API.
-Install them using:
-`npm install @types/mokapi --save-dev` 
-```
-
 ## Built-in Modules
 
 Mokapi provides a set of built-in JavaScript modules that can be used from executable scripts
@@ -167,6 +171,7 @@ Provides core functions for scheduling jobs, handling events, and accessing envi
 
 | Functions                                                                             | Description                                                 |
 |---------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| [app](/docs/javascript-api/mokapi/app/overview.md)                                    | Registers handlers per protocol, path, topic or channel.    |
 | [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md)          | Schedules a periodic job using a cron expression.           |
 | [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                               | Returns a formatted date string.                            |
 | [env( name )](/docs/javascript-api/mokapi/env.md)                                     | Gets the value of an environment variable.                  |

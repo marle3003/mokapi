@@ -122,32 +122,16 @@ mokapi --version
 
 ## TypeScript Support
 
-For full type safety and autocompletion when writing Mokapi scripts in TypeScript, install the type definitions:
+Mokapi provides type definitions for autocompletion and type checking in your
+editor, for both TypeScript and JavaScript scripts:
 
 ```bash
 npm install --save-dev @types/mokapi
 ```
 
-This enables IntelliSense and type checking in your IDE when writing custom event handlers and scripts.
-
-### Example TypeScript Script
-
-```typescript title=petstore.ts
-import { on } from 'mokapi'
-
-export default function() {
-  on('http', (request, response) => {
-    // TypeScript provides full autocompletion here
-    if (request.path.petId === '999') {
-      response.statusCode = 404
-      response.data = { message: 'Pet not found' }
-    }
-  })
-}
-```
-``` box=tip title="IDE Integration"
-With @types/mokapi installed, editors like VS Code will provide autocompletion for Mokapi's API, making script development faster and less error-prone.
-```
+If you installed Mokapi via npm (`go-mokapi`), the package already includes types
+that always match your Mokapi version. See [TypeScript & IntelliSense](../javascript-api/typescript.md)
+for setup options and an example.
 
 ## What's Next?
 

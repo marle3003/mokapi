@@ -2,12 +2,14 @@ package engine
 
 import (
 	"mokapi/engine/common"
-	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
-type EventHandler struct {
+type keyedDispatcher interface {
+	Has(key string) bool
+	Clear(key string)
+}
+
+type EventHandlerDispatcher struct {
 	HttpEventDispatcher
 	KafkaEventDispatcher
 	MqttEventDispatcher
@@ -16,64 +18,31 @@ type EventHandler struct {
 	LdapEventDispatcher
 }
 
-func (e *EventHandler) Clear(key string) {
+func (e *EventHandlerDispatcher) dispatcher() []keyedDispatcher {
+	return []keyedDispatcher{
+		&e.HttpEventDispatcher,
+		&e.KafkaEventDispatcher,
+		&e.MqttEventDispatcher,
+		&e.WebsocketEventDispatcher,
+		&e.MailEventDispatcher,
+		&e.LdapEventDispatcher,
+	}
+}
+
+func (e *EventHandlerDispatcher) Clear(key string) {
 	if e == nil {
 		return
 	}
-	e.HttpEventDispatcher.Clear(key)
-	e.KafkaEventDispatcher.Clear(key)
-	e.MqttEventDispatcher.Clear(key)
-	e.WebsocketEventDispatcher.Clear(key)
-	e.MailEventDispatcher.Clear(key)
-	e.LdapEventDispatcher.Clear(key)
+	for _, d := range e.dispatcher() {
+		d.Clear(key)
+	}
 }
 
-func runEventHandler(h common.EventHandler, args common.EventArgs, params ...any) *common.Action {
-	action := &common.Action{
-		Tags: args.Tags,
-	}
-	start := time.Now()
-	logs := len(action.Logs)
-
-	ctx := &common.EventContext{
-		EventLogger: action.AppendLog,
-		Args:        params,
-	}
-
-	if b, err := h(ctx); err != nil {
-		log.Errorf("unable to execute event handler: %v", err)
-		action.Error = &common.Error{Message: err.Error()}
-	} else if !b && logs == len(action.Logs) {
-		return nil
-	}
-	log.WithField("handler", action).Debug("processed event handler")
-
-	action.Parameters = getDeepCopy(params)
-	action.Duration = time.Now().Sub(start).Milliseconds()
-	return action
-}
-
-func (e *EventHandler) Has(key string) bool {
-	if e == nil {
-		return false
-	}
-	if e.HttpEventDispatcher.Has(key) {
-		return true
-	}
-	if e.KafkaEventDispatcher.Has(key) {
-		return true
-	}
-	if e.MqttEventDispatcher.Has(key) {
-		return true
-	}
-	if e.WebsocketEventDispatcher.Has(key) {
-		return true
-	}
-	if e.MailEventDispatcher.Has(key) {
-		return true
-	}
-	if e.LdapEventDispatcher.Has(key) {
-		return true
+func (e *EventHandlerDispatcher) Has(key string) bool {
+	for _, d := range e.dispatcher() {
+		if d.Has(key) {
+			return true
+		}
 	}
 	return false
 }

@@ -65,7 +65,6 @@ type Server struct {
 	TlsMode   TlsMode
 
 	mu         sync.Mutex
-	closeChan  chan bool
 	activeConn map[net.Conn]context.Context
 	listener   net.Listener
 	inShutdown atomicBool
@@ -78,6 +77,11 @@ func (s *Server) ListenAndServe() error {
 
 	var err error
 	s.mu.Lock()
+	// Close sets inShutdown before taking s.mu, so either we see it here or Close sees our listener.
+	if s.inShutdown.isSet() {
+		s.mu.Unlock()
+		return ErrServerClosed
+	}
 	s.listener, err = net.Listen("tcp", s.Addr)
 	s.mu.Unlock()
 	if err != nil {
@@ -87,17 +91,14 @@ func (s *Server) ListenAndServe() error {
 }
 
 func (s *Server) Serve(l net.Listener) error {
-	closeCh := s.getCloseChan()
 	for {
 		rw, err := l.Accept()
 		if err != nil {
-			select {
-			case <-closeCh:
+			if s.inShutdown.isSet() {
 				return ErrServerClosed
-			default:
-				log.Errorf("smtp: accept error: %v", err)
-				continue
 			}
+			log.Errorf("smtp: accept error: %v", err)
+			continue
 		}
 
 		if s.TlsMode == Implicit {
@@ -121,11 +122,6 @@ func (s *Server) Close() {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	if s.closeChan != nil {
-		s.closeChan <- true
-		close(s.closeChan)
-	}
 
 	if s.listener != nil {
 		s.listener.Close()
@@ -160,13 +156,6 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 	ctx := NewClientContext(context.Background(), conn.RemoteAddr().String())
 	s.activeConn[conn] = ctx
 	return ctx
-}
-
-func (s *Server) getCloseChan() chan bool {
-	if s.closeChan == nil {
-		s.closeChan = make(chan bool, 1)
-	}
-	return s.closeChan
 }
 
 func (r *response) Write(res Response) error {

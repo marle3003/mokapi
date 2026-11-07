@@ -37,7 +37,11 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Module) Fake(v goja.Value) interface{} {
-	i, err := m.fake(v)
+	req, err := m.newRequest(v)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	i, err := generate(req)
 	if err != nil {
 		panic(m.vm.ToValue(err.Error()))
 	}
@@ -45,48 +49,51 @@ func (m *Module) Fake(v goja.Value) interface{} {
 }
 
 func (m *Module) FakeAsync(v goja.Value) *goja.Promise {
-	p, resolve, reject := m.vm.NewPromise()
-	go func() {
-		i, err := m.fake(v)
-		if err != nil {
-			m.loop.Run(func(vm *goja.Runtime) {
-				_ = reject(err)
-			})
-		} else {
-			m.loop.Run(func(vm *goja.Runtime) {
-				_ = resolve(i)
-			})
-		}
-	}()
-	return p
+	req, err := m.newRequest(v)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	return util.RunAsync(m.vm, m.loop, func() (any, error) {
+		return generate(req)
+	}, nil)
 }
 
-func (m *Module) fake(v goja.Value) (any, error) {
+// newRequest converts the JavaScript schema to a plain Go request. It has to run on the event
+// loop because it reads from the goja runtime. Without a schema there is nothing to generate
+// and the request is nil.
+func (m *Module) newRequest(v goja.Value) (*generator.Request, error) {
 	if v == nil {
 		return nil, nil
 	}
 
 	t := v.ExportType()
 	if t.Kind() != reflect.Map {
-		panic(m.vm.ToValue(fmt.Errorf("expect object parameter but got: %v", util.JsType(v.Export()))))
+		return nil, fmt.Errorf("expect object parameter but got: %v", util.JsType(v.Export()))
 	}
 
 	r := &generator.Request{}
 	if isOpenApiSchema(v.ToObject(m.vm)) {
 		s, err := toStruct[*schema.Schema](v, m.vm)
 		if err != nil {
-			panic(m.vm.ToValue(err.Error()))
+			return nil, err
 		}
 		r.Schema = schema.ConvertToJsonSchema(s)
 	} else {
 		s, err := toStruct[*jsonSchema.Schema](v, m.vm)
 		if err != nil {
-			panic(m.vm.ToValue(err.Error()))
+			return nil, err
 		}
 		r.Schema = s
 	}
+	return r, nil
+}
 
-	return generator.New(r)
+// generate must not touch the goja runtime except through the event loop (custom nodes).
+func generate(req *generator.Request) (any, error) {
+	if req == nil {
+		return nil, nil
+	}
+	return generator.New(req)
 }
 
 func toStruct[T any](v goja.Value, vm *goja.Runtime) (T, error) {

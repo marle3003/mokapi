@@ -237,7 +237,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.UnknownServerError, p.ErrorCode)
 
-				require.Equal(t, 7, len(hook.Entries), hook.Entries)
+				require.Equal(t, 7, len(hook.AllEntries()), hook.AllEntries())
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid clientId: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
@@ -278,7 +278,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.InvalidGroupId, p.ErrorCode)
 
-				require.Equal(t, 7, len(hook.Entries))
+				require.Equal(t, 7, len(hook.AllEntries()))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid groupId: Validation error count 1:\n\t- #/pattern: string 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
@@ -324,7 +324,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
 
-				require.Equal(t, 7, len(hook.Entries))
+				require.Equal(t, 7, len(hook.AllEntries()))
 				require.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
 			},
 		},

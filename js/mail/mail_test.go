@@ -111,7 +111,7 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
-			req, err := require.NewRegistry()
+			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/smtp", mod.Require)

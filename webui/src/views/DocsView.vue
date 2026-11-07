@@ -8,6 +8,7 @@ import Footer from '@/components/Footer.vue'
 import { Modal } from 'bootstrap'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
+import { usePromo } from '@/composables/promo.ts';
 
 const files = inject<Record<string, string>>('files')!
 
@@ -215,7 +216,7 @@ main.resource-article {
 .doc-main {
   grid-area: doc;
   margin-left: 1rem;
-  padding-top: 1rem;
+  padding-top: calc(1.5rem + var(--promo-height));
   padding-bottom: 3rem;
 }
 .breadcrumb {

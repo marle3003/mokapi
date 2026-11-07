@@ -16,17 +16,6 @@ type Module struct {
 	loop *eventloop.EventLoop
 }
 
-type kafkaResult struct {
-	*common.KafkaProduceResult
-
-	// deprecated fields
-	Key       any
-	Value     any
-	Offset    int64
-	Headers   map[string]string
-	Partition int
-}
-
 func Require(vm *goja.Runtime, module *goja.Object) {
 	o := vm.Get("mokapi/internal").(*goja.Object)
 	host := o.Get("host").Export().(common.Host)
@@ -42,52 +31,43 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Module) Produce(v goja.Value) any {
-	defer func() {
-		r := recover()
-		if r != nil {
-			panic(m.rt.ToValue(fmt.Sprintf("%v", r)))
-		}
-	}()
+	defer util.ThrowPanic(m.rt)
 
-	args, err := m.mapParams(v)
+	args := m.prepareProduce(v)
+	result, err := m.execute(args)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
-	}
-	client := m.host.KafkaClient()
-
-	result, err := client.Produce(args)
-	if err != nil {
-		log.Errorf("js error(%s): %s", m.host.Name(), err)
-		panic(m.rt.ToValue(err.Error()))
-	}
-	if len(result.Messages) == 1 {
-		deprecatedResult := &kafkaResult{KafkaProduceResult: result}
-		deprecatedResult.Key = result.Messages[0].Key
-		deprecatedResult.Value = result.Messages[0].Value
-		deprecatedResult.Headers = result.Messages[0].Headers
-		deprecatedResult.Partition = result.Messages[0].Partition
 	}
 	return result
 }
 
 func (m *Module) ProduceAsync(v goja.Value) any {
-	p, resolve, reject := m.rt.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
+	args := m.prepareProduce(v)
+	return util.RunAsync(m.rt, m.loop, func() (*common.KafkaProduceResult, error) {
+		return m.execute(args)
+	}, nil)
+}
 
-		result := m.Produce(v)
-		m.loop.Run(func(vm *goja.Runtime) {
-			_ = resolve(result)
-		})
-	}()
-	return p
+// prepareProduce converts the JavaScript arguments to plain Go values. It has to run on the
+// event loop because it reads from the goja runtime. Invalid input throws.
+func (m *Module) prepareProduce(v goja.Value) *common.KafkaProduceArgs {
+	defer util.ThrowPanic(m.rt)
+
+	args, err := m.mapParams(v)
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+	return args
+}
+
+// execute only calls the Kafka client and must not touch the goja runtime.
+func (m *Module) execute(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+	result, err := m.host.KafkaClient().Produce(args)
+	if err != nil {
+		log.Errorf("js error(%s): %s", m.host.Name(), err)
+		return nil, err
+	}
+	return result, nil
 }
 
 func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {

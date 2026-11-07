@@ -11,6 +11,7 @@ import (
 	"mokapi/server"
 	"mokapi/try"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -447,10 +448,24 @@ func TestConfigWatcher_Read(t *testing.T) {
 				_ = w.Start(pool)
 				defer pool.Stop()
 
+				// listeners are called concurrently
+				var m sync.Mutex
 				var events []string
 				w.AddListener(func(e dynamic.ConfigEvent) {
+					m.Lock()
+					defer m.Unlock()
 					events = append(events, e.Config.Info.Path())
 				})
+				receivedEvents := func(n int) []string {
+					require.Eventually(t, func() bool {
+						m.Lock()
+						defer m.Unlock()
+						return len(events) >= n
+					}, time.Second, time.Millisecond)
+					m.Lock()
+					defer m.Unlock()
+					return append([]string{}, events...)
+				}
 
 				ch <- dynamic.ConfigEvent{Name: mainPath.String(), Event: dynamic.Create, Config: mainConfig}
 				c, err := w.Read(refPath, nil)
@@ -460,14 +475,12 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
 
-				time.Sleep(5 * time.Millisecond)
-				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml"}, events)
+				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml"}, receivedEvents(2))
 
-				refConfig.Info.Checksum = []byte{2}
-				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
+				refUpdate := &dynamic.Config{Info: dynamic.ConfigInfo{Url: refPath, Checksum: []byte{2}}}
+				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refUpdate}
 
-				time.Sleep(5 * time.Millisecond)
-				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, events)
+				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, receivedEvents(4))
 			},
 		},
 	}

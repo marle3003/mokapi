@@ -385,3 +385,30 @@ MOKAPI_DATA_GEN_OPTIONALPROPERTIES=sometimes
 data-gen:
   optionalProperties: sometimes
 ```
+
+## JavaScript Modules
+
+Defines module aliases. Before Mokapi resolves an import, it replaces the import path with
+the target of the matching alias. A key may contain one `*` wildcard; the matched text
+replaces the `*` in the target. See [Module Aliases](/docs/javascript-api/modules.md#module-aliases)
+for details.
+
+```yaml tab=File (YAML)
+javascript:
+  modules:
+    aliases:
+      msw: mokapi-msw-adapter
+      "msw/*": mokapi-msw-adapter/*
+```
+```json tab=File (JSON)
+{
+  "javascript": {
+    "modules": {
+      "aliases": {
+        "msw": "mokapi-msw-adapter",
+        "msw/*": "mokapi-msw-adapter/*"
+      }
+    }
+  }
+}
+```

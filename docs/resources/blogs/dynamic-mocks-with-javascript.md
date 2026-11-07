@@ -2,6 +2,7 @@
 title: "From Static to Dynamic: Smarter API Mocks with Mokapi Scripts"
 description: Static mocks always return the same thing. Mokapi Scripts let your mock react to the actual request, in plain JavaScript, no new DSL to learn.
 subtitle: Static mocks return the same response every time. Here's how to write JavaScript handlers that react to real request data, simulate stateful workflows, and behave like a real backend.
+tech: core
 ---
 
 # From Static to Dynamic: Smarter API Mocks with Mokapi Scripts

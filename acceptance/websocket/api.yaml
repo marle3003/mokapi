@@ -1,56 +1,135 @@
 asyncapi: 3.0.0
 info:
-  title: My WebSocket API
+  title: Chat API
   version: 1.0.0
 
 servers:
   production:
-    host: localhost:22800
+    host: localhost:22801
     protocol: ws
 
 channels:
   chat:
-    address: /chat
-    bindings:
-      ws:
-        method: GET
-        query:
-          type: object
-          properties:
-            token:
-              type: string
+    address: /chat/{roomId}
+    parameters:
+      roomId:
+        description: The chat room identifier
     messages:
-      incoming:
-        $ref: '#/components/messages/ChatMessage'
-      outgoing:
+      clientMessage:
+        $ref: '#/components/messages/ClientMessage'
+      serverMessage:
         $ref: '#/components/messages/ServerMessage'
 
+  dm:
+    address: /dm
+    messages:
+      directMessage:
+        $ref: '#/components/messages/DirectMessage'
+      ack:
+        $ref: '#/components/messages/Ack'
+
+  async:
+    address: /async
+    messages:
+      asyncMessage:
+        $ref: '#/components/messages/AsyncMessage'
+
 operations:
-  onChatMessage:
+  onClientMessage:
     action: receive
     channel:
       $ref: '#/channels/chat'
     messages:
-      - $ref: '#/channels/chat/messages/incoming'
+      - $ref: '#/channels/chat/messages/clientMessage'
 
-  sendChatMessage:
+  broadcastMessage:
     action: send
     channel:
       $ref: '#/channels/chat'
     messages:
-      - $ref: '#/channels/chat/messages/outgoing'
+      - $ref: '#/channels/chat/messages/serverMessage'
+
+  onDirectMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/dm'
+    messages:
+      - $ref: '#/channels/dm/messages/directMessage'
+
+  sendAck:
+    action: send
+    channel:
+      $ref: '#/channels/dm'
+    messages:
+      - $ref: '#/channels/dm/messages/ack'
+
+  onAsyncMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/async'
+    messages:
+      - $ref: '#/channels/async/messages/asyncMessage'
+
+  sendAsyncMessage:
+    action: send
+    channel:
+      $ref: '#/channels/async'
+    messages:
+      - $ref: '#/channels/async/messages/asyncMessage'
 
 components:
   messages:
-    ChatMessage:
+    AsyncMessage:
       payload:
         type: object
+        required: [text]
         properties:
           text:
             type: string
+
+    ClientMessage:
+      payload:
+        type: object
+        required: [user, text]
+        properties:
+          user:
+            type: string
+            description: The sender's username
+          text:
+            type: string
+            description: The message content
+
     ServerMessage:
       payload:
         type: object
+        required: [user, text, timestamp]
         properties:
-          reply:
+          user:
+            type: string
+          text:
+            type: string
+          timestamp:
+            type: string
+            format: date-time
+
+    DirectMessage:
+      payload:
+        type: object
+        required: [to, text]
+        properties:
+          to:
+            type: string
+            description: Recipient username
+          text:
+            type: string
+
+    Ack:
+      payload:
+        type: object
+        required: [status]
+        properties:
+          status:
+            type: string
+            enum: [ok, error]
+          error:
             type: string

@@ -91,43 +91,15 @@ func (m *Module) Options(url string, body interface{}, args goja.Value) interfac
 }
 
 func (m *Module) Fetch(url string, args goja.Value) *goja.Promise {
-	p, resolve, reject := m.rt.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
-
-		rArgs := &RequestArgs{Headers: make(map[string]interface{})}
-		opts := common.HttpClientOptions{MaxRedirects: 5, Timeout: 60 * time.Second}
-		if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-			var err error
-			rArgs, opts, err = parseArgs(args.ToObject(m.rt))
-			if err != nil {
-				panic(m.rt.ToValue(err.Error()))
-			}
-		}
-		if rArgs.Method == "" {
-			rArgs.Method = http.MethodGet
-		}
-
-		res := m.fetch(url, rArgs, opts)
-		m.loop.Run(func(vm *goja.Runtime) {
-			_ = resolve(res)
-		})
-	}()
-	return p
+	rArgs, opts := m.prepareFetch(args)
+	return util.RunAsync(m.rt, m.loop, func() (Response, error) {
+		return m.fetch(url, rArgs, opts)
+	}, nil)
 }
 
-func (m *Module) doRequest(method, url string, body interface{}, args goja.Value) Response {
-	if len(url) == 0 {
-		panic(m.rt.ToValue(fmt.Errorf("url cannot be empty")))
-	}
-
+// prepareFetch converts the JavaScript arguments to plain Go values. It has to run on the
+// event loop because it reads from the goja runtime. Invalid arguments throw.
+func (m *Module) prepareFetch(args goja.Value) (*RequestArgs, common.HttpClientOptions) {
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
 	opts := common.HttpClientOptions{MaxRedirects: 5, Timeout: 60 * time.Second}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -137,30 +109,45 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 			panic(m.rt.ToValue(err.Error()))
 		}
 	}
+	if rArgs.Method == "" {
+		rArgs.Method = http.MethodGet
+	}
+	return rArgs, opts
+}
 
+func (m *Module) doRequest(method, url string, body interface{}, args goja.Value) Response {
+	if len(url) == 0 {
+		panic(m.rt.ToValue(fmt.Errorf("url cannot be empty")))
+	}
+
+	rArgs, opts := m.prepareFetch(args)
 	rArgs.Method = method
 	rArgs.Body = body
 
-	return m.fetch(url, rArgs, opts)
-}
-
-func (m *Module) fetch(url string, args *RequestArgs, opts common.HttpClientOptions) Response {
-	req, err := createRequest(url, args)
-
+	res, err := m.fetch(url, rArgs, opts)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
+	}
+	return res
+}
+
+// fetch only talks to the HTTP client and must not touch the goja runtime.
+func (m *Module) fetch(url string, args *RequestArgs, opts common.HttpClientOptions) (Response, error) {
+	req, err := createRequest(url, args)
+	if err != nil {
+		return Response{}, err
 	}
 
 	client := m.host.HttpClient(opts)
 	res, err := client.Do(req)
 	if err != nil {
 		if os.IsTimeout(err) {
-			panic(m.rt.ToValue(fmt.Errorf("request to %s %s timed out", args.Method, url)))
+			return Response{}, fmt.Errorf("request to %s %s timed out", args.Method, url)
 		}
-		panic(m.rt.ToValue(err.Error()))
+		return Response{}, err
 	}
 
-	return m.parseResponse(res)
+	return m.parseResponse(res), nil
 }
 
 func createRequest(url string, args *RequestArgs) (*http.Request, error) {

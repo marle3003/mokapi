@@ -12,6 +12,11 @@ Attaches an event handler for the given event.
 | handler          | function | An [EventHandler](/docs/javascript-api/mokapi/eventhandler/eventhandler.md) to execute when the event is triggered |
 | args (optional)  | object   | [EventArgs](/docs/javascript-api/mokapi/eventhandler/eventargs.md) object contains additional event arguments.     | 
 
+``` box=tip url=[See app](/docs/javascript-api/mokapi/app/overview.md)
+To handle specific paths, operations, topics or channels, the `app` routers are often shorter:
+`app.http().get('/echo', handler)` instead of checking `request.url.path` inside an `on('http')` handler.
+```
+
 ## Example Echo Server
 
 ```javascript tab=echo.js

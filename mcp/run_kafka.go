@@ -143,7 +143,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 	if topic == nil {
 		return Topic{}, fmt.Errorf("topic '%s' not found", name)
 	}
-	for _, p := range topic.Partitions {
+	for _, p := range topic.PartitionList() {
 		t.Partitions = append(t.Partitions, &KafkaPartition{
 			Index:  p.Index,
 			Offset: p.Offset(),
@@ -250,7 +250,7 @@ func (t *Topic) Consume(partition int, startOffset int64, limit int) ([]KafkaRec
 	offset := startOffset
 	n := 0
 	for {
-		if offset >= p.Tail || n >= limit {
+		if offset >= p.Offset() || n >= limit {
 			return records, nil
 		}
 		seg := p.GetSegment(offset)

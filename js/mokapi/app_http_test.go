@@ -19,7 +19,7 @@ import (
 func TestModule_AppHttp(t *testing.T) {
 	type handler struct {
 		Filter  common.HttpFilter
-		Execute common.EventHandler
+		Execute common.EventHandlerFunc
 	}
 
 	testcases := []struct {
@@ -183,7 +183,7 @@ m.app.http().operation('foo', (req, res) => {})
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 
@@ -197,7 +197,7 @@ m.app.http().operation('foo', (req, res) => {})
 			reg.Enable(vm)
 
 			var handlers []handler
-			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				handlers = append(handlers, handler{
 					Filter:  filter,
 					Execute: do,

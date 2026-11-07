@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
@@ -42,14 +41,12 @@ func TestRequire(t *testing.T) {
 
 				r.NoError(t, s.Run())
 
-				var exports *goja.Object
-				err = s.RunFunc(func(vm *goja.Runtime) {
+				ok := onLoop(t, s, func(vm *goja.Runtime) bool {
 					mod := vm.Get("module").ToObject(vm)
-					exports = mod.Get("exports").ToObject(vm)
+					exports := mod.Get("exports").ToObject(vm)
+					_, ok := goja.AssertFunction(exports.Get("_sleep"))
+					return ok
 				})
-				time.Sleep(500 * time.Millisecond)
-				r.NoError(t, err)
-				_, ok := goja.AssertFunction(exports.Get("_sleep"))
 				r.True(t, ok, "sleep is not a function")
 			},
 		},
@@ -362,7 +359,7 @@ export default function () {return data}
 			t.Parallel()
 
 			host := &enginetest.Host{}
-			registry, err := require.NewRegistry()
+			registry, err := require.NewRegistry(nil)
 			js.RegisterNativeModules(registry)
 			r.NoError(t, err)
 

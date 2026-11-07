@@ -1,5 +1,7 @@
 /**
  * Sends one or more messages to a Kafka topic.
+ *
+ * Arguments are read when you call the function. Invalid arguments throw an error at the call. Client errors reject the returned promise.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
  * @param args - Produce arguments. If omitted, a random message is written to a random topic.
  * @returns Information about the written messages.

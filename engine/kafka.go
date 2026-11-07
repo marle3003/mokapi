@@ -203,12 +203,14 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partition, error) {
 	if partition < 0 {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
-		partition = r.Intn(len(t.Partitions))
-	} else if partition >= len(t.Partitions) {
-		return nil, fmt.Errorf("partiton %v does not exist", partition)
+		partition = r.Intn(t.NumPartitions())
 	}
 
-	return t.Partition(partition), nil
+	p := t.Partition(partition)
+	if p == nil {
+		return nil, fmt.Errorf("partiton %v does not exist", partition)
+	}
+	return p, nil
 }
 
 func createValue(r *asyncapi3.SchemaRef) (value any, err error) {

@@ -65,6 +65,9 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 }
 
 func (m *StoreManager) SetStore(size int, traits Traits) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	m.stores = append(m.stores, &store{
 		size:   size,
 		traits: traits,

@@ -166,3 +166,36 @@ func TestEventLoop_NestedRunSync_NoDeadlock(t *testing.T) {
 		t.Fatal("deadlock: nested RunSync did not return in time")
 	}
 }
+
+// Timers fire on their own goroutines while the loop keeps running scripts. The job counter
+// and the running flag are shared between these goroutines, so this test is meant to run
+// with `go test -race`.
+func TestEventLoop_TimersFiredConcurrently(t *testing.T) {
+	vm := goja.New()
+	loop := eventloop.New(vm, &enginetest.Host{})
+	loop.StartLoop()
+	defer loop.Stop()
+
+	_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+		return vm.RunString(`
+			var fired = 0
+			for (let i = 0; i < 50; i++) {
+				setTimeout(() => { fired++ }, 1)
+			}
+			var ticks = 0
+			var id = setInterval(() => {
+				if (++ticks === 5) { clearInterval(id) }
+			}, 1)
+		`)
+	})
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		var done bool
+		_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+			done = vm.Get("fired").ToInteger() == 50 && vm.Get("ticks").ToInteger() >= 5
+			return nil, nil
+		})
+		return err == nil && done && !loop.HasJobs()
+	}, 5*time.Second, 5*time.Millisecond)
+}

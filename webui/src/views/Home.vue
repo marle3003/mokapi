@@ -6,7 +6,7 @@ import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
 
 const title = 'Mokapi: Open-Source Mock API Tool & API Simulation'
-const description = `Simulate HTTP and Kafka APIs locally. Mokapi is a powerful, multi-protocol mock API tool driven by OpenAPI and AsyncAPI specs to speed up your testing.`
+const description = `Simulate HTTP, Kafka, MQTT, WebSocket, LDAP and mail APIs locally. Open-source mock API tool driven by OpenAPI and AsyncAPI specs.`
 
 useMeta(title, description, 'https://mokapi.io')
 
@@ -56,6 +56,12 @@ function showImage(evt: MouseEvent) {
               </router-link>
               <router-link :to="{ path: '/kafka' }">
                 <span class="badge" aria-label="Kafka Support">Kafka</span>
+              </router-link>
+              <router-link :to="{ path: '/mqtt' }">
+                <span class="badge" aria-label="MQTT Support">MQTT</span>
+              </router-link>
+              <router-link :to="{ path: '/websocket' }">
+                <span class="badge" aria-label="WebSocket Support">WebSocket</span>
               </router-link>
               <router-link :to="{ path: '/ldap' }">
                 <span class="badge" aria-label="LDAP Support">LDAP</span>
@@ -144,7 +150,7 @@ function showImage(evt: MouseEvent) {
           <div class="col-12 col-lg-6 d-flex justify-content-center">
             <img
               src="/mokapi-using-as-proxy.png"
-              alt="Diagram showing Mokapi acting as a proxy between clients and backends, validating API contracts, and simulating services like HTTP, Kafka, LDAP, or mail servers."
+              alt="Diagram showing Mokapi acting as a proxy between clients and backends, validating API contracts, and simulating services like HTTP, Kafka, MQTT, WebSocket, LDAP, or mail servers."
               class="img-fluid"
             />
           </div>
@@ -154,7 +160,7 @@ function showImage(evt: MouseEvent) {
             <p class="lead">
               Mokapi helps you test and develop faster by simulating APIs and services in any environment —
               locally, in CI pipelines, or in staging and test environments.
-              It supports <strong>HTTP, Kafka, LDAP, SMTP/IMAP</strong>, providing realistic mocks
+              It supports <strong>HTTP, Kafka, MQTT, WebSocket, LDAP, SMTP/IMAP</strong>, providing realistic mocks
               to test workflows, edge cases, and integrations without relying on live systems.
             </p>
           </div>
@@ -268,7 +274,7 @@ function showImage(evt: MouseEvent) {
             <span class="bi bi-rocket-takeoff display-5 mb-3 d-block icon"></span>
             <h3>Develop Without Waiting</h3>
             <p>
-              Mock HTTP APIs, Kafka topics, LDAP directories, or mail servers
+              Mock HTTP APIs, Kafka and MQTT topics, WebSocket channels, LDAP directories, or mail servers
               so development never blocks on missing or unstable backends.
             </p>
           </div>
@@ -313,7 +319,7 @@ function showImage(evt: MouseEvent) {
             <p>
               Use JavaScript for dynamic API mocking to control how your mocks behave at runtime.
               Respond dynamically to headers, payloads, authentication,
-              or message content — across HTTP, Kafka, LDAP, and mail.
+              or message content — across HTTP, Kafka, MQTT, WebSocket, LDAP, and mail.
             </p>
             <p class="fst-italic">
               Simulate edge cases, conditional logic, errors, and real-world workflows

@@ -105,6 +105,9 @@ certificates:
     static: []
 data-gen:
     optionalProperties: "0.85"
+javascript:
+    modules:
+        aliases: {}
 `, out)
 			},
 		},

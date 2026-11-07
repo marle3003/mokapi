@@ -2,18 +2,19 @@ package parser
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 )
 
-func (p *Parser) ParseAny(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
-	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+func (p *Parser) ParseAny(s *schema.Schema, data any, evaluated map[string]bool) (any, error) {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, any]); ok {
 		p2 := *p
 		p2.ValidateAdditionalProperties = true
 		return p2.parseAnyObject(m, s, evaluated)
 	}
 
-	var result interface{}
+	var result any
 	var err error
 	for _, one := range s.AnyOf {
 		result, err = p.parse(data, one)
@@ -28,8 +29,8 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}, evaluated map[stri
 	}
 }
 
-func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
-	var result *sortedmap.LinkedHashMap[string, interface{}]
+func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, any], s *schema.Schema, evaluated map[string]bool) (any, error) {
+	var result *sortedmap.LinkedHashMap[string, any]
 	p2 := *p
 	p2.ValidateAdditionalProperties = true
 	var err error
@@ -43,18 +44,18 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 		}
 
 		eval := map[string]bool{}
-		var obj *sortedmap.LinkedHashMap[string, interface{}]
-		obj, err = p2.parseObject(m, one, eval)
+		var obj *sortedmap.LinkedHashMap[string, any]
+		obj, err = p2.parseObjectWithComposition(m, one, eval)
 		if err != nil {
 			continue
 		}
 
-		var v interface{}
+		var v any
 		v, err = p.evaluateUnevaluatedProperties(obj, one, eval)
 		if err != nil {
 			continue
 		}
-		obj = v.(*sortedmap.LinkedHashMap[string, interface{}])
+		obj = v.(*sortedmap.LinkedHashMap[string, any])
 
 		if result == nil {
 			result = obj
@@ -68,9 +69,7 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 			}
 		}
 
-		for k, v := range eval {
-			evaluated[k] = v
-		}
+		maps.Copy(evaluated, eval)
 	}
 
 	if result == nil {

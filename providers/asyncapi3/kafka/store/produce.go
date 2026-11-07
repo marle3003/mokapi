@@ -17,7 +17,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 	m, withMonitor := monitor.KafkaFromContext(req.Context)
 	opts := WriteOptions{
-		ClientId: ctx.ClientId,
+		ClientId: ctx.ClientId(),
 	}
 
 	for _, rt := range r.Topics {
@@ -38,7 +38,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 				resPartition.ErrorMessage = s
 			} else if err := validateProducer(topic, ctx); err != nil {
 				resPartition.ErrorCode = kafka.UnknownServerError
-				resPartition.ErrorMessage = fmt.Sprintf("invalid producer clientId '%v' for topic %v: %v", ctx.ClientId, topic.Name, err)
+				resPartition.ErrorMessage = fmt.Sprintf("invalid producer clientId '%v' for topic %v: %v", ctx.ClientId(), topic.Name, err)
 				log.Errorf("kafka: failed to write to topic '%s': %s", topic.Name, resPartition.ErrorMessage)
 			} else {
 				p := topic.Partition(int(rp.Index))
@@ -83,7 +83,7 @@ func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
 		if op.Bindings != nil && op.Bindings.Kafka.ClientId != nil {
 			s := op.Bindings.Kafka.ClientId
 			p := parser.Parser{Schema: s}
-			_, err := p.Parse(ctx.ClientId)
+			_, err := p.Parse(ctx.ClientId())
 			return err
 		}
 	}

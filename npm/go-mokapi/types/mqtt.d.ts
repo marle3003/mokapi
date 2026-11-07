@@ -15,6 +15,8 @@ export function publish(args?: PublishArgs): PublishResult;
 
 /**
  * Sends a single message to a MQTT topic asynchronously.
+ *
+ * Arguments are read when you call the function. Invalid arguments throw an error at the call. Client errors reject the returned promise.
  * https://mokapi.io/docs/javascript-api/mokapi-mqtt/publishAsync
  * @param args - PublishArgs object contains MQTT publish arguments.
  * @returns The publish result.

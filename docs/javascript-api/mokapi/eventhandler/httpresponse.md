@@ -17,12 +17,41 @@ and response body.
 | headers    | object | Response headers defined by the OpenAPI response header parameters           |
 | body       | string | Raw response body. Takes precedence over `data`                              |
 | data       | any    | Response data that will be encoded according to the OpenAPI response schema  |
+| context    | object | Request-scoped store for passing data between handlers of the same route     |
 
 ## Methods
 
-| Name                             | Description                  |
-|----------------------------------|------------------------------|
-| rebuild(statusCode, contentType) | Rebuilds the HTTP response   |
+| Name                             | Description                                                    |
+|----------------------------------|----------------------------------------------------------------|
+| rebuild(statusCode, contentType) | Rebuilds the HTTP response                                     |
+| stopPropagation()                | Prevents subsequent handlers on the same route from running    |
+
+## Sharing Data Between Handlers
+
+`context` and `stopPropagation()` are designed for handlers registered with the
+[`app`](/docs/javascript-api/mokapi/app/overview.md) routers. A middleware registered with `use()`
+can check a condition, store data in `context` for the following handlers, or stop the
+pipeline. Values in `context` only live for the current request.
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    app.api('Petstore').http()
+        .route('/pets/{petId}')
+            .use((request, response) => {
+                if (!request.header['Authorization']) {
+                    response.statusCode = 401
+                    response.stopPropagation() // get will not run
+                    return
+                }
+                response.context.user = request.header['Authorization']
+            })
+            .get((request, response) => {
+                response.data = { id: request.path.petId, owner: response.context.user }
+            })
+}
+```
 
 ## Example
 
@@ -139,17 +168,17 @@ handler is skipped and no response modifications from that handler are applied.
 
 ```javascript
 import { on } from 'mokapi'
-import { read, writeString } from 'mokapi'
+import { read, writeString } from 'mokapi/file'
 
 export default function() {
     on('http', (request, response) => {
-        let data: { request: HttpRequest, response: HTTPResponse}[] = []
+        let data = []
         try {
             const s = read('./data.json');
             data = JSON.parse(s)
         } catch {}
         data.push({ request, response })
         writeString('./data.json', JSON.stringify(data))
-    }, { prriority: -1 })
+    }, { priority: -1 })
 }
 ```

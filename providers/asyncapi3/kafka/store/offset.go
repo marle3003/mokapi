@@ -35,12 +35,12 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 			})
 
 			if topic == nil {
-				log.Errorf("kafka Offset: unknown topic %v, client=%v", topic, ctx.ClientId)
+				log.Errorf("kafka Offset: unknown topic %v, client=%v", topic, ctx.ClientId())
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				partition := topic.Partition(int(rp.Index))
 				if partition == nil {
-					log.Errorf("kafka Offset: unknown partition %v, topic=%v, client=%v", rp.Index, rt.Name, ctx.ClientId)
+					log.Errorf("kafka Offset: unknown partition %v, topic=%v, client=%v", rp.Index, rt.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				} else {
 					if req.Header.ApiVersion > 0 {

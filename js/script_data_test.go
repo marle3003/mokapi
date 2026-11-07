@@ -18,7 +18,7 @@ func TestScript_Data(t *testing.T) {
 		{
 			name: "resource array",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.HttpEventResponse{}
@@ -38,7 +38,7 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
 		{
 			name: "resource absolute precedence ",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.HttpEventResponse{}
@@ -58,7 +58,7 @@ export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
 		{
 			name: "using default function",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.HttpEventResponse{}

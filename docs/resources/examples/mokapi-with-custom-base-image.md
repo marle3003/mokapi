@@ -2,6 +2,7 @@
 title: Mokapi with custom base image
 description: How to use Mokapi with your custom base Docker image
 icon: bi-box-seam-fill
+tech: core
 ---
 
 # Use Mokapi with a custom base Docker image

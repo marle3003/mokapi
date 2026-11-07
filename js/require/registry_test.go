@@ -2,8 +2,6 @@ package require_test
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
@@ -14,6 +12,9 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestRegistry(t *testing.T) {
@@ -37,7 +38,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -62,7 +63,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -87,7 +88,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -116,7 +117,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -140,7 +141,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, sources map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -175,7 +176,7 @@ func TestRegistry(t *testing.T) {
 		{
 			name: "getProgram updated file should return new result",
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				p, err := reg.GetProgram(&dynamic.Config{
@@ -221,7 +222,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -249,7 +250,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -277,7 +278,7 @@ func TestRegistry(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, host common.Host, _ map[string]source) {
-				reg, err := require.NewRegistry()
+				reg, err := require.NewRegistry(nil)
 				r.NoError(t, err)
 
 				vm := goja.New()
@@ -290,10 +291,57 @@ func TestRegistry(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
+		{
+			name: "simple alias",
+			sources: map[string]source{
+				"foo.js": {
+					code: `export default { foo: 'bar' }`,
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry(map[string]string{"mod": "foo"})
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m = require("mod")
+					if (m.default.foo !== 'bar') {
+						throw new Error('m test failed')
+					}
+				`)
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "alias with wildcard",
+			sources: map[string]source{
+				"foo/bar.js": {
+					code: `export default { foo: 'bar' }`,
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry(map[string]string{"mod/*": "foo/*"})
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m = require("mod/bar")
+					if (m.default.foo !== 'bar') {
+						throw new Error('m test failed')
+					}
+				`)
+				r.NoError(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			host := &enginetest.Host{
 				OpenFunc: func(file, hint string) (*dynamic.Config, error) {

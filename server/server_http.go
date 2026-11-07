@@ -38,30 +38,31 @@ func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime
 }
 
 func (m *HttpManager) AddService(name string, u *url.URL, h openapi.Handler) error {
-	server := m.getOrCreateServer(u.Scheme, u.Port())
-	err := server.AddOrUpdate(&service.HttpService{
+	return m.addService(&service.HttpService{
 		Url:     u,
 		Handler: h,
 		Name:    name,
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (m *HttpManager) AddInternalService(name string, u *url.URL, h http.Handler) error {
-	server := m.getOrCreateServer(u.Scheme, u.Port())
-	err := server.AddOrUpdate(&service.HttpService{
+	return m.addService(&service.HttpService{
 		Url:        u,
 		Handler:    &service.StdHandlerAdapter{H: h},
 		Name:       name,
 		IsInternal: true,
 	})
-	if err != nil {
-		return err
-	}
-	return nil
+}
+
+// addService creates the server if needed and adds the service in one critical section. A server
+// is therefore never visible in m.servers without a handler, so stopEmptyServers of a parallel
+// update cannot stop a server that is just about to receive its first service.
+func (m *HttpManager) addService(svc *service.HttpService) error {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	server := m.getOrCreateServer(svc.Url.Scheme, svc.Url.Port())
+	return server.AddOrUpdate(svc)
 }
 
 func (m *HttpManager) removeService(name string) {
@@ -116,23 +117,21 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 }
 
 func (m *HttpManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, server := range m.servers {
 		server.Stop()
 	}
 }
 
+// getOrCreateServer expects the caller to hold m.m.
 func (m *HttpManager) getOrCreateServer(scheme string, port string) *service.HttpServer {
-	m.m.RLock()
-	server, found := m.servers[port]
-	if found {
-		m.m.RUnlock()
+	if server, found := m.servers[port]; found {
 		return server
 	}
 
-	m.m.RUnlock()
-	m.m.Lock()
-	defer m.m.Unlock()
-
+	var server *service.HttpServer
 	if scheme == "https" {
 		server = service.NewHttpServerTls(port, m.certStore, m.app.Events)
 	} else {
@@ -165,6 +164,9 @@ func parseUrl(s string) (u *url.URL, err error) {
 }
 
 func (m *HttpManager) cleanupRemovedServers(cfg *runtime.HttpInfo, old []*openapi.Server) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, server := range old {
 		if !slices.ContainsFunc(cfg.Servers, func(s *openapi.Server) bool {
 			return s.Url == server.Url
@@ -188,6 +190,9 @@ func (m *HttpManager) cleanupRemovedServers(cfg *runtime.HttpInfo, old []*openap
 }
 
 func (m *HttpManager) stopEmptyServers() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for port, server := range m.servers {
 		if server.CanClose() {
 			log.Infof("stopping HTTP server on binding :%v", port)

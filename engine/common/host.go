@@ -73,18 +73,19 @@ type Host interface {
 
 	OpenFile(file string, hint string) (*dynamic.Config, error)
 
-	OnHttp(filter HttpFilter, do EventHandler, args EventArgs)
-	OnKafka(filter KafkaFilter, do EventHandler, args EventArgs)
-	OnMqtt(filter MqttFilter, do EventHandler, args EventArgs)
-	OnWebsocket(filter WebsocketFilter, do EventHandler, args EventArgs)
-	OnMail(filter MailFilter, do EventHandler, args EventArgs)
-	OnLdap(filter LdapFilter, do EventHandler, args EventArgs)
+	OnHttp(filter HttpFilter, do EventHandlerFunc, args EventArgs)
+	OnKafka(filter KafkaFilter, do EventHandlerFunc, args EventArgs)
+	OnMqtt(filter MqttFilter, do EventHandlerFunc, args EventArgs)
+	OnWebsocket(filter WebsocketFilter, do EventHandlerFunc, args EventArgs)
+	OnMail(filter MailFilter, do EventHandlerFunc, args EventArgs)
+	OnLdap(filter LdapFilter, do EventHandlerFunc, args EventArgs)
 
 	Webhook(name string, url string, args WebhookArgs) (*WebhookResponse, error)
 
 	KafkaClient() KafkaClient
 	MqttClient() MqttClient
 	HttpClient(HttpClientOptions) HttpClient
+	WebsocketClient() WebsocketClient
 
 	Name() string
 
@@ -269,7 +270,7 @@ type Store interface {
 	Namespace(name string) Store
 }
 
-type EventHandler func(ctx *EventContext) (bool, error)
+type EventHandlerFunc func(ctx *EventContext) (bool, error)
 
 type EventContext struct {
 	EventLogger func(level, message string)

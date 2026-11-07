@@ -12,7 +12,7 @@ func (s *Store) heartbeat(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 	ctx := kafka.ClientFromContext(req.Context)
 	if _, ok := ctx.Member[r.GroupId]; !ok {
-		log.Errorf("kafka Heartbeat: unknown member %v", ctx.ClientId)
+		log.Errorf("kafka Heartbeat: unknown member %v", ctx.ClientId())
 		return rw.Write(&heartbeat.Response{ErrorCode: kafka.UnknownMemberId})
 	} else {
 		g, ok := s.Group(r.GroupId)
@@ -20,7 +20,7 @@ func (s *Store) heartbeat(rw kafka.ResponseWriter, req *kafka.Request) error {
 			log.Errorf("kafka Heartbeat: invalid group %v", r.GroupId)
 			return rw.Write(&heartbeat.Response{ErrorCode: kafka.InvalidGroupId})
 		}
-		if g.State != Stable {
+		if g.State() != Stable {
 			return rw.Write(&heartbeat.Response{ErrorCode: kafka.RebalanceInProgress})
 		}
 	}

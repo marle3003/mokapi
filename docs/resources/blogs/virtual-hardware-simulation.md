@@ -2,6 +2,7 @@
 title: Building a Virtual Hardware Simulation with Mokapi and JavaScript
 description: Dynamic mocks simulate reality. Here's how to use Mokapi's JavaScript API to replace physical hardware with a fully controllable simulation.
 subtitle: This article uses a parcel terminal as a case study to show what's actually possible when you combine Mokapi's spec validation with its JavaScript API. The terminal is just the example. The point is what you can build.
+tech: http
 ---
 
 # Building a Virtual Hardware Simulation with Mokapi and JavaScript

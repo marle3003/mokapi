@@ -71,7 +71,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		i := r.Context.Value("time")
 		if i != nil {
 			t := i.(time.Time)
-			event.Duration = time.Now().Sub(t).Milliseconds()
+			event.SetDuration(time.Now().Sub(t).Milliseconds())
 		}
 	}()
 
@@ -157,7 +157,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 			results = append(results, res)
-			event.Response.Results = append(event.Response.Results, SearchResult{
+			event.AddResult(SearchResult{
 				Dn:         res.Dn,
 				Attributes: res.Attributes,
 			})
@@ -171,8 +171,8 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		Controls: msg.Controls,
 	}
 
-	event.Response.Status = ldap.StatusText[status]
-	event.Actions = d.emitter.EmitLdap(msg, res)
+	event.SetStatus(ldap.StatusText[status])
+	event.SetActions(d.emitter.EmitLdap(msg, res))
 
 	if err := rw.Write(res); err != nil {
 		log.Errorf("ldap: send search done: %v", err)

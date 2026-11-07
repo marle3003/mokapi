@@ -65,6 +65,10 @@ func (b *Broker) startCleaner(cleaner logCleaner) {
 	}()
 }
 
+// stopCleaner does not block if the cleaner was already told to stop.
 func (b *Broker) stopCleaner() {
-	b.stopCleanerChan <- true
+	select {
+	case b.stopCleanerChan <- true:
+	default:
+	}
 }

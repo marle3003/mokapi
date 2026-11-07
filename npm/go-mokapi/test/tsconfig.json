@@ -4,6 +4,7 @@
     "moduleResolution": "node16",
     "paths": {
       "mokapi": ["../types/index.d.ts"],
+      "mokapi/*": ["../types/*.d.ts"]
     },
     "lib": [
       "es6"

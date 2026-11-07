@@ -75,3 +75,50 @@ func (suite *MqttSuite) TestPublish() {
 	require.Equal(t, uint16(10), msg.MessageId)
 	require.Equal(t, mqtt.PublishSuccess, msg.ReasonCode)
 }
+
+func (suite *MqttSuite) TestHandlerCanPublishToAnotherTopic() {
+	time.Sleep(2 * time.Second)
+	t := suite.T()
+
+	c := mqtttest.NewClient("localhost:8883")
+	defer c.Close()
+
+	_, err := c.Send(&mqtt.Message{
+		Header: &mqtt.Header{
+			Type: mqtt.CONNECT,
+		},
+		Payload: &mqtt.ConnectRequest{
+			Protocol:     "MQTT",
+			Version:      5,
+			CleanSession: true,
+			KeepAlive:    60,
+			ClientId:     "client-forward",
+		},
+	})
+	require.NoError(t, err)
+
+	reading := `{"sensorId":"s-forward","value":42}`
+	res, err := c.Send(&mqtt.Message{
+		Header: &mqtt.Header{
+			Type: mqtt.PUBLISH,
+			QoS:  1,
+		},
+		Payload: &mqtt.PublishRequest{
+			Topic:     "sensors/temperature",
+			MessageId: 11,
+			Data:      []byte(reading),
+		},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, mqtt.PUBACK, res.Header.Type)
+	msg := res.Payload.(*mqtt.PublishResponse)
+	require.Equal(t, uint16(11), msg.MessageId)
+	require.Equal(t, mqtt.PublishSuccess, msg.ReasonCode)
+
+	m := suite.cmd.App.Mqtt.Get("Sensor Service")
+	topic, ok := m.Topic("sensors/alerts")
+	require.True(t, ok)
+	require.NotNil(t, topic.Retained)
+	require.Equal(t, reading, string(topic.Retained.Data))
+}

@@ -36,7 +36,7 @@ func (s *Store) createTopics(rw kafka.ResponseWriter, req *kafka.Request) error 
 
 		appendCreateTopicResponse(res, createTopics.TopicResponse{
 			Name:          rt.Name,
-			NumPartitions: int32(len(t.Partitions)),
+			NumPartitions: int32(t.NumPartitions()),
 		})
 	}
 

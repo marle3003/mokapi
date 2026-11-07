@@ -45,7 +45,9 @@ type Store struct {
 	config       *asyncapi3.Config
 
 	nextPID int64
-	m       sync.RWMutex
+	// guards topics, brokers, groups and clients; first in the lock order Store.m, Topic.m, Partition.m.
+	// Methods ending in Locked expect the caller to hold it.
+	m sync.RWMutex
 }
 
 type ProducerState struct {
@@ -73,8 +75,11 @@ func New(config *asyncapi3.Config, eventEmitter common.KafkaEventEmitter, eh eve
 }
 
 func (s *Store) Close() {
-	for _, g := range s.groups {
+	for _, g := range s.Groups() {
 		g.balancer.Stop()
+	}
+	for _, b := range s.Brokers() {
+		b.stopCleaner()
 	}
 }
 
@@ -144,6 +149,9 @@ func (s *Store) NewTopic(name string, b *Broker) (*Topic, error) {
 }
 
 func (s *Store) Topics() []*Topic {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	topics := make([]*Topic, 0, len(s.topics))
 	for _, t := range s.topics {
 		topics = append(topics, t)
@@ -152,6 +160,9 @@ func (s *Store) Topics() []*Topic {
 }
 
 func (s *Store) Brokers() []*Broker {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	brokers := make([]*Broker, 0, len(s.brokers))
 	for _, b := range s.brokers {
 		brokers = append(brokers, b)
@@ -160,6 +171,9 @@ func (s *Store) Brokers() []*Broker {
 }
 
 func (s *Store) Groups() []*Group {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	groups := make([]*Group, 0, len(s.groups))
 	for _, g := range s.groups {
 		groups = append(groups, g)
@@ -189,6 +203,18 @@ func (s *Store) GetOrCreateGroup(name string, broker *Broker) *Group {
 }
 
 func (s *Store) Update(c *asyncapi3.Config) {
+	// Brokers and partitions are stopped after the store lock is released: stopping the log cleaner
+	// and deleting partitions must not wait for goroutines that need the store.
+	s.m.Lock()
+	afterUnlock := s.updateLocked(c)
+	s.m.Unlock()
+
+	for _, f := range afterUnlock {
+		f()
+	}
+}
+
+func (s *Store) updateLocked(c *asyncapi3.Config) (afterUnlock []func()) {
 	s.config = c
 	if c.Servers != nil {
 		for it := c.Servers.Iter(); it.Next(); {
@@ -197,7 +223,7 @@ func (s *Store) Update(c *asyncapi3.Config) {
 			if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
 				continue
 			}
-			if b := s.getBroker(name); b != nil {
+			if b := s.getBrokerLocked(name); b != nil {
 				host, port := parseHostAndPort(server.Value.Host)
 				if len(host) == 0 {
 					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.config.Info.Name, server.Value.Host)
@@ -206,17 +232,16 @@ func (s *Store) Update(c *asyncapi3.Config) {
 				b.Host = host
 				b.Port = port
 			} else {
-				s.addBroker(name, server.Value)
+				s.addBrokerLocked(name, server.Value)
 			}
 		}
-		for _, b := range s.brokers {
-			if b == nil {
-				continue
+		s.brokers = slices.DeleteFunc(s.brokers, func(b *Broker) bool {
+			if _, ok := c.Servers.Get(b.Name); ok {
+				return false
 			}
-			if _, ok := c.Servers.Get(b.Name); !ok {
-				s.deleteBroker(b)
-			}
-		}
+			afterUnlock = append(afterUnlock, b.stopCleaner)
+			return true
+		})
 	}
 
 	for n, ch := range c.Channels {
@@ -235,14 +260,15 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		}
 
 		if t, ok := s.topics[n]; ok {
-			t.update(ch.Value, s)
+			removed := t.update(ch.Value)
+			afterUnlock = append(afterUnlock, func() { deletePartitions(removed) })
 		} else {
-			if _, err := s.addTopic(n, ch.Value, s.getOperations(ch.Value)); err != nil {
+			if _, err := s.addTopicLocked(n, ch.Value, s.getOperations(ch.Value)); err != nil {
 				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.config.Info.Name, err)
 			}
 		}
 	}
-	for name := range s.topics {
+	for name, t := range s.topics {
 		foundConfig := false
 		for n, ch := range c.Channels {
 			if ch.Value == nil {
@@ -253,9 +279,11 @@ func (s *Store) Update(c *asyncapi3.Config) {
 			}
 		}
 		if !foundConfig {
-			s.deleteTopic(name)
+			delete(s.topics, name)
+			afterUnlock = append(afterUnlock, t.delete)
 		}
 	}
+	return afterUnlock
 }
 
 func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
@@ -264,13 +292,13 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	client := kafka.ClientFromContext(req.Context)
 	if client != nil {
 		s.m.Lock()
-		if _, ok := s.clients[client.ClientId]; !ok {
-			s.clients[client.ClientId] = client
+		if _, ok := s.clients[client.ClientId()]; !ok {
+			s.clients[client.ClientId()] = client
 			client.Close = func() {
 				s.m.Lock()
 				defer s.m.Unlock()
 
-				delete(s.clients, client.ClientId)
+				delete(s.clients, client.ClientId())
 			}
 		}
 		s.m.Unlock()
@@ -317,7 +345,10 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
+	return s.addTopicLocked(name, channel, ops)
+}
 
+func (s *Store) addTopicLocked(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
@@ -326,22 +357,7 @@ func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncap
 	return t, nil
 }
 
-func (s *Store) deleteTopic(name string) {
-	s.m.Lock()
-	defer s.m.Unlock()
-
-	t, ok := s.topics[name]
-	if !ok {
-		return
-	}
-	t.delete()
-	delete(s.topics, name)
-}
-
-func (s *Store) addBroker(name string, config *asyncapi3.Server) {
-	s.m.Lock()
-	defer s.m.Unlock()
-
+func (s *Store) addBrokerLocked(name string, config *asyncapi3.Server) {
 	id := len(s.brokers)
 	b := newBroker(id, name, config)
 
@@ -349,17 +365,8 @@ func (s *Store) addBroker(name string, config *asyncapi3.Server) {
 	b.startCleaner(s.cleanLog)
 }
 
-func (s *Store) deleteBroker(broker *Broker) {
-	s.m.Lock()
-	defer s.m.Unlock()
-
-	broker.stopCleaner()
-	s.brokers = slices.DeleteFunc(s.brokers, func(b *Broker) bool {
-		return b.Name == broker.Name
-	})
-}
-
-func (s *Store) getBroker(name string) *Broker {
+// getBrokerLocked requires s.m.
+func (s *Store) getBrokerLocked(name string) *Broker {
 	for _, b := range s.brokers {
 		if b.Name == name {
 			return b
@@ -369,6 +376,9 @@ func (s *Store) getBroker(name string) *Broker {
 }
 
 func (s *Store) getBrokerByPort(addr string) *Broker {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	for _, b := range s.brokers {
 		_, p := parseHostAndPort(addr)
 		if b.Port == p && b.Host != "" {
@@ -500,17 +510,13 @@ func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partiti
 	m.Messages.WithLabel(labels...).Add(float64(len(batch.Records)))
 	m.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
 
-	for name, g := range s.groups {
-		gt, ok := g.Commits[topic.Name]
-		if !ok {
-			continue
-		}
-		commit, ok := gt[partition.Index]
+	for _, g := range s.Groups() {
+		commit, ok := g.committedOffset(topic.Name, partition.Index)
 		if !ok {
 			continue
 		}
 		lag := float64(partition.Offset() - commit)
-		m.Lags.WithLabel(s.config.Info.Name, name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
+		m.Lags.WithLabel(s.config.Info.Name, g.Name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
 	}
 }
 
@@ -531,18 +537,21 @@ func (s *Store) getOperations(channel *asyncapi3.Channel) []*asyncapi3.Operation
 	return ops
 }
 
-func (s *Store) Clients() []kafka.ClientContext {
-	var result []kafka.ClientContext
+func (s *Store) Clients() []*kafka.ClientContext {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	var result []*kafka.ClientContext
 	for _, c := range s.clients {
-		result = append(result, *c)
+		result = append(result, c)
 	}
 	return result
 }
 
-func (s *Store) Client(clientId string) (kafka.ClientContext, bool) {
+func (s *Store) Client(clientId string) (*kafka.ClientContext, bool) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	c, ok := s.clients[clientId]
-	if !ok {
-		return kafka.ClientContext{}, false
-	}
-	return *c, ok
+	return c, ok
 }

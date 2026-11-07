@@ -116,6 +116,23 @@ func TestJson(t *testing.T) {
 				}, cfg.Providers.File.Directories)
 			},
 		},
+		{
+			name: "JavaScript aliases",
+			data: `{
+"javascript": {
+  "modules": {
+    "aliases": {
+      "foo": "bar"
+    }
+  }
+}}
+`,
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, map[string]string{
+					"foo": "bar",
+				}, cfg.JavaScript.Modules.Aliases)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

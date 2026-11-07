@@ -617,7 +617,7 @@ func TestFaker_Schema(t *testing.T) {
 				defer generator.SetConfig(static.DataGen{})
 			}
 
-			reg, err := require.NewRegistry()
+			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)
 			r.NoError(t, err)
 

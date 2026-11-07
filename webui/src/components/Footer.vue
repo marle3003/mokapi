@@ -21,6 +21,16 @@
                   </router-link>
                 </li>
                 <li>
+                  <router-link :to="{ path: '/mqtt' }">
+                    MQTT Broker Mocking
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ path: '/websocket' }">
+                    WebSocket Mocking
+                  </router-link>
+                </li>
+                <li>
                   <router-link :to="{ path: '/mail' }">
                     SMTP & IMAP Mail Mocking
                   </router-link>

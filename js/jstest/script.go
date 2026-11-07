@@ -13,7 +13,7 @@ type Script struct {
 }
 
 func New(opts ...js.Option) (*Script, error) {
-	registry, err := require.NewRegistry()
+	registry, err := require.NewRegistry(map[string]string{})
 	js.RegisterNativeModules(registry)
 
 	opts = append([]js.Option{js.WithRegistry(registry)}, opts...)
