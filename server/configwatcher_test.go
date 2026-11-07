@@ -12,6 +12,7 @@ import (
 	"mokapi/try"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -134,8 +135,13 @@ func TestConfigWatcher_Read(t *testing.T) {
 						return nil
 					},
 				})
+				processed := make(chan struct{}, 1)
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					require.NotNil(t, e.Config.Data)
+					select {
+					case processed <- struct{}{}:
+					default:
+					}
 				})
 
 				pool := safe.NewPool(context.Background())
@@ -148,8 +154,15 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}}
-				time.Sleep(5 * time.Millisecond)
-				require.Equal(t, "foobar", c.Data)
+				// wait until the watcher finished parsing, otherwise Data is read while it is written
+				select {
+				case <-processed:
+				case <-time.After(2 * time.Second):
+					require.Fail(t, "config was not processed")
+				}
+				current, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", current.Data)
 			},
 		},
 		{
@@ -320,18 +333,17 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				var deleted *dynamic.Config
+				var deleted atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					if e.Event == dynamic.Delete {
-						deleted = e.Config
+						deleted.Store(e.Config)
 					}
 				})
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Delete}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, deleted)
-				require.Equal(t, c, deleted)
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, deleted.Load())
 
 			},
 		},
@@ -366,18 +378,17 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NotNil(t, parent)
 				dynamic.AddRef(parent, child)
 
-				var deleted *dynamic.Config
+				var deleted atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					if e.Event == dynamic.Delete {
-						deleted = e.Config
+						deleted.Store(e.Config)
 					}
 				})
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Name: configPathParent.String(), Event: dynamic.Delete}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, deleted)
-				require.Equal(t, parent, deleted)
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, parent, deleted.Load())
 
 				update := &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPathChild}}
 				update.Info.Checksum = []byte{2}
@@ -410,17 +421,16 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				var mainFile dynamic.ConfigEvent
+				var mainFile atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					mainFile = e
+					mainFile.Store(e.Config)
 				})
 
 				// The listener should be called even checksum matches to the specific w.Read call
 				// otherwise the configuration file will be ignored.
 				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Create, Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: c.Info.Checksum}}}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, mainFile)
-				require.Equal(t, c, mainFile.Config)
+				require.Eventually(t, func() bool { return mainFile.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, mainFile.Load())
 			},
 		},
 		{
@@ -529,9 +539,9 @@ func TestConfigWatcher_Start(t *testing.T) {
 				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 				w := server.NewConfigWatcher(&static.Config{})
-				var listenerReceived []*dynamic.Config
+				var listenerReceived atomic.Int32
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					listenerReceived = append(listenerReceived, e.Config)
+					listenerReceived.Add(1)
 				})
 				var ch chan dynamic.ConfigEvent
 				w.AddProvider("foo", &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
@@ -543,9 +553,8 @@ func TestConfigWatcher_Start(t *testing.T) {
 				require.NoError(t, err)
 
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.json")}, Raw: []byte(`{"openapi": "3.0","info":{"title":"Foo"}}`)}}
-				time.Sleep(time.Duration(100) * time.Millisecond)
-
-				require.Len(t, listenerReceived, 1)
+				require.Eventually(t, func() bool { return listenerReceived.Load() > 0 }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, int32(1), listenerReceived.Load())
 				pool.Stop()
 
 				func() {

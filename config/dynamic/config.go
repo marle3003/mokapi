@@ -110,23 +110,32 @@ func (l *Listeners) Remove(key string) {
 	l.m.Lock()
 	defer l.m.Unlock()
 
+	if l.list == nil {
+		return
+	}
 	l.list.Del(key)
 }
 
 func (l *Listeners) Invoke(e ConfigEvent) {
-	if l.list == nil {
-		return
-	}
-	for it := l.list.Iter(); it.Next(); {
-		it.Value()(e)
+	for _, fn := range l.List() {
+		fn(e)
 	}
 }
 
-func (l *Listeners) Iter() *sortedmap.Iterator[string, ConfigListener] {
+// List returns a snapshot of the listeners in insertion order. Callers invoke them
+// without holding the lock, because a listener may add or invoke other listeners.
+func (l *Listeners) List() []ConfigListener {
+	l.m.Lock()
+	defer l.m.Unlock()
+
 	if l.list == nil {
-		return &sortedmap.Iterator[string, ConfigListener]{}
+		return nil
 	}
-	return l.list.Iter()
+	var fns []ConfigListener
+	for it := l.list.Iter(); it.Next(); {
+		fns = append(fns, it.Value())
+	}
+	return fns
 }
 
 func Wrap(i ConfigInfo, c *Config) {

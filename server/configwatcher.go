@@ -13,6 +13,7 @@ import (
 	"mokapi/safe"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,6 +30,10 @@ type ConfigWatcher struct {
 type entry struct {
 	config *dynamic.Config
 	m      sync.Mutex
+	// parsed is the lock-free fast path of Read: the config was parsed successfully and has Data.
+	// It is set under m and cleared when a (re)parse fails or leaves Data nil, so a later Read
+	// can still parse into the caller's target.
+	parsed atomic.Bool
 }
 
 func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
@@ -74,11 +79,11 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 
 	w.m.Unlock()
 
-	if c.Data == nil {
+	if !e.parsed.Load() {
 		e.m.Lock()
 		defer e.m.Unlock()
 
-		if c.Data == nil {
+		if !e.parsed.Load() {
 			if v != nil {
 				c.Data = v
 			}
@@ -91,6 +96,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if err != nil {
 				return nil, err
 			}
+			e.parsed.Store(c.Data != nil)
 		}
 	}
 
@@ -235,9 +241,11 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
+		e.parsed.Store(false)
 		e.m.Unlock()
 		return
 	}
+	e.parsed.Store(c.Data != nil)
 
 	if c.Data == nil {
 		e.m.Unlock()
@@ -313,16 +321,14 @@ func getConfigKey(u *url.URL) string {
 }
 
 func invokeListeners(e dynamic.ConfigEvent) {
-	i := 0
-	for it := e.Config.Listeners.Iter(); it.Next(); {
+	for i, l := range e.Config.Listeners.List() {
 		if i == 0 {
 			// run parser (ConfigWatcher, first listener) synchronously
 			// this ensures config is parsed before other listeners are called
-			it.Value()(e)
+			l(e)
 		} else {
-			go it.Value()(e)
+			go l(e)
 		}
-		i++
 	}
 }
 
