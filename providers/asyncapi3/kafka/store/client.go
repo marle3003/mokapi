@@ -86,7 +86,7 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 				Error:     err.Error(),
 			})
 		}
-		value, err := c.parse(r.Value, ct, p.Topic.Config)
+		value, err := c.parse(r.Value, ct, p.Topic.Config())
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,

@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -39,12 +40,15 @@ type Store struct {
 	groups       map[string]*Group
 	eventEmitter common.KafkaEventEmitter
 	eh           events.Handler
-	producers    map[int64]*ProducerState
 	monitor      *monitor.Kafka
 	clients      map[string]*kafka.ClientContext
-	config       *asyncapi3.Config
+	// config is replaced as a whole by Update and read lock-free through cfg().
+	config atomic.Pointer[asyncapi3.Config]
 
 	nextPID int64
+	// guards producers; a leaf lock, never held while taking another lock.
+	producersM sync.RWMutex
+	producers  map[int64]*ProducerState
 	// guards topics, brokers, groups and clients; first in the lock order Store.m, Topic.m, Partition.m.
 	// Methods ending in Locked expect the caller to hold it.
 	m sync.RWMutex
@@ -102,9 +106,14 @@ func (s *Store) Topic(name string) *Topic {
 	return nil
 }
 
+// cfg returns the current config, which Update replaces as a whole.
+func (s *Store) cfg() *asyncapi3.Config {
+	return s.config.Load()
+}
+
 func (s *Store) NewTopic(name string, b *Broker) (*Topic, error) {
 	var errs []error
-	for _, ref := range s.config.Channels {
+	for _, ref := range s.cfg().Channels {
 		if ref.Value == nil {
 			continue
 		}
@@ -215,7 +224,7 @@ func (s *Store) Update(c *asyncapi3.Config) {
 }
 
 func (s *Store) updateLocked(c *asyncapi3.Config) (afterUnlock []func()) {
-	s.config = c
+	s.config.Store(c)
 	if c.Servers != nil {
 		for it := c.Servers.Iter(); it.Next(); {
 			name := it.Key()
@@ -226,11 +235,10 @@ func (s *Store) updateLocked(c *asyncapi3.Config) (afterUnlock []func()) {
 			if b := s.getBrokerLocked(name); b != nil {
 				host, port := parseHostAndPort(server.Value.Host)
 				if len(host) == 0 {
-					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.config.Info.Name, server.Value.Host)
+					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, c.Info.Name, server.Value.Host)
 					continue
 				}
-				b.Host = host
-				b.Port = port
+				b.setHostPort(host, port)
 			} else {
 				s.addBrokerLocked(name, server.Value)
 			}
@@ -264,7 +272,7 @@ func (s *Store) updateLocked(c *asyncapi3.Config) (afterUnlock []func()) {
 			afterUnlock = append(afterUnlock, func() { deletePartitions(removed) })
 		} else {
 			if _, err := s.addTopicLocked(n, ch.Value, s.getOperations(ch.Value)); err != nil {
-				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.config.Info.Name, err)
+				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.cfg().Info.Name, err)
 			}
 		}
 	}
@@ -381,7 +389,7 @@ func (s *Store) getBrokerByPort(addr string) *Broker {
 
 	for _, b := range s.brokers {
 		_, p := parseHostAndPort(addr)
-		if b.Port == p && b.Host != "" {
+		if host, port := b.HostPort(); port == p && host != "" {
 			return b
 		}
 	}
@@ -389,9 +397,10 @@ func (s *Store) getBrokerByPort(addr string) *Broker {
 }
 
 func (s *Store) log(log *KafkaMessageLog, traits events.Traits) {
-	log.Api = s.config.Info.Name
+	name := s.cfg().Info.Name
+	log.Api = name
 	t := traits.WithNamespace("kafka").
-		WithName(s.config.Info.Name).
+		WithName(name).
 		With("type", "message")
 	if log.ClientId != "" {
 		t = t.With("clientId", log.ClientId)
@@ -406,7 +415,7 @@ func (s *Store) trigger(topic string, partition int, record *kafka.Record, schem
 	}
 
 	r := &common.KafkaEventRecord{
-		Api:       s.config.Info.Name,
+		Api:       s.cfg().Info.Name,
 		Topic:     topic,
 		Partition: partition,
 		Offset:    record.Offset,
@@ -501,8 +510,9 @@ func parseHostAndPort(s string) (host string, port int) {
 }
 
 func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partition, batch kafka.RecordBatch) {
-	topicName := topic.Config.ResolveAddress()
-	labels := []string{s.config.Info.Name, topicName}
+	topicName := topic.Config().ResolveAddress()
+	clusterName := s.cfg().Info.Name
+	labels := []string{clusterName, topicName}
 	if topic.Name != topicName {
 		labels = append(labels, topic.Name)
 	}
@@ -516,13 +526,13 @@ func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partiti
 			continue
 		}
 		lag := float64(partition.Offset() - commit)
-		m.Lags.WithLabel(s.config.Info.Name, g.Name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
+		m.Lags.WithLabel(clusterName, g.Name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
 	}
 }
 
 func (s *Store) getOperations(channel *asyncapi3.Channel) []*asyncapi3.Operation {
 	var ops []*asyncapi3.Operation
-	for _, op := range s.config.Operations {
+	for _, op := range s.cfg().Operations {
 		if op == nil || op.Value == nil {
 			continue
 		}

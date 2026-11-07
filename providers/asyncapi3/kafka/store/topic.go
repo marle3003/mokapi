@@ -10,6 +10,7 @@ import (
 	"mokapi/schema/json/schema"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -21,10 +22,11 @@ type Topic struct {
 
 	logger     LogRecord
 	s          *Store
-	Config     *asyncapi3.Channel
+	config     atomic.Pointer[asyncapi3.Channel]
 	operations []*asyncapi3.Operation
 
-	// guards Config and Partitions; lock order: Store.m, Topic.m, Partition.m
+	// guards Partitions and writes of config; lock order: Store.m, Topic.m, Partition.m.
+	// config is atomic, so it can be read without m, e.g. inside Partition.m.
 	m sync.RWMutex
 }
 
@@ -64,7 +66,12 @@ func (t *Topic) PartitionList() []*Partition {
 func (t *Topic) channelAndPartitions() (*asyncapi3.Channel, []*Partition) {
 	t.m.RLock()
 	defer t.m.RUnlock()
-	return t.Config, slices.Clone(t.Partitions)
+	return t.Config(), slices.Clone(t.Partitions)
+}
+
+// Config returns the current channel config, which Update replaces as a whole.
+func (t *Topic) Config() *asyncapi3.Channel {
+	return t.config.Load()
 }
 
 func (t *Topic) delete() {
@@ -72,7 +79,9 @@ func (t *Topic) delete() {
 }
 
 func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, s *Store) *Topic {
-	t := &Topic{Name: name, logger: s.log, s: s, Config: channel, operations: ops}
+	t := &Topic{Name: name, logger: s.log, s: s, operations: ops}
+	// newPartition reads the config
+	t.config.Store(channel)
 
 	numPartitions := 1
 	if channel.Bindings != nil {
@@ -91,7 +100,7 @@ func (t *Topic) update(config *asyncapi3.Channel) (removed []*Partition) {
 	t.m.Lock()
 	defer t.m.Unlock()
 
-	t.Config = config
+	t.config.Store(config)
 	numPartitions := 1
 	if config.Bindings != nil {
 		numPartitions = config.Bindings.Kafka.Partitions
@@ -130,7 +139,7 @@ func (t *Topic) updatePartitionsLocked(numPartitions int) (removed []*Partition)
 			} else {
 				p = t.Partitions[i]
 			}
-			p.validator.Store(newValidator(t.Config))
+			p.validator.Store(newValidator(t.Config()))
 		}
 	}
 
@@ -145,8 +154,8 @@ func deletePartitions(partitions []*Partition) {
 }
 
 func (t *Topic) log(r *KafkaMessageLog, traits events.Traits) {
-	topicName := t.Config.ResolveAddress()
-	traits.With("topic", t.Config.ResolveAddress())
+	topicName := t.Config().ResolveAddress()
+	traits.With("topic", topicName)
 	if t.Name != topicName {
 		traits.With("instance", t.Name)
 	}

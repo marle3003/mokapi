@@ -71,10 +71,10 @@ func TestService_Run_Kafka(t *testing.T) {
 				)
 				require.NoError(t, err)
 				require.IsType(t, &mcp.Kafka{}, r.Result)
-				kafka := r.Result.(*mcp.Kafka)
-				require.Equal(t, "foo", kafka.Name)
-				require.Equal(t, "kafka", kafka.Type)
-				require.Equal(t, []mcp.Broker{{Name: "bar", Host: "foo.bar", Description: "server description"}}, kafka.Brokers)
+				k := r.Result.(*mcp.Kafka)
+				require.Equal(t, "foo", k.Name)
+				require.Equal(t, "kafka", k.Type)
+				require.Equal(t, []mcp.Broker{{Name: "bar", Host: "foo.bar", Description: "server description"}}, k.Brokers)
 			},
 		},
 		{
@@ -489,4 +489,58 @@ To create a valid payload:
 			tc.test(t, s)
 		})
 	}
+}
+
+func TestTopic_Consume(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	app := runtimetest.NewKafkaApp(
+		asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel("channel-1"),
+		),
+	)
+	_, err := app.Kafka.Get("foo").Store.Topic("channel-1").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
+		{Key: kafka.NewBytes([]byte("k0")), Value: kafka.NewBytes([]byte("v0"))},
+		{Key: kafka.NewBytes([]byte("k1")), Value: kafka.NewBytes([]byte("v1")),
+			Headers: []kafka.RecordHeader{{Key: "h", Value: []byte("x")}}},
+		{Key: kafka.NewBytes([]byte("k2")), Value: kafka.NewBytes([]byte("v2"))},
+	}})
+	require.NoError(t, err)
+
+	s := mcp.NewService(app)
+	r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo').getTopic('channel-1')`})
+	require.NoError(t, err)
+	topic := r.Result.(mcp.Topic)
+
+	testcases := []struct {
+		name   string
+		start  int64
+		limit  int
+		offset []int64
+	}{
+		{name: "from start", start: 0, limit: 10, offset: []int64{0, 1, 2}},
+		{name: "from middle", start: 1, limit: 10, offset: []int64{1, 2}},
+		{name: "limit", start: 0, limit: 2, offset: []int64{0, 1}},
+		{name: "start at tail", start: 3, limit: 10, offset: []int64{}},
+		{name: "start after tail", start: 99, limit: 10, offset: []int64{}},
+		{name: "start before head", start: -1, limit: 10, offset: []int64{}},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			records, err := topic.Consume(0, tc.start, tc.limit)
+			require.NoError(t, err)
+			offsets := []int64{}
+			for _, rec := range records {
+				offsets = append(offsets, rec.Offset)
+			}
+			require.Equal(t, tc.offset, offsets)
+			if len(records) > 1 && tc.start <= 1 {
+				require.Equal(t, map[string]string{"h": "x"}, records[1-int(tc.start)].Headers)
+			}
+		})
+	}
+
+	_, err = topic.Consume(5, 0, 10)
+	require.EqualError(t, err, "partition '5' not found")
 }

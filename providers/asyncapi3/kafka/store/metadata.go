@@ -15,14 +15,16 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	res := &metaData.Response{
 		Brokers:   make([]metaData.ResponseBroker, 0, len(brokers)),
 		Topics:    make([]metaData.ResponseTopic, 0, len(r.Topics)),
-		ClusterId: s.config.Info.Name,
+		ClusterId: s.cfg().Info.Name,
 	}
 
 	// Mokapi does no leader management; therefore, only the current server is returned as the broker.
 	host, port := parseHostAndPort(req.Host)
 	b := s.getBrokerByPort(req.Host)
-	if b != nil && b.Host != "" {
-		host = b.Host
+	if b != nil {
+		if h, _ := b.HostPort(); h != "" {
+			host = h
+		}
 	}
 	res.Brokers = append(res.Brokers, metaData.ResponseBroker{
 		NodeId: 0,
@@ -92,7 +94,7 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 }
 
 func isTopicAvailable(t *Topic, b *Broker) bool {
-	return isChannelAvailable(t.Config, b)
+	return isChannelAvailable(t.Config(), b)
 }
 
 func isChannelAvailable(ch *asyncapi3.Channel, b *Broker) bool {

@@ -152,7 +152,7 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
 			}
-			return clusters[0], topics[0].Config, nil
+			return clusters[0], topics[0].Config(), nil
 		}
 
 		var topics []*asyncapi3.Channel
@@ -162,7 +162,7 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 				if len(cluster) == 0 {
 					cluster = v.Info.Name
 				}
-				topics = append(topics, t.Config)
+				topics = append(topics, t.Config())
 			} else if topic != "" {
 				for _, ref := range v.Channels {
 					if ref.Value == nil {
@@ -185,7 +185,7 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 		if k = c.app.Kafka.Get(cluster); k != nil {
 			t := k.Topic(topic)
 			if t != nil {
-				ch = t.Config
+				ch = t.Config()
 			}
 		} else {
 			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)

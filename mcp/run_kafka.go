@@ -248,41 +248,29 @@ func (t *Topic) Consume(partition int, startOffset int64, limit int) ([]KafkaRec
 
 	records := []KafkaRecord{}
 	offset := startOffset
-	n := 0
-	for {
-		if offset >= p.Offset() || n >= limit {
-			return records, nil
-		}
-		seg := p.GetSegment(offset)
-		if seg == nil {
-			return records, nil
+	for offset < p.Offset() && len(records) < limit {
+		r := p.Record(offset)
+		if r == nil {
+			// offset was removed by the log cleaner
+			break
 		}
 
-		for seg.Contains(offset) {
-			r := seg.Record(offset)
-
-			result := KafkaRecord{
-				Offset: offset,
-				Key:    kafka.BytesToString(r.Key),
-				Value:  kafka.BytesToString(r.Value),
-			}
-			if r.Headers != nil {
-				result.Headers = make(map[string]string)
-				for _, h := range r.Headers {
-					result.Headers[h.Key] = string(h.Value)
-				}
-			}
-
-			records = append(records, result)
-
-			n++
-			offset++
-
-			if n >= limit {
-				return records, nil
+		result := KafkaRecord{
+			Offset: offset,
+			Key:    kafka.BytesToString(r.Key),
+			Value:  kafka.BytesToString(r.Value),
+		}
+		if r.Headers != nil {
+			result.Headers = make(map[string]string)
+			for _, h := range r.Headers {
+				result.Headers[h.Key] = string(h.Value)
 			}
 		}
+
+		records = append(records, result)
+		offset++
 	}
+	return records, nil
 }
 
 func getKafkaMessages(msg *asyncapi3.MessageRef) KafkaMessage {

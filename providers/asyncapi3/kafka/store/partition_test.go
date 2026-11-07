@@ -13,6 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTopicWithConfig(c *asyncapi3.Channel) *Topic {
+	t := &Topic{}
+	t.config.Store(c)
+	return t
+}
+
 func TestPartition(t *testing.T) {
 	p := newPartition(
 		0,
@@ -158,9 +164,9 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, _ events.Traits) {
 		}, func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
-		&Topic{Config: &asyncapi3.Channel{Bindings: &asyncapi3.ChannelBindings{
+		newTopicWithConfig(&asyncapi3.Channel{Bindings: &asyncapi3.ChannelBindings{
 			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
-		}}},
+		}}),
 	)
 	p.validator.Store(&validator{
 		validators: []recordValidator{
@@ -317,4 +323,44 @@ func TestPartition_Write_ActiveSegmentWasRemoved(t *testing.T) {
 	require.Equal(t, int64(1), p.Offset())
 	require.Contains(t, p.Segments, int64(0))
 	require.Contains(t, p.Segments, p.ActiveSegment)
+}
+
+func TestPartition_Record(t *testing.T) {
+	newBatch := func() kafka.RecordBatch {
+		return kafka.RecordBatch{Records: []*kafka.Record{
+			{Time: time.Now(), Key: kafka.NewBytes([]byte("k0")), Value: kafka.NewBytes([]byte("v0"))},
+			{Time: time.Now(), Key: kafka.NewBytes([]byte("k1")), Value: kafka.NewBytes([]byte("v1"))},
+		}}
+	}
+	newPartitionWithRecords := func() *Partition {
+		p := newPartition(0, []*Broker{{Id: 1}},
+			func(log *KafkaMessageLog, traits events.Traits) {},
+			func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
+			&Topic{},
+		)
+		_, err := p.Write(newBatch())
+		require.NoError(t, err)
+		return p
+	}
+
+	t.Run("record at offset", func(t *testing.T) {
+		p := newPartitionWithRecords()
+		r := p.Record(1)
+		require.NotNil(t, r)
+		require.Equal(t, "k1", kafka.BytesToString(r.Key))
+	})
+
+	t.Run("offset after tail", func(t *testing.T) {
+		p := newPartitionWithRecords()
+		require.Nil(t, p.Record(2))
+	})
+
+	t.Run("offset before head", func(t *testing.T) {
+		p := newPartitionWithRecords()
+		p.addSegmentLocked()
+		p.removeClosedSegments()
+		require.Equal(t, int64(2), p.StartOffset())
+		require.Nil(t, p.Record(0))
+		require.Nil(t, p.Record(-1))
+	})
 }

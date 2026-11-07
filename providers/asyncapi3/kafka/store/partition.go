@@ -75,9 +75,10 @@ type PartitionProducerState struct {
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]*Broker, 0, len(brokers))
+	ch := topic.Config()
 	for _, b := range brokers {
-		if topic.Config != nil && len(topic.Config.Servers) > 0 {
-			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
+		if ch != nil && len(ch.Servers) > 0 {
+			if slices.ContainsFunc(ch.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
 				brokerList = append(brokerList, b)
@@ -178,7 +179,9 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		// validate producer idempotence
 		if r.ProducerId > 0 {
 			if producer == nil {
-				producer = p.Topic.s.producers[r.ProducerId]
+				if ps, ok := p.Topic.s.producer(r.ProducerId); ok {
+					producer = &ps
+				}
 			}
 			state, ok := p.producers[r.ProducerId]
 			if ok {
@@ -261,7 +264,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		})
 	}
 
-	if len(result.Records) > 0 && p.Topic.Config.Bindings.Kafka.ValueSchemaValidation {
+	if len(result.Records) > 0 && p.Topic.Config().Bindings.Kafka.ValueSchemaValidation {
 		return result, nil
 	}
 
@@ -319,12 +322,6 @@ func (p *Partition) Record(offset int64) *kafka.Record {
 		return nil
 	}
 	return s.Record(offset)
-}
-
-func (p *Partition) GetSegment(offset int64) *Segment {
-	p.m.RLock()
-	defer p.m.RUnlock()
-	return p.getSegmentLocked(offset)
 }
 
 func (p *Partition) getSegmentLocked(offset int64) *Segment {

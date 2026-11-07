@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"mokapi/providers/asyncapi3"
+	"sync/atomic"
 	"time"
 )
 
@@ -10,11 +11,17 @@ type logCleaner func(broker *Broker)
 
 type Brokers []*Broker
 
+type hostPort struct {
+	host string
+	port int
+}
+
 type Broker struct {
 	Id   int
 	Name string
-	Host string
-	Port int
+
+	// host and port change together on config reload, so they are read as one pair.
+	addr atomic.Pointer[hostPort]
 
 	config          *asyncapi3.Server
 	kafkaConfig     asyncapi3.BrokerBindings
@@ -30,19 +37,33 @@ func newBroker(id int, name string, config *asyncapi3.Server) *Broker {
 		bindings = config.Bindings
 	}
 
-	return &Broker{
+	b := &Broker{
 		Id:              id,
 		Name:            name,
-		Host:            h,
-		Port:            p,
 		config:          config,
 		kafkaConfig:     bindings.Kafka,
 		stopCleanerChan: make(chan bool, 1),
 	}
+	b.setHostPort(h, p)
+	return b
+}
+
+// HostPort returns host and port as one consistent pair, empty and 0 if none is set.
+func (b *Broker) HostPort() (string, int) {
+	a := b.addr.Load()
+	if a == nil {
+		return "", 0
+	}
+	return a.host, a.port
+}
+
+func (b *Broker) setHostPort(host string, port int) {
+	b.addr.Store(&hostPort{host: host, port: port})
 }
 
 func (b *Broker) Addr() string {
-	return fmt.Sprintf("%v:%v", b.Host, b.Port)
+	host, port := b.HostPort()
+	return fmt.Sprintf("%v:%v", host, port)
 }
 
 func (b *Broker) startCleaner(cleaner logCleaner) {

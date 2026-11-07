@@ -402,7 +402,7 @@ func (h *handler) getKafkaTopics(w http.ResponseWriter, r *http.Request) {
 
 	var channels []*asyncapi3.ChannelRef
 	for _, topic := range ki.Topics() {
-		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config})
+		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config()})
 	}
 
 	topics := getKafkaChannels(channels, ki, h.app.Monitor.Kafka)
@@ -415,7 +415,7 @@ func (h *handler) getKafkaTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ti := newTopic(t, ki, t.Config, h.app.Monitor.Kafka)
+	ti := newTopic(t, ki, t.Config(), h.app.Monitor.Kafka)
 	write(w, ti)
 }
 
@@ -707,8 +707,8 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	})
 
 	bindings := asyncapi3.TopicBindings{Partitions: 1}
-	if t.Config.Bindings != nil {
-		bindings = t.Config.Bindings.Kafka
+	if ch.Bindings != nil {
+		bindings = ch.Bindings.Kafka
 	}
 
 	result := kafkaTopic{
@@ -734,7 +734,7 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	labels := []metrics.QueryOptions{
 		metrics.ByLabel("service", ki.Info.Name),
 	}
-	if len(t.Config.Parameters) > 0 {
+	if len(ch.Parameters) > 0 {
 		labels = append(labels, metrics.ByLabel("instance", t.Name))
 	} else {
 		labels = append(labels, metrics.ByLabel("topic", t.Name))
