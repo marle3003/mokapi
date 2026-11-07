@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -157,21 +156,6 @@ func TestAddRef(t *testing.T) {
 
 				require.Len(t, parent.Refs.List(true), 1)
 				require.Equal(t, ref, parent.Refs.List(true)[0])
-			},
-		},
-		{
-			name: "ref updates parent time",
-			test: func(t *testing.T) {
-				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
-				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
-				d, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
-				child.Info.Time = d
-
-				dynamic.AddRef(parent, child)
-				child.Info.Checksum = []byte{1}
-				child.Listeners.Invoke(dynamic.ConfigEvent{Config: child})
-
-				require.Equal(t, d, parent.Info.Time)
 			},
 		},
 		{

@@ -485,7 +485,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
 
-				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml"}, receivedEvents(2))
+				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml"}, receivedEvents(2))
 
 				refUpdate := &dynamic.Config{Info: dynamic.ConfigInfo{Url: refPath, Checksum: []byte{2}}}
 				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refUpdate}

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"github.com/go-sprout/sprout/sprigin"
 )
@@ -64,6 +65,11 @@ type ConfigEvent struct {
 	Name   string
 	Config *Config
 	Event  Event
+	// Checksum and Time are a snapshot of Config.Info taken when the event was created.
+	// Listeners run concurrently with the next update of Config.Info, so they must
+	// not read these values from Config.
+	Checksum []byte
+	Time     time.Time
 }
 
 func AddRef(parent, ref *Config) {
@@ -81,13 +87,11 @@ func AddRef(parent, ref *Config) {
 	checksum := ref.Info.Checksum
 	ref.Listeners.Add(parent.Info.Url.String(), func(e ConfigEvent) {
 		// event Create is used for reading first time
-		if bytes.Equal(e.Config.Info.Checksum, checksum) && e.Event == Create {
+		if bytes.Equal(e.Checksum, checksum) && e.Event == Create {
 			return
 		}
-		e.Config.Info.Checksum = checksum
 
-		parent.Info.Time = ref.Info.Time
-		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path()})
+		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path(), Time: e.Time})
 		if e.Event == Delete {
 			parent.Refs.Remove(ref)
 		}

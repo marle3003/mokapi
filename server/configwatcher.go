@@ -185,6 +185,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 		e = &entry{config: c}
 		w.configs[getConfigKey(c.Info.Url)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
+		evt.Checksum, evt.Time = c.Info.Checksum, c.Info.Time
 		w.m.Unlock()
 		invokeListeners(evt)
 		return nil
@@ -208,6 +209,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 	e.config.SourceType = c.SourceType
 	e.config.Info.Update(c.Info.Checksum)
 	evt.Config = e.config
+	evt.Checksum, evt.Time = e.config.Info.Checksum, e.config.Info.Time
 
 	e.m.Unlock()
 
@@ -235,6 +237,10 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	c := e.config
 	// set config on evt
 	evt.Config = c
+	// a reload triggered by a reference takes over the reference's time; never move back
+	if evt.Time.After(c.Info.Time) {
+		c.Info.Time = evt.Time
+	}
 
 	log.Debugf("processing %v", c.Info.Path())
 
