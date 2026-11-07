@@ -331,6 +331,47 @@ func TestNode(t *testing.T) {
 				r.Equal(t, map[string]any{"foo": "bar"}, req.Context.Values)
 			},
 		},
+		{
+			name: "async fake function resolves",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node { return street }
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = async () => {
+						await new Promise(resolve => setTimeout(resolve, 10))
+						return { name: 'foo' }
+					}
+				`)
+				r.NoError(t, err)
+
+				v, err := street.Fake(&generator.Request{})
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"name": "foo"}, v)
+			},
+		},
+		{
+			name: "async fake function rejects",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node { return street }
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = async () => {
+						await new Promise(resolve => setTimeout(resolve, 10))
+						throw new Error('failed')
+					}
+				`)
+				r.NoError(t, err)
+
+				_, err = street.Fake(&generator.Request{})
+				r.EqualError(t, err, "Error: failed")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

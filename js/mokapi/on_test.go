@@ -201,6 +201,35 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
+			// the track function is a goja function and must run on the loop,
+			// even while other jobs run there; meant to run with `go test -race`
+			name: "dynamic track while loop is busy",
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
+					handler = do
+				}
+
+				_, err := evalOnLoop(loop, `
+					const m = require('mokapi')
+					let ticks = 0
+					const id = setInterval(() => { ticks++ }, 1)
+					m.on('http', () => { ticks++ },
+						{ track: () => { ticks++; return ticks > 0 } }
+					)
+				`)
+				r.NoError(t, err)
+
+				for i := 0; i < 100; i++ {
+					b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
+					r.NoError(t, err)
+					r.True(t, b)
+				}
+				_, err = evalOnLoop(loop, `clearInterval(id)`)
+				r.NoError(t, err)
+			},
+		},
+		{
 			name: "dynamic track returning wrong type",
 			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
