@@ -140,6 +140,28 @@ func TestNode(t *testing.T) {
 			},
 		},
 		{
+			name: "request path of the root value is an empty array",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "street" {
+						return street
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = (r) => { return r.path.length };
+				`)
+				r.NoError(t, err)
+				v, err := street.Fake(generator.NewRequest(nil, schematest.New("string"), nil))
+				r.NoError(t, err)
+				r.Equal(t, int64(0), v)
+			},
+		},
+		{
 			name: "change name",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				street := generator.NewNode("street")
@@ -376,7 +398,7 @@ func TestNode(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			_ = gofakeit.Seed(11)
 
 			reg, err := require.NewRegistry(nil)
 			reg.RegisterNativeModule("faker", faker.Require)

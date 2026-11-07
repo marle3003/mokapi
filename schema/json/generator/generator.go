@@ -35,6 +35,7 @@ func SetConfig(cfg static.DataGen) {
 
 func New(r *Request) (any, error) {
 	r.g = g
+	r.Path = nonNilPath(r.Path)
 	if r.Context == nil {
 		r.Context = newContext()
 	}
