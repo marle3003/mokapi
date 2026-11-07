@@ -11,6 +11,7 @@ import (
 	"mokapi/server/cert"
 	"mokapi/server/service"
 	"mokapi/try"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -428,7 +429,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 
 			port := fmt.Sprintf("%v", try.GetFreePort())
 			s := service.NewHttpServer(port, sm)
-			s.Start()
+			require.NoError(t, s.Start())
 			defer s.Stop()
 
 			tc.test(t, s, port, sm)
@@ -446,7 +447,7 @@ func TestHttp(t *testing.T) {
 
 	port := fmt.Sprintf("%v", try.GetFreePort())
 	s := service.NewHttpServer(port, sm)
-	s.Start()
+	require.NoError(t, s.Start())
 	defer s.Stop()
 
 	err := s.AddOrUpdate(&service.HttpService{
@@ -477,7 +478,7 @@ func TestHttpTls(t *testing.T) {
 
 	port := fmt.Sprintf("%v", try.GetFreePort())
 	s := service.NewHttpServerTls(port, certStore, sm)
-	s.Start()
+	require.NoError(t, s.Start())
 	defer s.Stop()
 
 	err = s.AddOrUpdate(&service.HttpService{
@@ -593,4 +594,60 @@ func (s *spyBody) Read(p []byte) (n int, err error) {
 
 func (s *spyBody) Close() error {
 	return nil
+}
+
+// Start must return only when the port accepts connections. Dials once without retry.
+func TestHttpServer_Start_PortIsBoundWhenStartReturns(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	for i := 0; i < 200; i++ {
+		port, s := startOnFreePort(t)
+
+		conn, err := net.Dial("tcp", "localhost:"+port)
+		s.Stop()
+		require.NoError(t, err, "iteration %d", i)
+		_ = conn.Close()
+	}
+}
+
+func TestHttpServer_Start_ReturnsErrorWhenPortIsInUse(t *testing.T) {
+	ln, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+	defer ln.Close()
+	port := fmt.Sprintf("%v", ln.Addr().(*net.TCPAddr).Port)
+
+	t.Run("http", func(t *testing.T) {
+		s := service.NewHttpServer(port, &events.StoreManager{})
+		require.Error(t, s.Start())
+		s.Stop() // must not panic after a failed start
+	})
+
+	t.Run("https", func(t *testing.T) {
+		certStore, err := cert.NewStore(&static.Config{})
+		require.NoError(t, err)
+		s := service.NewHttpServerTls(port, certStore, &events.StoreManager{})
+		require.Error(t, s.Start())
+		s.Stop()
+	})
+}
+
+func TestHttpServer_Stop_RightAfterStart(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		_, s := startOnFreePort(t)
+		s.Stop()
+	}
+}
+
+// startOnFreePort retries because another process may take the port between GetFreePort and Start.
+func startOnFreePort(t *testing.T) (string, *service.HttpServer) {
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		port := fmt.Sprintf("%v", try.GetFreePort())
+		s := service.NewHttpServer(port, &events.StoreManager{})
+		if err = s.Start(); err == nil {
+			return port, s
+		}
+	}
+	require.NoError(t, err)
+	return "", nil
 }

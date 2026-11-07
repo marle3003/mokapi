@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -139,7 +140,9 @@ func (m *HttpManager) getOrCreateServer(scheme string, port string) *service.Htt
 	}
 
 	m.servers[port] = server
-	server.Start()
+	if err := server.Start(); err != nil {
+		log.Errorf("failed to start %s server :%s: %s", strings.ToUpper(scheme), port, err)
+	}
 	return server
 }
 

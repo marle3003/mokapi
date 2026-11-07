@@ -145,19 +145,27 @@ func (s *HttpServer) Remove(name string) {
 	}
 }
 
-func (s *HttpServer) Start() {
+// Start binds the port before it returns, so a bind error reaches the caller and the port
+// accepts connections as soon as Start returns.
+func (s *HttpServer) Start() error {
+	ln, err := net.Listen("tcp", s.server.Addr)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		var err error
 		switch {
 		case s.isTls:
-			err = s.server.ListenAndServeTLS("", "")
+			err = s.server.ServeTLS(ln, "", "")
 		default:
-			err = s.server.ListenAndServe()
+			err = s.server.Serve(ln)
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("failed to start %s server %s: %s", s.getProto(), s.server.Addr, err)
+			log.Errorf("failed to serve %s server %s: %s", s.getProto(), s.server.Addr, err)
 		}
 	}()
+	return nil
 }
 
 func (s *HttpServer) Stop() {
