@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -10,8 +11,45 @@ import (
 func TestClientContext_AddGroup(t *testing.T) {
 	ctx := &ClientContext{}
 	ctx.AddGroup("foo", "client")
-	require.Contains(t, ctx.Member, "foo")
-	require.Equal(t, "client", ctx.Member["foo"])
+	memberId, ok := ctx.MemberId("foo")
+	require.True(t, ok)
+	require.Equal(t, "client", memberId)
+	require.True(t, ctx.HasGroup("foo"))
+}
+
+func TestClientContext_UnknownGroup(t *testing.T) {
+	ctx := &ClientContext{}
+
+	memberId, ok := ctx.MemberId("foo")
+	require.False(t, ok)
+	require.Empty(t, memberId)
+	require.False(t, ctx.HasGroup("foo"))
+	require.Empty(t, ctx.Groups())
+}
+
+func TestClientContext_GroupsReturnsCopy(t *testing.T) {
+	ctx := &ClientContext{}
+	ctx.AddGroup("foo", "m1")
+
+	groups := ctx.Groups()
+	require.Equal(t, map[string]string{"foo": "m1"}, groups)
+
+	groups["bar"] = "m2"
+	groups["foo"] = "changed"
+	require.Equal(t, map[string]string{"foo": "m1"}, ctx.Groups())
+}
+
+func TestClientContext_GetOrCreateMemberId_ReusesExistingId(t *testing.T) {
+	SetUUIDGenerator(func() string { return "first" })
+	ctx := &ClientContext{}
+	require.Equal(t, "first", ctx.GetOrCreateMemberId("foo"))
+
+	SetUUIDGenerator(func() string { return "second" })
+	require.Equal(t, "first", ctx.GetOrCreateMemberId("foo"))
+
+	memberId, ok := ctx.MemberId("foo")
+	require.True(t, ok)
+	require.Equal(t, "first", memberId)
 }
 
 func TestClientContext_GetOrCreateMemberId(t *testing.T) {
@@ -69,6 +107,8 @@ func TestClientContext_ConcurrentAccess(t *testing.T) {
 		for i := 0; i < 200; i++ {
 			ctx.SetHeartbeat(time.Now())
 			ctx.SetClientId("foo")
+			ctx.AddGroup("group"+strconv.Itoa(i), "member")
+			_ = ctx.GetOrCreateMemberId("other")
 		}
 	}()
 	go func() {
@@ -76,6 +116,8 @@ func TestClientContext_ConcurrentAccess(t *testing.T) {
 		for i := 0; i < 200; i++ {
 			_ = ctx.Heartbeat()
 			_ = ctx.ClientId()
+			_ = ctx.Groups()
+			_ = ctx.HasGroup("group1")
 		}
 	}()
 	wg.Wait()

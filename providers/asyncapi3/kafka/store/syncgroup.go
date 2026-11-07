@@ -39,7 +39,7 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 				if generation := g.Generation(); generation == nil || generation.Id != int(r.GenerationId) {
 					res.ErrorCode = kafka.IllegalGeneration
 				} else {
-					if _, ok := ctx.Member[r.GroupId]; !ok {
+					if !ctx.HasGroup(r.GroupId) {
 						res.ErrorCode = kafka.RebalanceInProgress
 					} else {
 						// balancer writes the response

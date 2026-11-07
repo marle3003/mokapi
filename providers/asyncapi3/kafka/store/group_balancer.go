@@ -159,7 +159,7 @@ func (b *groupBalancer) run() {
 				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId(), b.group.Name)
 
 				for _, sync := range syncs {
-					memberName := sync.client.Member[b.group.Name]
+					memberName, _ := sync.client.MemberId(b.group.Name)
 					assign := assigns[memberName]
 					res := &syncGroup.Response{
 						ProtocolType: sync.protocolType,
@@ -177,8 +177,9 @@ func (b *groupBalancer) run() {
 			default:
 				// we have leader sync and respond directly
 				// a dead consumer from last generation will be kicked by heartbeat
+				memberId, _ := s.client.MemberId(b.group.Name)
 				res := &syncGroup.Response{
-					Assignment: assigns[s.client.Member[b.group.Name]].raw,
+					Assignment: assigns[memberId].raw,
 				}
 				b.respond(s.writer, res)
 			}
@@ -241,7 +242,7 @@ StopWaitingForConsumers:
 	generation.Protocol = protocol
 
 	leader := joins[0]
-	generation.LeaderId = leader.client.Member[b.group.Name]
+	generation.LeaderId, _ = leader.client.MemberId(b.group.Name)
 	generation.RebalanceTimeoutMs = leader.rebalanceTimeout
 	// publish the complete generation before any member learns about it
 	b.group.SetGeneration(generation)
@@ -255,7 +256,7 @@ StopWaitingForConsumers:
 	})
 
 	for _, j := range joins[1:] {
-		memberId := j.client.Member[b.group.Name]
+		memberId, _ := j.client.MemberId(b.group.Name)
 		members = append(members, joinGroup.Member{
 			MemberId: memberId,
 			MetaData: counter[protocol].metadata[memberId],

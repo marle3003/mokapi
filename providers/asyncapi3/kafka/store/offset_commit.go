@@ -41,7 +41,7 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 				if p == nil {
 					log.Errorf("kafka OffsetCommit: unknown partition %v, topic=%v, client=%v", rp.Index, topic, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
-				} else if _, ok := ctx.Member[r.GroupId]; !ok {
+				} else if !ctx.HasGroup(r.GroupId) {
 					log.Errorf("kafka OffsetCommit: unknown member topic=%v, client=%v", topic.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {

@@ -586,7 +586,7 @@ func (h *handler) getKafkaClient(w http.ResponseWriter, r *http.Request) {
 		BrokerAddress: c.ServerAddress,
 	}
 
-	for groupName, memberId := range c.Member {
+	for groupName, memberId := range c.Groups() {
 		client.Groups = append(client.Groups, clientGroupMember{
 			MemberId: memberId,
 			Group:    groupName,

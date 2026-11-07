@@ -46,7 +46,7 @@ func (s *Store) fetchTopicOffsets(groupId string, topics []offsetFetch.RequestTo
 				if p == nil {
 					log.Errorf("kafka OffsetFetch: unknown partition %v, topic=%v, client=%v", index, rt.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
-				} else if _, ok := ctx.Member[groupId]; !ok {
+				} else if !ctx.HasGroup(groupId) {
 					log.Errorf("kafka OffsetFetch: unknown member topic=%v, client=%v", rt.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {

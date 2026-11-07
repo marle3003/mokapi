@@ -11,7 +11,7 @@ func (s *Store) heartbeat(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*heartbeat.Request)
 
 	ctx := kafka.ClientFromContext(req.Context)
-	if _, ok := ctx.Member[r.GroupId]; !ok {
+	if !ctx.HasGroup(r.GroupId) {
 		log.Errorf("kafka Heartbeat: unknown member %v", ctx.ClientId())
 		return rw.Write(&heartbeat.Response{ErrorCode: kafka.UnknownMemberId})
 	} else {
