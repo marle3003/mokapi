@@ -196,3 +196,16 @@ func (suite *MqttSuite) TestPublishDataNullIsValidatedAgainstSelectedMessage() {
 	suite.simulatePublish("sensors/events", `{"messageId":"alarm","data":null}`,
 		try.HasStatusCode(http.StatusUnprocessableEntity))
 }
+
+// TestPublishEmptyRetainedValueRemovesRetainedMessage verifies the MQTT rule that a retained
+// publish with an empty payload deletes the retained message of the topic instead of storing the
+// empty payload.
+func (suite *MqttSuite) TestPublishEmptyRetainedValueRemovesRetainedMessage() {
+	reading := `"{\"sensorId\":\"s1\",\"value\":21.5}"`
+	data := suite.simulatePublish("sensors/events", `{"value":`+reading+`}`, try.HasStatusCode(http.StatusNoContent))
+	require.NotEmpty(suite.T(), data)
+
+	data = suite.simulatePublish("sensors/events", `{"value":null}`, try.HasStatusCode(http.StatusNoContent))
+
+	require.Nil(suite.T(), data, "retained message must be removed, not replaced by an empty payload")
+}

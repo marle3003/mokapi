@@ -67,7 +67,7 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 	if args.Retain {
 		// Update may have replaced the topic while the emitter ran
 		if current, ok := s.topic(msg.Topic); ok {
-			current.Retained = msg
+			current.Retained = retainedMessage(msg)
 		}
 	}
 	clients := s.clientList()
@@ -81,6 +81,15 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 
 	s.logMessage(apiName, messageId, topic, publish, actions, args)
 	return mqtt.PublishSuccess, nil
+}
+
+// retainedMessage returns the message to keep for its topic. A retained message
+// with an empty payload removes the retained message (MQTT 3.3.1.3), so nil.
+func retainedMessage(msg *Message) *Message {
+	if len(msg.Data) == 0 {
+		return nil
+	}
+	return msg
 }
 
 func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool, ctx *mqtt.ClientContext) {

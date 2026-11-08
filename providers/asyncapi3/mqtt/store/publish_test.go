@@ -15,6 +15,7 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -265,6 +266,92 @@ func TestPublish(t *testing.T) {
 			},
 		},
 		{
+			name: "retained publish with empty payload removes the retained message",
+			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				publisher.connect()
+
+				publishRetained(publisher, "/foo/bar", []byte("hello world"))
+				publishRetained(publisher, "/foo/bar", []byte{})
+
+				topic, ok := s.Topic("/foo/bar")
+				require.True(t, ok)
+				require.Nil(t, topic.Retained)
+			},
+		},
+		{
+			name: "consumer subscribes after retained message was removed by empty payload",
+			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				publisher.connect()
+
+				publishRetained(publisher, "/foo/bar", []byte("hello world"))
+				publishRetained(publisher, "/foo/bar", []byte{})
+				// connect after publishing, so no asynchronous delivery of the earlier messages can reach the consumer
+				consumer := newClient("consumer", s)
+				defer consumer.close()
+				consumer.connect()
+				subscribe(consumer, "/foo/bar")
+
+				consumer.conn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn, consumer.clientCtx)
+				require.True(t, os.IsTimeout(err), "no retained message expected, got: %v", err)
+			},
+		},
+		{
+			name: "connected consumer receives retained message with empty payload",
+			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				consumer := newClient("consumer", s)
+				defer consumer.close()
+				publisher.connect()
+				consumer.connect()
+				subscribe(consumer, "/foo/bar")
+
+				publishRetained(publisher, "/foo/bar", []byte{})
+
+				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn, consumer.clientCtx)
+				require.NoError(t, err)
+				pub := res.Payload.(*mqtt.PublishRequest)
+				require.Equal(t, "/foo/bar", pub.Topic)
+				require.Empty(t, pub.Data)
+			},
+		},
+		{
+			name: "empty payload without retain keeps the retained message",
+			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				publisher.connect()
+
+				publishRetained(publisher, "/foo/bar", []byte("hello world"))
+				publisher.send(&mqtt.Message{
+					Header:  &mqtt.Header{QoS: 0, Retain: false},
+					Payload: &mqtt.PublishRequest{Topic: "/foo/bar", Data: []byte{}},
+					Context: publisher.ctx,
+				})
+
+				topic, ok := s.Topic("/foo/bar")
+				require.True(t, ok)
+				require.NotNil(t, topic.Retained)
+				require.Equal(t, []byte("hello world"), topic.Retained.Data)
+			},
+		},
+		{
 			name: "consumer subscribes but is offline when publishing QoS=1",
 			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
 				s.RetryInterval = 500 * time.Millisecond
@@ -463,6 +550,24 @@ func (c *client) connect() *mqtttest.MessageRecorder {
 		Context: c.ctx,
 	})
 	return rr
+}
+
+func publishRetained(c *client, topic string, data []byte) {
+	c.send(&mqtt.Message{
+		Header:  &mqtt.Header{QoS: 0, Retain: true},
+		Payload: &mqtt.PublishRequest{Topic: topic, Data: data},
+		Context: c.ctx,
+	})
+}
+
+func subscribe(c *client, topic string) {
+	c.send(&mqtt.Message{
+		Payload: &mqtt.SubscribeRequest{
+			MessageId: 1,
+			Topics:    []mqtt.SubscribeTopic{{Name: topic, QoS: 0}},
+		},
+		Context: c.ctx,
+	})
 }
 
 func (c *client) send(r *mqtt.Message) *mqtttest.MessageRecorder {

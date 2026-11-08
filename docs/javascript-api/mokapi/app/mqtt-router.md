@@ -115,9 +115,10 @@ Groups handlers and publishers for a single topic. The methods behave like those
 | retain (optional) | boolean | If `true`, the broker keeps the message and delivers it to new subscribers. Default: `false`    |
 
 `data` is encoded and validated with the selected message (or the matching message of the
-topic), also when you pass `data: null`. An empty `value` (`null` or `''`) publishes an empty payload without validation. In MQTT, an
-empty retained payload signals that the retained message should be deleted. Mokapi's broker
-doesn't delete it yet.
+topic), also when you pass `data: null`. An empty `value` (`null` or `''`) publishes an empty
+payload without validation. With `retain: true`, an empty payload deletes the retained message
+of the topic, as the MQTT specification defines. Connected subscribers still receive the empty
+message, new subscribers get no retained message.
 
 The examples use a topic with the message `alarm`, whose payload requires `sensorId` (string)
 and `level` (`warning` or `critical`).
