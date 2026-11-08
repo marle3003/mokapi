@@ -1,12 +1,12 @@
-import { collectDashboard } from './collect-dashboard';
-import { driveHttp } from './drive-http';
-import { driveKafka, closeKafka } from './drive-kafka';
-import { driveMqtt } from './drive-mqtt';
-import { driveWebsocket } from './drive-websocket'
-import { startMokapi, stopMokapi } from './mokapi';
-import { driveMail } from './drive-mail';
-import { driveLdap } from './drive-ldap';
-import { collectBruno } from './bruno';
+import { collectDashboard } from './collect-dashboard.ts';
+import { driveHttp } from './drive-http.ts';
+import { driveKafka, closeKafka } from './drive-kafka.ts';
+import { driveMqtt } from './drive-mqtt.ts';
+import { driveWebsocket } from './drive-websocket.ts'
+import { startMokapi, stopMokapi } from './mokapi.ts';
+import { driveMail } from './drive-mail.ts';
+import { driveLdap } from './drive-ldap.ts';
+import { collectBruno } from './bruno.ts';
 
 async function main() {
     try {
