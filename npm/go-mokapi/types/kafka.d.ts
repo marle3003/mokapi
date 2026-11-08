@@ -1,5 +1,7 @@
 /**
  * Sends one or more messages to a Kafka topic.
+ *
+ * Arguments are read when you call the function. Invalid arguments throw an error at the call. Client errors reject the returned promise.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
  * @param args - Produce arguments. If omitted, a random message is written to a random topic.
  * @returns Information about the written messages.
@@ -139,6 +141,12 @@ export interface ProduceArgs {
  * Represents a Kafka message to write.
  */
 export interface Message {
+    /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     * Selects the message used to generate the value and key. An unknown `messageId` throws an error.
+     */
+    messageId?: string;
+
     /** Kafka partition index. If not specified, the partition is chosen based on the key. */
     partition?: number;
 

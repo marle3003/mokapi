@@ -1,0 +1,64 @@
+asyncapi: 3.0.0
+info:
+  title: Order Service
+  version: 1.0.0
+servers:
+  broker:
+    host: localhost:19094
+    protocol: kafka
+defaultContentType: application/json
+channels:
+  orders:
+    address: orders
+    bindings:
+      kafka:
+        partitions: 1
+    messages:
+      orderCreated:
+        $ref: '#/components/messages/OrderCreated'
+      orderDeleted:
+        $ref: '#/components/messages/OrderDeleted'
+operations:
+  sendOrderEvents:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/orderCreated'
+      - $ref: '#/channels/orders/messages/orderDeleted'
+components:
+  messages:
+    OrderCreated:
+      bindings:
+        kafka:
+          key:
+            type: string
+            pattern: 'created-[0-9]{3}'
+      payload:
+        type: object
+        required: [event, orderId]
+        properties:
+          event:
+            type: string
+            enum: [created]
+          orderId:
+            type: integer
+            minimum: 1
+    OrderDeleted:
+      bindings:
+        kafka:
+          key:
+            type: string
+            pattern: 'deleted-[0-9]{3}'
+      payload:
+        type: object
+        required: [event, orderId, reason]
+        properties:
+          event:
+            type: string
+            enum: [deleted]
+          orderId:
+            type: integer
+            minimum: 1
+          reason:
+            type: string

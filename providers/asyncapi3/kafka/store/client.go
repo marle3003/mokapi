@@ -86,7 +86,7 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 				Error:     err.Error(),
 			})
 		}
-		value, err := c.parse(r.Value, ct, p.Topic.Config)
+		value, err := c.parse(r.Value, ct, p.Topic.Config())
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -158,7 +158,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 	}
 
 	if offset < 0 {
-		offset = p.Head
+		offset = p.StartOffset()
 	}
 
 	// read max 6MB
@@ -227,15 +227,10 @@ func (c *Client) Offset(topic string, partition int, offset int64, ct *media.Con
 	}
 
 	if offset < 0 {
-		offset = p.Head
+		offset = p.StartOffset()
 	}
 
-	s := p.GetSegment(offset)
-	if s == nil {
-		return Record{}, OffsetOutOfRange
-	}
-
-	r := s.Record(offset)
+	r := p.Record(offset)
 	if r == nil {
 		return Record{}, OffsetOutOfRange
 	}
@@ -286,12 +281,14 @@ func (c *Client) Offset(topic string, partition int, offset int64, ct *media.Con
 func (c *Client) getPartition(t *Topic, id int) (*Partition, error) {
 	if id < 0 {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
-		id = r.Intn(len(t.Partitions))
-	} else if id >= len(t.Partitions) {
-		return nil, PartitionNotFound
+		id = r.Intn(t.NumPartitions())
 	}
 
-	return t.Partition(id), nil
+	p := t.Partition(id)
+	if p == nil {
+		return nil, PartitionNotFound
+	}
+	return p, nil
 }
 
 func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([]byte, error) {

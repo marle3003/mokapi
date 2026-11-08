@@ -362,13 +362,10 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				_, err = doFunc(&common.EventContext{Args: []any{10}})
 				r.NoError(t, err)
 
-				var v goja.Value
-				err = s.RunFunc(func(vm *goja.Runtime) {
-					v = vm.Get("counter")
+				counter := onLoop(t, s, func(vm *goja.Runtime) int64 {
+					return vm.Get("counter").ToInteger()
 				})
-
-				time.Sleep(100 * time.Millisecond)
-				r.Equal(t, int64(10), v.ToInteger())
+				r.Equal(t, int64(10), counter)
 				s.Close()
 			},
 		},

@@ -28,6 +28,12 @@ channels:
       ack:
         $ref: '#/components/messages/Ack'
 
+  async:
+    address: /async
+    messages:
+      asyncMessage:
+        $ref: '#/components/messages/AsyncMessage'
+
 operations:
   onClientMessage:
     action: receive
@@ -57,8 +63,30 @@ operations:
     messages:
       - $ref: '#/channels/dm/messages/ack'
 
+  onAsyncMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/async'
+    messages:
+      - $ref: '#/channels/async/messages/asyncMessage'
+
+  sendAsyncMessage:
+    action: send
+    channel:
+      $ref: '#/channels/async'
+    messages:
+      - $ref: '#/channels/async/messages/asyncMessage'
+
 components:
   messages:
+    AsyncMessage:
+      payload:
+        type: object
+        required: [text]
+        properties:
+          text:
+            type: string
+
     ClientMessage:
       payload:
         type: object

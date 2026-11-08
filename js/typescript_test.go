@@ -39,19 +39,8 @@ export default function() {
 				err = s.Run()
 				r.NoError(t, err)
 
-				var calledAt time.Time
-				deadline := time.Now().Add(5 * time.Second)
-				for time.Now().Before(deadline) {
-					_ = s.RunFunc(func(vm *goja.Runtime) {
-						v := vm.Get("calledAt")
-						_ = vm.ExportTo(v, &calledAt)
-					})
-					if !calledAt.IsZero() {
-						break
-					}
-					time.Sleep(100 * time.Millisecond)
-				}
-				r.False(t, calledAt.IsZero(), "calledAt should not be zero")
+				calledAt, ok := awaitGlobal(t, s, "calledAt").(time.Time)
+				r.True(t, ok, "calledAt should be a time")
 				r.Greater(t, calledAt.Sub(startTime), time.Second, "code should wait for a second")
 			},
 		},
@@ -84,20 +73,8 @@ let getMessage = async () => {
 				err = s.Run()
 				r.NoError(t, err)
 
-				time.Sleep(1 * time.Second)
-				var msg1 string
-				var msg2 string
-				err = s.RunFunc(func(vm *goja.Runtime) {
-					v := vm.Get("msg1")
-					err = vm.ExportTo(v, &msg1)
-					r.NoError(t, err)
-					v = vm.Get("msg2")
-					err = vm.ExportTo(v, &msg2)
-					r.NoError(t, err)
-				})
-				time.Sleep(2 * time.Second)
-				r.Equal(t, "foo", msg1)
-				r.Equal(t, "foo", msg2)
+				r.Equal(t, "foo", awaitGlobal(t, s, "msg1"))
+				r.Equal(t, "foo", awaitGlobal(t, s, "msg2"))
 			},
 		},
 		{
@@ -125,15 +102,7 @@ let getMessage = async () => {
 				err = s.Run()
 				r.NoError(t, err)
 
-				time.Sleep(1 * time.Second)
-				var msg1 string
-				err = s.RunFunc(func(vm *goja.Runtime) {
-					v := vm.Get("msg1")
-					err = vm.ExportTo(v, &msg1)
-					r.NoError(t, err)
-				})
-				time.Sleep(2 * time.Second)
-				r.Equal(t, "foo", msg1)
+				r.Equal(t, "foo", awaitGlobal(t, s, "msg1"))
 			},
 		},
 	}

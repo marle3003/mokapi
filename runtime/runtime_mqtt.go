@@ -12,8 +12,6 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"mokapi/sortedmap"
-	"path/filepath"
-	"sort"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -162,37 +160,7 @@ func (c *MqttInfo) update(reader dynamic.Reader) {
 		return
 	}
 
-	var keys []string
-	for k := range c.configs {
-		keys = append(keys, k)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		x := keys[i]
-		y := keys[j]
-		return filepath.Base(x) < filepath.Base(y)
-	})
-
-	cfg := &asyncapi3.Config{}
-	for i, k := range keys {
-		p, err := getMqttConfig(c.configs[k])
-		if err != nil {
-			log.Errorf("patch %v failed: %v", c.configs[k].Info.Url, err)
-		}
-		if i == 0 {
-			*cfg = *p
-		} else {
-			log.Infof("applying patch for %s: %s", cfg.Info.Name, k)
-			cfg.Patch(p)
-		}
-	}
-
-	if len(c.configs) > 1 {
-		err := cfg.Parse(&dynamic.Config{Data: cfg}, reader)
-		if err != nil {
-			log.Errorf("failed to parse config: %s", err)
-		}
-	}
+	cfg := mergeAsyncApiConfigs(c.configs, reader)
 
 	a := cfg.Analyze()
 	k := a.Usage("mqtt")

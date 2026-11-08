@@ -46,3 +46,9 @@ app.kafka().api(123).topic("foo").message((m: KafkaEventMessage) => {});
 app.api("title").kafka().topic("foo").message((m: KafkaEventMessage) => {});
 // @ts-expect-error
 app.api(123).kafka().topic("foo").message((m: KafkaEventMessage) => {});
+
+app.kafka().produce("orders", { messageId: "orderCreated" });
+app.kafka().produce("orders", [{ messageId: "orderCreated" }, { messageId: "orderDeleted", key: "order-1", value: null }]);
+app.kafka().topic("orders").produce({ messageId: "orderCreated" });
+// @ts-expect-error
+app.kafka().produce("orders", { messageId: 1 });

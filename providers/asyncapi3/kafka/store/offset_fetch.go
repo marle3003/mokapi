@@ -39,25 +39,25 @@ func (s *Store) fetchTopicOffsets(groupId string, topics []offsetFetch.RequestTo
 			resPartition := &offsetFetch.Partition{Index: index, CommittedOffset: -1}
 
 			if topic == nil {
-				log.Errorf("kafka OffsetFetch: unknown topic %v, client=%v", rt.Name, ctx.ClientId)
+				log.Errorf("kafka OffsetFetch: unknown topic %v, client=%v", rt.Name, ctx.ClientId())
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				p := topic.Partition(int(index))
 				if p == nil {
-					log.Errorf("kafka OffsetFetch: unknown partition %v, topic=%v, client=%v", index, rt.Name, ctx.ClientId)
+					log.Errorf("kafka OffsetFetch: unknown partition %v, topic=%v, client=%v", index, rt.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
-				} else if _, ok := ctx.Member[groupId]; !ok {
-					log.Errorf("kafka OffsetFetch: unknown member topic=%v, client=%v", rt.Name, ctx.ClientId)
+				} else if !ctx.HasGroup(groupId) {
+					log.Errorf("kafka OffsetFetch: unknown member topic=%v, client=%v", rt.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {
 					// todo check partition is assigned to member
 					g, ok := s.Group(groupId)
 					if !ok {
-						log.Errorf("kafka OffsetFetch: unkown group name %v, topic=%v, client=%v", groupId, rt.Name, ctx.ClientId)
+						log.Errorf("kafka OffsetFetch: unkown group name %v, topic=%v, client=%v", groupId, rt.Name, ctx.ClientId())
 						resPartition.ErrorCode = kafka.GroupIdNotFound
 					} else {
-						if err, code := validateConsumer(topic, ctx.ClientId, g.Name); err != nil {
-							log.Errorf("kafka OffsetFetch: invalid consumer '%v' for topic %v: %v", ctx.ClientId, rt.Name, err)
+						if err, code := validateConsumer(topic, ctx.ClientId(), g.Name); err != nil {
+							log.Errorf("kafka OffsetFetch: invalid consumer '%v' for topic %v: %v", ctx.ClientId(), rt.Name, err)
 							resPartition.ErrorCode = code
 						} else {
 							resPartition.CommittedOffset = g.Offset(topic.Name, p.Index)

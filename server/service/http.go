@@ -26,6 +26,7 @@ import (
 
 type HttpServer struct {
 	server   *http.Server
+	ln       net.Listener
 	handlers map[string]*HttpHost
 	eh       events.Handler
 	m        sync.RWMutex
@@ -108,6 +109,9 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 }
 
 func (s *HttpServer) RemoveUrl(u *url.URL) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	hostname := u.Hostname()
 	if host, ok := s.handlers[hostname]; ok {
 		path := u.Path
@@ -142,19 +146,28 @@ func (s *HttpServer) Remove(name string) {
 	}
 }
 
-func (s *HttpServer) Start() {
+// Start binds the port before it returns, so a bind error reaches the caller and the port
+// accepts connections as soon as Start returns.
+func (s *HttpServer) Start() error {
+	ln, err := net.Listen("tcp", s.server.Addr)
+	if err != nil {
+		return err
+	}
+	s.ln = ln
+
 	go func() {
 		var err error
 		switch {
 		case s.isTls:
-			err = s.server.ListenAndServeTLS("", "")
+			err = s.server.ServeTLS(ln, "", "")
 		default:
-			err = s.server.ListenAndServe()
+			err = s.server.Serve(ln)
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("failed to start %s server %s: %s", s.getProto(), s.server.Addr, err)
+			log.Errorf("failed to serve %s server %s: %s", s.getProto(), s.server.Addr, err)
 		}
 	}()
+	return nil
 }
 
 func (s *HttpServer) Stop() {
@@ -162,9 +175,16 @@ func (s *HttpServer) Stop() {
 	if err != nil {
 		log.Errorf("failed to stop %s server %s: %s", s.getProto(), s.server.Addr, err)
 	}
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if s.ln != nil {
+		_ = s.ln.Close()
+	}
 }
 
 func (s *HttpServer) CanClose() bool {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	return len(s.handlers) == 0
 }
 
@@ -190,8 +210,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	r = r.WithContext(context.WithValue(r.Context(), "logHttpRequestContext", &logHttpRequestContext{logged: false}))
 
 	var httpError *openapi.HttpError
-	if host, ok := s.handlers[hostname]; ok {
-		services := matchPath(host.Paths, r)
+	if services, ok := s.matchHost(hostname, r); ok {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -199,8 +218,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	}
 
 	// any host
-	if host, ok := s.handlers[""]; ok {
-		services := matchPath(host.Paths, r)
+	if services, ok := s.matchHost("", r); ok {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -208,8 +226,7 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 	}
 
 	// try every host
-	for _, host := range s.handlers {
-		services := matchPath(host.Paths, r)
+	for _, services := range s.matchEveryHost(r) {
 		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
@@ -224,6 +241,31 @@ func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *o
 		StatusCode: http.StatusNotFound,
 		Message:    fmt.Sprintf("There was no service listening at %s", lib.GetUrl(r)),
 	}
+}
+
+// matchHost and matchEveryHost look up services under the read lock and return copies, so the
+// caller invokes the handlers without holding the lock. A handler (e.g. a script) may trigger
+// config changes that need the write lock.
+func (s *HttpServer) matchHost(hostname string, r *http.Request) (map[string][]*HttpService, bool) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	host, ok := s.handlers[hostname]
+	if !ok {
+		return nil, false
+	}
+	return matchPath(host.Paths, r), true
+}
+
+func (s *HttpServer) matchEveryHost(r *http.Request) []map[string][]*HttpService {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	var result []map[string][]*HttpService
+	for _, host := range s.handlers {
+		result = append(result, matchPath(host.Paths, r))
+	}
+	return result
 }
 
 func (s *HttpServer) serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.Request) *openapi.HttpError {

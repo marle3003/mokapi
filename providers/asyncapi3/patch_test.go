@@ -1,6 +1,7 @@
 package asyncapi3_test
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/schema/json/schema"
@@ -777,4 +778,438 @@ func TestConfig_Patch_Components(t *testing.T) {
 			tc.test(t, c)
 		})
 	}
+}
+
+func TestConfig_Patch_HeaderFieldsOfFirstConfigWin(t *testing.T) {
+	first := &asyncapi3.Config{Version: "3.0.0", Id: "first", DefaultContentType: "application/xml", Info: asyncapi3.Info{Name: "foo"}}
+	second := &asyncapi3.Config{Version: "3.1.0", Id: "second", DefaultContentType: "application/json", Info: asyncapi3.Info{Name: "foo"}}
+
+	result := &asyncapi3.Config{}
+	result.Patch(first)
+	result.Patch(second)
+
+	require.Equal(t, "3.0.0", result.Version)
+	require.Equal(t, "first", result.Id)
+	require.Equal(t, "application/xml", result.DefaultContentType)
+	require.Equal(t, "foo", result.Info.Name)
+}
+
+func TestConfig_Patch_OneSideWithoutValue(t *testing.T) {
+	testcases := []struct {
+		name    string
+		configs []*asyncapi3.Config
+		test    func(t *testing.T, result *asyncapi3.Config)
+	}{
+		{
+			name: "contact only in first config",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithContact("foo", "foo.bar", "info@foo.bar")),
+				asyncapi3test.NewConfig(),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "foo", result.Info.Contact.Name)
+			},
+		},
+		{
+			name: "license only in first config",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithInfoExt("", "MIT", "foo.bar")),
+				asyncapi3test.NewConfig(),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "MIT", result.Info.License.Name)
+			},
+		},
+		{
+			name: "kafka topic configs only in patch config",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 3}))),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBindingFrom(map[string]any{"retention.ms": 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				b := result.Channels["foo"].Value.Bindings.Kafka
+				require.True(t, b.IsSet())
+				require.Equal(t, int64(1), b.RetentionMs)
+				require.Equal(t, 1, b.Partitions)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := tc.configs[0]
+			for _, p := range tc.configs[1:] {
+				require.NotPanics(t, func() { c.Patch(p) })
+			}
+			tc.test(t, c)
+		})
+	}
+}
+
+func TestConfig_Patch_Operations(t *testing.T) {
+	testcases := []struct {
+		name    string
+		configs []*asyncapi3.Config
+		test    func(t *testing.T, result *asyncapi3.Config)
+	}{
+		{
+			name: "add operation",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(),
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo",
+					asyncapi3test.WithOperationAction("send"), asyncapi3test.WithOperationTitle("bar"))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Len(t, result.Operations, 1)
+				require.Equal(t, "bar", result.Operations["foo"].Value.Title)
+			},
+		},
+		{
+			name: "add additional operation",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send"))),
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("bar", asyncapi3test.WithOperationAction("receive"))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Len(t, result.Operations, 2)
+				require.Equal(t, "send", result.Operations["foo"].Value.Action)
+				require.Equal(t, "receive", result.Operations["bar"].Value.Action)
+			},
+		},
+		{
+			name: "patch operation",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo",
+					asyncapi3test.WithOperationAction("send"), asyncapi3test.WithOperationTitle("title"))),
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo",
+					asyncapi3test.WithOperationAction("send"),
+					asyncapi3test.WithOperationSummary("summary"), asyncapi3test.WithOperationDescription("description"))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Len(t, result.Operations, 1)
+				op := result.Operations["foo"].Value
+				require.Equal(t, "title", op.Title)
+				require.Equal(t, "summary", op.Summary)
+				require.Equal(t, "description", op.Description)
+			},
+		},
+		{
+			name: "patch operation binding",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send"))),
+				asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send"),
+					asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{ClientId: schematest.New("string")}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "string", result.Operations["foo"].Value.Bindings.Kafka.ClientId.Type.String())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := tc.configs[0]
+			for _, p := range tc.configs[1:] {
+				c.Patch(p)
+			}
+			tc.test(t, c)
+		})
+	}
+}
+
+// Patch adds the entries of every Components map, not only servers, schemas and messages.
+func TestConfig_Patch_ComponentsOfAllKinds(t *testing.T) {
+	newConfig := func(key string) *asyncapi3.Config {
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithComponentServer(key, &asyncapi3.Server{Host: key}),
+			asyncapi3test.WithComponentTag(key, &asyncapi3.Tag{Name: key}),
+			asyncapi3test.WithComponentChannel(key, &asyncapi3.Channel{Address: key}),
+			asyncapi3test.WithComponentSchema(key, schematest.New("string")),
+			asyncapi3test.WithComponentMessage(key, &asyncapi3.Message{Name: key}),
+			asyncapi3test.WithComponentOperation(key, &asyncapi3.Operation{Title: key}),
+			asyncapi3test.WithComponentParameter(key, &asyncapi3.Parameter{Default: key}),
+			asyncapi3test.WithComponentCorrelationId(key, &asyncapi3.CorrelationId{Location: key}),
+			asyncapi3test.WithComponentExternalDoc(key, &asyncapi3.ExternalDoc{Url: key}),
+			asyncapi3test.WithComponentOperationTrait(key, &asyncapi3.OperationTrait{Title: key}),
+			asyncapi3test.WithComponentMessageTrait(key, &asyncapi3.MessageTrait{Name: key}),
+		)
+	}
+	result := &asyncapi3.Config{}
+
+	result.Patch(newConfig("a"))
+	result.Patch(newConfig("b"))
+
+	c := result.Components
+	require.Equal(t, "b", c.Servers["b"].Value.Host)
+	require.Equal(t, "b", c.Tags["b"].Value.Name)
+	require.Equal(t, "b", c.Channels["b"].Value.Address)
+	require.NotNil(t, c.Schemas["b"].Value)
+	require.Equal(t, "b", c.Messages["b"].Value.Name)
+	require.Equal(t, "b", c.Operations["b"].Value.Title)
+	require.Equal(t, "b", c.Parameters["b"].Value.Default)
+	require.Equal(t, "b", c.CorrelationIds["b"].Value.Location)
+	require.Equal(t, "b", c.ExternalDocs["b"].Value.Url)
+	require.Equal(t, "b", c.OperationTraits["b"].Value.Title)
+	require.Equal(t, "b", c.MessageTraits["b"].Value.Name)
+	for _, m := range []int{len(c.Servers), len(c.Tags), len(c.Channels), len(c.Schemas), len(c.Messages), len(c.Operations),
+		len(c.Parameters), len(c.CorrelationIds), len(c.ExternalDocs), len(c.OperationTraits), len(c.MessageTraits)} {
+		require.Equal(t, 2, m)
+	}
+}
+
+func TestConfig_Patch_NilEntriesInPatchConfig(t *testing.T) {
+	result := asyncapi3test.NewConfig(
+		asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
+		asyncapi3test.WithChannel("foo", asyncapi3test.WithMessage("foo")),
+		asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send")),
+	)
+	patch := asyncapi3test.NewConfig()
+	patch.Servers.Set("foo", nil)
+	patch.Channels = map[string]*asyncapi3.ChannelRef{"foo": {}}
+	patch.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+
+	require.NotPanics(t, func() { result.Patch(patch) })
+
+	require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+	require.Contains(t, result.Channels["foo"].Value.Messages, "foo")
+	require.Equal(t, "send", result.Operations["foo"].Value.Action)
+}
+
+func TestConfig_Patch_PayloadOfOtherSchemaFormat(t *testing.T) {
+	multi := func() *asyncapi3.SchemaRef {
+		return &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+			Format: "application/schema+json;version=draft-07",
+			Schema: &asyncapi3.SchemaRef{Value: schematest.New("string")},
+		}}
+	}
+	first := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.WithPayload(schematest.New("number")))))
+	patch := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.UsePayload(multi()))))
+
+	first.Patch(patch)
+
+	payload := first.Channels["foo"].Value.Messages["foo"].Value.Payload
+	require.Equal(t, multi(), payload)
+	require.NotSame(t, patch.Channels["foo"].Value.Messages["foo"].Value.Payload, payload)
+}
+
+func TestMultiSchemaFormat_Patch(t *testing.T) {
+	newPatch := func() *asyncapi3.MultiSchemaFormat {
+		return &asyncapi3.MultiSchemaFormat{
+			Format: "application/schema+json;version=draft-07",
+			Schema: &asyncapi3.SchemaRef{Value: schematest.New("object", schematest.WithProperty("foo", schematest.New("string")))},
+		}
+	}
+	patch := newPatch()
+
+	m := &asyncapi3.MultiSchemaFormat{}
+	m.Patch(patch)
+	m.Patch(&asyncapi3.MultiSchemaFormat{Schema: &asyncapi3.SchemaRef{Value: schematest.New("object",
+		schematest.WithProperty("bar", schematest.New("string")))}})
+	m.Schema.Value.(*schema.Schema).Properties.Get("foo").Type[0] = "changed"
+
+	require.Equal(t, patch.Format, m.Format)
+	require.Equal(t, 2, m.Schema.Value.(*schema.Schema).Properties.Len())
+	require.Equal(t, newPatch(), patch, "the patch is not changed")
+}
+
+func TestConfig_Patch_RefWithoutValue(t *testing.T) {
+	result := asyncapi3test.NewConfig()
+	result.Channels = map[string]*asyncapi3.ChannelRef{"foo": {}}
+	patch := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelDescription("bar")))
+	result.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": {}}}
+	patch.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": {Value: &asyncapi3.Message{Name: "name"}}}}
+
+	result.Patch(patch)
+
+	require.Equal(t, "bar", result.Channels["foo"].Value.Description)
+	require.NotSame(t, patch.Channels["foo"].Value, result.Channels["foo"].Value)
+	require.Equal(t, "name", result.Components.Messages["foo"].Value.Name)
+	require.NotSame(t, patch.Components.Messages["foo"].Value, result.Components.Messages["foo"].Value)
+}
+
+func TestConfig_Patch_KafkaBindingSchemas(t *testing.T) {
+	first := asyncapi3test.NewConfig(
+		asyncapi3test.WithChannel("foo", asyncapi3test.WithMessage("foo")),
+		asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send")),
+	)
+	key := schematest.New("string")
+	patch := asyncapi3test.NewConfig(
+		asyncapi3test.WithChannel("foo", asyncapi3test.WithMessage("foo",
+			asyncapi3test.WithKafkaMessageBinding(asyncapi3.KafkaMessageBinding{Key: &asyncapi3.SchemaRef{Value: key}}))),
+		asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send"),
+			asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{GroupId: schematest.New("string"), ClientId: schematest.New("string")})),
+	)
+	first.Channels["foo"].Value.Messages["foo"].Value.Bindings = &asyncapi3.MessageBinding{}
+	first.Operations["foo"].Value.Bindings = &asyncapi3.OperationBindings{}
+
+	first.Patch(patch)
+
+	msgKey := first.Channels["foo"].Value.Messages["foo"].Value.Bindings.Kafka.Key.Value.(*schema.Schema)
+	require.Equal(t, key, msgKey)
+	require.NotSame(t, key, msgKey)
+	op := first.Operations["foo"].Value.Bindings.Kafka
+	require.Equal(t, "string", op.GroupId.Type.String())
+	require.Equal(t, "string", op.ClientId.Type.String())
+	require.NotSame(t, patch.Operations["foo"].Value.Bindings.Kafka.GroupId, op.GroupId)
+}
+
+func TestConfig_Patch_NilEntriesInResultConfig(t *testing.T) {
+	testcases := []struct {
+		name  string
+		first func() *asyncapi3.Config
+		patch func() *asyncapi3.Config
+		test  func(t *testing.T, result *asyncapi3.Config)
+	}{
+		{
+			name: "server",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Servers.Set("foo", nil)
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar"))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+			},
+		},
+		{
+			name: "channel",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelDescription("bar")))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "bar", result.Channels["foo"].Value.Description)
+			},
+		},
+		{
+			name: "message of channel",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo"))
+				c.Channels["foo"].Value.Messages = map[string]*asyncapi3.MessageRef{"bar": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("bar", asyncapi3test.WithContentType("application/json"))))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "application/json", result.Channels["foo"].Value.Messages["bar"].Value.ContentType)
+			},
+		},
+		{
+			name: "operation",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send")))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "send", result.Operations["foo"].Value.Action)
+			},
+		},
+		{
+			name: "component message",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": nil}}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": {Value: &asyncapi3.Message{Name: "name"}}}}
+				return c
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "name", result.Components.Messages["foo"].Value.Name)
+			},
+		},
+		{
+			name: "component schema",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": {Value: schematest.New("string")}}}
+				return c
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.NotNil(t, result.Components.Schemas["foo"])
+				require.Equal(t, schematest.New("string"), result.Components.Schemas["foo"].Value)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.first()
+			require.NotPanics(t, func() { result.Patch(tc.patch()) })
+			tc.test(t, result)
+		})
+	}
+}
+
+func TestConfig_Patch_NilEntriesInBothConfigs(t *testing.T) {
+	first := asyncapi3test.NewConfig()
+	first.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+	first.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+	first.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+	patch := asyncapi3test.NewConfig()
+	patch.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+	patch.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+	patch.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+
+	require.NotPanics(t, func() { first.Patch(patch) })
+}
+
+func TestSchemaRef_Patch_WithoutValue(t *testing.T) {
+	testcases := []struct {
+		name  string
+		r     *asyncapi3.SchemaRef
+		patch *asyncapi3.SchemaRef
+	}{
+		{
+			name:  "patch has no value",
+			r:     &asyncapi3.SchemaRef{Value: schematest.New("string")},
+			patch: &asyncapi3.SchemaRef{},
+		},
+		{
+			name:  "patch has only a reference",
+			r:     &asyncapi3.SchemaRef{Value: schematest.New("string")},
+			patch: &asyncapi3.SchemaRef{Reference: dynamic.Reference[*asyncapi3.SchemaRef]{Ref: "#/components/schemas/foo"}},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() { tc.r.Patch(tc.patch) })
+			require.Equal(t, schematest.New("string"), tc.r.Value, "keeps the existing value")
+		})
+	}
+}
+
+func TestConfig_Patch_PayloadWithoutValue(t *testing.T) {
+	first := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.WithPayload(schematest.New("string")))))
+	patch := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.UsePayload(&asyncapi3.SchemaRef{}))))
+
+	require.NotPanics(t, func() { first.Patch(patch) })
+	require.Equal(t, schematest.New("string"), first.Channels["foo"].Value.Messages["foo"].Value.Payload.Value)
 }

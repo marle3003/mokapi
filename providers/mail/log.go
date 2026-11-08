@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
@@ -9,14 +10,28 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Log is pushed to the event store before the request has been processed. Duration and
+// actions are set afterwards (see common.EventLog), all other fields are final after
+// NewLogEvent.
 type Log struct {
-	From      string           `json:"from"`
-	To        []string         `json:"to"`
-	MessageId string           `json:"messageId"`
-	Subject   string           `json:"subject"`
-	Duration  int64            `json:"duration"`
-	Error     string           `json:"error"`
-	Actions   []*common.Action `json:"actions"`
+	common.EventLog
+	From      string
+	To        []string
+	MessageId string
+	Subject   string
+	Error     string
+}
+
+func (l *Log) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		From      string           `json:"from"`
+		To        []string         `json:"to"`
+		MessageId string           `json:"messageId"`
+		Subject   string           `json:"subject"`
+		Duration  int64            `json:"duration"`
+		Error     string           `json:"error"`
+		Actions   []*common.Action `json:"actions"`
+	}{l.From, l.To, l.MessageId, l.Subject, l.GetDuration(), l.Error, l.GetActions()})
 }
 
 type LogInfo struct {
@@ -29,10 +44,8 @@ type LogInfo struct {
 
 func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, traits events.Traits) *Log {
 	event := &Log{
-		From:     ctx.From,
-		To:       ctx.To,
-		Duration: 0,
-		Actions:  nil,
+		From: ctx.From,
+		To:   ctx.To,
 	}
 
 	if msg != nil {

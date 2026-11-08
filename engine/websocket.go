@@ -86,21 +86,15 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 		return nil, fmt.Errorf("websocket channel '%v' not found", args.ChannelName)
 	}
 
-	msg := args.Message
-	if msg == nil {
-		var cfgMsg *asyncapi3.Message
-		for _, ref := range cfg.Messages {
-			if ref.Value != nil {
-				cfgMsg = ref.Value
-				break
-			}
-		}
-		if cfgMsg != nil {
-			msg, err = createValue(cfgMsg.Payload)
-			if err != nil {
-				return nil, fmt.Errorf("unable to generate websocket message: %v", err)
-			}
-		}
+	selected, err := selectMessage(cfg, args.MessageId, func() (*asyncapi3.Message, error) {
+		return anyMessage(cfg), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	msg, err := websocketMessage(selected, args)
+	if err != nil {
+		return nil, err
 	}
 
 	err = ch.Broadcast(msg)
@@ -113,6 +107,32 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 		Channel: ch.Name,
 		Message: msg,
 	}, nil
+}
+
+// websocketMessage returns the message to send. A given message is validated against the message
+// selected by messageId, otherwise it is sent as is. Without a message, a payload is generated.
+func websocketMessage(selected *asyncapi3.Message, args common.WebsocketSendArgs) (any, error) {
+	if args.Message != nil {
+		if args.MessageId != "" {
+			if _, err := encodePayload(selected, args.Message); err != nil {
+				return nil, err
+			}
+		}
+		return args.Message, nil
+	}
+	if selected == nil {
+		return nil, nil
+	}
+
+	generate := generateAnyPayload
+	if args.MessageId != "" {
+		generate = generatePayload
+	}
+	msg, err := generate(selected)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate websocket message: %v", err)
+	}
+	return msg, nil
 }
 
 func (c *WebsocketClient) tryGet(api string, channelName string, retry common.RetryArgs) (w *runtime.WebsocketInfo, cfg *asyncapi3.Channel, err error) {

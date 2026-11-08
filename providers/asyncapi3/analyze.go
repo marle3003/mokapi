@@ -50,7 +50,7 @@ func (c *Config) Analyze() *Analysis {
 
 	opBindings := map[*Channel][]*OperationBindings{}
 	for _, op := range c.Operations {
-		if op.Value != nil && op.Value.Channel.Value != nil {
+		if op.Value != nil && op.Value.Channel != nil && op.Value.Channel.Value != nil {
 			ch := op.Value.Channel.Value
 			opBindings[ch] = append(opBindings[ch], op.Value.Bindings)
 		}

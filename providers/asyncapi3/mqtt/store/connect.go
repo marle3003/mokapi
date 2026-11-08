@@ -2,7 +2,6 @@ package store
 
 import (
 	"mokapi/mqtt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -55,7 +54,7 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 	c, ok := s.clients[connect.ClientId]
 	if ok {
 		sessionPresent = true
-		c.ctx = ctx
+		c.attach(ctx, connect.KeepAlive)
 		go c.ResendInflight(0)
 	} else {
 		if s.clients == nil {
@@ -63,24 +62,23 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 		}
 		c = &Client{
 			Id:                    connect.ClientId,
-			ctx:                   ctx,
 			SessionExpiryInterval: connect.Properties.SessionExpiryInterval(),
-			State:                 ClientConnected,
+			state:                 ClientConnected,
 		}
+		c.attach(ctx, connect.KeepAlive)
 		s.clients[connect.ClientId] = c
 	}
-	c.KeepAlive = connect.KeepAlive
-	c.LastSeen = time.Now()
 
 	if connect.Topic != "" {
-		if _, ok := s.Topics[connect.Topic]; ok {
+		if _, ok := s.topic(connect.Topic); ok {
 
 			if connect.WillFlag {
-				c.WillMessage = &Message{
+				c.SetWill(&Message{
+					Topic:  connect.Topic,
 					Data:   connect.Message,
 					QoS:    connect.WillQoS,
 					Retain: connect.WillRetain,
-				}
+				})
 			}
 		} else {
 			log.Infof("mqtt broker: invalid topic %v", connect.Topic)

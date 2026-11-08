@@ -46,12 +46,21 @@ func (v *validator) Validate(record *kafka.Record) (l *KafkaMessageLog, err erro
 	}
 
 	for _, val := range v.validators {
+		// a failed validator has read key and value
+		rewind(record.Key)
+		rewind(record.Value)
 		l, err = val.Validate(record)
 		if err == nil {
 			return
 		}
 	}
 	return newKafkaLog(record), err
+}
+
+func rewind(b kafka.Bytes) {
+	if b != nil {
+		_, _ = b.Seek(0, io.SeekStart)
+	}
 }
 
 type messageValidator struct {

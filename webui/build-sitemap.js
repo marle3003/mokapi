@@ -20,6 +20,10 @@ const pages = [
     url: 'https://mokapi.io/mqtt',
   },
   {
+    file: './src/views/Websocket.vue',
+    url: 'https://mokapi.io/websocket',
+  },
+  {
     file: './src/views/Mail.vue',
     url: 'https://mokapi.io/mail',
   },

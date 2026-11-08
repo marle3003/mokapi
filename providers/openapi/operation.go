@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -120,27 +121,44 @@ func (o *Operation) patch(patch *Operation) {
 	}
 	o.Deprecated = patch.Deprecated
 
+	for _, tag := range patch.Tags {
+		if !slices.Contains(o.Tags, tag) {
+			o.Tags = append(o.Tags, tag)
+		}
+	}
+
 	if o.RequestBody == nil {
-		o.RequestBody = patch.RequestBody
+		o.RequestBody = patch.RequestBody.clone()
 	} else {
 		o.RequestBody.patch(patch.RequestBody)
 	}
 
 	if o.Responses == nil {
-		o.Responses = patch.Responses
+		o.Responses = patch.Responses.clone()
 	} else {
 		o.Responses.patch(patch.Responses)
 	}
 
 	o.Parameters.Patch(patch.Parameters)
 
-	if o.Security == nil {
-		o.Security = patch.Security
-	} else {
-		for _, v := range patch.Security {
-			o.Security = append(o.Security, v)
-		}
+	o.Security = append(o.Security, cloneSecurityRequirements(patch.Security)...)
+}
+
+// clone leaves Method and Path empty: they belong to the Path that holds the clone,
+// see Path.bindOperations.
+func (o *Operation) clone() *Operation {
+	if o == nil {
+		return nil
 	}
+	c := *o
+	c.Method, c.Path = "", nil
+	c.Errors = slices.Clone(o.Errors)
+	c.Tags = slices.Clone(o.Tags)
+	c.Parameters = o.Parameters.clone()
+	c.RequestBody = o.RequestBody.clone()
+	c.Responses = o.Responses.clone()
+	c.Security = cloneSecurityRequirements(o.Security)
+	return &c
 }
 
 func (o *Operation) MarshalJSON() ([]byte, error) {

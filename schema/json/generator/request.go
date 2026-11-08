@@ -20,10 +20,19 @@ func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
 	}
 
 	return &Request{
-		Path:    path,
+		Path:    nonNilPath(path),
 		Schema:  s,
 		Context: &Context{Values: ctx},
 	}
+}
+
+// nonNilPath keeps Request.Path an empty array instead of null in JSON and JavaScript.
+// goja also converts a nil slice inside a map to null.
+func nonNilPath(path []string) []string {
+	if path == nil {
+		return []string{}
+	}
+	return path
 }
 
 func (r *Request) shift() *Request {
@@ -51,7 +60,7 @@ func (r *Request) WithPath(path []string) *Request {
 
 func (r *Request) With(path []string, s *schema.Schema, example []any) *Request {
 	return &Request{
-		Path:     path,
+		Path:     nonNilPath(path),
 		Schema:   s,
 		g:        r.g,
 		Context:  r.Context,

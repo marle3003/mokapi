@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"strconv"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -67,11 +68,75 @@ func TestListeners(t *testing.T) {
 				require.False(t, called)
 			},
 		},
+		{
+			name: "remove on empty listeners does not panic",
+			test: func(t *testing.T) {
+				l := dynamic.Listeners{}
+				require.NotPanics(t, func() { l.Remove("foo") })
+			},
+		},
+		{
+			name: "listener added while invoking is not called for that event",
+			test: func(t *testing.T) {
+				l := dynamic.Listeners{}
+				late := false
+				l.Add("first", func(event dynamic.ConfigEvent) {
+					l.Add("late", func(event dynamic.ConfigEvent) { late = true })
+				})
+				l.Invoke(dynamic.ConfigEvent{})
+				require.False(t, late)
+
+				l.Invoke(dynamic.ConfigEvent{})
+				require.True(t, late)
+			},
+		},
+		{
+			name: "list keeps insertion order",
+			test: func(t *testing.T) {
+				l := dynamic.Listeners{}
+				var order []string
+				for _, key := range []string{"a", "b", "c"} {
+					l.Add(key, func(event dynamic.ConfigEvent) { order = append(order, key) })
+				}
+				for _, fn := range l.List() {
+					fn(dynamic.ConfigEvent{})
+				}
+				require.Equal(t, []string{"a", "b", "c"}, order)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.test(t)
+		})
+	}
+}
+
+// Invoke and List must not walk the listener map without the lock while Add (e.g. from AddRef
+// during parsing) modifies it.
+func TestListeners_ConcurrentAccess(t *testing.T) {
+	for _, name := range []string{"invoke", "list"} {
+		t.Run(name+" while adding listeners", func(t *testing.T) {
+			l := dynamic.Listeners{}
+			l.Add("first", func(dynamic.ConfigEvent) {})
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for i := 0; i < 500; i++ {
+					l.Add(strconv.Itoa(i), func(dynamic.ConfigEvent) {})
+				}
+			}()
+			for i := 0; i < 500; i++ {
+				if name == "invoke" {
+					l.Invoke(dynamic.ConfigEvent{})
+				} else {
+					_ = l.List()
+				}
+			}
+			wg.Wait()
 		})
 	}
 }
@@ -91,21 +156,6 @@ func TestAddRef(t *testing.T) {
 
 				require.Len(t, parent.Refs.List(true), 1)
 				require.Equal(t, ref, parent.Refs.List(true)[0])
-			},
-		},
-		{
-			name: "ref updates parent time",
-			test: func(t *testing.T) {
-				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
-				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
-				d, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
-				child.Info.Time = d
-
-				dynamic.AddRef(parent, child)
-				child.Info.Checksum = []byte{1}
-				child.Listeners.Invoke(dynamic.ConfigEvent{Config: child})
-
-				require.Equal(t, d, parent.Info.Time)
 			},
 		},
 		{

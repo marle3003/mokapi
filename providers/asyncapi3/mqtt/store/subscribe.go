@@ -19,8 +19,9 @@ func (s *Store) subscribe(rw mqtt.MessageWriter, subscribe *mqtt.SubscribeReques
 		client.Subscribe(topic.Name, topic.QoS)
 		res.ReasonCodes = append(res.ReasonCodes, mqtt.SubscriptionReason(topic.QoS))
 
+		retained := s.getRetainedMessages(topic.Name)
 		go func() {
-			for _, msg := range s.getRetainedMessages(topic.Name) {
+			for _, msg := range retained {
 				client.publish(msg)
 			}
 		}()
@@ -58,16 +59,10 @@ func (s *Store) unsubscribe(rw mqtt.MessageWriter, req *mqtt.UnsubscribeRequest,
 	}
 
 	for _, topic := range req.Topics {
-		if client.Subscription == nil {
-			res.ReasonCodes = append(res.ReasonCodes, mqtt.NoSubscriptionExisted)
+		if client.Unsubscribe(topic) {
+			res.ReasonCodes = append(res.ReasonCodes, mqtt.UnsubscribeSuccess)
 		} else {
-			_, ok = client.Subscription[topic]
-			if !ok {
-				res.ReasonCodes = append(res.ReasonCodes, mqtt.NoSubscriptionExisted)
-			} else {
-				delete(client.Subscription, topic)
-				res.ReasonCodes = append(res.ReasonCodes, mqtt.UnsubscribeSuccess)
-			}
+			res.ReasonCodes = append(res.ReasonCodes, mqtt.NoSubscriptionExisted)
 		}
 	}
 

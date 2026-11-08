@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"github.com/stretchr/testify/require"
+	"sync"
 	"testing"
 )
 
@@ -109,4 +110,24 @@ func TestGaugeMap_MarshalJSON_With_Entries(t *testing.T) {
 	require.True(t,
 		`[{"name":"map{label=\"foo\"}","value":1},{"name":"map{label=\"bar\"}","value":2}]` == string(b) ||
 			`[{"name":"map{label=\"bar\"}","value":2},{"name":"map{label=\"foo\"}","value":1}]` == string(b))
+}
+
+func TestGauge_ConcurrentSetAndValue(t *testing.T) {
+	g := NewGauge()
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			g.Set(1.0)
+		}()
+		go func() {
+			defer wg.Done()
+			_ = g.Value()
+		}()
+	}
+	wg.Wait()
+
+	require.Equal(t, 1.0, g.Value())
 }

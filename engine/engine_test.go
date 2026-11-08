@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"io"
+	"mokapi/config/dynamic"
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -50,6 +51,31 @@ func TestEngine_Scheduler(t *testing.T) {
 				r.True(t, exec.NextRun.After(evts[0].Time))
 
 				r.Equal(t, float64(1), c.Value())
+			},
+		},
+		{
+			name: "run cron job immediately does not block (deadlock guard for the inline first run)",
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
+				done := make(chan error)
+				go func() {
+					done <- e.AddScript(newScript("test.js", `
+						import mokapi from 'mokapi'
+						export default function() {
+							mokapi.cron('0 0 1 1 *', function() {}, { skipImmediateFirstRun: false });
+						}
+					`))
+				}()
+
+				select {
+				case err := <-done:
+					r.NoError(t, err)
+				case <-time.After(5 * time.Second):
+					t.Fatal("registering a cron job with an immediate first run blocks")
+				}
+
+				r.Eventually(t, func() bool {
+					return len(sm.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))) == 1
+				}, 2*time.Second, 10*time.Millisecond)
 			},
 		},
 		{
@@ -161,6 +187,98 @@ func TestEngine_Scheduler(t *testing.T) {
 			e.Start()
 
 			tc.test(t, e, app.Monitor.JobCounter, app.Events)
+		})
+	}
+}
+
+func TestEngine_AddScript_Delete(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	jobScript := `
+		import mokapi from 'mokapi'
+		export default function() {
+			mokapi.every('100ms', function() {});
+		}
+	`
+	jobEvents := func(sm *events.StoreManager) int {
+		return len(sm.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js")))
+	}
+	deleted := func(evt dynamic.ConfigEvent) dynamic.ConfigEvent {
+		evt.Event = dynamic.Delete
+		return evt
+	}
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T, e *engine.Engine, sm *events.StoreManager)
+	}{
+		{
+			name: "deleted script is removed and does not run again",
+			test: func(t *testing.T, e *engine.Engine, sm *events.StoreManager) {
+				script := newScript("test.js", jobScript)
+				r.NoError(t, e.AddScript(script))
+				r.Equal(t, 1, e.Scripts())
+				r.Eventually(t, func() bool { return jobEvents(sm) > 0 }, 2*time.Second, 10*time.Millisecond)
+
+				r.NoError(t, e.AddScript(deleted(script)))
+
+				r.Equal(t, 0, e.Scripts())
+				// an execution already in flight at delete time may still be recorded once
+				count := jobEvents(sm)
+				r.Never(t, func() bool { return jobEvents(sm) > count+1 }, 400*time.Millisecond, 10*time.Millisecond,
+					"job of deleted script must not fire anymore")
+			},
+		},
+		{
+			name: "delete of unknown script does nothing",
+			test: func(t *testing.T, e *engine.Engine, sm *events.StoreManager) {
+				other := newScript("other.js", jobScript)
+				r.NoError(t, e.AddScript(other))
+
+				r.NoError(t, e.AddScript(deleted(newScript("test.js", jobScript))))
+
+				r.Equal(t, 1, e.Scripts())
+			},
+		},
+		{
+			name: "delete of script that already closed itself",
+			test: func(t *testing.T, e *engine.Engine, sm *events.StoreManager) {
+				script := newScript("test.js", `export default function() {}`)
+				r.NoError(t, e.AddScript(script))
+				r.Equal(t, 0, e.Scripts())
+
+				r.NoError(t, e.AddScript(deleted(script)))
+
+				r.Equal(t, 0, e.Scripts())
+			},
+		},
+		{
+			name: "script added again after delete runs again",
+			test: func(t *testing.T, e *engine.Engine, sm *events.StoreManager) {
+				script := newScript("test.js", jobScript)
+				r.NoError(t, e.AddScript(script))
+				r.NoError(t, e.AddScript(deleted(script)))
+				r.Equal(t, 0, e.Scripts())
+
+				r.NoError(t, e.AddScript(script))
+
+				r.Equal(t, 1, e.Scripts())
+				r.Eventually(t, func() bool { return jobEvents(sm) > 0 }, 2*time.Second, 10*time.Millisecond)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := runtimetest.NewApp()
+			e := enginetest.NewEngine(
+				engine.WithScheduler(engine.NewDefaultScheduler()),
+				engine.WithApp(app),
+			)
+			defer e.Close()
+			e.Start()
+
+			tc.test(t, e, app.Events)
 		})
 	}
 }

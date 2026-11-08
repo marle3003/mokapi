@@ -12,6 +12,7 @@ Message represents a Kafka message used by [produce](/docs/javascript-api/mokapi
 | key  (optional)      | any                           | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                                                                                       |
 | data (optional)      | any                           | Kafka message data that is validated against schema. If data and value are not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration        |
 | value (optional)     | string, number, boolean, null | Kafka message value that is *not* validated against schema. If value and data are not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
+| messageId (optional) | string                        | Key of the message under `channels.<channel>.messages` in the AsyncAPI specification. Mokapi generates value and key from this message and validates `data` against it. An unknown key throws an error. |
 | headers (optional)   | object                        | Kafka message headers.                                                                                                                                                                                                      |
 
 ## Example
@@ -31,6 +32,19 @@ export default function() {
                 key: 'foo-2',
                 value: 'hello mokapi'
             }
+        ]
+    })
+}
+```
+
+```javascript tab=message-id.js
+import { produce } from 'mokapi/kafka'
+
+export default function() {
+    produce({
+        topic: 'orders',
+        messages: [
+            { messageId: 'orderCreated' }
         ]
     })
 }

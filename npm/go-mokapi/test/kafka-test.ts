@@ -63,3 +63,7 @@ args.key = "foo";
 args.value = "foo";
 // @ts-expect-error
 args.headers = "foo";
+
+produce({ topic: "orders", messages: [{ messageId: "orderCreated" }, { messageId: "orderDeleted", value: null }] });
+// @ts-expect-error
+produce({ topic: "orders", messages: [{ messageId: 1 }] });

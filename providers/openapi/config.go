@@ -81,6 +81,18 @@ type ExternalDocs struct {
 	Url         string `yaml:"url" json:"url"`
 }
 
+func (e *ExternalDocs) patch(patch *ExternalDocs) {
+	if patch == nil {
+		return
+	}
+	if len(patch.Description) > 0 {
+		e.Description = patch.Description
+	}
+	if len(patch.Url) > 0 {
+		e.Url = patch.Url
+	}
+}
+
 func IsHttpStatusSuccess(status int) bool {
 	return status == http.StatusOK ||
 		status == http.StatusCreated ||
@@ -153,21 +165,23 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 }
 
 func (c *Config) Patch(patch *Config) {
+	if c.OpenApi.IsEmpty() {
+		c.OpenApi = patch.OpenApi
+	}
 	c.Info.patch(patch.Info)
 	c.patchServers(patch.Servers)
 	if c.Paths == nil {
-		c.Paths = patch.Paths
+		c.Paths = patch.Paths.clone()
 	} else {
 		c.Paths.patch(patch.Paths)
 	}
 	c.Components.patch(patch.Components)
 
-	if c.Security == nil {
-		c.Security = patch.Security
+	c.Security = append(c.Security, cloneSecurityRequirements(patch.Security)...)
+	if c.ExternalDocs == nil {
+		c.ExternalDocs = clonePointer(patch.ExternalDocs)
 	} else {
-		for _, v := range patch.Security {
-			c.Security = append(c.Security, v)
-		}
+		c.ExternalDocs.patch(patch.ExternalDocs)
 	}
 
 	for _, pt := range patch.Tags {
@@ -178,19 +192,19 @@ func (c *Config) Patch(patch *Config) {
 			}
 		}
 		if st == nil {
-			c.Tags = append(c.Tags, pt)
+			c.Tags = append(c.Tags, pt.clone())
 		} else {
 			st.patch(pt)
 		}
 	}
 
 	if c.Webhooks == nil {
-		c.Webhooks = patch.Webhooks
+		c.Webhooks = cloneMap(patch.Webhooks, (*PathRef).clone)
 	} else {
 		for k, w := range patch.Webhooks {
 			pw, ok := c.Webhooks[k]
 			if !ok {
-				c.Webhooks[k] = w
+				c.Webhooks[k] = w.clone()
 			} else {
 				pw.patch(w)
 			}

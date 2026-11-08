@@ -313,7 +313,7 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 
 	for _, ctx := range ki.Store.Clients() {
 		c := kafkaClientInfo{
-			ClientId: ctx.ClientId,
+			ClientId: ctx.ClientId(),
 			Address:  ctx.Addr,
 			Software: getSoftware(ctx.ClientSoftwareName, ctx.ClientSoftwareVersion),
 		}
@@ -402,7 +402,7 @@ func (h *handler) getKafkaTopics(w http.ResponseWriter, r *http.Request) {
 
 	var channels []*asyncapi3.ChannelRef
 	for _, topic := range ki.Topics() {
-		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config})
+		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config()})
 	}
 
 	topics := getKafkaChannels(channels, ki, h.app.Monitor.Kafka)
@@ -415,7 +415,7 @@ func (h *handler) getKafkaTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ti := newTopic(t, ki, t.Config, h.app.Monitor.Kafka)
+	ti := newTopic(t, ki, t.Config(), h.app.Monitor.Kafka)
 	write(w, ti)
 }
 
@@ -426,7 +426,7 @@ func (h *handler) getKafkaPartitions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var partitions []kafkaPartition
-	for _, p := range t.Partitions {
+	for _, p := range t.PartitionList() {
 		partitions = append(partitions, newPartition(p))
 	}
 	sort.Slice(partitions, func(i, j int) bool {
@@ -522,24 +522,25 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	snapshot := g.Snapshot()
 	grp := group{
-		Name:    g.Name,
-		State:   g.State.String(),
-		Metrics: getGroupMetrics(g.Name, ki, h.app.Monitor.Kafka),
+		Name:    snapshot.Name,
+		State:   snapshot.State.String(),
+		Metrics: getGroupMetrics(snapshot.Name, ki, h.app.Monitor.Kafka),
 	}
 
-	if g.Generation != nil {
-		grp.Generation = g.Generation.Id
-		grp.Leader = g.Generation.LeaderId
-		grp.Protocol = g.Generation.Protocol
+	if snapshot.Generation != nil {
+		grp.Generation = snapshot.Generation.Id
+		grp.Leader = snapshot.Generation.LeaderId
+		grp.Protocol = snapshot.Generation.Protocol
 
-		for id, m := range g.Generation.Members {
+		for id, m := range snapshot.Generation.Members {
 			grp.Members = append(grp.Members, kafkaMember{
 				Name:       id,
-				ClientId:   m.Client.ClientId,
+				ClientId:   m.Client.ClientId(),
 				Addr:       m.Client.Addr,
 				Software:   getSoftware(m.Client.ClientSoftwareName, m.Client.ClientSoftwareVersion),
-				Heartbeat:  m.Client.Heartbeat,
+				Heartbeat:  m.Client.Heartbeat(),
 				Partitions: m.Partitions,
 			})
 		}
@@ -549,7 +550,7 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 	} else {
 		grp.Generation = -1
 	}
-	for topicName := range g.Commits {
+	for topicName := range snapshot.Commits {
 		grp.Topics = append(grp.Topics, topicName)
 	}
 	sort.Slice(grp.Topics, func(i, j int) bool {
@@ -578,14 +579,14 @@ func (h *handler) getKafkaClient(w http.ResponseWriter, r *http.Request) {
 
 	client := kafkaClient{
 		kafkaClientInfo: kafkaClientInfo{
-			ClientId: c.ClientId,
+			ClientId: c.ClientId(),
 			Address:  c.Addr,
 			Software: getSoftware(c.ClientSoftwareName, c.ClientSoftwareVersion),
 		},
 		BrokerAddress: c.ServerAddress,
 	}
 
-	for groupName, memberId := range c.Member {
+	for groupName, memberId := range c.Groups() {
 		client.Groups = append(client.Groups, clientGroupMember{
 			MemberId: memberId,
 			Group:    groupName,
@@ -698,7 +699,7 @@ func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, m
 
 func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *monitor.Kafka) kafkaTopic {
 	var partitions []kafkaPartition
-	for _, p := range t.Partitions {
+	for _, p := range t.PartitionList() {
 		partitions = append(partitions, newPartition(p))
 	}
 	sort.Slice(partitions, func(i, j int) bool {
@@ -706,8 +707,8 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	})
 
 	bindings := asyncapi3.TopicBindings{Partitions: 1}
-	if t.Config.Bindings != nil {
-		bindings = t.Config.Bindings.Kafka
+	if ch.Bindings != nil {
+		bindings = ch.Bindings.Kafka
 	}
 
 	result := kafkaTopic{
@@ -733,7 +734,7 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	labels := []metrics.QueryOptions{
 		metrics.ByLabel("service", ki.Info.Name),
 	}
-	if len(t.Config.Parameters) > 0 {
+	if len(ch.Parameters) > 0 {
 		labels = append(labels, metrics.ByLabel("instance", t.Name))
 	} else {
 		labels = append(labels, metrics.ByLabel("topic", t.Name))
@@ -752,8 +753,9 @@ func getGroupInfos(ki *runtime.KafkaInfo, topic string, m *monitor.Kafka) []kafk
 	var result []kafkaGroupInfo
 Groups:
 	for _, g := range groups {
+		snapshot := g.Snapshot()
 		if topic != "" {
-			for topicName := range g.Commits {
+			for topicName := range snapshot.Commits {
 				if topicName != topic {
 					continue Groups
 				}
@@ -761,14 +763,14 @@ Groups:
 		}
 
 		gi := kafkaGroupInfo{
-			Name:    g.Name,
-			Metrics: getGroupMetrics(g.Name, ki, m),
+			Name:    snapshot.Name,
+			Metrics: getGroupMetrics(snapshot.Name, ki, m),
 		}
-		if g.Generation != nil {
-			gi.Generation = g.Generation.Id
-			gi.State = g.State.String()
-			gi.Protocol = g.Generation.Protocol
-			gi.Members = len(g.Generation.Members)
+		if snapshot.Generation != nil {
+			gi.Generation = snapshot.Generation.Id
+			gi.State = snapshot.State.String()
+			gi.Protocol = snapshot.Generation.Protocol
+			gi.Members = len(snapshot.Generation.Members)
 		}
 		result = append(result, gi)
 	}

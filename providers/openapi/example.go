@@ -140,14 +140,17 @@ func (e Examples) patch(patch Examples) {
 		if v, ok := e[k]; ok && v != nil {
 			v.patch(p)
 		} else {
-			e[k] = p
+			e[k] = p.clone()
 		}
 	}
 }
 
 func (r *ExampleRef) patch(patch *ExampleRef) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone()
 		return
 	}
 
@@ -166,4 +169,20 @@ func (r *ExampleRef) patch(patch *ExampleRef) {
 	if len(patch.Value.ExternalValue) > 0 {
 		r.Value.ExternalValue = patch.Value.ExternalValue
 	}
+}
+
+func (e Examples) clone() Examples {
+	return cloneMap(e, (*ExampleRef).clone)
+}
+
+func (r *ExampleRef) clone() *ExampleRef {
+	if r == nil {
+		return nil
+	}
+	return &ExampleRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+// clone takes over Value as it is, it is never patched.
+func (e *Example) clone() *Example {
+	return clonePointer(e)
 }

@@ -114,6 +114,10 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		o.Channel.Value = resolved.Value
 	}
 
+	o.Messages = removeNilElements(o.Messages)
+	o.Traits = removeNilElements(o.Traits)
+	o.ExternalDocs = removeNilElements(o.ExternalDocs)
+
 	for _, msg := range o.Messages {
 		if err := msg.Parse(config, reader); err != nil {
 			return err
@@ -138,6 +142,9 @@ func (r *OperationTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader)
 		}
 		r.Value = resolved.Value
 		return nil
+	}
+	if r.Value != nil {
+		r.Value.ExternalDocs = removeNilElements(r.Value.ExternalDocs)
 	}
 	return nil
 }

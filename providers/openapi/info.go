@@ -25,16 +25,42 @@ type License struct {
 	Url  string `yaml:"url" json:"url"`
 }
 
+func (l *License) patch(patch *License) {
+	if patch == nil {
+		return
+	}
+	if len(patch.Name) > 0 {
+		l.Name = patch.Name
+	}
+	if len(patch.Url) > 0 {
+		l.Url = patch.Url
+	}
+}
+
 func (c *Info) patch(patch Info) {
+	if len(patch.Name) > 0 {
+		c.Name = patch.Name
+	}
+	if len(patch.Summary) > 0 {
+		c.Summary = patch.Summary
+	}
 	if len(patch.Description) > 0 {
 		c.Description = patch.Description
 	}
 	if c.Contact == nil {
-		c.Contact = patch.Contact
+		c.Contact = clonePointer(patch.Contact)
 	} else {
 		c.Contact.patch(patch.Contact)
 	}
 	if len(patch.Version) > 0 {
 		c.Version = patch.Version
+	}
+	if len(patch.TermsOfService) > 0 {
+		c.TermsOfService = patch.TermsOfService
+	}
+	if c.License == nil {
+		c.License = clonePointer(patch.License)
+	} else {
+		c.License.patch(patch.License)
 	}
 }

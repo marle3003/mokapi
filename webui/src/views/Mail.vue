@@ -52,6 +52,8 @@ function showImage(evt: MouseEvent) {
             <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
               <a href="/http"><span class="badge bg-secondary" aria-label="Go to HTTP API page">HTTP</span></a>
               <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
+              <a href="/mqtt"><span class="badge bg-secondary" aria-label="Go to MQTT API page">MQTT</span></a>
+              <a href="/websocket"><span class="badge bg-secondary" aria-label="Go to WebSocket API page">WebSocket</span></a>
               <a href="/ldap"><span class="badge bg-secondary" aria-label="Go to LDAP API page">LDAP</span></a>
               <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the Email API page">Email</span>
             </div>

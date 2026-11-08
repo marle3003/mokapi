@@ -1,5 +1,7 @@
 package openapi
 
+import "slices"
+
 type Server struct {
 	Url string `yaml:"url,omitempty" json:"url,omitempty"`
 
@@ -14,10 +16,6 @@ func (c *Config) patchServers(patch []*Server) {
 	if len(patch) == 0 {
 		return
 	}
-	if len(c.Servers) == 0 {
-		c.Servers = patch
-	}
-
 LoopPatch:
 	for _, p := range patch {
 		for _, s := range c.Servers {
@@ -28,6 +26,14 @@ LoopPatch:
 				continue LoopPatch
 			}
 		}
-		c.Servers = append(c.Servers, p)
+		c.Servers = append(c.Servers, clonePointer(p))
 	}
+}
+
+func cloneSecurityRequirements(r []SecurityRequirement) []SecurityRequirement {
+	return cloneSlice(r, SecurityRequirement.clone)
+}
+
+func (r SecurityRequirement) clone() SecurityRequirement {
+	return cloneMap(r, slices.Clone[[]string])
 }

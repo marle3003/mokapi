@@ -29,7 +29,7 @@ func TestMqttBroker(t *testing.T) {
 		})
 	})
 	b := service.NewMqttBroker(fmt.Sprintf("%v", port), handler)
-	b.Start()
+	require.NoError(t, b.Start())
 	defer b.Stop()
 
 	client := mqtttest.Client{Addr: addr}
@@ -51,4 +51,20 @@ func TestMqttBroker(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, called, "handler should be called")
 	require.Equal(t, fmt.Sprintf(":%v", port), b.Addr())
+}
+
+func newMqttBroker(port string) *service.MqttBroker {
+	return service.NewMqttBroker(port, mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {}))
+}
+
+func TestMqttBroker_Start_PortIsBoundWhenStartReturns(t *testing.T) {
+	requirePortIsBoundWhenStartReturns(t, newMqttBroker)
+}
+
+func TestMqttBroker_Start_ReturnsErrorWhenPortIsInUse(t *testing.T) {
+	requireStartReturnsErrorWhenPortIsInUse(t, newMqttBroker)
+}
+
+func TestMqttBroker_Stop_FreesPort(t *testing.T) {
+	requireStopFreesPort(t, newMqttBroker)
 }

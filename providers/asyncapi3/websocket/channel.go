@@ -2,12 +2,14 @@ package websocket
 
 import (
 	"context"
+	"maps"
 	engine "mokapi/engine/common"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/encoding"
+	"slices"
 	"sync"
 	"time"
 
@@ -105,6 +107,9 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		channelName := c.Config.ResolveAddress()
 
 		l := messageLog(c, data, messageId, client, Send)
+		if err != nil {
+			l.ValidationErrors = validationErrors
+		}
 		traits := events.NewTraits().
 			With("channel", channelName).
 			With("type", "message").
@@ -125,10 +130,9 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 
 		if err != nil {
 			c.monitor.MessagesError.WithLabel(labels...).Add(1)
-			l.ValidationErrors = validationErrors
 			return err
 		}
-		l.Actions = c.runMessageEvent(client, msg)
+		l.SetActions(c.runMessageEvent(client, msg))
 	}
 }
 
@@ -147,8 +151,15 @@ func (c *Channel) removeClient(client *Client) {
 	delete(c.clients, client.Id)
 }
 
+// connectedClients returns a snapshot, because clients connect and disconnect concurrently
+func (c *Channel) connectedClients() []*Client {
+	c.m.Lock()
+	defer c.m.Unlock()
+	return slices.Collect(maps.Values(c.clients))
+}
+
 func (c *Channel) Broadcast(message any) error {
-	for _, c := range c.clients {
+	for _, c := range c.connectedClients() {
 		err := c.sendMessage(message)
 		if err != nil {
 			return err

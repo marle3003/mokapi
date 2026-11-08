@@ -100,7 +100,7 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 			i := r.Context.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "modify").Add(1)
@@ -171,7 +171,7 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 			i := ctx.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "modify").Add(1)
@@ -188,7 +188,7 @@ func (d *Directory) Unbind(ctx context.Context) {
 		i := ctx.Value("time")
 		if i != nil {
 			t := i.(time.Time)
-			l.Duration = time.Now().Sub(t).Milliseconds()
+			l.SetDuration(time.Now().Sub(t).Milliseconds())
 		}
 		m.RequestCounter.WithLabel(d.config.Info.Name, "unbind").Add(1)
 		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
@@ -222,7 +222,7 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx con
 			i := ctx.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "add").Add(1)
@@ -254,7 +254,7 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, c
 			i := ctx.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "delete").Add(1)
@@ -289,7 +289,7 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 			i := ctx.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "modifyDN").Add(1)
@@ -320,7 +320,7 @@ func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest,
 			i := ctx.Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				l.Duration = time.Now().Sub(t).Milliseconds()
+				l.SetDuration(time.Now().Sub(t).Milliseconds())
 			}
 		}()
 		m.RequestCounter.WithLabel(d.config.Info.Name, "compare").Add(1)

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -36,16 +36,20 @@ var fieldsNotIncludedInAll = []string{"api"}
 var SupportedFacets = []string{"type"}
 
 type SearchIndex struct {
-	cfg    static.Search
-	idx    bleve.Index
-	ready  chan struct{}
-	queue  chan indexOp
-	initWG sync.WaitGroup // tracks initial items
+	cfg static.Search
+	// idx needs no lock: start() writes it before the worker starts and before
+	// close(ready), and Search reads it only after <-ready.
+	idx     bleve.Index
+	enabled atomic.Bool // set to false if the index cannot be created
+	ready   chan struct{}
+	queue   chan indexOp
+	pending atomic.Int64 // operations queued but not yet flushed to the index
 }
 
 func newSearchIndex(cfg static.Search) *SearchIndex {
 	s := &SearchIndex{cfg: cfg}
 	if cfg.Enabled {
+		s.enabled.Store(true)
 		s.ready = make(chan struct{})
 		s.queue = make(chan indexOp, 1000)
 		if cfg.NumIndexWorker == 0 {
@@ -56,7 +60,7 @@ func newSearchIndex(cfg static.Search) *SearchIndex {
 }
 
 func (s *SearchIndex) start(pool *safe.Pool) {
-	if !s.cfg.Enabled {
+	if !s.enabled.Load() {
 		return
 	}
 
@@ -121,9 +125,9 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 
 	if err != nil {
 		log.Errorf("disabling search due to error: %s", err)
-		s.cfg.Enabled = false
+		s.enabled.Store(false)
 		close(s.ready)
-		close(s.queue)
+		s.drainQueue()
 		return
 	}
 
@@ -131,10 +135,25 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 		pool.Go(s.runWorker)
 	}
 
-	s.initWG.Wait()
+	// never finishes if the pool is cancelled before the workers drain the queue (same as the old Wait)
+	for s.pending.Load() > 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
 	// ensure last batch is flushed
 	time.Sleep(500 * time.Millisecond)
 	close(s.ready)
+}
+
+// drainQueue drops queued operations. The queue is not closed because a
+// concurrent Add may still send to it.
+func (s *SearchIndex) drainQueue() {
+	for {
+		select {
+		case <-s.queue:
+		default:
+			return
+		}
+	}
 }
 
 type opType int
@@ -151,11 +170,11 @@ type indexOp struct {
 }
 
 func (s *SearchIndex) Add(id string, data any) {
-	if !s.cfg.Enabled {
+	if !s.enabled.Load() {
 		return
 	}
 
-	s.initWG.Add(1)
+	s.pending.Add(1)
 	s.queue <- indexOp{
 		id:   id,
 		data: data,
@@ -183,7 +202,7 @@ func (s *SearchIndex) runWorker(ctx context.Context) {
 			println("batch failed:", err.Error())
 		}
 
-		s.initWG.Add(-batchSize)
+		s.pending.Add(-int64(batchSize))
 
 		batch = s.idx.NewBatch()
 		batchSize = 0
@@ -220,10 +239,10 @@ func (s *SearchIndex) runWorker(ctx context.Context) {
 }
 
 func (s *SearchIndex) Delete(id string) {
-	if !s.cfg.Enabled {
+	if !s.enabled.Load() {
 		return
 	}
-	s.initWG.Add(1)
+	s.pending.Add(1)
 	s.queue <- indexOp{
 		id:  id,
 		typ: opDelete,
@@ -233,9 +252,13 @@ func (s *SearchIndex) Delete(id string) {
 func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 	result := search.Result{}
 
+	// without this check Search would wait forever: ready only exists if enabled
+	if !s.enabled.Load() {
+		return result, &search.ErrNotEnabled{}
+	}
 	<-s.ready
-
-	if s.idx == nil || !s.cfg.Enabled {
+	// start() may have disabled search while we were waiting
+	if !s.enabled.Load() {
 		return result, &search.ErrNotEnabled{}
 	}
 

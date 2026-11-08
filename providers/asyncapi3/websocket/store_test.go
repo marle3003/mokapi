@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	engine "mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
@@ -68,6 +69,25 @@ func TestStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 				defer func() { _ = c.CloseNow() }()
+			},
+		},
+		{
+			name: "channel next to empty channel",
+			cfg: func() *asyncapi3.Config {
+				cfg := asyncapi3test.NewConfig(asyncapi3test.WithChannel("/subscribe"))
+				cfg.Channels["/empty"] = nil
+				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				return cfg
+			}(),
+			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+				defer cancel()
+				c, _, err := ws.Dial(ctx, url+"/subscribe", nil)
+				require.NoError(t, err)
+				defer func() { _ = c.CloseNow() }()
+
+				_, _, err = ws.Dial(ctx, url+"/empty", nil)
+				require.ErrorContains(t, err, "404")
 			},
 		},
 		{
@@ -211,7 +231,7 @@ func TestStore(t *testing.T) {
 
 				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 2
+					return len(evts) > 2 && handlersFinished(evts)
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
@@ -228,14 +248,14 @@ func TestStore(t *testing.T) {
 				evt = evts[1]
 				m := evt.Data.(*websocket.MessageLog)
 				require.Equal(t, "message", evt.Traits.Get("type"))
-				require.Len(t, m.Actions, 1)
-				require.Equal(t, `message`, m.Actions[0].Logs[0].Message)
+				require.Len(t, m.GetActions(), 1)
+				require.Equal(t, `message`, m.GetActions()[0].Logs[0].Message)
 
 				evt = evts[2]
 				d := evt.Data.(*websocket.ConnectLog)
 				require.Equal(t, "connection", evt.Traits.Get("type"))
-				require.Len(t, d.Actions, 1)
-				require.Equal(t, `connect`, d.Actions[0].Logs[0].Message)
+				require.Len(t, d.GetActions(), 1)
+				require.Equal(t, `connect`, d.GetActions()[0].Logs[0].Message)
 			},
 		},
 		{
@@ -292,21 +312,21 @@ export default function() {
 
 				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 2
+					return len(evts) > 2 && handlersFinished(evts)
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 				require.Len(t, evts, 3)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
-				require.Len(t, d.Actions, 0)
+				require.Len(t, d.GetActions(), 0)
 				require.Equal(t, map[string]string{"ChatMessage": "Validation error count 1:\n\t- #/required: required properties are missing: text"}, d.ValidationErrors)
 
 				evt = evts[1]
 				d = evt.Data.(*websocket.MessageLog)
-				require.Len(t, d.Actions, 1)
-				require.NotNil(t, d.Actions[0].Error)
-				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: text", d.Actions[0].Error.Message)
+				require.Len(t, d.GetActions(), 1)
+				require.NotNil(t, d.GetActions()[0].Error)
+				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: text", d.GetActions()[0].Error.Message)
 			},
 		},
 		{
@@ -418,15 +438,15 @@ export default function() {
 
 				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 1
+					return len(evts) > 1 && handlersFinished(evts)
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 				require.Len(t, evts, 2)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
-				require.Len(t, d.Actions, 1)
-				require.Equal(t, `{"id":"foo"}`, d.Actions[0].Logs[0].Message)
+				require.Len(t, d.GetActions(), 1)
+				require.Equal(t, `{"id":"foo"}`, d.GetActions()[0].Logs[0].Message)
 			},
 		},
 		{
@@ -514,7 +534,7 @@ export default function() {
 
 				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 1
+					return len(evts) > 1 && handlersFinished(evts)
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
@@ -523,8 +543,8 @@ export default function() {
 				evt := evts[0]
 				m := evt.Data.(*websocket.MessageLog)
 				require.Equal(t, "message", evt.Traits.Get("type"))
-				require.Len(t, m.Actions, 1)
-				require.Equal(t, `{"id":"foo"}`, m.Actions[0].Logs[0].Message)
+				require.Len(t, m.GetActions(), 1)
+				require.Equal(t, `{"id":"foo"}`, m.GetActions()[0].Logs[0].Message)
 			},
 		},
 		{
@@ -606,7 +626,7 @@ export default function() {
 
 				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 1
+					return len(evts) > 1 && handlersFinished(evts)
 				})
 
 				require.Equal(t, 1.0, app.Monitor.Websocket.Messages.Sum(
@@ -625,14 +645,34 @@ export default function() {
 				require.Len(t, evts, 2)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
-				require.Len(t, d.Actions, 1)
+				require.Len(t, d.GetActions(), 1)
 				var result engine.WebsocketEventChannel
-				err = json.Unmarshal([]byte(d.Actions[0].Logs[0].Message), &result)
+				err = json.Unmarshal([]byte(d.GetActions()[0].Logs[0].Message), &result)
 				require.NoError(t, err)
 				require.Equal(t, "/chats/1234", result.Name)
 				require.Len(t, result.Clients, 1)
 				require.NotNil(t, result.Clients[0])
 				require.Equal(t, map[string]string{"chatId": "1234"}, result.Params)
+			},
+		},
+		{
+			name: "broadcast right after handshake reaches client",
+			cfg:  chatCfg(),
+			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				c, _, err := ws.Dial(ctx, url+"/chat", nil)
+				require.NoError(t, err)
+				defer func() { _ = c.CloseNow() }()
+
+				// no waiting: the client must already be known once Dial returns
+				ch, ok := store.Channel("/chat")
+				require.True(t, ok)
+				require.NoError(t, ch.Broadcast(map[string]any{"text": "hello"}))
+
+				_, data, err := c.Read(ctx)
+				require.NoError(t, err)
+				require.JSONEq(t, `{"text":"hello"}`, string(data))
 			},
 		},
 	}
@@ -667,4 +707,18 @@ export default function() {
 			tc.test(t, s, serv.URL, app)
 		})
 	}
+}
+
+// handlersFinished reports whether the script handlers of all message events have attached
+// their actions. The event is visible in the store before its handler has finished.
+func handlersFinished(evts []events.Event) bool {
+	for _, evt := range evts {
+		switch l := evt.Data.(type) {
+		case *websocket.MessageLog:
+			if len(l.ValidationErrors) == 0 && len(l.GetActions()) == 0 {
+				return false
+			}
+		}
+	}
+	return true
 }

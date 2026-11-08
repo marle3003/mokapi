@@ -1,127 +1,130 @@
 package schema
 
+import (
+	"maps"
+	"slices"
+)
+
+// Clone returns a deep copy of s. Resolved references make the schema graph
+// cyclic (a property that refers to its parent), so every schema is copied once
+// and the copy has the same cycles as the original.
 func (s *Schema) Clone() *Schema {
+	return s.clone(schemaCopies{})
+}
+
+type schemaCopies map[*Schema]*Schema
+
+func (s *Schema) clone(copies schemaCopies) *Schema {
 	if s == nil {
 		return nil
 	}
-
-	clone := &Schema{
-		Id:            s.Id,
-		Reference:     s.Reference,
-		Schema:        s.Schema,
-		Boolean:       s.Boolean,
-		Anchor:        s.Anchor,
-		DynamicAnchor: s.DynamicAnchor,
-
-		Const: s.Const,
-
-		MultipleOf: s.MultipleOf,
-		Maximum:    s.Maximum,
-		Minimum:    s.Minimum,
-
-		MaxLength: s.MaxLength,
-		MinLength: s.MinLength,
-		Pattern:   s.Pattern,
-		Format:    s.Format,
-
-		Items:            s.Items.Clone(),
-		UnevaluatedItems: s.UnevaluatedItems.Clone(),
-		Contains:         s.Contains.Clone(),
-		MaxContains:      s.MaxContains,
-		MinContains:      s.MinContains,
-		MaxItems:         s.MaxItems,
-		MinItems:         s.MinItems,
-		UniqueItems:      s.UniqueItems,
-		ShuffleItems:     s.ShuffleItems,
-
-		MaxProperties:         s.MaxProperties,
-		MinProperties:         s.MinProperties,
-		AdditionalProperties:  s.AdditionalProperties.Clone(),
-		UnevaluatedProperties: s.UnevaluatedProperties.Clone(),
-		PropertyNames:         s.PropertyNames.Clone(),
-
-		Not: s.Not.Clone(),
-
-		If:   s.If.Clone(),
-		Then: s.Then.Clone(),
-		Else: s.Else.Clone(),
-
-		Title:       s.Title,
-		Description: s.Description,
-		Default:     s.Default,
-		Deprecated:  s.Deprecated,
-		Examples:    s.Examples,
-
-		ContentMediaType: s.ContentMediaType,
-		ContentEncoding:  s.ContentEncoding,
+	if c, ok := copies[s]; ok {
+		return c
 	}
+	c := &Schema{}
+	copies[s] = c
+	*c = *s
 
-	for _, t := range s.Type {
-		clone.Type = append(clone.Type, t)
-	}
+	// Reference is copied by value together with its origin
+	c.Sub = s.Sub.clone(copies)
+	c.m = maps.Clone(s.m)
 
-	for _, e := range s.Enum {
-		clone.Enum = append(clone.Enum, e)
-	}
+	c.Boolean = clonePointer(s.Boolean)
+	c.Type = slices.Clone(s.Type)
+	// values of type any are taken over, they are never patched
+	c.Enum = slices.Clone(s.Enum)
+	c.Const = clonePointer(s.Const)
 
-	if s.ExclusiveMaximum != nil {
-		clone.ExclusiveMaximum = &UnionType[float64, bool]{
-			A: s.ExclusiveMaximum.A,
-			B: s.ExclusiveMaximum.B,
-		}
-	}
-	if s.ExclusiveMinimum != nil {
-		clone.ExclusiveMinimum = &UnionType[float64, bool]{
-			A: s.ExclusiveMinimum.A,
-			B: s.ExclusiveMinimum.B,
-		}
-	}
+	c.MultipleOf = clonePointer(s.MultipleOf)
+	c.Maximum = clonePointer(s.Maximum)
+	c.ExclusiveMaximum = clonePointer(s.ExclusiveMaximum)
+	c.Minimum = clonePointer(s.Minimum)
+	c.ExclusiveMinimum = clonePointer(s.ExclusiveMinimum)
 
-	for _, pi := range s.PrefixItems {
-		clone.PrefixItems = append(clone.PrefixItems, pi.Clone())
-	}
+	c.MaxLength = clonePointer(s.MaxLength)
+	c.MinLength = clonePointer(s.MinLength)
 
-	if s.Properties != nil {
-		clone.Properties = new(Schemas)
-		for it := s.Properties.Iter(); it.Next(); {
-			clone.Properties.Set(it.Key(), it.Value().Clone())
-		}
-	}
+	c.Items = s.Items.clone(copies)
+	c.PrefixItems = cloneSchemas(s.PrefixItems, copies)
+	c.UnevaluatedItems = s.UnevaluatedItems.clone(copies)
+	c.Contains = s.Contains.clone(copies)
+	c.MaxContains = clonePointer(s.MaxContains)
+	c.MinContains = clonePointer(s.MinContains)
+	c.MaxItems = clonePointer(s.MaxItems)
+	c.MinItems = clonePointer(s.MinItems)
+	c.UniqueItems = clonePointer(s.UniqueItems)
 
-	if s.PatternProperties != nil {
-		clone.PatternProperties = map[string]*Schema{}
-		for k, v := range s.PatternProperties {
-			clone.PatternProperties[k] = v.Clone()
-		}
-	}
+	c.Properties = s.Properties.clone(copies)
+	c.PatternProperties = cloneSchemaMap(s.PatternProperties, copies)
+	c.MaxProperties = clonePointer(s.MaxProperties)
+	c.MinProperties = clonePointer(s.MinProperties)
+	c.Required = slices.Clone(s.Required)
+	c.DependentRequired = cloneDependentRequired(s.DependentRequired)
+	c.DependentSchemas = cloneSchemaMap(s.DependentSchemas, copies)
+	c.AdditionalProperties = s.AdditionalProperties.clone(copies)
+	c.UnevaluatedProperties = s.UnevaluatedProperties.clone(copies)
+	c.PropertyNames = s.PropertyNames.clone(copies)
 
-	if s.DependentRequired != nil {
-		clone.DependentRequired = map[string][]string{}
-		for k, v := range s.DependentRequired {
-			clone.DependentRequired[k] = append(clone.DependentRequired[k], v...)
-		}
-	}
+	c.AllOf = cloneSchemas(s.AllOf, copies)
+	c.AnyOf = cloneSchemas(s.AnyOf, copies)
+	c.OneOf = cloneSchemas(s.OneOf, copies)
+	c.Not = s.Not.clone(copies)
 
-	if s.DependentSchemas != nil {
-		clone.DependentSchemas = map[string]*Schema{}
-		for k, v := range s.DependentSchemas {
-			clone.DependentSchemas[k] = v.Clone()
-		}
-	}
+	c.If = s.If.clone(copies)
+	c.Then = s.Then.clone(copies)
+	c.Else = s.Else.clone(copies)
 
-	for _, v := range s.Required {
-		clone.Required = append(clone.Required, v)
-	}
+	c.Examples = slices.Clone(s.Examples)
 
-	for _, as := range s.AllOf {
-		clone.AllOf = append(clone.AllOf, as.Clone())
-	}
-	for _, as := range s.AnyOf {
-		clone.AnyOf = append(clone.AnyOf, as.Clone())
-	}
-	for _, as := range s.OneOf {
-		clone.OneOf = append(clone.OneOf, as.Clone())
-	}
+	c.Definitions = cloneSchemaMap(s.Definitions, copies)
+	c.Defs = cloneSchemaMap(s.Defs, copies)
+	return c
+}
 
-	return clone
+func (s *Schemas) clone(copies schemaCopies) *Schemas {
+	if s == nil {
+		return nil
+	}
+	return &Schemas{LinkedHashMap: s.CloneWith(func(v *Schema) *Schema { return v.clone(copies) })}
+}
+
+func cloneSchemas(s []*Schema, copies schemaCopies) []*Schema {
+	if s == nil {
+		return nil
+	}
+	c := make([]*Schema, len(s))
+	for i, v := range s {
+		c[i] = v.clone(copies)
+	}
+	return c
+}
+
+func cloneSchemaMap(m map[string]*Schema, copies schemaCopies) map[string]*Schema {
+	if m == nil {
+		return nil
+	}
+	c := make(map[string]*Schema, len(m))
+	for k, v := range m {
+		c[k] = v.clone(copies)
+	}
+	return c
+}
+
+func cloneDependentRequired(m map[string][]string) map[string][]string {
+	if m == nil {
+		return nil
+	}
+	c := make(map[string][]string, len(m))
+	for k, v := range m {
+		c[k] = slices.Clone(v)
+	}
+	return c
+}
+
+func clonePointer[T any](p *T) *T {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	return &c
 }

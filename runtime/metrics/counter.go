@@ -28,6 +28,9 @@ func (c *Counter) Add(v float64) {
 }
 
 func (c *Counter) Value() float64 {
+	c.m.Lock()
+	defer c.m.Unlock()
+
 	return c.value
 }
 
@@ -40,6 +43,9 @@ func (c *Counter) Collect(ch chan<- Metric) {
 }
 
 func (c *Counter) Reset() {
+	c.m.Lock()
+	defer c.m.Unlock()
+
 	c.value = 0
 }
 

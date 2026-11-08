@@ -3,46 +3,51 @@ export async function driveWebsocket(): Promise<void> {
     const bob = new WebSocket('ws://localhost:8000/chats/general');
     const carol = new WebSocket('ws://localhost:8000/chats/general');
 
-    carol.addEventListener('message', console.log)
+    // Mokapi broadcasts only to clients that completed the handshake
+    await Promise.all([opened(bob), opened(carol)]);
 
-    // Wait for connection to open
-    await new Promise((resolve, reject) => {
-        bob.addEventListener('open', resolve, { once: true });
-        bob.addEventListener('error', reject, { once: true });
-    });
+    // Listen before sending, otherwise the broadcast could be missed
+    const broadcastReceived = Promise.all([
+        receivedMessage('bob', bob),
+        receivedMessage('carol', carol),
+    ]);
 
-    bob.addEventListener('error', error => {
-        console.error('WebSocket error:', error);
-    });
+    bob.send(JSON.stringify({ text: 'Hello there!', username: 'bob'}));
 
-    return safeSend(bob, JSON.stringify({ text: 'Hello there!', username: 'bob'}))
+    await broadcastReceived;
 }
 
-function safeSend(socket: WebSocket, message: string, waitMs = 100) {
-  return new Promise<void>((resolve, reject) => {
-    const onClose = (event: CloseEvent) => {
-      cleanup();
-      reject(new Error(`Rejected — code: ${event.code}, reason: ${event.reason || 'none'}`));
-    };
-    const onError = () => {
-      cleanup();
-      reject(new Error('WebSocket error'));
-    };
+function opened(socket: WebSocket) {
+    return new Promise<void>((resolve, reject) => {
+        socket.addEventListener('open', () => resolve(), { once: true });
+        socket.addEventListener('error', () => reject(new Error('WebSocket error before open')), { once: true });
+    });
+}
 
-    const cleanup = () => {
-      socket.removeEventListener('close', onClose);
-      socket.removeEventListener('error', onError);
-    };
+function receivedMessage(name: string, socket: WebSocket, timeoutMs = 5000) {
+    return new Promise<void>((resolve, reject) => {
+        const fail = (reason: string) => {
+            cleanup();
+            reject(new Error(`websocket: ${name} did not receive the broadcast (${reason})`));
+        };
+        const onMessage = (event: MessageEvent) => {
+            cleanup();
+            console.log(`websocket: ${name} received`, event.data);
+            resolve();
+        };
+        const onClose = (event: CloseEvent) => fail(`closed, code: ${event.code}, reason: ${event.reason || 'none'}`);
+        const onError = () => fail('WebSocket error');
+        const timer = setTimeout(() => fail(`timeout after ${timeoutMs} ms`), timeoutMs);
 
-    socket.addEventListener('close', onClose, { once: true });
-    socket.addEventListener('error', onError, { once: true });
+        const cleanup = () => {
+            clearTimeout(timer);
+            socket.removeEventListener('message', onMessage);
+            socket.removeEventListener('close', onClose);
+            socket.removeEventListener('error', onError);
+        };
 
-    socket.send(message);
-
-    // If connection is still alive after waitMs, assume send was accepted
-    setTimeout(() => {
-      cleanup();
-      resolve();
-    }, waitMs);
-  });
+        socket.addEventListener('message', onMessage);
+        socket.addEventListener('close', onClose);
+        socket.addEventListener('error', onError);
+    });
 }

@@ -87,6 +87,8 @@ export function options(url: string, body?: any, args?: Args): Response;
 /**
  * Sends an HTTP request and returns a Promise resolving to the response.
  *
+ * The URL and options are read when you call the function. Invalid options throw an error at the call. Request errors and timeouts reject the returned promise.
+ *
  * @param {string} url - The URL to request.
  * @param {FetchOptions} opts - Optional fetch configuration.
  * @returns {Promise<Response>} A Promise that resolves with the response.

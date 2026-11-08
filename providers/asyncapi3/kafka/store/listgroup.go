@@ -15,9 +15,10 @@ func (s *Store) listgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 			GroupState: "Empty",
 		}
 
-		if g.Generation != nil && len(g.Generation.Members) > 0 {
-			group.ProtocolType = g.Generation.Protocol
-			group.GroupState = g.State.String()
+		snapshot := g.Snapshot()
+		if snapshot.Generation != nil && len(snapshot.Generation.Members) > 0 {
+			group.ProtocolType = snapshot.Generation.Protocol
+			group.GroupState = snapshot.State.String()
 		}
 
 		if containsState(r.StatesFilter, group.GroupState) {

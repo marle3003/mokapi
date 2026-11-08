@@ -2,6 +2,7 @@ package engine
 
 import (
 	"mokapi/engine/common"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,38 +17,38 @@ func TestScheduler(t *testing.T) {
 		{
 			name: "add one job run immediately",
 			test: func(t *testing.T, s Scheduler) {
-				count := 0
+				var count atomic.Int32
 				_, err := s.Every("2s", func() {
-					count++
+					count.Add(1)
 				}, common.JobOptions{})
 				require.NoError(t, err)
 				time.Sleep(100 * time.Millisecond)
-				require.Equal(t, 1, count)
+				require.Equal(t, int32(1), count.Load())
 			},
 		},
 		{
 			name: "add one job run not immediately",
 			test: func(t *testing.T, s Scheduler) {
-				count := 0
+				var count atomic.Int32
 				_, err := s.Every("2s", func() {
-					count++
+					count.Add(1)
 				}, common.JobOptions{SkipImmediateFirstRun: true})
 				require.NoError(t, err)
 				time.Sleep(100 * time.Millisecond)
-				require.Equal(t, 0, count)
+				require.Equal(t, int32(0), count.Load())
 			},
 		},
 		{
 			name: "add one job run only one time",
 			test: func(t *testing.T, s Scheduler) {
-				count := 0
+				var count atomic.Int32
 				_, err := s.Every("100ms", func() {
 					time.Sleep(200 * time.Millisecond)
-					count++
+					count.Add(1)
 				}, common.JobOptions{Times: 1})
 				require.NoError(t, err)
 				time.Sleep(500 * time.Millisecond)
-				require.Equal(t, 1, count)
+				require.Equal(t, int32(1), count.Load())
 			},
 		},
 	}

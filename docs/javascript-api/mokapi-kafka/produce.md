@@ -6,6 +6,9 @@ description: Send a single message to a Kafka topic.
 
 Sends a Kafka message to a Kafka topic.
 
+`produceAsync( [args] )` takes the same arguments and returns a `Promise<ProduceResult>`. It reads the arguments
+when you call it, so invalid arguments throw an error at the call. Client errors, such as a broker error, reject the promise.
+
 ``` box=tip url=[See KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md)
 You can also produce messages with `app.kafka().produce( topic, message )` or
 `app.api('My API').kafka().topic('my-topic').produce( message )`. These variants support API scoping,
@@ -109,6 +112,22 @@ export default function() {
                     'message-type': 'greetings'
                 }
             },
+        ],
+    })
+}
+```
+
+Example with a message selected by its key under `channels.<channel>.messages`. Mokapi generates
+value and key from that message.
+
+```javascript
+import { produce } from 'mokapi/kafka'
+
+export default function() {
+    const result = produce({
+        topic: 'orders',
+        messages: [
+            { messageId: 'orderCreated' }
         ],
     })
 }

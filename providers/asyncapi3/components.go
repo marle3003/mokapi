@@ -24,6 +24,19 @@ func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		return nil
 	}
 
+	removeNilEntries(c.Servers)
+	removeNilEntries(c.Tags)
+	removeNilEntries(c.Channels)
+	removeNilEntries(c.Schemas)
+	removeNilEntries(c.Messages)
+	removeNilEntries(c.Operations)
+	removeNilEntries(c.Parameters)
+	removeNilEntries(c.CorrelationIds)
+	removeNilEntries(c.ExternalDocs)
+	removeNilEntries(c.OperationTraits)
+	removeNilEntries(c.MessageTraits)
+	removeNilEntries(c.ServerVariables)
+
 	for _, t := range c.Tags {
 		if err := t.parse(config, reader); err != nil {
 			return err

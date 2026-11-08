@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Order Simulation
+  version: 1.0.0
+servers:
+  - url: http://localhost:18094
+paths:
+  /sim/ready:
+    get:
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]
+  /sim/kafka:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: Records produced
+        '422':
+          description: Producing failed
+          content:
+            text/plain:
+              schema:
+                type: string

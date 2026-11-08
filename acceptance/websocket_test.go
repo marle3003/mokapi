@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"mokapi/config/static"
 	"mokapi/try"
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,6 +60,27 @@ func (suite *WebsocketSuite) TestEcho() {
 	require.Equal(suite.T(), "alice", msg["user"])
 	require.Equal(suite.T(), "Hello, world!", msg["text"])
 	require.NotEmpty(suite.T(), msg["timestamp"])
+}
+
+// TestSendAsyncSendsSnapshotOfMessage verifies that sendAsync sends the message as it was at
+// call time, even if the script changes the message object right after the call.
+func (suite *WebsocketSuite) TestSendAsyncSendsSnapshotOfMessage() {
+	time.Sleep(2 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "http://localhost:22801/async", nil)
+	require.NoError(suite.T(), err)
+	defer c.CloseNow()
+
+	err = wsjson.Write(ctx, c, map[string]string{"text": "trigger"})
+	require.NoError(suite.T(), err)
+
+	var msg map[string]any
+	err = wsjson.Read(ctx, c, &msg)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), "hello", msg["text"])
 }
 
 // TestBroadcast verifies that a message is delivered to all connected clients in the same room.
@@ -251,4 +274,75 @@ func (suite *WebsocketSuite) TestPayloadValidation() {
 	// Expect the connection to be closed with a policy violation or an error message
 	_, _, err = c.Read(ctx)
 	require.Error(suite.T(), err, "expected error or close after invalid payload")
+}
+
+// postSimulation asks the fixture script to send a message to the channel /dm.
+func (suite *WebsocketSuite) postSimulation(endpoint, body string, conditions ...try.ResponseCondition) {
+	waitForScript(suite.T(), "http://localhost:18096")
+	try.Request(suite.T(), http.MethodPost, "http://localhost:18096"+endpoint,
+		map[string]string{"Content-Type": "application/json"}, strings.NewReader(body), conditions...)
+}
+
+// simulateSend connects a client to /dm, asks the fixture script to send a message to the channel
+// and returns what the client receives. The conditions check the script's HTTP response.
+func (suite *WebsocketSuite) simulateSend(endpoint, body string, conditions ...try.ResponseCondition) map[string]any {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "http://localhost:22801/dm", nil)
+	require.NoError(suite.T(), err)
+	defer c.CloseNow()
+
+	suite.postSimulation(endpoint, body, conditions...)
+	if suite.T().Failed() {
+		return nil
+	}
+
+	var msg map[string]any
+	err = wsjson.Read(ctx, c, &msg)
+	require.NoError(suite.T(), err)
+	return msg
+}
+
+// TestSendGeneratesSelectedMessage verifies that messageId without a message sends a payload
+// generated from the selected message of the channel.
+func (suite *WebsocketSuite) TestSendGeneratesSelectedMessage() {
+	msg := suite.simulateSend("/sim/websocket", `{"messageId":"directMessage"}`, try.HasStatusCode(http.StatusNoContent))
+	require.Contains(suite.T(), msg, "to")
+	require.Contains(suite.T(), msg, "text")
+
+	msg = suite.simulateSend("/sim/websocket", `{"messageId":"ack"}`, try.HasStatusCode(http.StatusNoContent))
+	require.Contains(suite.T(), []any{"ok", "error"}, msg["status"])
+}
+
+// TestSendAsyncGeneratesSelectedMessage verifies that sendAsync selects the message by messageId.
+func (suite *WebsocketSuite) TestSendAsyncGeneratesSelectedMessage() {
+	msg := suite.simulateSend("/sim/websocket-async", `{"messageId":"directMessage"}`, try.HasStatusCode(http.StatusNoContent))
+
+	require.Contains(suite.T(), msg, "to")
+	require.Contains(suite.T(), msg, "text")
+}
+
+// TestSendMessageIsValidatedAgainstSelectedMessage verifies that a message valid for the selected
+// message is sent as given.
+func (suite *WebsocketSuite) TestSendMessageIsValidatedAgainstSelectedMessage() {
+	msg := suite.simulateSend("/sim/websocket", `{"messageId":"ack","message":{"status":"error","error":"boom"}}`,
+		try.HasStatusCode(http.StatusNoContent))
+
+	require.Equal(suite.T(), map[string]any{"status": "error", "error": "boom"}, msg)
+}
+
+// TestSendInvalidMessageForSelectedMessageFails verifies that a message not matching the selected
+// message is rejected.
+func (suite *WebsocketSuite) TestSendInvalidMessageForSelectedMessageFails() {
+	suite.postSimulation("/sim/websocket", `{"messageId":"directMessage","message":{"status":"ok"}}`,
+		try.HasStatusCode(http.StatusUnprocessableEntity),
+		try.BodyContains("required properties are missing"))
+}
+
+// TestSendUnknownMessageIdFails verifies that a typo in messageId is reported to the script.
+func (suite *WebsocketSuite) TestSendUnknownMessageIdFails() {
+	suite.postSimulation("/sim/websocket", `{"messageId":"ackk"}`,
+		try.HasStatusCode(http.StatusUnprocessableEntity),
+		try.BodyContains("message 'ackk' not found in channel '/dm'"))
 }

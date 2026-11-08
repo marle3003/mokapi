@@ -22,55 +22,65 @@ func (s *Store) cleanLog(b *Broker) {
 	}
 	now := time.Now()
 
-	for _, topic := range s.topics {
+	for _, topic := range s.Topics() {
+		channel, partitions := topic.channelAndPartitions()
+
 		retentionTime := time.Duration(brokerRetentionMs) * time.Millisecond
 		retentionBytes := brokerRetentionBytes
 		rollingTime := time.Duration(brokerRollingMs) * time.Millisecond
 
-		if topic.Config.Bindings != nil {
-			if topic.Config.Bindings.Kafka.RetentionMs > 0 {
-				retentionTime = time.Duration(topic.Config.Bindings.Kafka.RetentionMs) * time.Millisecond
+		if channel.Bindings != nil {
+			if channel.Bindings.Kafka.RetentionMs > 0 {
+				retentionTime = time.Duration(channel.Bindings.Kafka.RetentionMs) * time.Millisecond
 			}
-			if topic.Config.Bindings.Kafka.RetentionBytes > 0 {
-				retentionBytes = topic.Config.Bindings.Kafka.RetentionBytes
+			if channel.Bindings.Kafka.RetentionBytes > 0 {
+				retentionBytes = channel.Bindings.Kafka.RetentionBytes
 			}
-			if topic.Config.Bindings.Kafka.SegmentMs > 0 {
-				rollingTime = time.Duration(topic.Config.Bindings.Kafka.SegmentMs) * time.Millisecond
+			if channel.Bindings.Kafka.SegmentMs > 0 {
+				rollingTime = time.Duration(channel.Bindings.Kafka.SegmentMs) * time.Millisecond
 			}
 		}
 
-		for _, p := range topic.Partitions {
+		for _, p := range partitions {
 			if p.leader.Id != b.Id {
 				continue
 			}
-
-			partitionSize := int64(0)
-			for _, segment := range p.Segments {
-				partitionSize += int64(segment.Size)
-
-				// check rolling
-				if segment.Closed.IsZero() && now.After(segment.Opened.Add(rollingTime)) {
-					// Close the current segment.
-					// Segment creation is lazy — it happens when a write comes in.
-					segment.Closed = now
-				}
-
-				// check retention
-				if segment.Size > 0 && !segment.Closed.IsZero() && now.After(segment.Closed.Add(retentionTime)) {
-					log.Infof(
-						"kafka: deleting segment with offset [%v:%v] from partition %v topic '%s'",
-						segment.Head, segment.Tail, p.Index, topic.Name)
-					p.removeSegment(segment)
-				}
-			}
-
-			if retentionBytes > 0 && partitionSize >= retentionBytes {
-				deleteSegmentsUntilLogIsWithinLimit(p)
-			}
+			cleanPartition(p, now, rollingTime, retentionTime, retentionBytes)
 		}
 	}
 }
 
+// cleanPartition holds only the partition lock, never the store lock.
+func cleanPartition(p *Partition, now time.Time, rollingTime, retentionTime time.Duration, retentionBytes int64) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	partitionSize := int64(0)
+	for _, segment := range p.Segments {
+		partitionSize += int64(segment.Size)
+
+		// check rolling
+		if segment.Closed.IsZero() && now.After(segment.Opened.Add(rollingTime)) {
+			// Close the current segment.
+			// Segment creation is lazy — it happens when a write comes in.
+			segment.Closed = now
+		}
+
+		// check retention
+		if segment.Size > 0 && !segment.Closed.IsZero() && now.After(segment.Closed.Add(retentionTime)) {
+			log.Infof(
+				"kafka: deleting segment with offset [%v:%v] from partition %v topic '%s'",
+				segment.Head, segment.Tail, p.Index, p.Topic.Name)
+			p.removeSegmentLocked(segment)
+		}
+	}
+
+	if retentionBytes > 0 && partitionSize >= retentionBytes {
+		deleteSegmentsUntilLogIsWithinLimit(p)
+	}
+}
+
+// deleteSegmentsUntilLogIsWithinLimit requires the partition lock.
 func deleteSegmentsUntilLogIsWithinLimit(p *Partition) {
 	// Build a slice of segments
 	var segments []*Segment
@@ -89,7 +99,7 @@ func deleteSegmentsUntilLogIsWithinLimit(p *Partition) {
 		if !s.Closed.IsZero() {
 			log.Infof("kafka: maximum partition size reached. deleting segment [%v:%v] from partition %v of topic '%s'",
 				s.Head, s.Tail, p.Index, p.Topic.Name)
-			p.removeSegment(s)
+			p.removeSegmentLocked(s)
 		}
 	}
 }

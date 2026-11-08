@@ -1,12 +1,12 @@
 package eventloop
 
 import (
+	"errors"
 	"fmt"
 	"mokapi/engine/common"
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -29,6 +29,15 @@ type JobContext struct {
 	EventLogger func(level, message string)
 }
 
+// ErrStopped is returned by RunAsync when the loop is stopped before the job's result is available.
+var ErrStopped = errors.New("event loop stopped")
+
+// outcome is the result of a RunAsync job. It is written to the job's result channel exactly once.
+type outcome struct {
+	value goja.Value
+	err   error
+}
+
 type EventLoop struct {
 	vm   *goja.Runtime
 	host common.Host
@@ -37,11 +46,11 @@ type EventLoop struct {
 
 	queueChan chan func()
 	stopChan  chan struct{}
-	running   bool
-	jobCount  int
+	// stopped is closed by the loop goroutine when it exits
+	stopped  chan struct{}
+	running  atomic.Bool
+	jobCount atomic.Int32
 
-	waitCond *sync.Cond
-	waitLock sync.Mutex
 	loopGoID uint64
 }
 
@@ -51,8 +60,8 @@ func New(vm *goja.Runtime, host common.Host) *EventLoop {
 		host:      host,
 		queueChan: make(chan func(), 1),
 		stopChan:  make(chan struct{}, 1),
+		stopped:   make(chan struct{}),
 	}
-	r.waitCond = sync.NewCond(&r.waitLock)
 
 	r.exports = vm.NewObject()
 	_ = vm.Set("exports", r.exports)
@@ -73,7 +82,7 @@ func goID() uint64 {
 }
 
 func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
-	if loop.running {
+	if loop.running.Load() {
 		loop.queueChan <- func() { fn(loop.vm) }
 	} else {
 		fn(loop.vm)
@@ -102,65 +111,111 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 		return fn(loop.vm)
 	}
 
-	if loop.running {
-		var result goja.Value
-		var err error
-		done := make(chan struct{})
-		if ctx.EventLogger != nil {
-			loop.host.SetEventLogger(ctx.EventLogger)
-			defer loop.host.SetEventLogger(nil)
-		}
-		loop.queueChan <- func() {
-			defer func() {
-				if r := recover(); r != nil {
-					var ok bool
-					err, ok = r.(error)
-					if !ok {
-						err = fmt.Errorf("%v", r)
-					}
-					done <- struct{}{}
-				}
-			}()
-
-			result, err = fn(loop.vm)
-			done <- struct{}{}
-		}
-
-		<-done
-
-		if err != nil {
-			return nil, err
-		}
-
-		if p, ok := result.Export().(*goja.Promise); ok {
-			for p.State() == goja.PromiseStatePending && loop.running {
-				loop.wait()
-			}
-			if p.State() == goja.PromiseStateRejected {
-				r := p.Result()
-				return nil, fmt.Errorf("%v", r.ToString())
-			}
-			return p.Result(), nil
-		}
-
-		return result, nil
+	if !loop.running.Load() {
+		return nil, fmt.Errorf("event loop not started")
 	}
 
-	return nil, fmt.Errorf("event loop not started")
+	select {
+	case <-loop.stopped:
+		return nil, ErrStopped
+	default:
+	}
+
+	if ctx.EventLogger != nil {
+		loop.host.SetEventLogger(ctx.EventLogger)
+		defer loop.host.SetEventLogger(nil)
+	}
+
+	result := make(chan outcome, 1)
+	select {
+	case loop.queueChan <- loop.newJob(fn, result):
+	case <-loop.stopped:
+		return nil, ErrStopped
+	}
+
+	select {
+	case o := <-result:
+		return o.value, o.err
+	case <-loop.stopped:
+		return nil, ErrStopped
+	}
+}
+
+// newJob wraps fn so that everything touching goja values, including the promise
+// state, happens on the loop goroutine.
+func (loop *EventLoop) newJob(fn JobFunc, result chan<- outcome) func() {
+	return func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err, ok := r.(error)
+				if !ok {
+					err = fmt.Errorf("%v", r)
+				}
+				result <- outcome{err: err}
+			}
+		}()
+
+		v, err := fn(loop.vm)
+		if err != nil {
+			result <- outcome{err: err}
+			return
+		}
+		loop.deliver(v, result)
+	}
+}
+
+func (loop *EventLoop) deliver(v goja.Value, result chan<- outcome) {
+	if v == nil {
+		v = goja.Undefined()
+	}
+
+	p, ok := v.Export().(*goja.Promise)
+	switch {
+	case !ok:
+		result <- outcome{value: v}
+	case p.State() == goja.PromiseStatePending:
+		loop.deliverWhenSettled(v, p, result)
+	default:
+		result <- settledOutcome(p)
+	}
+}
+
+// deliverWhenSettled registers Go reactions on the pending promise. goja offers no Go API
+// for that, so it calls the promise's JS "then". jobCount stays above zero while the
+// promise is pending, so HasJobs reports the loop as busy.
+func (loop *EventLoop) deliverWhenSettled(v goja.Value, p *goja.Promise, result chan<- outcome) {
+	loop.jobCount.Add(1)
+	onSettled := loop.vm.ToValue(func(goja.FunctionCall) goja.Value {
+		loop.jobCount.Add(-1)
+		result <- settledOutcome(p)
+		return goja.Undefined()
+	})
+
+	then, _ := goja.AssertFunction(v.ToObject(loop.vm).Get("then"))
+	if _, err := then(v, onSettled, onSettled); err != nil {
+		loop.jobCount.Add(-1)
+		result <- outcome{err: err}
+	}
+}
+
+func settledOutcome(p *goja.Promise) outcome {
+	if p.State() == goja.PromiseStateRejected {
+		return outcome{err: fmt.Errorf("%v", p.Result().ToString())}
+	}
+	return outcome{value: p.Result()}
 }
 
 func (loop *EventLoop) StartLoop() {
-	loop.running = true
+	loop.running.Store(true)
 	go func() {
+		defer close(loop.stopped)
 		atomic.StoreUint64(&loop.loopGoID, goID())
 	LOOP:
 		for {
 			select {
 			case job := <-loop.queueChan:
 				job()
-				loop.wakeup()
 			case <-loop.stopChan:
-				loop.wakeup()
 				break LOOP
 			}
 		}
@@ -168,21 +223,24 @@ func (loop *EventLoop) StartLoop() {
 }
 
 func (loop *EventLoop) Stop() {
-	if loop.running {
-		loop.stopChan <- struct{}{}
+	if loop.running.Load() {
+		select {
+		case loop.stopChan <- struct{}{}:
+		default:
+		}
 	}
 }
 
 func (loop *EventLoop) HasJobs() bool {
-	return loop.jobCount > 0
+	return loop.jobCount.Load() > 0
 }
 
 func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
-	loop.jobCount++
+	loop.jobCount.Add(1)
 	delay, run := loop.getScheduledFunc(call)
 	t := &timeout{}
 	t.timer = time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
-		loop.jobCount--
+		loop.jobCount.Add(-1)
 		loop.queueChan <- run
 	})
 
@@ -191,11 +249,11 @@ func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
 
 func (loop *EventLoop) clearTimeout(t *timeout) {
 	t.timer.Stop()
-	loop.jobCount--
+	loop.jobCount.Add(-1)
 }
 
 func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
-	loop.jobCount++
+	loop.jobCount.Add(1)
 	v, run := loop.getScheduledFunc(call)
 	milliseconds := time.Duration(v) * time.Millisecond
 	// https://nodejs.org/api/timers.html#timers_setinterval_callback_delay_args
@@ -214,7 +272,7 @@ func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
 }
 
 func (loop *EventLoop) clearInterval(i *interval) {
-	loop.jobCount--
+	loop.jobCount.Add(-1)
 	close(i.stop)
 }
 
@@ -234,20 +292,6 @@ func (loop *EventLoop) getScheduledFunc(call goja.FunctionCall) (int64, func()) 
 		return delay, f
 	}
 	return 0, nil
-}
-
-func (loop *EventLoop) wait() {
-	loop.waitLock.Lock()
-	defer loop.waitLock.Unlock()
-	loop.jobCount++
-	loop.waitCond.Wait()
-	loop.jobCount--
-}
-
-func (loop *EventLoop) wakeup() {
-	loop.waitLock.Lock()
-	defer loop.waitLock.Unlock()
-	loop.waitCond.Broadcast()
 }
 
 func (i *interval) start(loop *EventLoop) {

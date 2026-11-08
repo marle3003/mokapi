@@ -32,37 +32,42 @@ func (c *Components) IsEmpty() bool {
 
 func (c *Components) patch(patch Components) {
 	if c.Schemas == nil {
-		c.Schemas = patch.Schemas
+		c.Schemas = patch.Schemas.Clone()
 	} else {
 		c.Schemas.Patch(patch.Schemas)
 	}
 	if c.Responses == nil {
-		c.Responses = patch.Responses
+		c.Responses = patch.Responses.clone()
 	} else {
 		c.Responses.patch(patch.Responses)
 	}
 	if c.RequestBodies == nil {
-		c.RequestBodies = patch.RequestBodies
+		c.RequestBodies = patch.RequestBodies.clone()
 	} else {
 		c.RequestBodies.patch(patch.RequestBodies)
 	}
 	if c.Parameters == nil {
-		c.Parameters = patch.Parameters
+		c.Parameters = patch.Parameters.clone()
 	} else {
 		c.Parameters.patch(patch.Parameters)
 	}
 	if c.Examples == nil {
-		c.Examples = patch.Examples
+		c.Examples = patch.Examples.clone()
 	} else {
 		c.Examples.patch(patch.Examples)
 	}
 	if c.Headers == nil {
-		c.Headers = patch.Headers
+		c.Headers = patch.Headers.clone()
 	} else {
 		c.Headers.patch(patch.Headers)
 	}
+	if c.PathItems == nil {
+		c.PathItems = patch.PathItems.clone()
+	} else {
+		c.PathItems.patch(patch.PathItems)
+	}
 	if c.SecuritySchemes == nil {
-		c.SecuritySchemes = patch.SecuritySchemes
+		c.SecuritySchemes = patch.SecuritySchemes.clone()
 	} else {
 		c.SecuritySchemes.patch(patch.SecuritySchemes)
 	}
@@ -77,12 +82,16 @@ func (p ComponentParameters) Parse(config *dynamic.Config, reader dynamic.Reader
 	return nil
 }
 
+func (p ComponentParameters) clone() ComponentParameters {
+	return cloneMap(p, (*ParameterRef).clone)
+}
+
 func (p ComponentParameters) patch(patch ComponentParameters) {
 	for name, param := range patch {
 		if p1, ok := p[name]; ok {
 			p1.Patch(param)
 		} else {
-			p[name] = param
+			p[name] = param.clone()
 		}
 	}
 }

@@ -10,9 +10,11 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/schema/json/generator"
 	"mokapi/try"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -200,4 +202,115 @@ func (suite *KafkaSuite) TestKafka3_Consume() {
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), r)
 	require.Len(suite.T(), r.Topics[0].Partitions[0].RecordSet.Records, 1)
+}
+
+// KafkaMessageIdSuite verifies that a script selects the AsyncAPI message of a channel by messageId.
+type KafkaMessageIdSuite struct{ BaseSuite }
+
+func (suite *KafkaMessageIdSuite) SetupSuite() {
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./kafka-messageid"}}
+	suite.initCmd(cfg)
+	waitForScript(suite.T(), "http://localhost:18094")
+}
+
+func (suite *KafkaMessageIdSuite) partition() *store.Partition {
+	return suite.cmd.App.Kafka.Get("Order Service").Store.Topic("orders").Partition(0)
+}
+
+func (suite *KafkaMessageIdSuite) post(body string, conditions ...try.ResponseCondition) {
+	try.Request(suite.T(), http.MethodPost, "http://localhost:18094/sim/kafka",
+		map[string]string{"Content-Type": "application/json"}, strings.NewReader(body), conditions...)
+}
+
+// simulate asks the fixture script to produce messages and returns the records written by it.
+func (suite *KafkaMessageIdSuite) simulate(body string, conditions ...try.ResponseCondition) []*kafka.Record {
+	start := suite.partition().Offset()
+	suite.post(body, conditions...)
+
+	c := kafkatest.NewClient("localhost:19094", "test")
+	defer c.Close()
+	r, err := c.Fetch(12, &fetch.Request{
+		MaxBytes:  100000,
+		MinBytes:  1,
+		MaxWaitMs: 5000,
+		Topics: []fetch.Topic{{
+			Name:       "orders",
+			Partitions: []fetch.RequestPartition{{Index: 0, FetchOffset: start, MaxBytes: 100000}},
+		}},
+	})
+	require.NoError(suite.T(), err)
+	return r.Topics[0].Partitions[0].RecordSet.Records
+}
+
+// TestGeneratesPayloadAndKeyFromSelectedMessage verifies that messageId alone produces a record
+// whose value and key are generated from the selected message.
+func (suite *KafkaMessageIdSuite) TestGeneratesPayloadAndKeyFromSelectedMessage() {
+	records := suite.simulate(`{"messages":[{"messageId":"orderDeleted"}]}`, try.HasStatusCode(http.StatusNoContent))
+
+	require.Len(suite.T(), records, 1)
+	require.Regexp(suite.T(), `^deleted-[0-9]{3}$`, kafka.BytesToString(records[0].Key))
+	var value map[string]any
+	require.NoError(suite.T(), json.Unmarshal(kafka.Read(records[0].Value), &value))
+	require.Equal(suite.T(), "deleted", value["event"])
+	require.Contains(suite.T(), value, "reason")
+}
+
+// TestMixedMessagesInOneCall verifies that every message of one produce call is generated
+// from its own messageId.
+func (suite *KafkaMessageIdSuite) TestMixedMessagesInOneCall() {
+	records := suite.simulate(`{"messages":[{"messageId":"orderCreated"},{"messageId":"orderDeleted"}]}`,
+		try.HasStatusCode(http.StatusNoContent))
+
+	require.Len(suite.T(), records, 2)
+	require.Regexp(suite.T(), `^created-[0-9]{3}$`, kafka.BytesToString(records[0].Key))
+	require.Contains(suite.T(), kafka.BytesToString(records[0].Value), `"event":"created"`)
+	require.Regexp(suite.T(), `^deleted-[0-9]{3}$`, kafka.BytesToString(records[1].Key))
+	require.Contains(suite.T(), kafka.BytesToString(records[1].Value), `"event":"deleted"`)
+}
+
+// TestTombstoneWithMessageId verifies that value null still produces a record without value
+// when a messageId is given.
+func (suite *KafkaMessageIdSuite) TestTombstoneWithMessageId() {
+	records := suite.simulate(`{"messages":[{"messageId":"orderDeleted","key":"order-1","value":null}]}`,
+		try.HasStatusCode(http.StatusNoContent))
+
+	require.Len(suite.T(), records, 1)
+	require.Equal(suite.T(), "order-1", kafka.BytesToString(records[0].Key))
+	require.Nil(suite.T(), records[0].Value)
+}
+
+// TestTombstoneWithoutMessageId verifies that value null still produces a record without value
+// when no messageId is given.
+func (suite *KafkaMessageIdSuite) TestTombstoneWithoutMessageId() {
+	records := suite.simulate(`{"messages":[{"key":"order-1","value":null}]}`, try.HasStatusCode(http.StatusNoContent))
+
+	require.Len(suite.T(), records, 1)
+	require.Equal(suite.T(), "order-1", kafka.BytesToString(records[0].Key))
+	require.Nil(suite.T(), records[0].Value)
+}
+
+// TestInvalidDataForSelectedMessageFails verifies that data is validated against the selected
+// message only, even if another message of the topic would accept it.
+func (suite *KafkaMessageIdSuite) TestInvalidDataForSelectedMessageFails() {
+	start := suite.partition().Offset()
+
+	suite.post(`{"messages":[{"messageId":"orderDeleted","data":{"event":"created","orderId":1}}]}`,
+		try.HasStatusCode(http.StatusUnprocessableEntity),
+		try.BodyContains("failed to produce message to Kafka topic 'orders'"))
+
+	require.Equal(suite.T(), start, suite.partition().Offset())
+}
+
+// TestUnknownMessageIdFails verifies that a typo in messageId is reported to the script
+// instead of falling back to a random message.
+func (suite *KafkaMessageIdSuite) TestUnknownMessageIdFails() {
+	start := suite.partition().Offset()
+
+	suite.post(`{"messages":[{"messageId":"orderCreatd"}]}`,
+		try.HasStatusCode(http.StatusUnprocessableEntity),
+		try.BodyContains("message 'orderCreatd' not found in channel 'orders'"))
+
+	require.Equal(suite.T(), start, suite.partition().Offset())
 }

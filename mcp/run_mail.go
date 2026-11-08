@@ -70,7 +70,7 @@ func (m *mokapi) getMailApi(name string) any {
 }
 
 func (m *MailAPI) GetMailboxes() []MailboxSummary {
-	var result []MailboxSummary
+	result := []MailboxSummary{}
 	for _, mb := range m.info.Store.Mailboxes {
 		result = append(result, MailboxSummary{
 			Name:        mb.Name,

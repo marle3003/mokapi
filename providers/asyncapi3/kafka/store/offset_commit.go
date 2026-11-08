@@ -19,10 +19,10 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 	ctx := kafka.ClientFromContext(req.Context)
 
 	for _, rt := range r.Topics {
-		log.Infof("kafa OffsetCommit: topic %v, client=%v", rt.Name, ctx.ClientId)
+		log.Infof("kafa OffsetCommit: topic %v, client=%v", rt.Name, ctx.ClientId())
 		topic := s.Topic(rt.Name)
 		if topic == nil {
-			log.Errorf("kafka OffsetCommit: unknown topic %v, client=%v", rt.Name, ctx.ClientId)
+			log.Errorf("kafka OffsetCommit: unknown topic %v, client=%v", rt.Name, ctx.ClientId())
 		}
 
 		resTopic := offsetCommit.ResponseTopic{
@@ -39,24 +39,24 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
-					log.Errorf("kafka OffsetCommit: unknown partition %v, topic=%v, client=%v", rp.Index, topic, ctx.ClientId)
+					log.Errorf("kafka OffsetCommit: unknown partition %v, topic=%v, client=%v", rp.Index, topic, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
-				} else if _, ok := ctx.Member[r.GroupId]; !ok {
-					log.Errorf("kafka OffsetCommit: unknown member topic=%v, client=%v", topic.Name, ctx.ClientId)
+				} else if !ctx.HasGroup(r.GroupId) {
+					log.Errorf("kafka OffsetCommit: unknown member topic=%v, client=%v", topic.Name, ctx.ClientId())
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {
 					// todo check partition is assigned to member
 					if rp.Offset > p.Offset() {
-						log.Errorf("kafka OffsetCommit: offset out of range, offset=%v, topic=%v, client=%v", rp.Offset, topic, ctx.ClientId)
+						log.Errorf("kafka OffsetCommit: offset out of range, offset=%v, topic=%v, client=%v", rp.Offset, topic, ctx.ClientId())
 						resPartition.ErrorCode = kafka.OffsetOutOfRange
 					} else {
 						g, ok := s.Group(r.GroupId)
 						if !ok {
-							log.Errorf("kafka OffsetCommit: unknown group name %v, topic=%v, client=%v", r.GroupId, topic, ctx.ClientId)
+							log.Errorf("kafka OffsetCommit: unknown group name %v, topic=%v, client=%v", r.GroupId, topic, ctx.ClientId())
 							resPartition.ErrorCode = kafka.GroupIdNotFound
 						} else {
-							if err, code := validateConsumer(topic, ctx.ClientId, g.Name); err != nil {
-								log.Errorf("kafka OffsetCommit: invalid consumer '%v' for topic %v: %v", ctx.ClientId, rt.Name, err)
+							if err, code := validateConsumer(topic, ctx.ClientId(), g.Name); err != nil {
+								log.Errorf("kafka OffsetCommit: invalid consumer '%v' for topic %v: %v", ctx.ClientId(), rt.Name, err)
 								resPartition.ErrorCode = code
 							} else {
 								g.Commit(topic.Name, p.Index, rp.Offset)
@@ -81,7 +81,9 @@ func (s *Store) processMetricsOffsetCommit(ctx context.Context, g *Group, topic 
 		return
 	}
 
-	lag := float64(partition.Offset() - g.Commits[topic][partition.Index])
-	m.Lags.WithLabel(s.config.Info.Name, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
-	m.Commits.WithLabel(s.config.Info.Name, g.Name, topic, strconv.Itoa(partition.Index)).Set(float64(g.Commits[topic][partition.Index]))
+	committed := g.Offset(topic, partition.Index)
+	lag := float64(partition.Offset() - committed)
+	clusterName := s.cfg().Info.Name
+	m.Lags.WithLabel(clusterName, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
+	m.Commits.WithLabel(clusterName, g.Name, topic, strconv.Itoa(partition.Index)).Set(float64(committed))
 }

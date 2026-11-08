@@ -28,12 +28,12 @@ func TestHttp(t *testing.T) {
 	testcases := []struct {
 		name   string
 		client func(options common.HttpClientOptions) common.HttpClient
-		test   func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
+		test   func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host)
 	}{
 		{
 			name: "empty url",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('')
 				`)
@@ -49,8 +49,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar')
 				`)
@@ -69,8 +69,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar')
 				`)
@@ -86,13 +86,13 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				v, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				v, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').statusCode
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(http.StatusOK), v.Export())
+				r.Equal(t, int64(http.StatusOK), v)
 			},
 		},
 		{
@@ -104,13 +104,13 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				v, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				v, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').statusCode
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(http.StatusOK), v.Export())
+				r.Equal(t, int64(http.StatusOK), v)
 			},
 		},
 		{
@@ -122,13 +122,13 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				v, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				v, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').headers.foo
 				`)
 				r.NoError(t, err)
-				r.Equal(t, []string{"bar"}, v.Export())
+				r.Equal(t, []string{"bar"}, v)
 			},
 		},
 		{
@@ -140,13 +140,13 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				v, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				v, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').body
 				`)
 				r.NoError(t, err)
-				r.Equal(t, "foobar", v.Export())
+				r.Equal(t, "foobar", v)
 			},
 		},
 		{
@@ -158,13 +158,13 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				v, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				v, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').json()
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{"foo": "bar"}, v.Export())
+				r.Equal(t, map[string]interface{}{"foo": "bar"}, v)
 			},
 		},
 		{
@@ -176,8 +176,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar').json()
 				`)
@@ -202,8 +202,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.post('https://foo.bar', { 'foo': 'bar' }, {
 						headers: { 'Content-Type': 'application/json' }
@@ -224,8 +224,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.post('https://foo.bar', { 'foo': 'bar' }, {
 						headers: { 'Content-Type': 'foo/bar' }
@@ -246,8 +246,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.put('https://foo.bar')
 				`)
@@ -266,8 +266,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.head('https://foo.bar')
 				`)
@@ -286,8 +286,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.patch('https://foo.bar')
 				`)
@@ -306,8 +306,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.delete('https://foo.bar')
 				`)
@@ -326,8 +326,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.options('https://foo.bar')
 				`)
@@ -344,8 +344,8 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					m.get('https://foo.bar', { timeout: '500ms' })
 				`)
@@ -364,21 +364,18 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar')
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				res, ok := v.Export().(mod.Response)
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
 				if !ok {
-					r.FailNow(t, v.String())
+					r.FailNow(t, fmt.Sprint(v))
 				}
 				r.Equal(t, http.StatusOK, res.StatusCode)
 			},
@@ -395,21 +392,18 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar', { method: 'post' })
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				res, ok := v.Export().(mod.Response)
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
 				if !ok {
-					r.FailNow(t, v.String())
+					r.FailNow(t, fmt.Sprint(v))
 				}
 				r.Equal(t, http.StatusOK, res.StatusCode)
 			},
@@ -432,21 +426,52 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar', { method: 'PUT', body: { foo: 'bar' } })
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				res, ok := v.Export().(mod.Response)
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
 				if !ok {
-					r.FailNow(t, v.String())
+					r.FailNow(t, fmt.Sprint(v))
+				}
+				r.Equal(t, http.StatusOK, res.StatusCode)
+			},
+		},
+		{
+			name: "fetch sends body as it was at call time",
+			client: func(options common.HttpClientOptions) common.HttpClient {
+				return &enginetest.HttpClient{
+					DoFunc: func(request *http.Request) (*http.Response, error) {
+						b, err := io.ReadAll(request.Body)
+						if err != nil {
+							return nil, fmt.Errorf("cannot read body: %w", err)
+						} else if string(b) != `{"foo":"bar"}` {
+							return nil, fmt.Errorf("expected body to be '{\"foo\":\"bar\"}', but is %s", b)
+						}
+						return &http.Response{StatusCode: http.StatusOK}, nil
+					},
+				}
+			},
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
+					const m = require('mokapi/http')
+					const body = { foo: 'bar' }
+					const p = m.fetch('https://foo.bar', { method: 'PUT', body: body })
+					body.foo = 'changed'
+					let result;
+					p.then(v => result = v).catch(err => result = err)
+				`)
+				r.NoError(t, err)
+
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
+				if !ok {
+					r.FailNow(t, fmt.Sprint(v))
 				}
 				r.Equal(t, http.StatusOK, res.StatusCode)
 			},
@@ -469,21 +494,18 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar', { method: 'delete', headers: { foo: 'bar', bar: [ 'f', 'o', 'o' ] } })
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				res, ok := v.Export().(mod.Response)
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
 				if !ok {
-					r.FailNow(t, v.String())
+					r.FailNow(t, fmt.Sprint(v))
 				}
 				r.Equal(t, http.StatusOK, res.StatusCode)
 			},
@@ -497,53 +519,36 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar', { method: 'delete', headers: { foo: 'bar', bar: [ 'f', 'o', 'o' ] } })
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				r.Equal(t, "TEST ERROR", v.Export())
+				v := awaitResult(t, loop)
+				r.Equal(t, "TEST ERROR", v)
 			},
 		},
 		{
 			name: "fetch method not string",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
-					const p = m.fetch('https://foo.bar', { method: 12 })
-					let result;
-					p.then(v => result = v).catch(err => result = err)
+					m.fetch('https://foo.bar', { method: 12 })
 				`)
-				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				r.Equal(t, "unexpected type for 'method': got Integer, expected String", v.Export())
+				r.EqualError(t, err, "unexpected type for 'method': got Integer, expected String at mokapi/js/http.(*Module).Fetch-fm (native)")
 			},
 		},
 		{
 			name: "fetch maxRedirects not number",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
-					const p = m.fetch('https://foo.bar', { maxRedirects: 'foo' })
-					let result;
-					p.then(v => result = v).catch(err => result = err)
+					m.fetch('https://foo.bar', { maxRedirects: 'foo' })
 				`)
-				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				r.Equal(t, "unexpected type for 'maxRedirects': got String, expected Number", v.Export())
+				r.EqualError(t, err, "unexpected type for 'maxRedirects': got String, expected Number at mokapi/js/http.(*Module).Fetch-fm (native)")
 			},
 		},
 		{
@@ -558,40 +563,30 @@ func TestHttp(t *testing.T) {
 					},
 				}
 			},
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
 					const p = m.fetch('https://foo.bar', { insecure: true })
 					let result;
 					p.then(v => result = v).catch(err => result = err)
 				`)
 				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				res, ok := v.Export().(mod.Response)
+				v := awaitResult(t, loop)
+				res, ok := v.(mod.Response)
 				if !ok {
-					r.FailNow(t, v.String())
+					r.FailNow(t, fmt.Sprint(v))
 				}
 				r.Equal(t, http.StatusOK, res.StatusCode)
 			},
 		},
 		{
 			name: "fetch insecure not boolean",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi/http')
-					const p = m.fetch('https://foo.bar', { insecure: 'foo' })
-					let result;
-					p.then(v => result = v).catch(err => result = err)
+					m.fetch('https://foo.bar', { insecure: 'foo' })
 				`)
-				r.NoError(t, err)
-				time.Sleep(200 * time.Millisecond)
-
-				v, err := vm.RunString("result")
-				r.NoError(t, err)
-				r.Equal(t, "unexpected type for 'insecure': got String, expected Boolean", v.Export())
+				r.EqualError(t, err, "unexpected type for 'insecure': got String, expected Boolean at mokapi/js/http.(*Module).Fetch-fm (native)")
 			},
 		},
 	}
@@ -602,13 +597,16 @@ func TestHttp(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{HttpClientFunc: tc.client}
-			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
+			loop := eventloop.New(vm, host)
+			loop.StartLoop()
+			defer loop.Stop()
+			js.EnableInternal(vm, host, loop, &dynamic.Config{})
 			req, err := require.NewRegistry(nil)
 			r.NoError(t, err)
 			req.Enable(vm)
 			req.RegisterNativeModule("mokapi/http", mod.Require)
 
-			tc.test(t, vm, host)
+			tc.test(t, loop, host)
 		})
 	}
 }

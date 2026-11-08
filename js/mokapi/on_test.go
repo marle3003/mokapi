@@ -19,16 +19,16 @@ import (
 func TestModule_On(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
+		test func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host)
 	}{
 		{
 			name: "register event handler",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let result = 0;
 					m.on('http', () => result++)
@@ -37,19 +37,19 @@ func TestModule_On(t *testing.T) {
 				b, err := handler(&common.EventContext{})
 				r.NoError(t, err)
 				r.Equal(t, false, b)
-				v, _ := vm.RunString("result")
-				r.Equal(t, int64(1), v.Export())
+				v, _ := evalOnLoop(loop, "result")
+				r.Equal(t, int64(1), v)
 			},
 		},
 		{
 			name: "event handler with parameter",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let result = false
 					m.on('http', (param) => result = param === 'foo')
@@ -58,19 +58,19 @@ func TestModule_On(t *testing.T) {
 				b, err := handler(&common.EventContext{Args: []any{"foo"}})
 				r.NoError(t, err)
 				r.Equal(t, true, b)
-				v, _ := vm.RunString("result")
-				r.Equal(t, true, v.Export())
+				v, _ := evalOnLoop(loop, "result")
+				r.Equal(t, true, v)
 			},
 		},
 		{
 			name: "event handler changes params",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', (param) => { param['foo'] = false })
 				`)
@@ -82,13 +82,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler does not change params",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', (param) => { })
 				`)
@@ -100,13 +100,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler does not change params but uses track argument",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', (param) => { }, { track: true })
 				`)
@@ -118,13 +118,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler changes params but disables track",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', (param) => { param['foo'] = false }, { track: false })
 				`)
@@ -136,13 +136,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "dynamic track",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let nextTrack = true
 					m.on('http', (param) => { param['foo'] = false },
@@ -170,13 +170,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "dynamic track using parameters",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let nextTrack = true
 					m.on('http', (param) => { param['foo'] = !param['foo'] },
@@ -201,14 +201,43 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
-			name: "dynamic track returning wrong type",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			// the track function is a goja function and must run on the loop,
+			// even while other jobs run there; meant to run with `go test -race`
+			name: "dynamic track while loop is busy",
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
+					const m = require('mokapi')
+					let ticks = 0
+					const id = setInterval(() => { ticks++ }, 1)
+					m.on('http', () => { ticks++ },
+						{ track: () => { ticks++; return ticks > 0 } }
+					)
+				`)
+				r.NoError(t, err)
+
+				for i := 0; i < 100; i++ {
+					b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
+					r.NoError(t, err)
+					r.True(t, b)
+				}
+				_, err = evalOnLoop(loop, `clearInterval(id)`)
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "dynamic track returning wrong type",
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				var handler common.EventHandlerFunc
+				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
+					handler = do
+				}
+
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let nextTrack = true
 					m.on('http', (param) => { param['foo'] = !param['foo'] },
@@ -229,13 +258,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler throws error",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => { throw new Error('TEST') })
 				`)
@@ -246,13 +275,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler with tags",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var tags map[string]string
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					tags = args.Tags
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => true, { tags: { foo: 'bar', bar: null } })
 				`)
@@ -262,8 +291,8 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler with tags but invalid type",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => true, { tags: 'foo' })
 				`)
@@ -272,8 +301,8 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler invalid type for args",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => true, 'foo')
 				`)
@@ -282,13 +311,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler with priority",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				priority := 0
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					priority = args.Priority
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => true, { priority: 100 })
 				`)
@@ -298,8 +327,8 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "event handler invalid type for priority",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', () => true, { priority: 'foo' })
 				`)
@@ -308,13 +337,13 @@ func TestModule_On(t *testing.T) {
 		},
 		{
 			name: "async event handler",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler common.EventHandlerFunc
 				host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.on('http', async (p) => {
 						p.msg = await getMessage();
@@ -358,7 +387,7 @@ func TestModule_On(t *testing.T) {
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 			reg.Enable(vm)
 
-			tc.test(t, vm, host)
+			tc.test(t, loop, host)
 		})
 	}
 }
@@ -712,7 +741,7 @@ m.on('http', (req, res) => {
 			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
 				runEvent = do
 			}
-			_, err = vm.RunString(tc.script)
+			_, err = evalOnLoop(loop, tc.script)
 			r.NoError(t, err)
 
 			var actions []*common.Action

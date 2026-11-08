@@ -1,11 +1,9 @@
 package mqtt
 
 import (
-	"fmt"
-	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
-	"time"
+	"mokapi/js/util"
 
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
@@ -32,58 +30,50 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Module) Publish(v goja.Value) interface{} {
-	defer func() {
-		r := recover()
-		if r != nil {
-			panic(m.rt.ToValue(fmt.Sprintf("%v", r)))
-		}
-	}()
+	defer util.ThrowPanic(m.rt)
 
-	args, err := m.mapParams(v)
+	args := m.preparePublish(v)
+	result, err := m.execute(args)
 	if err != nil {
-		panic(m.rt.ToValue(err.Error()))
-	}
-	client := m.host.MqttClient()
-
-	result, err := client.Publish(args)
-	if err != nil {
-		log.Errorf("js error: %v in %v", err, m.host.Name())
 		panic(m.rt.ToValue(err.Error()))
 	}
 	return result
 }
 
 func (m *Module) PublishAsync(v goja.Value) interface{} {
-	p, resolve, reject := m.rt.NewPromise()
-	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				m.loop.Run(func(vm *goja.Runtime) {
-					_ = reject(r)
-				})
-			}
-		}()
+	args := m.preparePublish(v)
+	return util.RunAsync(m.rt, m.loop, func() (*common.MqttPublishResult, error) {
+		return m.execute(args)
+	}, nil)
+}
 
-		result := m.Publish(v)
-		m.loop.Run(func(vm *goja.Runtime) {
-			_ = resolve(result)
-		})
-	}()
-	return p
+// preparePublish converts the JavaScript arguments to plain Go values. It has to run on the
+// event loop because it reads from the goja runtime. Invalid input throws.
+func (m *Module) preparePublish(v goja.Value) *common.MqttPublishArgs {
+	defer util.ThrowPanic(m.rt)
+
+	args, err := m.mapParams(v)
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+	return args
+}
+
+// execute only calls the MQTT client and must not touch the goja runtime.
+func (m *Module) execute(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
+	result, err := m.host.MqttClient().Publish(args)
+	if err != nil {
+		log.Errorf("js error: %v in %v", err, m.host.Name())
+		return nil, err
+	}
+	return result, nil
 }
 
 func (m *Module) mapParams(args goja.Value) (*common.MqttPublishArgs, error) {
-	file := getFile(m.rt)
 	pa := &common.MqttPublishArgs{
 		ClientId:   "mokapi-script",
-		ScriptFile: file.Info.Key(),
-		Retry: common.RetryArgs{
-			MaxRetryTime:     3 * time.Minute,
-			InitialRetryTime: 500 * time.Millisecond,
-			Retries:          10,
-			Factor:           2,
-		},
+		ScriptFile: util.GetScriptFile(m.rt).Info.Key(),
+		Retry:      util.DefaultRetryArgs(),
 	}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -102,58 +92,35 @@ func (m *Module) mapParams(args goja.Value) (*common.MqttPublishArgs, error) {
 					continue
 				}
 				pa.Topic = topic.String()
+			case "messageId":
+				var err error
+				pa.MessageId, err = util.MessageId(params.Get(k).Export())
+				if err != nil {
+					return nil, err
+				}
 			case "retain":
 				v := params.Get(k)
 				pa.Retain = v.ToBoolean()
 			case "value":
 				value := params.Get(k)
-				if goja.IsUndefined(value) || goja.IsNull(value) {
+				if goja.IsUndefined(value) {
+					continue
+				}
+				if goja.IsNull(value) {
+					// an empty payload, not nil: nil asks for a generated payload
+					pa.Value = []byte{}
 					continue
 				}
 				pa.Value = []byte(value.String())
 			case "retry":
 				retry := params.Get(k).Export().(map[string]interface{})
-				if i, ok := retry["maxRetryTime"]; ok {
-					switch v := i.(type) {
-					case int64:
-						pa.Retry.MaxRetryTime = time.Duration(v) * time.Millisecond
-					case string:
-						d, err := time.ParseDuration(v)
-						if err != nil {
-							return nil, fmt.Errorf("parse maxRetryTime failed: %w", err)
-						}
-						pa.Retry.MaxRetryTime = d
-					default:
-						return nil, fmt.Errorf("type %T for maxRetryTime not supported", v)
-					}
-
-				}
-				if i, ok := retry["initialRetryTime"]; ok {
-					switch v := i.(type) {
-					case int64:
-						pa.Retry.InitialRetryTime = time.Duration(v) * time.Millisecond
-					case string:
-						d, err := time.ParseDuration(v)
-						if err != nil {
-							return nil, fmt.Errorf("parse initialRetryTime failed: %w", err)
-						}
-						pa.Retry.InitialRetryTime = d
-					default:
-						return nil, fmt.Errorf("type %T for initialRetryTime not supported", v)
-					}
-				}
-				if v, ok := retry["retries"]; ok {
-					pa.Retry.Retries = int(v.(int64))
-				}
-				if v, ok := retry["factor"]; ok {
-					pa.Retry.Factor = int(v.(int64))
+				var err error
+				pa.Retry, err = util.ConvertToRetryArgs(retry)
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
 	}
 	return pa, nil
-}
-
-func getFile(vm *goja.Runtime) *dynamic.Config {
-	return vm.Get("mokapi/internal").(*goja.Object).Get("file").Export().(*dynamic.Config)
 }

@@ -413,3 +413,124 @@ func TestWebsocketClient(t *testing.T) {
 		})
 	}
 }
+
+func TestWebsocketClient_Send_MessageId(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// channel "/dm" with the messages directMessage and ack, channel "/ping" with a message without payload
+	newConfig := func() *asyncapi3.Config {
+		direct := asyncapi3test.NewMessage(
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("kind", schematest.New("string", schematest.WithEnumValues("direct"))),
+				schematest.WithRequired("kind"),
+			)),
+		)
+		ack := asyncapi3test.NewMessage(
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("kind", schematest.New("string", schematest.WithEnumValues("ack"))),
+				schematest.WithRequired("kind"),
+			)),
+		)
+
+		dm := asyncapi3test.NewChannel(
+			asyncapi3test.UseMessage("directMessage", &asyncapi3.MessageRef{Value: direct}),
+			asyncapi3test.UseMessage("ack", &asyncapi3.MessageRef{Value: ack}),
+		)
+		ping := asyncapi3test.NewChannel(
+			asyncapi3test.UseMessage("ping", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+		)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("/dm", dm),
+			asyncapi3test.AddChannel("/ping", ping),
+		)
+	}
+
+	testcases := []struct {
+		name    string
+		channel string
+		args    common.WebsocketSendArgs
+		// received is empty if the call failed
+		test func(t *testing.T, received string, err error)
+	}{
+		{
+			name: "message is generated from the selected message",
+			args: common.WebsocketSendArgs{MessageId: "ack"},
+			test: func(t *testing.T, received string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kind":"ack"}`, received)
+			},
+		},
+		{
+			name: "valid message for the selected message is sent as given",
+			args: common.WebsocketSendArgs{MessageId: "ack", Message: map[string]any{"kind": "ack", "extra": 1}},
+			test: func(t *testing.T, received string, err error) {
+				require.NoError(t, err)
+				require.JSONEq(t, `{"kind":"ack","extra":1}`, received)
+			},
+		},
+		{
+			name: "message is validated against the selected message",
+			// valid for ack, but directMessage is selected
+			args: common.WebsocketSendArgs{MessageId: "directMessage", Message: map[string]any{"kind": "ack"}},
+			test: func(t *testing.T, received string, err error) {
+				require.Error(t, err)
+				require.Empty(t, received)
+			},
+		},
+		{
+			name: "unknown messageId is an error without fallback",
+			args: common.WebsocketSendArgs{MessageId: "akc"},
+			test: func(t *testing.T, received string, err error) {
+				require.EqualError(t, err, "message 'akc' not found in channel '/dm'")
+				require.Empty(t, received)
+			},
+		},
+		{
+			name:    "selected message without payload sends no payload",
+			channel: "/ping",
+			args:    common.WebsocketSendArgs{MessageId: "ping"},
+			test: func(t *testing.T, received string, err error) {
+				require.NoError(t, err)
+				// the message is null; the channel validates against payload schemas only
+				// and writes an empty frame if it has none
+				require.Empty(t, received)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			generator.Seed(11)
+
+			app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+			e := enginetest.NewEngine(engine.WithWebsocketClient(engine.NewWebsocketClient(app)))
+			s, err := app.Websocket.Add(getConfig(newConfig()), e)
+			require.NoError(t, err)
+			serv := httptest.NewServer(s)
+			defer serv.Close()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			channel := tc.channel
+			if channel == "" {
+				channel = "/dm"
+			}
+			c, _, err := ws.Dial(ctx, serv.URL+channel, &ws.DialOptions{})
+			require.NoError(t, err)
+			defer func() { _ = c.CloseNow() }()
+
+			args := tc.args
+			args.ChannelName = channel
+			_, err = engine.NewWebsocketClient(app).Send(args)
+
+			received := ""
+			if err == nil {
+				_, b, readErr := c.Read(ctx)
+				require.NoError(t, readErr)
+				received = string(b)
+			}
+			tc.test(t, received, err)
+		})
+	}
+}

@@ -25,3 +25,9 @@ app.mqtt().publish("topic", {}, { retry: { factor: 10 } });
 // @ts-expect-error
 app.mqtt().publish("topic", {}, { retry: { factor: "" } });
 app.mqtt().publishAsync("topic", {}).then(k => k.publish("topic", {}));
+
+app.mqtt().publish("topic", { messageId: "alarm" });
+app.mqtt().publish("topic", { messageId: "alarm", data: { level: "critical" }, retain: true });
+app.mqtt().topic("topic").publish({ messageId: "alarm" });
+// @ts-expect-error
+app.mqtt().publish("topic", { messageId: 1 });

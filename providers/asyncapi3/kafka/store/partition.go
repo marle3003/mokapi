@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -25,12 +26,16 @@ type Partition struct {
 	// only for log cleaner
 	leader *Broker
 
-	validator *validator
+	// atomic: Update replaces it without the partition lock, because a script handler
+	// running inside write holds that lock and may need the store lock Update holds.
+	validator atomic.Pointer[validator]
 	logger    LogRecord
 	trigger   Trigger
 
 	producers map[int64]*PartitionProducerState
 
+	// guards the fields above; lock order: Store.m, Topic.m, Partition.m.
+	// Methods ending in Locked expect the caller to hold it.
 	m sync.RWMutex
 }
 
@@ -70,9 +75,10 @@ type PartitionProducerState struct {
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]*Broker, 0, len(brokers))
+	ch := topic.Config()
 	for _, b := range brokers {
-		if topic.Config != nil && len(topic.Config.Servers) > 0 {
-			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
+		if ch != nil && len(ch.Servers) > 0 {
+			if slices.ContainsFunc(ch.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
 				brokerList = append(brokerList, b)
@@ -101,8 +107,11 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	if p == nil {
 		return kafka.RecordBatch{}, kafka.UnknownTopicOrPartition
 	}
+	p.m.RLock()
+	defer p.m.RUnlock()
+
 	batch := kafka.NewRecordBatch()
-	if offset < p.StartOffset() {
+	if offset < p.Head {
 		return batch, kafka.OffsetOutOfRange
 	}
 
@@ -113,7 +122,7 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 		if offset >= p.Tail || size > maxBytes {
 			return batch, kafka.None
 		}
-		seg := p.GetSegment(offset)
+		seg := p.getSegmentLocked(offset)
 		if seg == nil {
 			return batch, kafka.None
 		}
@@ -170,7 +179,9 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		// validate producer idempotence
 		if r.ProducerId > 0 {
 			if producer == nil {
-				producer = p.Topic.s.producers[r.ProducerId]
+				if ps, ok := p.Topic.s.producer(r.ProducerId); ok {
+					producer = &ps
+				}
 			}
 			state, ok := p.producers[r.ProducerId]
 			if ok {
@@ -202,7 +213,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 			sequenceNumber++
 		}
 
-		kLog, err := p.validator.Validate(r)
+		kLog, err := p.validator.Load().Validate(r)
 		if err != nil && !opts.SkipValidation {
 			result.fail(i, kafka.InvalidRecord, err.Error())
 			return result, nil
@@ -210,7 +221,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		actions := p.trigger(p.Topic.Name, p.Index, r, kLog.SchemaId)
 		if len(actions) > 0 && !opts.SkipValidation {
 			// validate again
-			kLog, err = p.validator.Validate(r)
+			kLog, err = p.validator.Load().Validate(r)
 			if err != nil {
 				result.fail(i, kafka.InvalidRecord, err.Error())
 				return result, nil
@@ -238,7 +249,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 
 			segment, ok := p.Segments[p.ActiveSegment]
 			if !ok {
-				segment = p.addSegment()
+				segment = p.addSegmentLocked()
 			}
 
 			segment.Log = append(segment.Log, &record{Data: r, Log: kLog})
@@ -253,7 +264,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		})
 	}
 
-	if len(result.Records) > 0 && p.Topic.Config.Bindings.Kafka.ValueSchemaValidation {
+	if len(result.Records) > 0 && p.Topic.Config().Bindings.Kafka.ValueSchemaValidation {
 		return result, nil
 	}
 
@@ -275,15 +286,22 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 }
 
 func (p *Partition) Offset() int64 {
+	p.m.RLock()
+	defer p.m.RUnlock()
 	return p.Tail
 }
 
 func (p *Partition) StartOffset() int64 {
+	p.m.RLock()
+	defer p.m.RUnlock()
 	return p.Head
 }
 
 func (p *Partition) OffsetTimestamp(offset int64) int64 {
-	s := p.GetSegment(offset)
+	p.m.RLock()
+	defer p.m.RUnlock()
+
+	s := p.getSegmentLocked(offset)
 	if s == nil {
 		return -1
 	}
@@ -294,10 +312,19 @@ func (p *Partition) OffsetTimestamp(offset int64) int64 {
 	return r.Time.Unix()
 }
 
-func (p *Partition) GetSegment(offset int64) *Segment {
+// Record returns the record at the given offset or nil if no segment holds it.
+func (p *Partition) Record(offset int64) *kafka.Record {
 	p.m.RLock()
 	defer p.m.RUnlock()
 
+	s := p.getSegmentLocked(offset)
+	if s == nil {
+		return nil
+	}
+	return s.Record(offset)
+}
+
+func (p *Partition) getSegmentLocked(offset int64) *Segment {
 	for _, v := range p.Segments {
 		if v.Head <= offset && offset <= v.Tail {
 			return v
@@ -308,26 +335,26 @@ func (p *Partition) GetSegment(offset int64) *Segment {
 }
 
 func (p *Partition) delete() {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	for _, s := range p.Segments {
-		p.removeSegment(s)
+		p.removeSegmentLocked(s)
 	}
 }
 
 func (p *Partition) removeClosedSegments() {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	for _, s := range p.Segments {
 		if !s.Closed.IsZero() {
-			if p.Head < s.Tail {
-				p.Head = s.Tail
-			}
-			p.removeSegment(s)
+			p.removeSegmentLocked(s)
 		}
 	}
 }
 
-func (p *Partition) removeSegment(s *Segment) {
-	p.m.RLock()
-	defer p.m.RUnlock()
-
+func (p *Partition) removeSegmentLocked(s *Segment) {
 	if p.Head < s.Tail {
 		p.Head = s.Tail
 	}
@@ -336,17 +363,14 @@ func (p *Partition) removeSegment(s *Segment) {
 	delete(p.Segments, s.Head)
 }
 
-func (p *Partition) addSegment() *Segment {
-	p.m.RLock()
-	defer p.m.RUnlock()
-
+func (p *Partition) addSegmentLocked() *Segment {
 	now := time.Now()
 
 	if active, ok := p.Segments[p.ActiveSegment]; ok && active.Closed.IsZero() {
 		active.Closed = now
 	}
-	p.ActiveSegment = p.Offset()
-	s := newSegment(p.Offset())
+	p.ActiveSegment = p.Tail
+	s := newSegment(p.Tail)
 	p.Segments[p.ActiveSegment] = s
 	log.Infof("kafka: added new segment to partition %v, topic %v", p.Index, p.Topic.Name)
 

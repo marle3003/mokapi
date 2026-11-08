@@ -11,7 +11,7 @@ func newEventChannel(ch *Channel) *engine.WebsocketEventChannel {
 		Params: ch.params,
 		Conn:   ch,
 	}
-	for _, c := range ch.clients {
+	for _, c := range ch.connectedClients() {
 		ec.Clients = append(ec.Clients, newEventClient(c))
 	}
 	return ec

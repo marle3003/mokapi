@@ -2,14 +2,36 @@ package asyncapi3
 
 import "maps"
 
+// Patch applies patch to c. Everything c takes over from patch is copied, so c never shares
+// data with patch and patching does not change the config that was parsed from a file.
 func (c *Config) Patch(patch *Config) {
-	c.patchInfo(patch)
-	c.patchServer(patch)
-	c.patchChannels(patch)
-	c.patchComponents(patch)
+	cp := copies{}
+	c.patchHeader(patch)
+	c.patchInfo(patch, cp)
+	c.patchServer(patch, cp)
+	c.patchChannels(patch, cp)
+	c.patchOperations(patch, cp)
+	c.patchComponents(patch, cp)
 }
 
-func (c *Config) patchInfo(patch *Config) {
+// patchHeader keeps the values of the first config: every file has them,
+// DefaultContentType even by default.
+func (c *Config) patchHeader(patch *Config) {
+	if c.Version == "" {
+		c.Version = patch.Version
+	}
+	if c.Id == "" {
+		c.Id = patch.Id
+	}
+	if c.DefaultContentType == "" {
+		c.DefaultContentType = patch.DefaultContentType
+	}
+}
+
+func (c *Config) patchInfo(patch *Config, cp copies) {
+	if c.Info.Name == "" {
+		c.Info.Name = patch.Info.Name
+	}
 	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
@@ -17,7 +39,7 @@ func (c *Config) patchInfo(patch *Config) {
 		c.Info.Version = patch.Info.Version
 	}
 	if c.Info.Contact == nil {
-		c.Info.Contact = patch.Info.Contact
+		c.Info.Contact = clonePointer(patch.Info.Contact)
 	} else {
 		c.Info.Contact.patch(patch.Info.Contact)
 	}
@@ -25,13 +47,19 @@ func (c *Config) patchInfo(patch *Config) {
 		c.Info.TermsOfService = patch.Info.TermsOfService
 	}
 	if c.Info.License == nil {
-		c.Info.License = patch.Info.License
+		c.Info.License = clonePointer(patch.Info.License)
 	} else {
 		c.Info.License.patch(patch.Info.License)
+	}
+	if len(c.Info.ExternalDocs) == 0 {
+		c.Info.ExternalDocs = cloneExternalDocRefs(patch.Info.ExternalDocs, cp)
 	}
 }
 
 func (c *Contact) patch(patch *Contact) {
+	if patch == nil {
+		return
+	}
 	if len(patch.Name) > 0 {
 		c.Name = patch.Name
 	}
@@ -44,6 +72,9 @@ func (c *Contact) patch(patch *Contact) {
 }
 
 func (l *License) patch(patch *License) {
+	if patch == nil {
+		return
+	}
 	if len(patch.Name) > 0 {
 		l.Name = patch.Name
 	}
@@ -52,26 +83,26 @@ func (l *License) patch(patch *License) {
 	}
 }
 
-func (c *Config) patchServer(patch *Config) {
+func (c *Config) patchServer(patch *Config, cp copies) {
 	if c.Servers.Len() == 0 {
-		c.Servers = patch.Servers
+		c.Servers = cloneServers(patch.Servers, cp)
 	} else {
 		for it := patch.Servers.Iter(); it.Next(); {
-			if s, ok := c.Servers.Get(it.Key()); ok {
-				s.patch(it.Value())
+			if s, ok := c.Servers.Get(it.Key()); ok && s != nil {
+				s.patch(it.Value(), cp)
 			} else {
-				c.Servers.Set(it.Key(), it.Value())
+				c.Servers.Set(it.Key(), it.Value().clone(cp))
 			}
 		}
 	}
 }
 
-func (r *ServerRef) patch(patch *ServerRef) {
+func (r *ServerRef) patch(patch *ServerRef, cp copies) {
 	if patch == nil {
 		return
 	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone(cp)
 	} else {
 		r.Value.patch(patch.Value)
 	}
@@ -100,39 +131,32 @@ func (s *Server) patch(patch *Server) {
 	if s.Bindings != nil {
 		s.Bindings.patch(patch.Bindings)
 	} else {
-		s.Bindings = patch.Bindings
+		s.Bindings = patch.Bindings.clone()
 	}
 }
 
-func (c *Config) patchChannels(patch *Config) {
-	if patch.Channels == nil {
-		return
-	}
-	if c.Channels == nil {
-		c.Channels = map[string]*ChannelRef{}
-	}
-
-	for k, v := range patch.Channels {
-		if ch, ok := c.Channels[k]; ok {
-			ch.patch(v)
-		} else {
-			c.Channels[k] = v
+func (c *Config) patchChannels(patch *Config, cp copies) {
+	c.Channels = patchMap(c.Channels, patch.Channels, cp, (*ChannelRef).clone, (*ChannelRef).patch)
+	// the channels belong to c now, like after Parse
+	for _, ch := range c.Channels {
+		if ch != nil && ch.Value != nil {
+			ch.Value.Config = c
 		}
 	}
 }
 
-func (r *ChannelRef) patch(patch *ChannelRef) {
+func (r *ChannelRef) patch(patch *ChannelRef, cp copies) {
 	if patch == nil {
 		return
 	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone(cp)
 	} else {
-		r.Value.patch(patch.Value)
+		r.Value.patch(patch.Value, cp)
 	}
 }
 
-func (c *Channel) patch(patch *Channel) {
+func (c *Channel) patch(patch *Channel, cp copies) {
 	if patch == nil {
 		return
 	}
@@ -140,22 +164,27 @@ func (c *Channel) patch(patch *Channel) {
 		c.Description = patch.Description
 	}
 
-	if c.Messages == nil {
-		c.Messages = patch.Messages
-	} else {
-		for k, p := range patch.Messages {
-			if v, ok := c.Messages[k]; ok {
-				v.patch(p)
-			} else {
-				c.Messages[k] = p
-			}
-		}
-	}
+	c.Messages = patchMap(c.Messages, patch.Messages, cp, (*MessageRef).clone, (*MessageRef).patch)
 
 	if c.Bindings != nil {
 		c.Bindings.patch(patch.Bindings)
 	} else {
-		c.Bindings = patch.Bindings
+		c.Bindings = patch.Bindings.clone()
+	}
+}
+
+func (c *Config) patchOperations(patch *Config, cp copies) {
+	c.Operations = patchMap(c.Operations, patch.Operations, cp, (*OperationRef).clone, (*OperationRef).patch)
+}
+
+func (r *OperationRef) patch(patch *OperationRef, cp copies) {
+	if patch == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value.clone(cp)
+	} else {
+		r.Value.patch(patch.Value)
 	}
 }
 
@@ -175,23 +204,22 @@ func (o *Operation) patch(patch *Operation) {
 	if o.Bindings != nil {
 		o.Bindings.patch(patch.Bindings)
 	} else {
-		o.Bindings = patch.Bindings
+		o.Bindings = patch.Bindings.clone()
 	}
-
 }
 
-func (r *MessageRef) patch(patch *MessageRef) {
+func (r *MessageRef) patch(patch *MessageRef, cp copies) {
 	if patch == nil {
 		return
 	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone(cp)
 	} else {
-		r.Value.patch(patch.Value)
+		r.Value.patch(patch.Value, cp)
 	}
 }
 
-func (m *Message) patch(patch *Message) {
+func (m *Message) patch(patch *Message, cp copies) {
 	if patch == nil {
 		return
 	}
@@ -211,66 +239,64 @@ func (m *Message) patch(patch *Message) {
 		m.ContentType = patch.ContentType
 	}
 	if m.Payload == nil {
-		m.Payload = patch.Payload
+		m.Payload = patch.Payload.clone(cp)
 	} else {
 		m.Payload.Patch(patch.Payload)
 	}
 	if m.Headers == nil {
-		m.Headers = patch.Headers
+		m.Headers = patch.Headers.clone(cp)
 	} else {
 		m.Headers.Patch(patch.Headers)
 	}
 	if m.Bindings != nil {
 		m.Bindings.patch(patch.Bindings)
 	} else {
-		m.Bindings = patch.Bindings
+		m.Bindings = patch.Bindings.clone(cp)
 	}
 }
 
-func (c *Config) patchComponents(patch *Config) {
+func (c *Config) patchComponents(patch *Config, cp copies) {
 	if patch.Components == nil {
 		return
 	}
 	if c.Components == nil {
-		c.Components = patch.Components
+		c.Components = patch.Components.clone(cp)
 		return
 	}
 
-	if c.Components.Servers == nil {
-		c.Components.Servers = patch.Components.Servers
-	} else {
-		for k, p := range patch.Components.Servers {
-			if v, ok := c.Components.Servers[k]; ok {
-				v.patch(p)
-			} else {
-				c.Components.Servers[k] = p
-			}
-		}
-	}
+	p := patch.Components
+	c.Components.Servers = patchMap(c.Components.Servers, p.Servers, cp, (*ServerRef).clone, (*ServerRef).patch)
+	c.Components.Tags = patchMap(c.Components.Tags, p.Tags, cp, (*TagRef).clone, nil)
+	c.Components.Channels = patchMap(c.Components.Channels, p.Channels, cp, (*ChannelRef).clone, (*ChannelRef).patch)
+	c.Components.Schemas = patchMap(c.Components.Schemas, p.Schemas, cp, (*SchemaRef).clone,
+		func(r, patch *SchemaRef, _ copies) { r.Patch(patch) })
+	c.Components.Messages = patchMap(c.Components.Messages, p.Messages, cp, (*MessageRef).clone, (*MessageRef).patch)
+	c.Components.Operations = patchMap(c.Components.Operations, p.Operations, cp, (*OperationRef).clone, (*OperationRef).patch)
+	c.Components.Parameters = patchMap(c.Components.Parameters, p.Parameters, cp, (*ParameterRef).clone, nil)
+	c.Components.CorrelationIds = patchMap(c.Components.CorrelationIds, p.CorrelationIds, cp, (*CorrelationIdRef).clone, nil)
+	c.Components.ExternalDocs = patchMap(c.Components.ExternalDocs, p.ExternalDocs, cp, (*ExternalDocRef).clone, nil)
+	c.Components.OperationTraits = patchMap(c.Components.OperationTraits, p.OperationTraits, cp, (*OperationTraitRef).clone, nil)
+	c.Components.MessageTraits = patchMap(c.Components.MessageTraits, p.MessageTraits, cp, (*MessageTraitRef).clone, nil)
+	c.Components.ServerVariables = patchMap(c.Components.ServerVariables, p.ServerVariables, cp, (*ServerVariableRef).clone, nil)
+}
 
-	if c.Components.Schemas == nil {
-		c.Components.Schemas = patch.Components.Schemas
-	} else {
-		for k, p := range patch.Components.Schemas {
-			if v, ok := c.Components.Schemas[k]; ok {
-				v.Patch(p)
-			} else {
-				c.Components.Schemas[k] = p
-			}
+// patchMap adds a copy of the entries of patch that m does not have (or has as nil) and merges the others
+// with merge. Entries without merge function and nil entries of patch keep the value of m.
+func patchMap[V comparable](m, patch map[string]V, cp copies, clone func(V, copies) V, merge func(V, V, copies)) map[string]V {
+	if m == nil {
+		return cloneMap(patch, cp, clone)
+	}
+	var nothing V
+	for k, p := range patch {
+		v := m[k]
+		switch {
+		case v == nothing:
+			m[k] = clone(p, cp)
+		case p != nothing && merge != nil:
+			merge(v, p, cp)
 		}
 	}
-
-	if c.Components.Messages == nil {
-		c.Components.Messages = patch.Components.Messages
-	} else {
-		for k, p := range patch.Components.Messages {
-			if v, ok := c.Components.Messages[k]; ok {
-				v.patch(p)
-			} else {
-				c.Components.Messages[k] = p
-			}
-		}
-	}
+	return m
 }
 
 func (b *BrokerBindings) Patch(patch BrokerBindings) {
@@ -307,7 +333,11 @@ func (b *BrokerBindings) Patch(patch BrokerBindings) {
 }
 
 func (t *TopicBindings) Patch(patch TopicBindings) {
-	maps.Copy(t.configs, patch.configs)
+	if t.configs == nil {
+		t.configs = maps.Clone(patch.configs)
+	} else {
+		maps.Copy(t.configs, patch.configs)
+	}
 
 	if patch.Partitions != 0 {
 		t.Partitions = patch.Partitions
@@ -332,7 +362,7 @@ func (m *KafkaMessageBinding) Patch(patch KafkaMessageBinding) {
 	if m.Key != nil {
 		m.Key.Patch(patch.Key)
 	} else {
-		m.Key = patch.Key
+		m.Key = patch.Key.clone(copies{})
 	}
 }
 
@@ -340,12 +370,12 @@ func (o *KafkaOperationBinding) Patch(patch KafkaOperationBinding) {
 	if o.ClientId != nil {
 		o.ClientId.Patch(patch.ClientId)
 	} else {
-		o.ClientId = patch.ClientId
+		o.ClientId = patch.ClientId.Clone()
 	}
 
 	if o.GroupId != nil {
 		o.GroupId.Patch(patch.GroupId)
 	} else {
-		o.GroupId = patch.GroupId
+		o.GroupId = patch.GroupId.Clone()
 	}
 }

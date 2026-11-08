@@ -35,11 +35,11 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 		if b != nil {
 			g := s.GetOrCreateGroup(r.GroupId, b)
 
-			if g.State != PreparingRebalance {
-				if g.Generation == nil || g.Generation.Id != int(r.GenerationId) {
+			if g.State() != PreparingRebalance {
+				if generation := g.Generation(); generation == nil || generation.Id != int(r.GenerationId) {
 					res.ErrorCode = kafka.IllegalGeneration
 				} else {
-					if _, ok := ctx.Member[r.GroupId]; !ok {
+					if !ctx.HasGroup(r.GroupId) {
 						res.ErrorCode = kafka.RebalanceInProgress
 					} else {
 						// balancer writes the response

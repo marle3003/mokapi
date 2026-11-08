@@ -9,6 +9,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/safe"
 	"mokapi/server"
+	"mokapi/try"
 	"testing"
 	"time"
 
@@ -29,11 +30,13 @@ func TestServer(t *testing.T) {
 	http := &server.HttpManager{}
 	mail := &server.MailManager{}
 	ldap := &server.LdapDirectoryManager{}
+	mqtt := &server.MqttManager{}
+	websocket := &server.WebsocketManager{}
 	e := engine.NewEngine()
 
 	hook := test.NewGlobal()
 	log.SetLevel(log.DebugLevel)
-	s := server.NewServer(pool, app, watcher, kafka, http, mail, ldap, e)
+	s := server.NewServer(pool, app, watcher, kafka, http, mail, ldap, mqtt, websocket, e)
 	stopped := make(chan bool)
 	go func() {
 		err := s.Start()
@@ -49,4 +52,31 @@ func TestServer(t *testing.T) {
 
 	require.Len(t, hook.Entries, 1)
 	require.Equal(t, "stopping server", hook.Entries[0].Message)
+}
+
+func TestServer_ShutdownStopsMqttAndWebsocketManagers(t *testing.T) {
+	log.SetOutput(io.Discard)
+
+	cfg := &static.Config{}
+	app := runtime.New(cfg, &dynamictest.Reader{})
+	mqtt := server.NewMqttManager(nil, app)
+	websocket := server.NewWebsocketManager(nil, app)
+	mqttPort, websocketPort := try.GetFreePort(), try.GetFreePort()
+	mqtt.UpdateConfig(mqttConfigEvent(mqttPort))
+	websocket.UpdateConfig(websocketConfigEvent(websocketPort))
+
+	s := server.NewServer(safe.NewPool(context.Background()), app, server.NewConfigWatcher(cfg),
+		&server.KafkaManager{}, &server.HttpManager{}, &server.MailManager{}, &server.LdapDirectoryManager{},
+		mqtt, websocket, engine.NewEngine())
+	stopped := make(chan bool)
+	go func() {
+		_ = s.Start()
+		close(stopped)
+	}()
+
+	s.Close()
+	<-stopped
+
+	requirePortIsFree(t, mqttPort)
+	requirePortIsFree(t, websocketPort)
 }

@@ -71,6 +71,10 @@ export default function() {
 Produces one or more messages to the given topic. `produce()` runs synchronously,
 `produceAsync()` returns a `Promise` you can `await`.
 
+`produceAsync()` reads the messages and options when you call it, so changing a message afterwards doesn't
+affect what is produced. Invalid arguments throw an error at the call. Client errors, such as a broker error,
+reject the promise, and so does an error thrown in the `result` callback.
+
 | Parameter       | Type            | Description                                                                                   |
 |-----------------|-----------------|-----------------------------------------------------------------------------------------------|
 | topic           | string          | Kafka topic name                                                                              |
@@ -78,7 +82,8 @@ Produces one or more messages to the given topic. `produce()` runs synchronously
 | opts (optional) | object          | [KafkaProduceArgs](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproduceargs) with a result callback and retry settings |
 
 If a message sets neither `data` nor `value`, Mokapi generates a random valid value based on
-the AsyncAPI schema.
+the AsyncAPI schema. Use `messageId` to generate it from a specific message of the channel, see
+[Selecting a message](/docs/javascript-api/mokapi/app/kafka-produce.md#selecting-a-message).
 
 ```javascript
 import { app } from 'mokapi'
@@ -87,7 +92,8 @@ export default function() {
     app.kafka().produce('order-placed', [
         { key: 'order-1', data: { id: 1 } },
         { data: { id: 2 } },
-        {} // random value generated from the schema
+        {}, // random value generated from the schema
+        { messageId: 'orderCreated' } // value and key generated from this message
     ], {
         result: (r) => console.log(`offset=${r.messages[0].offset}`)
     })

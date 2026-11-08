@@ -58,7 +58,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 		i := ctx.Value("time")
 		if i != nil {
 			t := i.(time.Time)
-			event.Duration = time.Now().Sub(t).Milliseconds()
+			event.SetDuration(time.Now().Sub(t).Milliseconds())
 		}
 	}()
 
@@ -81,7 +81,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	}
 
 	res := &smtp.DataResponse{Result: smtp.Ok}
-	event.Actions = h.eventEmitter.EmitSmtp(r.Message, res.Result)
+	event.SetActions(h.eventEmitter.EmitSmtp(r.Message, res.Result))
 
 	_ = rw.Write(res)
 }

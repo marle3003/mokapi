@@ -115,13 +115,14 @@ type KafkaRequestData interface {
 }
 
 func (s *Store) logRequest(h *kafka.Header, req KafkaRequest) func(res any) {
-	log := &KafkaRequestLogEvent{Api: s.config.Info.Name, Request: req}
+	name := s.cfg().Info.Name
+	log := &KafkaRequestLogEvent{Api: name, Request: req}
 	log.Header.set(h)
 	return func(res any) {
 		log.Response = res
 		t := events.NewTraits().
 			WithNamespace("kafka").
-			WithName(s.config.Info.Name).
+			WithName(name).
 			With("type", "request").
 			With("clientId", h.ClientId)
 		_ = s.eh.Push(log, t)

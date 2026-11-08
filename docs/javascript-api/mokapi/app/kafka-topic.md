@@ -30,7 +30,8 @@ export default function() {
 
 The methods behave like their counterparts on
 [KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md), but `produce()` and
-`produceAsync()` take no topic name.
+`produceAsync()` take no topic name. `produceAsync()` reads the messages when you call it.
+Invalid arguments throw an error at the call, and client errors reject the promise.
 
 ### Parameters
 
@@ -39,6 +40,21 @@ The methods behave like their counterparts on
 | handler         | function        | A [KafkaEventHandler](/docs/javascript-api/mokapi/eventhandler/kafkaeventhandler.md)          |
 | message         | object \| array | One [KafkaProduceMessage](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproducemessage) or an array of them |
 | opts (optional) | object          | [EventArgs](/docs/javascript-api/mokapi/eventhandler/eventargs.md) for `message()`, [KafkaProduceArgs](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproduceargs) for `produce()` |
+
+## Example: Produce a Specific Message
+
+`messageId` selects one of the messages defined for the channel. Mokapi generates the value and
+key from it. See [Selecting a message](/docs/javascript-api/mokapi/app/kafka-produce.md#selecting-a-message).
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    app.api('Order Events').kafka()
+        .topic('order-placed')
+        .produce({ messageId: 'orderCreated' })
+}
+```
 
 ## Example: Produce Periodically
 

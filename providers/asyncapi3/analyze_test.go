@@ -1,12 +1,15 @@
 package asyncapi3_test
 
 import (
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestAnalyze(t *testing.T) {
@@ -170,6 +173,35 @@ func TestAnalyze(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a := tc.cfg.Analyze()
 			tc.test(t, a)
+		})
+	}
+}
+
+// Empty entries (`foo:` in YAML) are removed by Parse (Analyze always runs on parsed configs).
+// An operation without channel is a missing field and must be skipped by Analyze itself.
+func TestAnalyze_EmptyEntries(t *testing.T) {
+	const head = "asyncapi: 3.0.0\ninfo:\n  title: foo\n  version: '1.0'\n"
+	testcases := []struct {
+		name string
+		body string
+	}{
+		{name: "server", body: "servers:\n  dev:\n"},
+		{name: "channel", body: "channels:\n  orders:\n"},
+		{name: "operation", body: "operations:\n  send:\n"},
+		{name: "operation without channel", body: "operations:\n  send:\n    action: send\n"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var cfg *asyncapi3.Config
+			require.NoError(t, yaml.Unmarshal([]byte(head+tc.body), &cfg))
+			require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+
+			var a *asyncapi3.Analysis
+			require.NotPanics(t, func() { a = cfg.Analyze() })
+			require.False(t, a.HasServers)
+			require.False(t, a.HasChannels)
+			require.Empty(t, a.Protocols)
 		})
 	}
 }

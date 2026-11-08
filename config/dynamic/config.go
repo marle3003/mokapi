@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 	"text/template"
+	"time"
 
 	"github.com/go-sprout/sprout/sprigin"
 )
@@ -64,6 +65,11 @@ type ConfigEvent struct {
 	Name   string
 	Config *Config
 	Event  Event
+	// Checksum and Time are a snapshot of Config.Info taken when the event was created.
+	// Listeners run concurrently with the next update of Config.Info, so they must
+	// not read these values from Config.
+	Checksum []byte
+	Time     time.Time
 }
 
 func AddRef(parent, ref *Config) {
@@ -81,13 +87,11 @@ func AddRef(parent, ref *Config) {
 	checksum := ref.Info.Checksum
 	ref.Listeners.Add(parent.Info.Url.String(), func(e ConfigEvent) {
 		// event Create is used for reading first time
-		if bytes.Equal(e.Config.Info.Checksum, checksum) && e.Event == Create {
+		if bytes.Equal(e.Checksum, checksum) && e.Event == Create {
 			return
 		}
-		e.Config.Info.Checksum = checksum
 
-		parent.Info.Time = ref.Info.Time
-		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path()})
+		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path(), Time: e.Time})
 		if e.Event == Delete {
 			parent.Refs.Remove(ref)
 		}
@@ -110,23 +114,32 @@ func (l *Listeners) Remove(key string) {
 	l.m.Lock()
 	defer l.m.Unlock()
 
+	if l.list == nil {
+		return
+	}
 	l.list.Del(key)
 }
 
 func (l *Listeners) Invoke(e ConfigEvent) {
-	if l.list == nil {
-		return
-	}
-	for it := l.list.Iter(); it.Next(); {
-		it.Value()(e)
+	for _, fn := range l.List() {
+		fn(e)
 	}
 }
 
-func (l *Listeners) Iter() *sortedmap.Iterator[string, ConfigListener] {
+// List returns a snapshot of the listeners in insertion order. Callers invoke them
+// without holding the lock, because a listener may add or invoke other listeners.
+func (l *Listeners) List() []ConfigListener {
+	l.m.Lock()
+	defer l.m.Unlock()
+
 	if l.list == nil {
-		return &sortedmap.Iterator[string, ConfigListener]{}
+		return nil
 	}
-	return l.list.Iter()
+	var fns []ConfigListener
+	for it := l.list.Iter(); it.Next(); {
+		fns = append(fns, it.Value())
+	}
+	return fns
 }
 
 func Wrap(i ConfigInfo, c *Config) {

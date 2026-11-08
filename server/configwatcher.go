@@ -12,7 +12,9 @@ import (
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
+	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,6 +31,10 @@ type ConfigWatcher struct {
 type entry struct {
 	config *dynamic.Config
 	m      sync.Mutex
+	// parsed is the lock-free fast path of Read: the config was parsed successfully and has Data.
+	// It is set under m and cleared when a (re)parse fails or leaves Data nil, so a later Read
+	// can still parse into the caller's target.
+	parsed atomic.Bool
 }
 
 func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
@@ -74,11 +80,11 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 
 	w.m.Unlock()
 
-	if c.Data == nil {
+	if !e.parsed.Load() {
 		e.m.Lock()
 		defer e.m.Unlock()
 
-		if c.Data == nil {
+		if !e.parsed.Load() {
 			if v != nil {
 				c.Data = v
 			}
@@ -91,6 +97,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if err != nil {
 				return nil, err
 			}
+			e.parsed.Store(c.Data != nil)
 		}
 	}
 
@@ -137,7 +144,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 						continue
 					}
 					evt.Config = e.config
-					go e.config.Listeners.Invoke(evt)
+					go invokeAll(e.config.Listeners.List(), evt)
 				} else {
 					if err := w.addOrUpdate(evt); err != nil {
 						log.Error(err)
@@ -179,6 +186,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 		e = &entry{config: c}
 		w.configs[getConfigKey(c.Info.Url)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
+		evt.Checksum, evt.Time = c.Info.Checksum, c.Info.Time
 		w.m.Unlock()
 		invokeListeners(evt)
 		return nil
@@ -202,6 +210,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 	e.config.SourceType = c.SourceType
 	e.config.Info.Update(c.Info.Checksum)
 	evt.Config = e.config
+	evt.Checksum, evt.Time = e.config.Info.Checksum, e.config.Info.Time
 
 	e.m.Unlock()
 
@@ -224,40 +233,52 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 		return
 	}
 	w.m.Unlock()
+
+	if !w.reload(e, &evt) {
+		return
+	}
+
+	for _, l := range w.listener {
+		go invokeListener(l, evt)
+	}
+}
+
+// reload parses and validates the entry's config and reports whether listeners should be notified.
+// The deferred unlock keeps the entry usable if Parse or Validate panics.
+func (w *ConfigWatcher) reload(e *entry, evt *dynamic.ConfigEvent) bool {
 	e.m.Lock()
+	defer e.m.Unlock()
 
 	c := e.config
 	// set config on evt
 	evt.Config = c
+	// a reload triggered by a reference takes over the reference's time; never move back
+	if evt.Time.After(c.Info.Time) {
+		c.Info.Time = evt.Time
+	}
 
 	log.Debugf("processing %v", c.Info.Path())
 
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
-		e.m.Unlock()
-		return
+		e.parsed.Store(false)
+		return false
 	}
+	e.parsed.Store(c.Data != nil)
 
 	if c.Data == nil {
-		e.m.Unlock()
 		log.Debugf("processed %v", c.Info.Path())
-		return
+		return false
 	}
 
 	if err = dynamic.Validate(c); err != nil {
-		e.m.Unlock()
 		log.Errorf("skipping file %v: %v", c.Info.Path(), err)
-		return
+		return false
 	}
-
-	e.m.Unlock()
 
 	log.Debugf("processed %v", c.Info.Path())
-
-	for _, l := range w.listener {
-		go l(evt)
-	}
+	return true
 }
 
 func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
@@ -283,9 +304,8 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	e.m.Unlock()
 
 	for _, l := range w.listener {
-		go l(evt)
+		go invokeListener(l, evt)
 	}
-	return
 }
 
 func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
@@ -302,26 +322,45 @@ func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
 }
 
 func getConfigKey(u *url.URL) string {
-	if u.Scheme == "file" || u.Host == "" {
+	// work on a copy: u is often the config's own URL, read concurrently via ConfigInfo.Key()
+	k := *u
+	if k.Scheme == "file" || k.Host == "" {
 		// Ensures the behavior is always the same for files,
 		// otherwise it is sometimes file:/ or file:///
-		u.OmitHost = true
+		k.OmitHost = true
 	}
-	return u.String()
+	return k.String()
 }
 
 func invokeListeners(e dynamic.ConfigEvent) {
-	i := 0
-	for it := e.Config.Listeners.Iter(); it.Next(); {
+	for i, l := range e.Config.Listeners.List() {
 		if i == 0 {
 			// run parser (ConfigWatcher, first listener) synchronously
 			// this ensures config is parsed before other listeners are called
-			it.Value()(e)
+			invokeListener(l, e)
 		} else {
-			go it.Value()(e)
+			go invokeListener(l, e)
 		}
-		i++
 	}
+}
+
+// invokeAll calls the listeners in order; a panicking listener does not skip the others.
+func invokeAll(listeners []dynamic.ConfigListener, e dynamic.ConfigEvent) {
+	for _, l := range listeners {
+		invokeListener(l, e)
+	}
+}
+
+// invokeListener recovers from a panic in a listener (e.g. a parser or a JavaScript handler),
+// so that a single faulty config cannot terminate Mokapi.
+func invokeListener(l dynamic.ConfigListener, e dynamic.ConfigEvent) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debugf("config listener panic: %v", string(debug.Stack()))
+			log.Errorf("config listener panic for %v: %v", e.Config.Info.Path(), r)
+		}
+	}()
+	l(e)
 }
 
 func (w *ConfigWatcher) AddProvider(name string, p dynamic.Provider) {

@@ -117,3 +117,20 @@ func TestLinkedHashMap(t *testing.T) {
 		})
 	}
 }
+
+func TestLinkedHashMap_CloneWith(t *testing.T) {
+	m := &sortedmap.LinkedHashMap[string, *int]{}
+	one, two := 1, 2
+	m.Set("b", &one)
+	m.Set("a", &two)
+
+	c := m.CloneWith(func(v *int) *int { n := *v; return &n })
+
+	require.Equal(t, []string{"b", "a"}, c.Keys())
+	b, _ := c.Get("b")
+	require.Equal(t, 1, *b)
+	require.NotSame(t, &one, b)
+
+	*b = 10
+	require.Equal(t, 1, one)
+}

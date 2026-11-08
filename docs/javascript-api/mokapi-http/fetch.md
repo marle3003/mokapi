@@ -7,6 +7,10 @@ description: Use Mokapi's JavaScript API to send HTTP requests. Customize method
 The `fetch()` function provides a Promise-based interface for making HTTP requests in Mokapi’s JavaScript environment.
 It works similarly to the browser’s Fetch API.
 
+`fetch()` reads the URL and options when you call it, so changing the options object or body afterwards doesn't
+affect the request. Invalid options, such as a `method` that is not a string, throw an error at the call.
+Request errors and timeouts reject the promise.
+
 | Parameter       | Type   | Description                                                                                                      |
 |-----------------|--------|------------------------------------------------------------------------------------------------------------------|
 | url             | string | Request URL e.g. https://foo.bar                                                                                 |

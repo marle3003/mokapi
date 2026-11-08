@@ -34,6 +34,9 @@ func NewWebsocketManager(emitter common.EventEmitter, app *runtime.App) *Websock
 }
 
 func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartWebsocket(e.Config)
 	if cfg == nil || mode == runtime.WebsocketNone {
 		if cfg == nil || m.services == nil {
@@ -45,18 +48,18 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Websocket.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.Kafka.Remove(e.Config)
+		m.app.Websocket.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)
 			return
 		}
-	}
-
-	var err error
-	info, err = m.app.Websocket.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add Websocket config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Websocket.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add Websocket config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
 	m.addOrUpdateService(info)
@@ -68,10 +71,8 @@ func (m *WebsocketManager) addOrUpdateService(cfg *runtime.WebsocketInfo) {
 	c.update(cfg, m.app.Monitor.Websocket)
 }
 
+// getOrCreateService expects the caller to hold m.m.
 func (m *WebsocketManager) getOrCreateService(cfg *runtime.WebsocketInfo) *websocketService {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.services[cfg.Info.Name]
 	if !ok {
 		c = &websocketService{cfg: cfg, servers: make(map[string]*service.WebsocketServer)}
@@ -80,15 +81,13 @@ func (m *WebsocketManager) getOrCreateService(cfg *runtime.WebsocketInfo) *webso
 	return c
 }
 
+// removeService expects the caller to hold m.m.
 func (m *WebsocketManager) removeService(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.services[name]
 	if !ok {
 		return
 	}
-	log.Infof("removing kafka cluster '%v'", name)
+	log.Infof("removing Websocket service '%v'", name)
 	c.close()
 	delete(m.services, name)
 }
@@ -122,7 +121,7 @@ func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *mo
 				req = req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
 				h.ServeHTTP(w, req)
 			}))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.servers[port] = broker
 	}
@@ -140,6 +139,9 @@ func (c *websocketService) close() {
 }
 
 func (m *WebsocketManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.services {
 		c.close()
 	}

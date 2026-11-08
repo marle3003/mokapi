@@ -32,6 +32,9 @@ func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager 
 }
 
 func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartMqtt(e.Config)
 	if cfg == nil || mode == runtime.MqttNone {
 		if cfg == nil || m.clusters == nil {
@@ -43,18 +46,18 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Mqtt.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.Kafka.Remove(e.Config)
+		m.app.Mqtt.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	}
-
-	var err error
-	info, err = m.app.Mqtt.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Mqtt.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
 	m.addOrUpdateCluster(info)
@@ -66,10 +69,8 @@ func (m *MqttManager) addOrUpdateCluster(cfg *runtime.MqttInfo) {
 	c.update(cfg, m.app.Monitor.Mqtt)
 }
 
+// getOrCreateCluster expects the caller to hold m.m.
 func (m *MqttManager) getOrCreateCluster(cfg *runtime.MqttInfo) *mqttCluster {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		c = &mqttCluster{cfg: cfg, brokers: make(map[string]Broker)}
@@ -78,15 +79,13 @@ func (m *MqttManager) getOrCreateCluster(cfg *runtime.MqttInfo) *mqttCluster {
 	return c
 }
 
+// removeCluster expects the caller to hold m.m.
 func (m *MqttManager) removeCluster(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[name]
 	if !ok {
 		return
 	}
-	log.Infof("removing kafka cluster '%v'", name)
+	log.Infof("removing MQTT cluster '%v'", name)
 	c.close()
 	delete(m.clusters, name)
 }
@@ -116,7 +115,7 @@ func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt
 		} else {
 			log.Infof("adding new MQTT broker '%v' on port %v to '%v'", name, port, cfg.Info.Name)
 			broker = service.NewMqttBroker(port, cfg.Handler(monitor))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.brokers[port] = broker
 	}
@@ -134,6 +133,9 @@ func (c *mqttCluster) close() {
 }
 
 func (m *MqttManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.clusters {
 		c.close()
 	}

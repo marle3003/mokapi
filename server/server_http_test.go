@@ -224,6 +224,45 @@ func TestHttp(t *testing.T) {
 			},
 		},
 		{
+			name: "delete config that was never added",
+			test: func(t *testing.T, m *server.HttpManager) {
+				require.NotPanics(t, func() {
+					m.Update(dynamic.ConfigEvent{
+						Event: dynamic.Delete,
+						Config: &dynamic.Config{
+							Info: dynamictest.NewConfigInfo(),
+							Data: openapitest.NewConfig("3.1.0", openapitest.WithInfo("foo", "", "")),
+						},
+					})
+				})
+			},
+		},
+		{
+			name: "delete one of two configs with same title closes only its server",
+			test: func(t *testing.T, m *server.HttpManager) {
+				portA, portB := try.GetFreePort(), try.GetFreePort()
+				event := func(file string, port int) dynamic.ConfigEvent {
+					return dynamic.ConfigEvent{Config: &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: try.MustUrl(file)},
+						Data: openapitest.NewConfig("3.1.0",
+							openapitest.WithInfo("foo", "", ""),
+							openapitest.WithServer(fmt.Sprintf("http://127.0.0.1:%d", port), ""),
+						),
+					}}
+				}
+				m.Update(event("a.yml", portA))
+				b := event("b.yml", portB)
+				m.Update(b)
+				requirePortOpen(t, portB)
+
+				b.Event = dynamic.Delete
+				m.Update(b)
+
+				requirePortOpen(t, portA)
+				requirePortClosed(t, portB)
+			},
+		},
+		{
 			name: "new service and healthcheck on same port",
 			test: func(t *testing.T, m *server.HttpManager) {
 				healthCfg := static.Health{Port: server.DefaultHttpPort}

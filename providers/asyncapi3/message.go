@@ -119,6 +119,9 @@ func (m *Message) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	m.Traits = removeNilElements(m.Traits)
+	m.ExternalDocs = removeNilElements(m.ExternalDocs)
+
 	if m.Payload != nil {
 		if err := m.Payload.Parse(config, reader); err != nil {
 			return err
@@ -184,6 +187,9 @@ func (r *MessageTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader) e
 	if r.Value == nil {
 		return nil
 	}
+
+	r.Value.Examples = removeNilElements(r.Value.Examples)
+	r.Value.ExternalDocs = removeNilElements(r.Value.ExternalDocs)
 
 	if r.Value.Headers != nil {
 		if err := r.Value.Headers.Parse(config, reader); err != nil {

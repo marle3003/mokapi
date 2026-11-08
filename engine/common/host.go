@@ -123,6 +123,8 @@ type KafkaProduceArgs struct {
 }
 
 type KafkaMessage struct {
+	// MessageId is the key of the message under channels.<channel>.messages
+	MessageId string
 	Key       any
 	Value     Optional[[]byte]
 	Data      Optional[any]
@@ -171,9 +173,13 @@ type MqttClient interface {
 }
 
 type MqttPublishArgs struct {
-	Cluster    string
-	Topic      string
-	Data       any
+	Cluster string
+	Topic   string
+	// MessageId is the key of the message under channels.<channel>.messages
+	MessageId string
+	Data      Optional[any]
+	// Value is the payload as given; an empty, non-nil value is an empty payload.
+	// Without Data and Value (nil), a payload is generated.
 	Value      []byte
 	Retain     bool
 	Retry      RetryArgs

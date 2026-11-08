@@ -965,3 +965,215 @@ func TestPatch_Composition(t *testing.T) {
 		})
 	}
 }
+
+func TestSchema_Patch_Keywords(t *testing.T) {
+	str := func() *schema.Schema { return &schema.Schema{Type: jsonSchema.Types{"string"}} }
+	num := func() *schema.Schema { return &schema.Schema{Type: jsonSchema.Types{"number"}} }
+	two := 2
+
+	t.Run("keywords are taken over", func(t *testing.T) {
+		s := &schema.Schema{}
+		s.Patch(&schema.Schema{
+			Schema: "draft", DynamicAnchor: "a", Not: str(), If: str(), Then: str(), Else: str(),
+			UnevaluatedItems: str(), Contains: str(), MaxContains: &two, MinContains: &two,
+			UnevaluatedProperties: str(), PropertyNames: str(),
+			PatternProperties: map[string]*schema.Schema{"^x": str()},
+			DependentRequired: map[string][]string{"a": {"b"}},
+			DependentSchemas:  map[string]*schema.Schema{"a": str()},
+		})
+
+		require.Equal(t, "draft", s.Schema)
+		require.Equal(t, "a", s.DynamicAnchor)
+		require.Equal(t, str(), s.Not)
+		require.Equal(t, str(), s.If)
+		require.Equal(t, str(), s.Then)
+		require.Equal(t, str(), s.Else)
+		require.Equal(t, str(), s.UnevaluatedItems)
+		require.Equal(t, str(), s.Contains)
+		require.Equal(t, 2, *s.MaxContains)
+		require.Equal(t, 2, *s.MinContains)
+		require.Equal(t, str(), s.UnevaluatedProperties)
+		require.Equal(t, str(), s.PropertyNames)
+		require.Equal(t, str(), s.PatternProperties["^x"])
+		require.Equal(t, []string{"b"}, s.DependentRequired["a"])
+		require.Equal(t, str(), s.DependentSchemas["a"])
+	})
+
+	t.Run("nested keywords are merged", func(t *testing.T) {
+		s := &schema.Schema{
+			Not:               str(),
+			PrefixItems:       []*schema.Schema{str()},
+			PatternProperties: map[string]*schema.Schema{"^x": str()},
+			DependentRequired: map[string][]string{"a": {"b"}},
+		}
+		s.Patch(&schema.Schema{
+			Not:               num(),
+			PrefixItems:       []*schema.Schema{num(), str()},
+			PatternProperties: map[string]*schema.Schema{"^x": num(), "^y": str()},
+			DependentRequired: map[string][]string{"a": {"c"}},
+		})
+
+		require.Equal(t, jsonSchema.Types{"string", "number"}, s.Not.Type)
+		require.Len(t, s.PrefixItems, 2)
+		require.Equal(t, jsonSchema.Types{"string", "number"}, s.PrefixItems[0].Type)
+		require.Equal(t, str(), s.PrefixItems[1])
+		require.Equal(t, jsonSchema.Types{"string", "number"}, s.PatternProperties["^x"].Type)
+		require.Equal(t, str(), s.PatternProperties["^y"])
+		require.Equal(t, []string{"c"}, s.DependentRequired["a"])
+	})
+}
+
+func TestSchema_Patch_DoesNotShareWithPatch(t *testing.T) {
+	t.Run("types", func(t *testing.T) {
+		patch := &schema.Schema{Type: jsonSchema.Types{"string"}}
+		s := &schema.Schema{}
+		s.Patch(patch)
+		s.Patch(&schema.Schema{Type: jsonSchema.Types{"number"}})
+
+		require.Equal(t, jsonSchema.Types{"string", "number"}, s.Type)
+		require.Equal(t, jsonSchema.Types{"string"}, patch.Type)
+	})
+
+	t.Run("merging types does not write into the origin array", func(t *testing.T) {
+		origin := make(jsonSchema.Types, 1, 10)
+		origin[0] = "string"
+		s := &schema.Schema{Type: origin}
+
+		s.Patch(&schema.Schema{Type: jsonSchema.Types{"number"}})
+
+		require.Equal(t, jsonSchema.Types{"string", "number"}, s.Type)
+		require.Equal(t, "", origin[:2][1])
+	})
+
+	t.Run("nested schemas, compositions and pointers", func(t *testing.T) {
+		build := func() *schema.Schema {
+			max := 3
+			s := schematest.NewAllOf(schematest.New("string"))
+			s.Items = schematest.New("integer")
+			s.MaxLength = &max
+			s.Xml = &schema.Xml{Name: "foo"}
+			s.Properties = &schema.Schemas{}
+			s.Properties.Set("id", schematest.New("string"))
+			return s
+		}
+		patch := build()
+		s := &schema.Schema{}
+		s.Patch(patch)
+
+		s.AllOf[0].Type[0] = "changed"
+		s.Items.Type[0] = "changed"
+		*s.MaxLength = 99
+		s.Xml.Name = "changed"
+		s.Properties.Get("id").Type[0] = "changed"
+
+		require.Equal(t, build(), patch)
+	})
+
+	t.Run("composition entry is added to existing composition", func(t *testing.T) {
+		patch := &schema.Schema{AnyOf: []*schema.Schema{{Title: "a", Type: jsonSchema.Types{"string"}}}}
+		s := &schema.Schema{AnyOf: []*schema.Schema{{Title: "b"}}}
+		s.Patch(patch)
+
+		s.AnyOf[1].Type[0] = "changed"
+
+		require.Equal(t, jsonSchema.Types{"string"}, patch.AnyOf[0].Type)
+	})
+}
+
+func TestSchema_Patch_CyclicSchema(t *testing.T) {
+	cyclic := parseCyclic(t)
+
+	result := &schema.Schema{}
+	result.Patch(cyclic)
+
+	// Sub is derived by Parse and not patched, the cycle is reached through the properties
+	child := result.Properties.Get("child")
+	node := child.Sub
+	require.NotNil(t, node)
+	require.NotSame(t, cyclic.Sub, node)
+	require.Same(t, node, node.Properties.Get("child").Sub, "the copy keeps the cycle")
+
+	result.Title = "changed"
+	node.Title = "changed"
+	node.Properties.Get("child").Title = "changed"
+	node.Type[0] = "changed"
+	require.Equal(t, "node", cyclic.Sub.Title)
+	require.Equal(t, jsonSchema.Types{"object"}, cyclic.Sub.Type)
+	require.Equal(t, "node", cyclic.Sub.Properties.Get("child").Title)
+	require.NotEqual(t, "changed", cyclic.Title)
+}
+
+// newCyclicNode builds the graph Parse leaves behind for a schema that refers to
+// itself (node.properties.child: $ref node): the resolved reference shares the
+// properties of node, so node.Properties -> child -> child.Properties == node.Properties.
+func newCyclicNode() *schema.Schema {
+	props := &schema.Schemas{}
+	props.Set("name", schematest.New("string"))
+	node := schematest.New("object", schematest.WithTitle("node"))
+	node.Properties = props
+	props.Set("child", &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: props})
+	return node
+}
+
+// Two files with the same title that both define the same recursive schema are merged.
+// Until this is fixed, Patch recurses forever: fatal error "stack overflow" (not recoverable,
+// it aborts the whole test binary).
+func TestSchema_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
+	s := newCyclicNode()
+
+	s.Patch(newCyclicNode())
+
+	child := s.Properties.Get("child")
+	require.NotNil(t, child)
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Same(t, s.Properties, child.Properties)
+}
+
+// The target cycles over one schema, the patch over two, both with the same keys:
+// the pairs (node, a) and (node, b) recur. The properties of the longer cycle must
+// still reach the target.
+func TestSchema_Patch_CyclesOfDifferentLength(t *testing.T) {
+	s := newCyclicNode()
+
+	aProps := &schema.Schemas{}
+	a := &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: aProps}
+	bProps := &schema.Schemas{}
+	b := &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: bProps}
+	aProps.Set("name", schematest.New("string"))
+	aProps.Set("child", b)
+	bProps.Set("extra", schematest.New("integer"))
+	bProps.Set("child", a)
+
+	s.Patch(a)
+
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Equal(t, "integer", s.Properties.Get("extra").Type.String())
+	require.NotNil(t, s.Properties.Get("child"))
+}
+
+// A schema that is referenced twice is patched once, so an untitled composition
+// entry (which is appended, not merged) is not added twice.
+func TestSchema_Patch_SharedSchemaIsPatchedOnce(t *testing.T) {
+	newRoot := func(shared *schema.Schema) *schema.Schema {
+		return schematest.New("object",
+			schematest.WithProperty("a", shared),
+			schematest.WithProperty("b", shared))
+	}
+	s := newRoot(schematest.NewAny(schematest.New("string")))
+
+	s.Patch(newRoot(schematest.NewAny(schematest.New("integer"))))
+
+	require.Len(t, s.Properties.Get("a").AnyOf, 2)
+	require.Same(t, s.Properties.Get("a"), s.Properties.Get("b"))
+}
+
+func TestSchemas_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
+	target := newCyclicNode().Properties
+	patch := newCyclicNode().Properties
+
+	target.Patch(patch)
+
+	require.Equal(t, "string", target.Get("name").Type.String())
+	require.NotNil(t, target.Get("child"))
+	require.Same(t, target, target.Get("child").Properties)
+}

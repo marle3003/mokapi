@@ -105,7 +105,7 @@ func (m *mokapi) getKafkaApi(name string) any {
 }
 
 func (k *Kafka) GetTopics() []TopicSummary {
-	var topics []TopicSummary
+	topics := []TopicSummary{}
 	for name, c := range k.info.Channels {
 		if c.Value == nil {
 			continue
@@ -143,7 +143,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 	if topic == nil {
 		return Topic{}, fmt.Errorf("topic '%s' not found", name)
 	}
-	for _, p := range topic.Partitions {
+	for _, p := range topic.PartitionList() {
 		t.Partitions = append(t.Partitions, &KafkaPartition{
 			Index:  p.Index,
 			Offset: p.Offset(),
@@ -154,7 +154,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 		if op.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value != ch.Value {
+		if op.Value.Channel == nil || op.Value.Channel.Value != ch.Value {
 			continue
 		}
 
@@ -246,43 +246,31 @@ func (t *Topic) Consume(partition int, startOffset int64, limit int) ([]KafkaRec
 		return nil, fmt.Errorf("partition '%d' not found", partition)
 	}
 
-	var records []KafkaRecord
+	records := []KafkaRecord{}
 	offset := startOffset
-	n := 0
-	for {
-		if offset >= p.Tail || n >= limit {
-			return records, nil
-		}
-		seg := p.GetSegment(offset)
-		if seg == nil {
-			return records, nil
+	for offset < p.Offset() && len(records) < limit {
+		r := p.Record(offset)
+		if r == nil {
+			// offset was removed by the log cleaner
+			break
 		}
 
-		for seg.Contains(offset) {
-			r := seg.Record(offset)
-
-			result := KafkaRecord{
-				Offset: offset,
-				Key:    kafka.BytesToString(r.Key),
-				Value:  kafka.BytesToString(r.Value),
-			}
-			if r.Headers != nil {
-				result.Headers = make(map[string]string)
-				for _, h := range r.Headers {
-					result.Headers[h.Key] = string(h.Value)
-				}
-			}
-
-			records = append(records, result)
-
-			n++
-			offset++
-
-			if n >= limit {
-				return records, nil
+		result := KafkaRecord{
+			Offset: offset,
+			Key:    kafka.BytesToString(r.Key),
+			Value:  kafka.BytesToString(r.Value),
+		}
+		if r.Headers != nil {
+			result.Headers = make(map[string]string)
+			for _, h := range r.Headers {
+				result.Headers[h.Key] = string(h.Value)
 			}
 		}
+
+		records = append(records, result)
+		offset++
 	}
+	return records, nil
 }
 
 func getKafkaMessages(msg *asyncapi3.MessageRef) KafkaMessage {

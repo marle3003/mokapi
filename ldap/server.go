@@ -60,7 +60,6 @@ type Server struct {
 	Handler Handler
 
 	mu         sync.Mutex
-	closeChan  chan bool
 	activeConn map[net.Conn]context.Context
 	listener   net.Listener
 	inShutdown atomicBool
@@ -70,29 +69,32 @@ func (s *Server) ListenAndServe() error {
 	if s.inShutdown.isSet() {
 		return ErrServerClosed
 	}
-
-	var err error
-	s.mu.Lock()
-	s.listener, err = net.Listen("tcp", s.Addr)
-	s.mu.Unlock()
+	l, err := net.Listen("tcp", s.Addr)
 	if err != nil {
 		return err
 	}
-	return s.Serve(s.listener)
+	return s.Serve(l)
 }
 
 func (s *Server) Serve(l net.Listener) error {
-	closeCh := s.getCloseChan()
+	s.mu.Lock()
+	// Close sets inShutdown before taking s.mu, so either we see it here or Close sees our listener.
+	if s.inShutdown.isSet() {
+		s.mu.Unlock()
+		_ = l.Close()
+		return ErrServerClosed
+	}
+	s.listener = l
+	s.mu.Unlock()
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			select {
-			case <-closeCh:
+			if s.inShutdown.isSet() {
 				return ErrServerClosed
-			default:
-				log.Errorf("kafka: Accept error: %v", err)
-				continue
 			}
+			log.Errorf("ldap: Accept error: %v", err)
+			continue
 		}
 
 		ctx := s.trackConn(conn)
@@ -108,11 +110,6 @@ func (s *Server) Close() {
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	if s.closeChan != nil {
-		s.closeChan <- true
-		close(s.closeChan)
-	}
 
 	if s.listener != nil {
 		s.listener.Close()
@@ -233,13 +230,6 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 	ctx := context.Background()
 	s.activeConn[conn] = ctx
 	return ctx
-}
-
-func (s *Server) getCloseChan() chan bool {
-	if s.closeChan == nil {
-		s.closeChan = make(chan bool, 1)
-	}
-	return s.closeChan
 }
 
 func (r *response) Write(msg Message) error {

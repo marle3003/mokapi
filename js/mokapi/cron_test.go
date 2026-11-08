@@ -18,11 +18,11 @@ import (
 func TestModule_Cron(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
+		test func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host)
 	}{
 		{
 			name: "register cron handler",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var cron string
 				var handler func()
 				host.CronFunc = func(every string, do func(), opt common.JobOptions) {
@@ -30,7 +30,7 @@ func TestModule_Cron(t *testing.T) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let test = ''
 					m.cron('* * * * *', () => { test = 'foo' })
@@ -38,20 +38,20 @@ func TestModule_Cron(t *testing.T) {
 				r.NoError(t, err)
 				r.Equal(t, "* * * * *", cron)
 				handler()
-				v, err := vm.RunString("test")
+				v, err := evalOnLoop(loop, "test")
 				r.NoError(t, err)
-				r.Equal(t, "foo", v.Export())
+				r.Equal(t, "foo", v)
 			},
 		},
 		{
 			name: "cron handler throws error",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var handler func()
 				host.CronFunc = func(every string, do func(), opt common.JobOptions) {
 					handler = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => { throw new Error('TEST') })
 				`)
@@ -61,13 +61,13 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with tags",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var tags map[string]string
 				host.CronFunc = func(evt string, do func(), opts common.JobOptions) {
 					tags = opts.Tags
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { tags: { foo: 'bar', bar: null } })
 				`)
@@ -77,8 +77,8 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with tags but invalid type",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { tags: 'foo' })
 				`)
@@ -87,8 +87,8 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler invalid type for args",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, 'foo')
 				`)
@@ -97,13 +97,13 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with times options",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var times int
 				host.CronFunc = func(evt string, do func(), opts common.JobOptions) {
 					times = opts.Times
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { times: 10 })
 				`)
@@ -113,8 +113,8 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with invalid type for times",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { times: [] })
 				`)
@@ -123,13 +123,13 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with skipImmediateFirstRun",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var skip bool
 				host.CronFunc = func(evt string, do func(), opts common.JobOptions) {
 					skip = opts.SkipImmediateFirstRun
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { skipImmediateFirstRun: true })
 				`)
@@ -139,8 +139,8 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "cron handler with invalid type for skipImmediateFirstRun",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				_, err := vm.RunString(`
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					m.cron('', () => {}, { skipImmediateFirstRun: 'true' })
 				`)
@@ -149,13 +149,13 @@ func TestModule_Cron(t *testing.T) {
 		},
 		{
 			name: "async handler",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
 				var f func()
 				host.CronFunc = func(cron string, do func(), opt common.JobOptions) {
 					f = do
 				}
 
-				_, err := vm.RunString(`
+				_, err := evalOnLoop(loop, `
 					const m = require('mokapi')
 					let result;
 					m.cron('', async () => {
@@ -173,9 +173,9 @@ func TestModule_Cron(t *testing.T) {
 				r.NoError(t, err)
 				f()
 				r.NoError(t, err)
-				v, err := vm.RunString("result")
+				v, err := evalOnLoop(loop, "result")
 				r.NoError(t, err)
-				r.Equal(t, "foo", v.Export())
+				r.Equal(t, "foo", v)
 			},
 		},
 	}
@@ -199,7 +199,7 @@ func TestModule_Cron(t *testing.T) {
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 			reg.Enable(vm)
 
-			tc.test(t, vm, host)
+			tc.test(t, loop, host)
 		})
 	}
 }

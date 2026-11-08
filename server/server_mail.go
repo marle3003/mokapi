@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"mokapi/config/dynamic"
 	engine "mokapi/engine/common"
 	"mokapi/imap"
@@ -18,7 +17,7 @@ import (
 
 type MailServer interface {
 	Stop()
-	Start()
+	Start() error
 }
 
 type MailManager struct {
@@ -68,6 +67,27 @@ func (m *MailManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 }
 
+type mailProtocol struct {
+	label       string
+	defaultPort string
+	newServer   func(port string, h runtime.MailHandler, store *cert.Store) MailServer
+}
+
+var mailProtocols = map[string]mailProtocol{
+	"smtp": {"SMTP", "25", func(port string, h runtime.MailHandler, store *cert.Store) MailServer {
+		return service.NewSmtpServer(port, h, store, smtp.StartTls)
+	}},
+	"smtps": {"SMTPS", "587", func(port string, h runtime.MailHandler, store *cert.Store) MailServer {
+		return service.NewSmtpServer(port, h, store, smtp.Implicit)
+	}},
+	"imap": {"IMAP", "143", func(port string, h runtime.MailHandler, store *cert.Store) MailServer {
+		return service.NewImapServer(port, h, store, imap.StartTls)
+	}},
+	"imaps": {"IMAPS", "993", func(port string, h runtime.MailHandler, store *cert.Store) MailServer {
+		return service.NewImapServer(port, h, store, imap.Implicit)
+	}},
+}
+
 func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 	servers, ok := m.servers[cfg.Info.Name]
 	if !ok {
@@ -76,69 +96,35 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 	}
 	h := cfg.Handler(m.app.Monitor.Mail, m.eventEmitter, m.app.Events)
 	for _, server := range cfg.Servers {
-		_, port, _ := net.SplitHostPort(server.Host)
-
-		switch server.Protocol {
-		case "smtp":
-			if port == "" {
-				port = "25"
-			}
-			if _, ok = servers[port]; ok {
-				continue
-			}
-
-			log.Infof("adding new SMTP host on :%v", port)
-			s := service.NewSmtpServer(port, h, m.certStore, smtp.StartTls)
-			s.Start()
-			servers[port] = s
-		case "smtps":
-			if port == "" {
-				port = "587"
-			}
-
-			addr := fmt.Sprintf(":%v", port)
-			if _, ok = servers[addr]; ok {
-				continue
-			}
-
-			log.Infof("adding new SMTPS host on %v", port)
-			s := service.NewSmtpServer(port, h, m.certStore, smtp.Implicit)
-			s.Start()
-			servers[port] = s
-		case "imap":
-			if port == "" {
-				port = "143"
-			}
-
-			addr := fmt.Sprintf(":%v", port)
-			if _, ok = servers[addr]; ok {
-				continue
-			}
-
-			log.Infof("adding new IMAP host on %v", port)
-			s := service.NewImapServer(port, h, m.certStore, imap.StartTls)
-			s.Start()
-			servers[port] = s
-		case "imaps":
-			if port == "" {
-				port = "993"
-			}
-
-			addr := fmt.Sprintf(":%v", port)
-			if _, ok = servers[addr]; ok {
-				continue
-			}
-
-			log.Infof("adding new IMAPS host on %v", port)
-			s := service.NewImapServer(port, h, m.certStore, imap.Implicit)
-			s.Start()
-			servers[port] = s
+		protocol, ok := mailProtocols[server.Protocol]
+		if !ok {
+			continue
 		}
+		port := mailPort(server)
+		if _, ok = servers[port]; ok {
+			continue
+		}
+
+		log.Infof("adding new %v host on :%v", protocol.label, port)
+		s := protocol.newServer(port, h, m.certStore)
+		startAndLogError(s)
+		servers[port] = s
 	}
 	return nil
 }
 
+func mailPort(server *mail.Server) string {
+	_, port, _ := net.SplitHostPort(server.Host)
+	if port == "" {
+		return mailProtocols[server.Protocol].defaultPort
+	}
+	return port
+}
+
 func (m *MailManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, ms := range m.servers {
 		for _, server := range ms {
 			server.Stop()
@@ -147,19 +133,15 @@ func (m *MailManager) Stop() {
 }
 
 func (m *MailManager) removeService(name string) {
-	servers := m.servers[name]
-	for _, server := range servers {
-		switch s := server.(type) {
-		case *service.SmtpServer:
-			log.Infof("removing service '%v' on IMAP binding %v", name, s.Addr())
-		case *service.ImapServer:
-			log.Infof("removing service '%v' on SMTP binding %v", name, s.Addr())
-		}
+	for port, server := range m.servers[name] {
+		log.Infof("removing service '%v' on binding :%v", name, port)
 		server.Stop()
 	}
+	delete(m.servers, name)
 }
 
 func (m *MailManager) cleanupRemovedServers(cfg *runtime.MailInfo, old map[string]*mail.Server) {
+	servers := m.servers[cfg.Info.Name]
 	for key, val := range old {
 		if val2, ok := cfg.Servers[key]; ok {
 			if val2.Host == val.Host && val2.Protocol == val.Protocol {
@@ -167,41 +149,11 @@ func (m *MailManager) cleanupRemovedServers(cfg *runtime.MailInfo, old map[strin
 			}
 		}
 
-		_, port, err := net.SplitHostPort(val.Host)
-		if err != nil {
-			continue
-		}
-		if port == "" {
-			switch val.Protocol {
-			case "smtp":
-				port = "25"
-			case "smtps":
-				port = "587"
-			case "imap":
-				port = "143"
-			case "imaps":
-				port = "993"
-			}
-		}
-
-		addr := fmt.Sprintf(":%v", port)
-
-		servers := m.servers[cfg.Info.Name]
-		for _, server := range servers {
-			switch s := server.(type) {
-			case *service.SmtpServer:
-				if s.Addr() == addr {
-					log.Infof("removing '%v' on SMTP binding %v", cfg.Info.Name, addr)
-					s.Stop()
-					delete(m.servers, addr)
-				}
-			case *service.ImapServer:
-				if s.Addr() == addr {
-					log.Infof("removing '%v' on IMAP binding %v", cfg.Info.Name, addr)
-					s.Stop()
-					delete(m.servers, addr)
-				}
-			}
+		port := mailPort(val)
+		if server, ok := servers[port]; ok {
+			log.Infof("removing '%v' on binding :%v", cfg.Info.Name, port)
+			server.Stop()
+			delete(servers, port)
 		}
 	}
 }

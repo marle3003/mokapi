@@ -13,11 +13,12 @@ test('header in dashboard', async ({ dashboard }) => {
             await expect(links.nth(1)).toHaveText('HTTP')
             await expect(links.nth(2)).toHaveText('Kafka')
             await expect(links.nth(3)).toHaveText('MQTT')
-            await expect(links.nth(4)).toHaveText('LDAP')
-            await expect(links.nth(5)).toHaveText('Email')
-            await expect(links.nth(6)).toHaveText('Dashboard')
-            await expect(links.nth(7)).toHaveText('Docs')
-            await expect(links.nth(8)).toHaveText('Resources')
+            await expect(links.nth(4)).toHaveText('WebSocket')
+            await expect(links.nth(5)).toHaveText('LDAP')
+            await expect(links.nth(6)).toHaveText('Email')
+            await expect(links.nth(7)).toHaveText('Dashboard')
+            await expect(links.nth(8)).toHaveText('Docs')
+            await expect(links.nth(9)).toHaveText('Resources')
         }
     })
 

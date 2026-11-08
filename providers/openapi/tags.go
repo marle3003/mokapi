@@ -21,7 +21,7 @@ func (t *Tag) patch(patch *Tag) {
 	}
 	if patch.ExternalDocs != nil {
 		if t.ExternalDocs == nil {
-			t.ExternalDocs = patch.ExternalDocs
+			t.ExternalDocs = clonePointer(patch.ExternalDocs)
 		}
 	}
 	if patch.Parent != "" {
@@ -30,6 +30,15 @@ func (t *Tag) patch(patch *Tag) {
 	if len(patch.Kind) > 0 {
 		t.Kind = patch.Kind
 	}
+}
+
+func (t *Tag) clone() *Tag {
+	if t == nil {
+		return nil
+	}
+	c := *t
+	c.ExternalDocs = clonePointer(t.ExternalDocs)
+	return &c
 }
 
 // tagPath returns the chain from root ancestor down to the tag itself,

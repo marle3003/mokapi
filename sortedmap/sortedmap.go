@@ -147,6 +147,16 @@ func (m *LinkedHashMap[K, V]) Merge(o *LinkedHashMap[K, V]) {
 	}
 }
 
+// CloneWith returns a map with the same keys in the same order. Every value
+// is copied with clone, so the result does not share values with m.
+func (m *LinkedHashMap[K, V]) CloneWith(clone func(V) V) LinkedHashMap[K, V] {
+	c := LinkedHashMap[K, V]{KeyNormalizer: m.KeyNormalizer}
+	for it := m.Iter(); it.Next(); {
+		c.Set(it.Key(), clone(it.Value()))
+	}
+	return c
+}
+
 func (m *LinkedHashMap[K, V]) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteString("{")

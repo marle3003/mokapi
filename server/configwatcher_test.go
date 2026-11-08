@@ -11,6 +11,8 @@ import (
 	"mokapi/server"
 	"mokapi/try"
 	"net/url"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -133,8 +135,13 @@ func TestConfigWatcher_Read(t *testing.T) {
 						return nil
 					},
 				})
+				processed := make(chan struct{}, 1)
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					require.NotNil(t, e.Config.Data)
+					select {
+					case processed <- struct{}{}:
+					default:
+					}
 				})
 
 				pool := safe.NewPool(context.Background())
@@ -147,8 +154,15 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}}
-				time.Sleep(5 * time.Millisecond)
-				require.Equal(t, "foobar", c.Data)
+				// wait until the watcher finished parsing, otherwise Data is read while it is written
+				select {
+				case <-processed:
+				case <-time.After(2 * time.Second):
+					require.Fail(t, "config was not processed")
+				}
+				current, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", current.Data)
 			},
 		},
 		{
@@ -319,18 +333,17 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				var deleted *dynamic.Config
+				var deleted atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					if e.Event == dynamic.Delete {
-						deleted = e.Config
+						deleted.Store(e.Config)
 					}
 				})
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Delete}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, deleted)
-				require.Equal(t, c, deleted)
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, deleted.Load())
 
 			},
 		},
@@ -365,18 +378,17 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NotNil(t, parent)
 				dynamic.AddRef(parent, child)
 
-				var deleted *dynamic.Config
+				var deleted atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					if e.Event == dynamic.Delete {
-						deleted = e.Config
+						deleted.Store(e.Config)
 					}
 				})
 
 				time.Sleep(500 * time.Millisecond)
 				ch <- dynamic.ConfigEvent{Name: configPathParent.String(), Event: dynamic.Delete}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, deleted)
-				require.Equal(t, parent, deleted)
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, parent, deleted.Load())
 
 				update := &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPathChild}}
 				update.Info.Checksum = []byte{2}
@@ -409,17 +421,16 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				var mainFile dynamic.ConfigEvent
+				var mainFile atomic.Pointer[dynamic.Config]
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					mainFile = e
+					mainFile.Store(e.Config)
 				})
 
 				// The listener should be called even checksum matches to the specific w.Read call
 				// otherwise the configuration file will be ignored.
 				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Create, Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: c.Info.Checksum}}}
-				time.Sleep(5 * time.Millisecond)
-				require.NotNil(t, mainFile)
-				require.Equal(t, c, mainFile.Config)
+				require.Eventually(t, func() bool { return mainFile.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, mainFile.Load())
 			},
 		},
 		{
@@ -447,10 +458,24 @@ func TestConfigWatcher_Read(t *testing.T) {
 				_ = w.Start(pool)
 				defer pool.Stop()
 
+				// listeners are called concurrently
+				var m sync.Mutex
 				var events []string
 				w.AddListener(func(e dynamic.ConfigEvent) {
+					m.Lock()
+					defer m.Unlock()
 					events = append(events, e.Config.Info.Path())
 				})
+				receivedEvents := func(n int) []string {
+					require.Eventually(t, func() bool {
+						m.Lock()
+						defer m.Unlock()
+						return len(events) >= n
+					}, time.Second, time.Millisecond)
+					m.Lock()
+					defer m.Unlock()
+					return append([]string{}, events...)
+				}
 
 				ch <- dynamic.ConfigEvent{Name: mainPath.String(), Event: dynamic.Create, Config: mainConfig}
 				c, err := w.Read(refPath, nil)
@@ -460,14 +485,12 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
 
-				time.Sleep(5 * time.Millisecond)
-				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml"}, events)
+				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml"}, receivedEvents(2))
 
-				refConfig.Info.Checksum = []byte{2}
-				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
+				refUpdate := &dynamic.Config{Info: dynamic.ConfigInfo{Url: refPath, Checksum: []byte{2}}}
+				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refUpdate}
 
-				time.Sleep(5 * time.Millisecond)
-				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, events)
+				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, receivedEvents(4))
 			},
 		},
 	}
@@ -516,9 +539,9 @@ func TestConfigWatcher_Start(t *testing.T) {
 				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 				w := server.NewConfigWatcher(&static.Config{})
-				var listenerReceived []*dynamic.Config
+				var listenerReceived atomic.Int32
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					listenerReceived = append(listenerReceived, e.Config)
+					listenerReceived.Add(1)
 				})
 				var ch chan dynamic.ConfigEvent
 				w.AddProvider("foo", &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
@@ -530,9 +553,8 @@ func TestConfigWatcher_Start(t *testing.T) {
 				require.NoError(t, err)
 
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.json")}, Raw: []byte(`{"openapi": "3.0","info":{"title":"Foo"}}`)}}
-				time.Sleep(time.Duration(100) * time.Millisecond)
-
-				require.Len(t, listenerReceived, 1)
+				require.Eventually(t, func() bool { return listenerReceived.Load() > 0 }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, int32(1), listenerReceived.Load())
 				pool.Stop()
 
 				func() {
@@ -612,6 +634,154 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 			tc.test(t)
 		})
 	}
+}
+
+func TestConfigWatcher_PanicInListener(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "panic in registered listener does not stop later events",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Config.Info.Url.Path == "first.json" {
+						panic("TEST PANIC in listener")
+					}
+					received.Add(1)
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				sendEvent(t, ch, newPanicTestConfig("first.json", `{}`))
+				sendEvent(t, ch, newPanicTestConfig("second.json", `{}`))
+
+				require.Eventually(t, func() bool { return received.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic while parsing does not block later update of same file",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					received.Add(1)
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				sendEvent(t, ch, newPanicTestConfig("foo.json", `{"panic": true}`))
+				// the update of the same file locks the entry the panicking parse may have left locked
+				sendEvent(t, ch, newPanicTestConfig("foo.json", `{"panic": false}`))
+
+				require.Eventually(t, func() bool { return received.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic in a config listener other than the first does not stop the watcher",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) { received.Add(1) })
+				ch := startWatcherWithChannel(t, w)
+
+				c := newPanicTestConfig("first.json", `{}`)
+				panicked := make(chan struct{})
+				// the first listener runs synchronously, the following ones in their own goroutine
+				c.Listeners.Add("first", func(dynamic.ConfigEvent) {})
+				c.Listeners.Add("panic", func(dynamic.ConfigEvent) {
+					defer close(panicked)
+					panic("TEST PANIC in config listener")
+				})
+				sendEvent(t, ch, c)
+				sendEvent(t, ch, newPanicTestConfig("second.json", `{}`))
+
+				select {
+				case <-panicked:
+				case <-time.After(2 * time.Second):
+					t.Fatal("panicking listener was not called")
+				}
+				require.Eventually(t, func() bool { return received.Load() == 2 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic in a config listener on delete does not skip the other listeners",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var removed atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						removed.Add(1)
+					}
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				c := newPanicTestConfig("first.json", `{}`)
+				var after atomic.Int32
+				c.Listeners.Add("panic", func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						panic("TEST PANIC in config listener")
+					}
+				})
+				c.Listeners.Add("after", func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						after.Add(1)
+					}
+				})
+				sendEvent(t, ch, c)
+				ch <- dynamic.ConfigEvent{Event: dynamic.Delete, Name: "first.json"}
+
+				require.Eventually(t, func() bool { return after.Load() == 1 && removed.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
+}
+
+func startWatcherWithChannel(t *testing.T, w *server.ConfigWatcher) chan dynamic.ConfigEvent {
+	var ch chan dynamic.ConfigEvent
+	w.AddProvider("foo", &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+		ch = configs
+		return nil
+	}})
+	pool := safe.NewPool(context.Background())
+	t.Cleanup(pool.Stop)
+	require.NoError(t, w.Start(pool))
+	return ch
+}
+
+// sendEvent fails instead of hanging when the watcher's event loop is stuck or gone.
+func sendEvent(t *testing.T, ch chan dynamic.ConfigEvent, c *dynamic.Config) {
+	select {
+	case ch <- dynamic.ConfigEvent{Event: dynamic.Create, Config: c}:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("watcher does not accept event for %v", c.Info.Url)
+	}
+}
+
+func newPanicTestConfig(name, raw string) *dynamic.Config {
+	return &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)},
+		Raw:  []byte(raw),
+		Data: &panicOnParse{},
+	}
+}
+
+// panicOnParse panics in Parse when the config contains "panic": true.
+type panicOnParse struct {
+	Panic bool `json:"panic"`
+}
+
+func (d *panicOnParse) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	if d.Panic {
+		panic("TEST PANIC in parse")
+	}
+	return nil
 }
 
 type parseError struct{}

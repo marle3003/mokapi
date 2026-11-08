@@ -468,3 +468,45 @@ func TestKafkaServer_Update(t *testing.T) {
 		})
 	}
 }
+
+func TestKafkaManager_PortIsBoundWhenUpdateConfigReturns(t *testing.T) {
+	m := server.NewKafkaManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+	defer m.Stop()
+
+	requireBoundWhenUpdateReturns(t, func(port int) { m.UpdateConfig(kafkaConfigEvent(port)) })
+}
+
+func TestKafkaManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
+	m := server.NewKafkaManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+	defer m.Stop()
+
+	requireBindErrorIsLoggedAndServerStaysRegistered(t,
+		func(port int) { m.UpdateConfig(kafkaConfigEvent(port)) },
+		func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+	)
+}
+
+func kafkaConfigEvent(port int) dynamic.ConfigEvent {
+	cfg := asyncapi3test.NewConfig(
+		asyncapi3test.WithTitle("foo"),
+		asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", port)),
+	)
+	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
+}
+
+func TestKafkaManager_DeleteFileStopsBrokerOnlyItDefined(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewKafkaManager(nil, app)
+	defer m.Stop()
+
+	f := newMergedFiles("kafka")
+	m.UpdateConfig(f.a)
+	m.UpdateConfig(f.b)
+
+	deleteA := f.a
+	deleteA.Event = dynamic.Delete
+	m.UpdateConfig(deleteA)
+
+	requirePortClosed(t, f.portA)
+	requirePortOpen(t, f.portB)
+}

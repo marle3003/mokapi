@@ -37,9 +37,10 @@ func TestListGroup(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
 				group := s.GetOrCreateGroup("foo", &store.Broker{})
-				group.State = store.PreparingRebalance
+				group.SetState(store.PreparingRebalance)
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
+				group.SetGeneration(g)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 4,
@@ -58,9 +59,10 @@ func TestListGroup(t *testing.T) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
 				s.GetOrCreateGroup("foo", &store.Broker{})
 				group := s.GetOrCreateGroup("bar", &store.Broker{})
-				group.State = store.CompletingRebalance
+				group.SetState(store.CompletingRebalance)
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
+				group.SetGeneration(g)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 4,

@@ -6,6 +6,7 @@ import (
 	"maps"
 	"mokapi/engine/common"
 	"mokapi/mqtt"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
 	"slices"
@@ -31,14 +32,21 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 	}
 
 	pa := store.PublishArgs{
-		Retain:     args.Retain,
-		ClientId:   args.ClientId,
-		ScriptFile: args.ScriptFile,
+		// an empty payload (value null or '') is the MQTT tombstone and is written as is
+		SkipValidation: args.Value != nil && len(args.Value) == 0,
+		Retain:         args.Retain,
+		ClientId:       args.ClientId,
+		ScriptFile:     args.ScriptFile,
+	}
+
+	payload, err := mqttPayload(t, args)
+	if err != nil {
+		return nil, err
 	}
 
 	req := &mqtt.PublishRequest{
 		Topic: t.Name,
-		Data:  args.Value,
+		Data:  payload,
 	}
 
 	_, err = m.Publish(req, pa)
@@ -49,8 +57,48 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 	return &common.MqttPublishResult{
 		Cluster: m.Info.Name,
 		Topic:   t.Name,
-		Value:   string(args.Value),
+		Value:   string(payload),
 	}, nil
+}
+
+// mqttPayload returns the value as given, the encoded data, or a payload generated from a message
+// of the topic. A messageId selects that message, otherwise the message is chosen by the data
+// or, for a generated payload, randomly.
+func mqttPayload(t *store.Topic, args *common.MqttPublishArgs) ([]byte, error) {
+	ch := t.Config()
+	if ch == nil {
+		// a topic without channel has no messages, e.g. $SYS topics
+		if args.MessageId != "" {
+			return nil, fmt.Errorf("message '%v' not found in channel '%v'", args.MessageId, t.Name)
+		}
+		return args.Value, nil
+	}
+
+	msg, err := selectMessage(ch, args.MessageId, func() (*asyncapi3.Message, error) {
+		if args.Data.IsSet {
+			return ch.GetMessageByPayload(args.Data.Value)
+		}
+		return anyMessage(ch), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case args.Value != nil:
+		return args.Value, nil
+	case args.Data.IsSet:
+		return encodePayload(msg, args.Data.Value)
+	}
+
+	if payloadSchema(msg) == nil {
+		return nil, nil
+	}
+	value, err := generatePayload(msg)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate mqtt payload: %v", err)
+	}
+	return encodePayload(msg, value)
 }
 
 func (c *MqttClient) tryGet(cluster string, topic string, retry common.RetryArgs) (m *runtime.MqttInfo, t *store.Topic, err error) {

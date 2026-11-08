@@ -75,6 +75,11 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 	e.m.Lock()
 	defer e.m.Unlock()
 
+	if evt.Event == dynamic.Delete {
+		e.removeScript(evt.Config.Info.Path())
+		return nil
+	}
+
 	host := newScriptHost(evt.Config, e)
 	e.addOrUpdate(host)
 	e.scripts[host.name] = host
@@ -116,14 +121,20 @@ func (e *Engine) Close() {
 }
 
 func (e *Engine) addOrUpdate(host *scriptHost) {
-	if h, ok := e.scripts[host.name]; ok {
+	if _, ok := e.scripts[host.name]; ok {
 		log.Debugf("updating script %v", host.name)
-		h.close()
-		delete(e.scripts, host.name)
+		e.removeScript(host.name)
 	} else {
 		log.Debugf("parsing script %v", host.name)
 	}
 	e.scripts[host.name] = host
+}
+
+func (e *Engine) removeScript(name string) {
+	if h, ok := e.scripts[name]; ok {
+		h.close()
+		delete(e.scripts, name)
+	}
 }
 
 func (e *Engine) run(host *scriptHost) error {

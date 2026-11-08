@@ -91,7 +91,7 @@ func TestGroupBalancing(t *testing.T) {
 				require.Equal(t, kafka.None, j2.ErrorCode)
 
 				g, _ := s.Group("TestGroup")
-				require.Len(t, g.Generation.Members, 2)
+				require.Len(t, g.Snapshot().Generation.Members, 2)
 			},
 		},
 		{
@@ -229,10 +229,11 @@ func TestGroupBalancing(t *testing.T) {
 
 				g, ok := s.Group("TestGroup")
 				require.True(t, ok, "group must exist")
-				require.NotNil(t, g.Generation, "generation must exist")
-				require.Len(t, g.Generation.Members, 1, "group must contain one members")
-				require.Contains(t, g.Generation.Members, "foo")
-				m := g.Generation.Members["foo"]
+				generation := g.Snapshot().Generation
+				require.NotNil(t, generation, "generation must exist")
+				require.Len(t, generation.Members, 1, "group must contain one members")
+				require.Contains(t, generation.Members, "foo")
+				m := generation.Members["foo"]
 				require.Len(t, m.Partitions, 1)
 				require.Contains(t, m.Partitions, "foo")
 				require.Equal(t, m.Partitions["foo"], []int{1})
@@ -342,19 +343,20 @@ func TestGroupBalancing(t *testing.T) {
 				// group
 				g, ok := s.Group("TestGroup")
 				require.True(t, ok, "group must exist")
-				require.NotNil(t, g.Generation, "generation must exist")
-				require.Len(t, g.Generation.Members, 2, "group must contain two members")
-				require.Contains(t, g.Generation.Members, "leader")
-				require.Contains(t, g.Generation.Members, "member")
+				generation := g.Snapshot().Generation
+				require.NotNil(t, generation, "generation must exist")
+				require.Len(t, generation.Members, 2, "group must contain two members")
+				require.Contains(t, generation.Members, "leader")
+				require.Contains(t, generation.Members, "member")
 
 				// leader
-				m := g.Generation.Members["leader"]
+				m := generation.Members["leader"]
 				require.Len(t, m.Partitions, 1)
 				require.Contains(t, m.Partitions, "foo")
 				require.Equal(t, m.Partitions["foo"], []int{1})
 
 				// member
-				m = g.Generation.Members["member"]
+				m = generation.Members["member"]
 				require.Len(t, m.Partitions, 1)
 				require.Contains(t, m.Partitions, "foo")
 				require.Equal(t, m.Partitions["foo"], []int{2})

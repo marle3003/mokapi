@@ -16,3 +16,16 @@ func TestJsType(t *testing.T) {
 	require.Equal(t, "String", util.JsType("123"))
 	require.Equal(t, "Integer", util.JsType(123))
 }
+
+func TestMessageId(t *testing.T) {
+	id, err := util.MessageId("orderCreated")
+	require.NoError(t, err)
+	require.Equal(t, "orderCreated", id)
+
+	id, err = util.MessageId(nil)
+	require.NoError(t, err)
+	require.Equal(t, "", id)
+
+	_, err = util.MessageId(int64(12))
+	require.EqualError(t, err, "unexpected type for 'messageId': expected string, got Integer")
+}

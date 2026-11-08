@@ -17,7 +17,7 @@ import (
 
 type Broker interface {
 	Addr() string
-	Start()
+	Start() error
 	Stop()
 }
 
@@ -43,6 +43,9 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartKafka(e.Config)
 	if cfg == nil || mode == runtime.KafkaNone {
 		if cfg == nil || m.clusters == nil {
@@ -53,34 +56,33 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Kafka.Get(cfg.Info.Name)
+	var servers *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]
+	if info != nil {
+		servers = info.Servers
+	}
+
 	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	}
-	var servers *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]
-	if info != nil {
-		servers = info.Servers
-	}
-	var err error
-	info, err = m.app.Kafka.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Kafka.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
-	c := m.getOrCreateCluster(info)
-	c.updateBrokers(info, servers)
+	m.getOrCreateCluster(info).updateBrokers(info, servers)
 
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
+// getOrCreateCluster expects the caller to hold m.m.
 func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
@@ -90,10 +92,8 @@ func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster 
 	return c
 }
 
+// removeCluster expects the caller to hold m.m.
 func (m *KafkaManager) removeCluster(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[name]
 	if !ok {
 		return
@@ -137,7 +137,7 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old *sortedmap.Link
 		if !found {
 			log.Infof("adding new kafka broker '%v' on port %v to cluster '%v'", name, port, cfg.Info.Name)
 			broker = service.NewKafkaBroker(port, cfg.Handler(c.monitor))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.brokers[port] = broker
 	}
@@ -150,6 +150,9 @@ func (c *kafkaCluster) close() {
 }
 
 func (m *KafkaManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.clusters {
 		c.close()
 	}

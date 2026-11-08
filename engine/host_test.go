@@ -130,3 +130,33 @@ type hostTestLog struct {
 	level   string
 	message string
 }
+
+type stubJob struct{}
+
+func (stubJob) NextRun() time.Time { return time.Time{} }
+
+func TestScriptHost_Jobs(t *testing.T) {
+	t.Run("job lookup after close finds nothing", func(t *testing.T) {
+		sh := &scriptHost{jobs: map[int]Job{0: stubJob{}}}
+		r.NotNil(t, sh.job(0))
+
+		sh.takeJobs()
+
+		r.Nil(t, sh.job(0))
+	})
+
+	t.Run("cancel unknown job", func(t *testing.T) {
+		sh := &scriptHost{jobs: map[int]Job{}}
+
+		r.EqualError(t, sh.Cancel(1), "job not defined")
+	})
+
+	t.Run("jobs registered", func(t *testing.T) {
+		sh := &scriptHost{jobs: map[int]Job{0: stubJob{}}}
+		r.True(t, sh.hasJobs())
+
+		sh.takeJobs()
+
+		r.False(t, sh.hasJobs())
+	})
+}
