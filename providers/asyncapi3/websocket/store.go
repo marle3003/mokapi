@@ -119,14 +119,6 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		serverAddr = server.Host
 	}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
-	if err != nil {
-		// Accept writes the error response itself, no need to write again
-		log.Errorf("websocket: %s", err)
-		return
-	}
-	defer func() { _ = conn.CloseNow() }()
-
 	client := &Client{
 		Id:         uuid.New().String(),
 		Query:      query,
@@ -137,8 +129,19 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		send:       make(chan Message, 16),
 		closeCh:    make(chan struct{}),
 	}
+	// Register before Accept: the client's Dial returns with the handshake response, so a
+	// message sent right after it must already find the client. It is buffered in client.send
+	// until writeLoop starts.
 	ch.addClient(client)
 	defer ch.removeClient(client)
+
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+	if err != nil {
+		// Accept writes the error response itself, no need to write again
+		log.Errorf("websocket: %s", err)
+		return
+	}
+	defer func() { _ = conn.CloseNow() }()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

@@ -655,6 +655,26 @@ export default function() {
 				require.Equal(t, map[string]string{"chatId": "1234"}, result.Params)
 			},
 		},
+		{
+			name: "broadcast right after handshake reaches client",
+			cfg:  chatCfg(),
+			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				c, _, err := ws.Dial(ctx, url+"/chat", nil)
+				require.NoError(t, err)
+				defer func() { _ = c.CloseNow() }()
+
+				// no waiting: the client must already be known once Dial returns
+				ch, ok := store.Channel("/chat")
+				require.True(t, ok)
+				require.NoError(t, ch.Broadcast(map[string]any{"text": "hello"}))
+
+				_, data, err := c.Read(ctx)
+				require.NoError(t, err)
+				require.JSONEq(t, `{"text":"hello"}`, string(data))
+			},
+		},
 	}
 
 	for _, tc := range testcases {
