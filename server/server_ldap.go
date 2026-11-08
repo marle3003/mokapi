@@ -104,6 +104,9 @@ func (m *LdapDirectoryManager) start(cfg *runtime.LdapInfo) {
 }
 
 func (m *LdapDirectoryManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, s := range m.servers {
 		s.close()
 	}

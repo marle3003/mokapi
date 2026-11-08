@@ -43,6 +43,9 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartKafka(e.Config)
 	if cfg == nil || mode == runtime.KafkaNone {
 		if cfg == nil || m.clusters == nil {
@@ -77,10 +80,8 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
+// getOrCreateCluster expects the caller to hold m.m.
 func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
@@ -90,10 +91,8 @@ func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster 
 	return c
 }
 
+// removeCluster expects the caller to hold m.m.
 func (m *KafkaManager) removeCluster(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[name]
 	if !ok {
 		return
@@ -150,6 +149,9 @@ func (c *kafkaCluster) close() {
 }
 
 func (m *KafkaManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.clusters {
 		c.close()
 	}

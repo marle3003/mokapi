@@ -95,7 +95,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	}
 
 	pool := safe.NewPool(context.Background())
-	s := server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine)
+	s := server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, mqtt, websocket, scriptEngine)
 	go func() {
 		err := s.Start()
 		if err != nil {

@@ -34,6 +34,9 @@ func NewWebsocketManager(emitter common.EventEmitter, app *runtime.App) *Websock
 }
 
 func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartWebsocket(e.Config)
 	if cfg == nil || mode == runtime.WebsocketNone {
 		if cfg == nil || m.services == nil {
@@ -68,10 +71,8 @@ func (m *WebsocketManager) addOrUpdateService(cfg *runtime.WebsocketInfo) {
 	c.update(cfg, m.app.Monitor.Websocket)
 }
 
+// getOrCreateService expects the caller to hold m.m.
 func (m *WebsocketManager) getOrCreateService(cfg *runtime.WebsocketInfo) *websocketService {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.services[cfg.Info.Name]
 	if !ok {
 		c = &websocketService{cfg: cfg, servers: make(map[string]*service.WebsocketServer)}
@@ -80,10 +81,8 @@ func (m *WebsocketManager) getOrCreateService(cfg *runtime.WebsocketInfo) *webso
 	return c
 }
 
+// removeService expects the caller to hold m.m.
 func (m *WebsocketManager) removeService(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.services[name]
 	if !ok {
 		return
@@ -140,6 +139,9 @@ func (c *websocketService) close() {
 }
 
 func (m *WebsocketManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.services {
 		c.close()
 	}

@@ -122,6 +122,9 @@ func mailPort(server *mail.Server) string {
 }
 
 func (m *MailManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, ms := range m.servers {
 		for _, server := range ms {
 			server.Stop()

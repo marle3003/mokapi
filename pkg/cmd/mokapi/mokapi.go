@@ -200,7 +200,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		reportMockability(e)
 	})
 
-	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine), nil
+	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, mqtt, websocket, scriptEngine), nil
 }
 
 var lastMockability = map[string]string{}

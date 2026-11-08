@@ -32,6 +32,9 @@ func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager 
 }
 
 func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	cfg, mode := runtime.ShouldStartMqtt(e.Config)
 	if cfg == nil || mode == runtime.MqttNone {
 		if cfg == nil || m.clusters == nil {
@@ -66,10 +69,8 @@ func (m *MqttManager) addOrUpdateCluster(cfg *runtime.MqttInfo) {
 	c.update(cfg, m.app.Monitor.Mqtt)
 }
 
+// getOrCreateCluster expects the caller to hold m.m.
 func (m *MqttManager) getOrCreateCluster(cfg *runtime.MqttInfo) *mqttCluster {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		c = &mqttCluster{cfg: cfg, brokers: make(map[string]Broker)}
@@ -78,10 +79,8 @@ func (m *MqttManager) getOrCreateCluster(cfg *runtime.MqttInfo) *mqttCluster {
 	return c
 }
 
+// removeCluster expects the caller to hold m.m.
 func (m *MqttManager) removeCluster(name string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-
 	c, ok := m.clusters[name]
 	if !ok {
 		return
@@ -134,6 +133,9 @@ func (c *mqttCluster) close() {
 }
 
 func (m *MqttManager) Stop() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.clusters {
 		c.close()
 	}
