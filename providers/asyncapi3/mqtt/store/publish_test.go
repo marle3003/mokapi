@@ -470,3 +470,22 @@ func (c *client) send(r *mqtt.Message) *mqtttest.MessageRecorder {
 	c.handler.ServeMessage(rr, r)
 	return rr
 }
+
+func TestTopic_Config(t *testing.T) {
+	ch := asyncapi3test.NewChannel(
+		asyncapi3test.WithChannelAddress("foo"),
+		asyncapi3test.WithMessage("typed", asyncapi3test.WithPayload(schematest.New("object"))),
+	)
+	s := store.New(
+		asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("test-server", "", ""),
+			asyncapi3test.AddChannel("foo", ch),
+		),
+		enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt(),
+	)
+	defer s.Close()
+
+	topic, ok := s.Topic("foo")
+	require.True(t, ok)
+	require.Same(t, ch, topic.Config())
+}

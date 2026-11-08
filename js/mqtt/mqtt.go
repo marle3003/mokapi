@@ -92,12 +92,23 @@ func (m *Module) mapParams(args goja.Value) (*common.MqttPublishArgs, error) {
 					continue
 				}
 				pa.Topic = topic.String()
+			case "messageId":
+				var err error
+				pa.MessageId, err = util.MessageId(params.Get(k).Export())
+				if err != nil {
+					return nil, err
+				}
 			case "retain":
 				v := params.Get(k)
 				pa.Retain = v.ToBoolean()
 			case "value":
 				value := params.Get(k)
-				if goja.IsUndefined(value) || goja.IsNull(value) {
+				if goja.IsUndefined(value) {
+					continue
+				}
+				if goja.IsNull(value) {
+					// an empty payload, not nil: nil asks for a generated payload
+					pa.Value = []byte{}
 					continue
 				}
 				pa.Value = []byte(value.String())

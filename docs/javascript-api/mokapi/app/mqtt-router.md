@@ -72,8 +72,8 @@ and so does an error thrown in the `result` callback.
 | message         | object | [MqttPublishMessage](#mqttpublishmessage)                |
 | opts (optional) | object | [MqttPublishArgs](#mqttpublishargs)                      |
 
-If the message sets neither `data` nor `value`, Mokapi generates a random valid value based on
-the AsyncAPI schema.
+If the message sets neither `data` nor `value`, Mokapi generates a payload from the message
+selected by `messageId`, or from a random message of the topic if you set none.
 
 ```javascript
 import { app } from 'mokapi'
@@ -111,7 +111,28 @@ Groups handlers and publishers for a single topic. The methods behave like those
 |-------------------|---------|-------------------------------------------------------------------------------------------------|
 | data (optional)   | any     | Structured data, encoded according to the topic's content type and validated against the schema |
 | value (optional)  | any     | Raw value written as-is, without validation. Objects are JSON-serialized.                       |
+| messageId (optional) | string | Key of the message under `channels.<channel>.messages` in the AsyncAPI specification. Selects the message used to generate or encode the payload. An unknown key throws an error such as `message 'alarm' not found in channel 'sensors/events'`. |
 | retain (optional) | boolean | If `true`, the broker keeps the message and delivers it to new subscribers. Default: `false`    |
+
+`data` is encoded and validated with the selected message (or the matching message of the
+topic), also when you pass `data: null`. An empty `value` (`null` or `''`) publishes an empty payload without validation. In MQTT, an
+empty retained payload signals that the retained message should be deleted. Mokapi's broker
+doesn't delete it yet.
+
+The examples use a topic with the message `alarm`, whose payload requires `sensorId` (string)
+and `level` (`warning` or `critical`).
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    // payload generated from the message 'alarm'
+    app.mqtt().publish('sensors/events', { messageId: 'alarm' })
+
+    // data validated and encoded with the message 'alarm'
+    app.mqtt().publish('sensors/events', { messageId: 'alarm', data: { sensorId: 's1', level: 'critical' } })
+}
+```
 
 ## MqttPublishArgs
 

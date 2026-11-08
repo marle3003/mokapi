@@ -174,6 +174,12 @@ func mapProduceMessage(vMsg *goja.Object) (common.KafkaMessage, error) {
 
 	for _, propName := range vMsg.Keys() {
 		switch propName {
+		case "messageId":
+			var err error
+			msg.MessageId, err = util.MessageId(vMsg.Get(propName).Export())
+			if err != nil {
+				return msg, err
+			}
 		case "key":
 			msg.Key = vMsg.Get(propName).Export()
 		case "data":

@@ -36,3 +36,7 @@ args.cluster = "foo";
 args.topic = "foo";
 // @ts-expect-error
 args.value = "foo";
+
+publish({ topic: "orders", messageId: "alarm" });
+// @ts-expect-error
+publish({ topic: "orders", messageId: 1 });

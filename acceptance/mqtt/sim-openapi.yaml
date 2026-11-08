@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Sensor Simulation
+  version: 1.0.0
+servers:
+  - url: http://localhost:18095
+paths:
+  /sim/ready:
+    get:
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]
+  /sim/mqtt:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: Message published
+        '422':
+          description: Publishing failed
+          content:
+            text/plain:
+              schema:
+                type: string

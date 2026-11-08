@@ -82,7 +82,8 @@ reject the promise, and so does an error thrown in the `result` callback.
 | opts (optional) | object          | [KafkaProduceArgs](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproduceargs) with a result callback and retry settings |
 
 If a message sets neither `data` nor `value`, Mokapi generates a random valid value based on
-the AsyncAPI schema.
+the AsyncAPI schema. Use `messageId` to generate it from a specific message of the channel, see
+[Selecting a message](/docs/javascript-api/mokapi/app/kafka-produce.md#selecting-a-message).
 
 ```javascript
 import { app } from 'mokapi'
@@ -91,7 +92,8 @@ export default function() {
     app.kafka().produce('order-placed', [
         { key: 'order-1', data: { id: 1 } },
         { data: { id: 2 } },
-        {} // random value generated from the schema
+        {}, // random value generated from the schema
+        { messageId: 'orderCreated' } // value and key generated from this message
     ], {
         result: (r) => console.log(`offset=${r.messages[0].offset}`)
     })

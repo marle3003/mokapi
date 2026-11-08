@@ -41,6 +41,21 @@ Invalid arguments throw an error at the call, and client errors reject the promi
 | message         | object \| array | One [KafkaProduceMessage](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproducemessage) or an array of them |
 | opts (optional) | object          | [EventArgs](/docs/javascript-api/mokapi/eventhandler/eventargs.md) for `message()`, [KafkaProduceArgs](/docs/javascript-api/mokapi/app/kafka-produce.md#kafkaproduceargs) for `produce()` |
 
+## Example: Produce a Specific Message
+
+`messageId` selects one of the messages defined for the channel. Mokapi generates the value and
+key from it. See [Selecting a message](/docs/javascript-api/mokapi/app/kafka-produce.md#selecting-a-message).
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    app.api('Order Events').kafka()
+        .topic('order-placed')
+        .produce({ messageId: 'orderCreated' })
+}
+```
+
 ## Example: Produce Periodically
 
 ```javascript

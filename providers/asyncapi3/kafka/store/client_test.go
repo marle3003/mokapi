@@ -413,3 +413,36 @@ func TestClient(t *testing.T) {
 		})
 	}
 }
+
+// TestClient_Write_SeveralMessagesWithPayload verifies that every message of a topic validates the
+// whole value, regardless of the order in which the messages are tried.
+func TestClient_Write_SeveralMessagesWithPayload(t *testing.T) {
+	newMessage := func(event string) *asyncapi3.Message {
+		return asyncapi3test.NewMessage(
+			asyncapi3test.WithContentType("application/json"),
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("event", schematest.New("string", schematest.WithEnumValues(event))),
+				schematest.WithRequired("event"),
+			)),
+		)
+	}
+	ch := asyncapi3test.NewChannel(
+		asyncapi3test.UseMessage("created", &asyncapi3.MessageRef{Value: newMessage("created")}),
+		asyncapi3test.UseMessage("deleted", &asyncapi3.MessageRef{Value: newMessage("deleted")}),
+		asyncapi3test.UseMessage("notified", &asyncapi3.MessageRef{Value: newMessage("notified")}),
+	)
+	s := store.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("foo", ch)), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+	c := store.NewClient(s, monitor.NewKafka())
+
+	// the messages are an unordered map, so repeat to cover several orders
+	for i := 0; i < 30; i++ {
+		for _, event := range []string{"created", "deleted", "notified"} {
+			result, err := c.Write("foo", []store.Record{{
+				Partition: 0,
+				Value:     []byte(`{"event":"` + event + `"}`),
+			}}, media.ParseContentType("application/json"))
+			require.NoError(t, err)
+			require.Equal(t, "", result[0].Error, event)
+		}
+	}
+}

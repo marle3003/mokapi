@@ -21,13 +21,13 @@ Reads the entire contents of an existing file.
 
 | Name       | Type   | Description                                                                                              |
 |------------|--------|----------------------------------------------------------------------------------------------------------|
-| as         | string | By default contents of the file are read as `string`, but with `binary` the file will be read as binary. |
+| as         | string | By default contents of the file are read as `string`. With `binary` the file is read as binary. With `resolved` Mokapi returns the parsed configuration as an object with all `$ref` references resolved. |
 
 ## Returns
 
 | Type                | Description               |
 |---------------------|---------------------------|
-| string &#124; array | The contents of the file. |
+| string &#124; array &#124; object | The contents of the file. With `resolved`, the parsed configuration as an object. |
 
 ## Example Reading JSON File
 
@@ -62,6 +62,18 @@ export default function() {
 ```javascript
 export default function() {
     const image = open('./image.png', { as: 'binary' })
+}
+```
+
+## Example: Reading a Resolved Specification
+
+With `as: 'resolved'`, Mokapi parses the file as a specification and resolves its references.
+Circular references are replaced by `{ description: 'circular reference' }`.
+
+```javascript
+export default function() {
+    const api = open('./openapi.yaml', { as: 'resolved' })
+    console.log(api.info.title)
 }
 ```
 

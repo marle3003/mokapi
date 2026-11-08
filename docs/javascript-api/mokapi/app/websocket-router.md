@@ -68,7 +68,7 @@ Client errors, such as an unknown channel, reject the promise, and so does an er
 | Parameter       | Type   | Description                                                                     |
 |-----------------|--------|---------------------------------------------------------------------------------|
 | channel         | string | Channel name as defined in the AsyncAPI specification                           |
-| message         | any    | Payload, encoded according to the channel's `contentType`                       |
+| message (optional) | any | Payload, encoded according to the channel's `contentType`. If omitted, Mokapi generates a payload from the channel's message |
 | args (optional) | object | [WebsocketSendArgs](#websocketsendargs)                                         |
 
 ``` box=warning
@@ -138,5 +138,33 @@ Additional properties per event:
 
 | Name              | Type     | Description                                                                                          |
 |-------------------|----------|------------------------------------------------------------------------------------------------------|
+| messageId (optional) | string | Key of the message under `channels.<channel>.messages` in the AsyncAPI specification, see [Selecting a message](#selecting-a-message) |
 | result (optional) | function | Called after the message has been sent, before the `sendAsync()` promise resolves. The result contains `api`, `channel` and `message`.          |
 | retry (optional)  | object   | [Retry](/docs/javascript-api/mokapi/app/retry.md) settings, used when the channel is not yet available |
+
+## Selecting a message
+
+A channel can define several messages. Set `messageId` in the send arguments to choose one. The
+value is the key of the message under `channels.<channel>.messages` in your AsyncAPI
+specification. For AsyncAPI 2, it is the key Mokapi derives: the `operationId` of the operation,
+otherwise the last segment of the message `$ref`. It is the same value the dashboard shows as
+`messageId` in the message log.
+
+Without a message, Mokapi generates the payload from the selected message. If the selected
+message has no payload, Mokapi sends an empty text frame. With a message, Mokapi validates it
+against the selected message and throws an error if it is invalid. An unknown `messageId` throws
+an error. `sendAsync()` rejects the promise.
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    const chat = app.api('Chat API').websocket()
+
+    // payload generated from the message 'serverMessage'
+    chat.send('/chat', undefined, { messageId: 'serverMessage' })
+
+    // validated against the message 'serverMessage'
+    chat.send('/chat', { text: 'hello' }, { messageId: 'serverMessage' })
+}
+```

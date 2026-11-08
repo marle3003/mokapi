@@ -9,6 +9,7 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
@@ -924,4 +925,237 @@ func getHeader(name string, headers []kafka.RecordHeader) (kafka.RecordHeader, b
 		}
 	}
 	return kafka.RecordHeader{}, false
+}
+
+func TestKafkaClient_Produce_MessageId(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// topic "orders" with two messages: orderCreated and orderDeleted define their own key schema,
+	// orderNotified has none, ping has no payload at all.
+	newConfig := func() *asyncapi3.Config {
+		created := asyncapi3test.NewMessage(
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("event", schematest.New("string", schematest.WithEnumValues("created"))),
+				schematest.WithRequired("event"),
+			)),
+			asyncapi3test.WithKey(schematest.New("string", schematest.WithPattern("created-[0-9]{3}"))),
+		)
+		deleted := asyncapi3test.NewMessage(
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("event", schematest.New("string", schematest.WithEnumValues("deleted"))),
+				schematest.WithRequired("event"),
+			)),
+			asyncapi3test.WithKey(schematest.New("string", schematest.WithPattern("deleted-[0-9]{3}"))),
+		)
+		notified := asyncapi3test.NewMessage(
+			asyncapi3test.WithPayload(schematest.New("object",
+				schematest.WithProperty("event", schematest.New("string", schematest.WithEnumValues("notified"))),
+				schematest.WithRequired("event"),
+			)),
+		)
+		ping := asyncapi3test.NewMessage()
+
+		ch := asyncapi3test.NewChannel(
+			asyncapi3test.WithChannelAddress("orders"),
+			asyncapi3test.UseMessage("orderCreated", &asyncapi3.MessageRef{Value: created}),
+			asyncapi3test.UseMessage("orderDeleted", &asyncapi3.MessageRef{Value: deleted}),
+			asyncapi3test.UseMessage("orderNotified", &asyncapi3.MessageRef{Value: notified}),
+			asyncapi3test.UseMessage("ping", &asyncapi3.MessageRef{Value: ping}),
+		)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("orders", ch),
+			asyncapi3test.WithOperation("sendAction",
+				asyncapi3test.WithOperationAction("send"),
+				asyncapi3test.WithOperationChannel(ch),
+				asyncapi3test.UseOperationMessage(created),
+				asyncapi3test.UseOperationMessage(deleted),
+				asyncapi3test.UseOperationMessage(notified),
+				asyncapi3test.UseOperationMessage(ping),
+			),
+		)
+	}
+
+	produce := func(app *runtime.App, messages ...common.KafkaMessage) (*common.KafkaProduceResult, error) {
+		for i := range messages {
+			messages[i].Partition = 0
+		}
+		return engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{Topic: "orders", Messages: messages})
+	}
+	records := func(t *testing.T, app *runtime.App) []*kafka.Record {
+		b, errCode := app.Kafka.Get("foo").Store.Topic("orders").Partition(0).Read(0, 10000)
+		require.Equal(t, kafka.None, errCode)
+		return b.Records
+	}
+	set := func(b []byte) common.Optional[[]byte] { return common.Optional[[]byte]{IsSet: true, Value: b} }
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T, app *runtime.App)
+	}{
+		{
+			name: "payload and key are generated from the selected message",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderDeleted"})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Len(t, r, 1)
+				require.Equal(t, `{"event":"deleted"}`, kafka.BytesToString(r[0].Value))
+				require.Regexp(t, `^deleted-[0-9]{3}$`, kafka.BytesToString(r[0].Key))
+			},
+		},
+		{
+			name: "key falls back to the default key schema if the message defines none",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderNotified"})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Equal(t, `{"event":"notified"}`, kafka.BytesToString(r[0].Value))
+				require.Regexp(t, `^[a-z]{9}$`, kafka.BytesToString(r[0].Key))
+			},
+		},
+		{
+			name: "explicit key is kept",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderDeleted", Key: "order-1"})
+
+				require.NoError(t, err)
+				require.Equal(t, "order-1", kafka.BytesToString(records(t, app)[0].Key))
+			},
+		},
+		{
+			name: "mixed messages in one call",
+			test: func(t *testing.T, app *runtime.App) {
+				result, err := produce(app,
+					common.KafkaMessage{MessageId: "orderCreated"},
+					common.KafkaMessage{MessageId: "orderDeleted"},
+					common.KafkaMessage{MessageId: "orderCreated"},
+				)
+
+				require.NoError(t, err)
+				require.Len(t, result.Messages, 3)
+				r := records(t, app)
+				require.Len(t, r, 3)
+				require.Equal(t, `{"event":"created"}`, kafka.BytesToString(r[0].Value))
+				require.Equal(t, `{"event":"deleted"}`, kafka.BytesToString(r[1].Value))
+				require.Equal(t, `{"event":"created"}`, kafka.BytesToString(r[2].Value))
+			},
+		},
+		{
+			name: "data is encoded with the selected message",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{
+					MessageId: "orderDeleted",
+					Data:      common.Optional[any]{IsSet: true, Value: map[string]any{"event": "deleted"}},
+				})
+
+				require.NoError(t, err)
+				require.Equal(t, `{"event":"deleted"}`, kafka.BytesToString(records(t, app)[0].Value))
+			},
+		},
+		{
+			name: "data is validated against the selected message only",
+			test: func(t *testing.T, app *runtime.App) {
+				// valid for orderCreated, but orderDeleted is selected
+				_, err := produce(app, common.KafkaMessage{
+					MessageId: "orderDeleted",
+					Data:      common.Optional[any]{IsSet: true, Value: map[string]any{"event": "created"}},
+				})
+
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "failed to produce message to Kafka topic 'orders'")
+				require.Empty(t, records(t, app))
+			},
+		},
+		{
+			name: "value is not validated but the selected message determines the key",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderDeleted", Value: set([]byte("not json"))})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Equal(t, "not json", kafka.BytesToString(r[0].Value))
+				require.Regexp(t, `^deleted-[0-9]{3}$`, kafka.BytesToString(r[0].Key))
+			},
+		},
+		{
+			name: "unknown messageId is an error without fallback",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderCreatd"})
+
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'orders': message 'orderCreatd' not found in channel 'orders'")
+				require.Empty(t, records(t, app))
+			},
+		},
+		{
+			name: "unknown messageId with value is an error",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderCreatd", Value: set(nil)})
+
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "message 'orderCreatd' not found in channel 'orders'")
+			},
+		},
+		{
+			name: "tombstone with messageId has no value",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "orderDeleted", Key: "order-1", Value: set(nil)})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Len(t, r, 1)
+				require.Equal(t, "order-1", kafka.BytesToString(r[0].Key))
+				require.Nil(t, r[0].Value)
+			},
+		},
+		{
+			name: "tombstone without messageId has no value",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{Key: "order-1", Value: set(nil)})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Len(t, r, 1)
+				require.Equal(t, "order-1", kafka.BytesToString(r[0].Key))
+				require.Nil(t, r[0].Value)
+			},
+		},
+		{
+			name: "selected message without payload produces null",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{MessageId: "ping", Key: "p"})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Len(t, r, 1)
+				require.Nil(t, r[0].Value)
+			},
+		},
+		{
+			name: "without messageId a message of the channel is chosen",
+			test: func(t *testing.T, app *runtime.App) {
+				_, err := produce(app, common.KafkaMessage{})
+
+				require.NoError(t, err)
+				r := records(t, app)
+				require.Len(t, r, 1)
+				require.Regexp(t, `^\{"event":"(created|deleted|notified)"\}$`, kafka.BytesToString(r[0].Value))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			generator.Seed(11)
+
+			app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+			e := enginetest.NewEngine(engine.WithKafkaClient(engine.NewKafkaClient(app)))
+			_, err := app.Kafka.Add(getConfig(newConfig()), e)
+			require.NoError(t, err)
+
+			tc.test(t, app)
+		})
+	}
 }

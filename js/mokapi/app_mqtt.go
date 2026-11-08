@@ -128,6 +128,7 @@ func prepareMqttPublish(vm *goja.Runtime, filter common.MqttFilter, vMsg goja.Va
 	return &common.MqttPublishArgs{
 		Cluster:    filter.Api,
 		Topic:      filter.Topic,
+		MessageId:  msg.MessageId,
 		Data:       msg.Data,
 		Value:      msg.Value,
 		Retain:     msg.Retain,
@@ -148,8 +149,14 @@ func mapPublishMessage(vMsg *goja.Object) (*common.MqttPublishArgs, error) {
 
 	for _, propName := range vMsg.Keys() {
 		switch propName {
+		case "messageId":
+			var err error
+			msg.MessageId, err = util.MessageId(vMsg.Get(propName).Export())
+			if err != nil {
+				return nil, err
+			}
 		case "data":
-			msg.Data = vMsg.Get(propName).Export()
+			msg.Data = common.Optional[any]{Value: vMsg.Get(propName).Export(), IsSet: true}
 		case "value":
 			v := vMsg.Get(propName).Export()
 			switch val := v.(type) {
@@ -160,7 +167,8 @@ func mapPublishMessage(vMsg *goja.Object) (*common.MqttPublishArgs, error) {
 			case int64, float64, bool:
 				msg.Value = []byte(fmt.Sprintf("%v", val))
 			case nil:
-				msg.Value = nil
+				// an empty payload, not nil: nil asks for a generated payload
+				msg.Value = []byte{}
 			default:
 				b, err := json.Marshal(val)
 				if err != nil {

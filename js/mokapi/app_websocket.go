@@ -172,6 +172,7 @@ func prepareWebsocketSend(vm *goja.Runtime, filter common.WebsocketFilter, vMsg 
 	return common.WebsocketSendArgs{
 		Api:         filter.Api,
 		ChannelName: filter.Channel,
+		MessageId:   args.MessageId,
 		Message:     vMsg.Export(),
 		ScriptFile:  util.GetScriptFile(vm).Info.Key(),
 		Retry:       args.Retry,
@@ -179,8 +180,9 @@ func prepareWebsocketSend(vm *goja.Runtime, filter common.WebsocketFilter, vMsg 
 }
 
 type WebsocketSendArgs struct {
-	Retry  common.RetryArgs
-	result WebsocketSendResultCallback
+	MessageId string
+	Retry     common.RetryArgs
+	result    WebsocketSendResultCallback
 }
 
 type WebsocketSendResultCallback func(result *common.WebsocketSendResult) error
@@ -197,6 +199,12 @@ func mapSendArgs(v goja.Value, vm *goja.Runtime) (*WebsocketSendArgs, error) {
 	jsObj := v.ToObject(vm)
 	for _, propName := range jsObj.Keys() {
 		switch propName {
+		case "messageId":
+			var err error
+			args.MessageId, err = util.MessageId(jsObj.Get(propName).Export())
+			if err != nil {
+				return nil, err
+			}
 		case "retry":
 			retry, ok := jsObj.Get(propName).Export().(map[string]any)
 			if !ok {

@@ -14,6 +14,19 @@ func JsType(v any) string {
 	return lib.TypeFrom(v)
 }
 
+// MessageId converts an exported messageId property of a message or option object.
+// An absent messageId (undefined or null) selects no message.
+func MessageId(v any) (string, error) {
+	switch id := v.(type) {
+	case nil:
+		return "", nil
+	case string:
+		return id, nil
+	default:
+		return "", fmt.Errorf("unexpected type for 'messageId': expected string, got %s", JsType(v))
+	}
+}
+
 func GetScriptFile(vm *goja.Runtime) *dynamic.Config {
 	return vm.Get("mokapi/internal").(*goja.Object).Get("file").Export().(*dynamic.Config)
 }

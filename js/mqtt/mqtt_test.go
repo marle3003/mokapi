@@ -80,6 +80,56 @@ func TestMqtt(t *testing.T) {
 			},
 		},
 		{
+			name: "publish with messageId",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var published *common.MqttPublishArgs
+				host.MqttClientTest = &enginetest.MqttClient{PublishFunc: func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
+					published = args
+					return &common.MqttPublishResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const mqtt = require("mokapi/mqtt")
+					mqtt.publish({ topic: 't', messageId: 'alarm' })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "alarm", published.MessageId)
+				r.Nil(t, published.Value)
+			},
+		},
+		{
+			name: "publish null value is an empty payload",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var published *common.MqttPublishArgs
+				host.MqttClientTest = &enginetest.MqttClient{PublishFunc: func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
+					published = args
+					return &common.MqttPublishResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const mqtt = require("mokapi/mqtt")
+					mqtt.publish({ topic: 't', value: null })
+				`)
+				r.NoError(t, err)
+				r.NotNil(t, published.Value)
+				r.Empty(t, published.Value)
+			},
+		},
+		{
+			name: "messageId of wrong type",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.MqttClientTest = &enginetest.MqttClient{PublishFunc: func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
+					return &common.MqttPublishResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const mqtt = require("mokapi/mqtt")
+					mqtt.publish({ topic: 't', messageId: 12 })
+				`)
+				r.EqualError(t, err, "unexpected type for 'messageId': expected string, got Integer at mokapi/js/mqtt.(*Module).Publish-fm (native)")
+			},
+		},
+		{
 			name: "publish client error throws",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.MqttClientTest = &enginetest.MqttClient{PublishFunc: func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {

@@ -101,6 +101,22 @@ m.app.kafka().produce('foo', [{ key: 'key1' },{ key: 'key2' }])
 			},
 		},
 		{
+			name: "produce messages with messageId",
+			script: `
+const m = require('mokapi')
+m.app.kafka().produce('foo', [{ messageId: 'orderCreated' }, { messageId: 'orderDeleted', value: null }, { key: 'k' }, { messageId: undefined }])
+`,
+			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
+				r.NoError(t, err)
+				r.Len(t, produces, 1)
+				r.Equal(t, "orderCreated", produces[0].Messages[0].MessageId)
+				r.Equal(t, "orderDeleted", produces[0].Messages[1].MessageId)
+				r.True(t, produces[0].Messages[1].Value.IsSet)
+				r.Equal(t, "", produces[0].Messages[2].MessageId)
+				r.Equal(t, "", produces[0].Messages[3].MessageId)
+			},
+		},
+		{
 			name: "produce key is number",
 			script: `
 const m = require('mokapi')
@@ -303,6 +319,11 @@ func TestModule_AppKafka_ProduceAsync_Errors(t *testing.T) {
 		reason string // part of the rejection reason of the promise
 		thrown string // part of the exception when the call itself must throw
 	}{
+		{
+			name:   "messageId of wrong type throws synchronously",
+			script: `m.app.kafka().produceAsync('foo', { messageId: 12 })`,
+			thrown: "unexpected type for 'messageId': expected string, got Integer",
+		},
 		{
 			name:   "invalid retry throws synchronously",
 			script: `m.app.kafka().produceAsync('foo', { value: 'hello' }, { retry: 'foo' })`,

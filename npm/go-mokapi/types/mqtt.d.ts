@@ -48,8 +48,14 @@ export interface PublishArgs {
     /** MQTT topic name. If not specified, message will be written to a random topic. */
     topic?: string
 
+    /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     * Selects the message used to generate the value. An unknown `messageId` throws an error.
+     */
+    messageId?: string;
+
     /** MQTT message value. If not specified, a random value will be generated based on the topic configuration. */
-    value: string;
+    value?: string;
 
     /** Whether the message should be retained */
     retain?: boolean

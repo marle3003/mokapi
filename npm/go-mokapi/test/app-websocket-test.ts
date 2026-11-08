@@ -46,3 +46,11 @@ async function sendAsync() {
 
 const routerAfterSend: WebsocketRouter = app.websocket().send("channel", {});
 const channelRouterAfterSend: WebsocketChannelRouter = app.websocket().channel("channel").send({});
+
+app.websocket().send("channel", undefined, { messageId: "serverMessage" });
+app.websocket().send("channel", { text: "hello" }, { messageId: "serverMessage" });
+app.websocket().channel("channel").send(undefined, { messageId: "serverMessage" });
+app.websocket().sendAsync("channel", undefined, { messageId: "serverMessage" });
+app.websocket().channel("channel").sendAsync(undefined, { messageId: "serverMessage" });
+// @ts-expect-error
+app.websocket().send("channel", undefined, { messageId: 1 });

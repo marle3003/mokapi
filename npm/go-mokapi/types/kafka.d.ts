@@ -141,6 +141,12 @@ export interface ProduceArgs {
  * Represents a Kafka message to write.
  */
 export interface Message {
+    /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     * Selects the message used to generate the value and key. An unknown `messageId` throws an error.
+     */
+    messageId?: string;
+
     /** Kafka partition index. If not specified, the partition is chosen based on the key. */
     partition?: number;
 

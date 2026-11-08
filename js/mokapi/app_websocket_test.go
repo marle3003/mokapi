@@ -22,6 +22,7 @@ func TestModule_AppWebsocket_SendAsync(t *testing.T) {
 		name            string
 		script          string
 		expectedChannel string
+		expectedId      string
 	}{
 		{
 			name: "sendAsync on channel sends the message once",
@@ -38,6 +39,15 @@ const m = require('mokapi')
 const p = m.app.websocket().sendAsync('/foo', { text: 'hello' })
 `,
 			expectedChannel: "/foo",
+		},
+		{
+			name: "sendAsync without message selects the message by messageId",
+			script: `
+const m = require('mokapi')
+const p = m.app.websocket().sendAsync('/foo', undefined, { messageId: 'ack' })
+`,
+			expectedChannel: "/foo",
+			expectedId:      "ack",
 		},
 	}
 
@@ -76,6 +86,7 @@ const p = m.app.websocket().sendAsync('/foo', { text: 'hello' })
 			defer mu.Unlock()
 			r.Len(t, sends, 1, "one sendAsync call must send exactly one message")
 			r.Equal(t, tc.expectedChannel, sends[0].ChannelName)
+			r.Equal(t, tc.expectedId, sends[0].MessageId)
 		})
 	}
 }
@@ -126,8 +137,9 @@ const p = m.app.websocket().sendAsync('/foo', { text: 'hello' })
 
 func TestModule_AppWebsocket_Send(t *testing.T) {
 	testcases := []struct {
-		name   string
-		script string
+		name       string
+		script     string
+		expectedId string
 	}{
 		{
 			name: "send on router with channel name",
@@ -142,6 +154,22 @@ m.app.websocket().send('/foo', { text: 'hello' })
 const m = require('mokapi')
 m.app.websocket().channel('/foo').send({ text: 'hello' })
 `,
+		},
+		{
+			name: "send without message selects the message by messageId",
+			script: `
+const m = require('mokapi')
+m.app.websocket().send('/foo', undefined, { messageId: 'ack' })
+`,
+			expectedId: "ack",
+		},
+		{
+			name: "send on channel without message selects the message by messageId",
+			script: `
+const m = require('mokapi')
+m.app.websocket().channel('/foo').send(undefined, { messageId: 'ack' })
+`,
+			expectedId: "ack",
 		},
 	}
 
@@ -173,6 +201,7 @@ m.app.websocket().channel('/foo').send({ text: 'hello' })
 
 			r.Len(t, sends, 1)
 			r.Equal(t, "/foo", sends[0].ChannelName)
+			r.Equal(t, tc.expectedId, sends[0].MessageId)
 		})
 	}
 }
@@ -185,6 +214,11 @@ func TestModule_AppWebsocket_SendAsync_Errors(t *testing.T) {
 		reason string // part of the rejection reason of the promise
 		thrown string // part of the exception when the call itself must throw
 	}{
+		{
+			name:   "messageId of wrong type throws synchronously",
+			script: `m.app.websocket().sendAsync('/foo', undefined, { messageId: 12 })`,
+			thrown: "unexpected type for 'messageId': expected string, got Integer",
+		},
 		{
 			name:   "invalid retry throws synchronously",
 			script: `m.app.websocket().sendAsync('/foo', { text: 'hello' }, { retry: 'foo' })`,

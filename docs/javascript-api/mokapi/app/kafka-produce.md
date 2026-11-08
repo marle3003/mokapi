@@ -17,11 +17,45 @@ A single message to produce.
 | key (optional)       | any    | Message key. If omitted, Mokapi generates a random key based on the AsyncAPI schema.                     |
 | data (optional)      | any    | Structured data. Mokapi encodes it according to the topic's content type and validates it against the schema. |
 | value (optional)     | any    | Raw value written as-is, without validation. Objects are JSON-serialized; `ArrayBuffer` is written unchanged. |
+| messageId (optional) | string | Key of the AsyncAPI message to use, see [Selecting a message](#selecting-a-message).                     |
 | headers (optional)   | object | Kafka headers. They are not validated against the specification.                                        |
 | partition (optional) | number | Zero-based partition index. If omitted, Mokapi selects a partition.                                      |
 
 If neither `data` nor `value` is set, Mokapi generates a random valid value based on the
 AsyncAPI schema.
+
+### Selecting a message
+
+A channel can define several messages. By default, Mokapi picks one that fits the data you
+pass, or a random one if you pass none. Set `messageId` to choose a message yourself. The
+value is the key of the message under `channels.<channel>.messages` in your AsyncAPI
+specification. For AsyncAPI 2, it is the key Mokapi derives: the `operationId` of the
+operation, otherwise the last segment of the message `$ref`. It is the same value the
+dashboard shows as `messageId` in the message log.
+
+With `messageId`, Mokapi generates the value and, unless you set `key`, the key from the
+selected message.
+
+* `data` is validated against the selected message only.
+* `value` is still written without validation, but Mokapi looks up the message, so a wrong
+  `messageId` fails and the key is generated from its key schema.
+* `{ messageId, value: null }` produces a tombstone. The key is generated from that message's key schema unless you set `key`.
+
+If the channel has no message with that key, the call throws an error such as
+`message 'orderCreated' not found in channel 'order-placed'`. The channel name in the error is the
+channel address, or the channel key if it has no address. Mokapi doesn't fall back to another
+message.
+
+```javascript
+import { app } from 'mokapi'
+
+export default function() {
+    app.api('Order Events').kafka().produce('order-placed', [
+        { messageId: 'orderCreated' },
+        { messageId: 'orderDeleted', key: 'order-1', value: null }
+    ])
+}
+```
 
 ``` box=tip
 Prefer `data` when the topic has a schema. It guarantees that the message matches your

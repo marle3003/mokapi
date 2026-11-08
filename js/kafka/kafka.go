@@ -152,6 +152,10 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 						return nil, fmt.Errorf("invalid type in messages: expected Object but got %v", util.JsType(item))
 					}
 					r := common.KafkaMessage{Partition: -1}
+					var err error
+					if r.MessageId, err = util.MessageId(rec["messageId"]); err != nil {
+						return nil, err
+					}
 					if k, ok := rec["key"]; ok {
 						r.Key = k
 					}

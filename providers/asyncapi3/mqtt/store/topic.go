@@ -21,6 +21,10 @@ type Topic struct {
 	cfg *asyncapi3.Channel
 }
 
+func (t *Topic) Config() *asyncapi3.Channel {
+	return t.cfg
+}
+
 func (t *Topic) validate(value []byte) (messageId string, err error) {
 	if t.cfg == nil {
 		return

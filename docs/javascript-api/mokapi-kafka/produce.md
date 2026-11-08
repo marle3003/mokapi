@@ -116,3 +116,19 @@ export default function() {
     })
 }
 ```
+
+Example with a message selected by its key under `channels.<channel>.messages`. Mokapi generates
+value and key from that message.
+
+```javascript
+import { produce } from 'mokapi/kafka'
+
+export default function() {
+    const result = produce({
+        topic: 'orders',
+        messages: [
+            { messageId: 'orderCreated' }
+        ],
+    })
+}
+```

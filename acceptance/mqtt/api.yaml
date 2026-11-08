@@ -24,6 +24,15 @@ channels:
       TemperatureEvent:
         $ref: '#/components/messages/Temperature'
 
+  sensorEvents:
+    address: 'sensors/events'
+    description: Topic with several message types for scripts selecting a message by messageId.
+    messages:
+      reading:
+        $ref: '#/components/messages/Temperature'
+      alarm:
+        $ref: '#/components/messages/Alarm'
+
 operations:
   publishTemperature:
     action: send
@@ -42,6 +51,20 @@ operations:
 
 components:
   messages:
+    Alarm:
+      name: AlarmEvent
+      title: A sensor alarm
+      payload:
+        type: object
+        properties:
+          sensorId:
+            type: string
+          level:
+            type: string
+            enum: [warning, critical]
+        required:
+          - sensorId
+          - level
     Temperature:
       name: TemperatureEvent
       title: A temperature reading

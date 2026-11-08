@@ -2405,6 +2405,22 @@ export interface KafkaTopic {
  */
 export interface KafkaProduceMessage {
     /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     *
+     * Selects the message used to generate the value and, if no `key` is set, the key
+     * (`bindings.kafka.key`). With `data`, the data is validated against this message only.
+     * An unknown `messageId` throws an error. Without `messageId`, Mokapi chooses a matching
+     * message of the topic.
+     *
+     * @example
+     * app.kafka().produce('orders', [
+     *   { messageId: 'orderCreated' },
+     *   { messageId: 'orderDeleted', key: 'order-1', value: null } // tombstone
+     * ])
+     */
+    messageId?: string;
+
+    /**
      * The zero-based partition index to write the message to.
      * If not specified, Mokapi selects a partition automatically
      * based on the message key or topic configuration.
@@ -2958,6 +2974,18 @@ export interface MqttTopicRouter {
  */
 export interface MqttPublishMessage {
     /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     *
+     * Selects the message used to generate the payload or to encode and validate `data`.
+     * An unknown `messageId` throws an error. Without `messageId`, Mokapi chooses a message
+     * of the topic.
+     *
+     * @example
+     * app.mqtt().publish('sensors/events', { messageId: 'alarm' })
+     */
+    messageId?: string;
+
+    /**
      * Structured data to be encoded and validated according to the
      * AsyncAPI schema definition for this topic.
      *
@@ -3274,6 +3302,7 @@ export interface WebsocketRouter {
      *
      * @param channel The channel name to send to, as defined in the AsyncAPI specification.
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * If omitted, a payload is generated from the channel's message (see `args.messageId`).
      * @param args Optional configuration including a result callback and retry settings.
      * @throws Error if the channel is found in more than one API, or if no matching channel exists.
      * @returns This `WebsocketRouter` instance for chaining.
@@ -3296,7 +3325,7 @@ export interface WebsocketRouter {
      *   })
      * }
      */
-    send(channel: string, message: any, args?: WebsocketSendArgs): WebsocketRouter
+    send(channel: string, message?: any, args?: WebsocketSendArgs): WebsocketRouter
 
     /**
      * Sends a message to all clients currently connected to the given channel asynchronously.
@@ -3313,6 +3342,7 @@ export interface WebsocketRouter {
      *
      * @param channel The channel name to send to, as defined in the AsyncAPI specification.
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * If omitted, a payload is generated from the channel's message (see `args.messageId`).
      * @param args Optional configuration including a result callback and retry settings.
      * @returns A `Promise` resolving to this `WebsocketRouter` instance for chaining.
      *
@@ -3324,7 +3354,7 @@ export interface WebsocketRouter {
      *   })
      * }
      */
-    sendAsync(channel: string, message: any, args?: WebsocketSendArgs): Promise<WebsocketRouter>
+    sendAsync(channel: string, message?: any, args?: WebsocketSendArgs): Promise<WebsocketRouter>
 }
 
 /**
@@ -3430,6 +3460,7 @@ export interface WebsocketChannelRouter {
      * Use `sendAsync()` if you need to await the result.
      *
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * If omitted, a payload is generated from the channel's message (see `args.messageId`).
      * @param args Optional configuration including a result callback and retry settings.
      * @returns This `WebsocketChannelRouter` instance for chaining.
      * @throws Error if the channel is found in more than one API, or if no matching channel exists.
@@ -3444,7 +3475,7 @@ export interface WebsocketChannelRouter {
      *   })
      * }
      */
-    send(message: any, args?: WebsocketSendArgs): WebsocketChannelRouter
+    send(message?: any, args?: WebsocketSendArgs): WebsocketChannelRouter
 
     /**
      * Sends a message to all clients currently connected to this channel asynchronously.
@@ -3455,6 +3486,7 @@ export interface WebsocketChannelRouter {
      * The arguments are read when you call the method, so changing the message afterwards doesn't affect what is sent. Invalid arguments throw an error at the call. Client errors reject the returned promise. An error thrown in the `result` callback also rejects it.
      *
      * @param message The message payload to send. Will be encoded according to the channel's `contentType`.
+     * If omitted, a payload is generated from the channel's message (see `args.messageId`).
      * @param args Optional configuration including a result callback and retry settings.
      * @returns A `Promise` resolving to this `WebsocketChannelRouter` instance for chaining.
      *
@@ -3468,7 +3500,7 @@ export interface WebsocketChannelRouter {
      *     })
      * }
      */
-    sendAsync(message: any, args?: WebsocketSendArgs): Promise<WebsocketChannelRouter>
+    sendAsync(message?: any, args?: WebsocketSendArgs): Promise<WebsocketChannelRouter>
 }
 
 /**
@@ -3483,6 +3515,18 @@ export interface WebsocketChannelRouter {
  * })
  */
 export interface WebsocketSendArgs {
+    /**
+     * The key of the message under `channels.<channel>.messages` in the AsyncAPI specification.
+     *
+     * Without a message, the payload is generated from the selected message. With a message,
+     * the message is validated against the selected message and an invalid message throws an error.
+     * An unknown `messageId` throws an error.
+     *
+     * @example
+     * app.websocket().send('/chat', undefined, { messageId: 'serverMessage' })
+     */
+    messageId?: string;
+
     /**
      * Callback invoked after the message has been successfully sent
      * to all connected clients on the channel.

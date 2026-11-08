@@ -98,9 +98,11 @@ type WebsocketClient interface {
 type WebsocketSendArgs struct {
 	Api         string
 	ChannelName string
-	Message     any
-	ScriptFile  string
-	Retry       RetryArgs
+	// MessageId is the key of the message under channels.<channel>.messages
+	MessageId  string
+	Message    any
+	ScriptFile string
+	Retry      RetryArgs
 }
 
 type WebsocketSendResult struct {

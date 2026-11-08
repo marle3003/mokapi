@@ -129,13 +129,58 @@ m.app.mqtt().publish('foo', { value: { foo: 'bar' } })
 			},
 		},
 		{
+			name: "publish with messageId",
+			script: `
+const m = require('mokapi')
+m.app.mqtt().publish('foo', { messageId: 'alarm', data: { level: 'critical' } })
+m.app.mqtt().publish('foo', { messageId: undefined })
+`,
+			test: func(t *testing.T, handlers []handler, publishes []*common.MqttPublishArgs, loop *eventloop.EventLoop, err error) {
+				r.NoError(t, err)
+				r.Len(t, publishes, 2)
+				r.Equal(t, "alarm", publishes[0].MessageId)
+				r.Equal(t, common.Optional[any]{IsSet: true, Value: map[string]any{"level": "critical"}}, publishes[0].Data)
+				r.Equal(t, "", publishes[1].MessageId)
+			},
+		},
+		{
+			name: "publish null value is an empty payload, not a generated one",
+			script: `
+const m = require('mokapi')
+m.app.mqtt().publish('foo', { value: null })
+m.app.mqtt().publish('foo', {})
+m.app.mqtt().publish('foo', { value: '' })
+`,
+			test: func(t *testing.T, handlers []handler, publishes []*common.MqttPublishArgs, loop *eventloop.EventLoop, err error) {
+				r.NoError(t, err)
+				r.NotNil(t, publishes[0].Value)
+				r.Empty(t, publishes[0].Value)
+				r.Nil(t, publishes[1].Value)
+				r.NotNil(t, publishes[2].Value)
+				r.Empty(t, publishes[2].Value)
+			},
+		},
+		{
+			name: "publish data null is set, no data is not",
+			script: `
+const m = require('mokapi')
+m.app.mqtt().publish('foo', { data: null })
+m.app.mqtt().publish('foo', {})
+`,
+			test: func(t *testing.T, handlers []handler, publishes []*common.MqttPublishArgs, loop *eventloop.EventLoop, err error) {
+				r.NoError(t, err)
+				r.Equal(t, common.Optional[any]{IsSet: true}, publishes[0].Data)
+				r.Equal(t, common.Optional[any]{}, publishes[1].Data)
+			},
+		},
+		{
 			name: "publish data using object",
 			script: `
 const m = require('mokapi')
 m.app.mqtt().publish('foo', { data: { foo: 'bar' } })
 `,
 			test: func(t *testing.T, handlers []handler, publishes []*common.MqttPublishArgs, loop *eventloop.EventLoop, err error) {
-				r.Equal(t, map[string]any{"foo": "bar"}, publishes[0].Data)
+				r.Equal(t, common.Optional[any]{IsSet: true, Value: map[string]any{"foo": "bar"}}, publishes[0].Data)
 			},
 		},
 		{
@@ -260,6 +305,11 @@ func TestModule_AppMqtt_PublishAsync_Errors(t *testing.T) {
 		reason string // part of the rejection reason of the promise
 		thrown string // part of the exception when the call itself must throw
 	}{
+		{
+			name:   "messageId of wrong type throws synchronously",
+			script: `m.app.mqtt().publishAsync('foo', { messageId: 12 })`,
+			thrown: "unexpected type for 'messageId': expected string, got Integer",
+		},
 		{
 			name:   "invalid retry throws synchronously",
 			script: `m.app.mqtt().publishAsync('foo', { value: 'hello' }, { retry: 'foo' })`,

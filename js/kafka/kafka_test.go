@@ -68,6 +68,55 @@ func TestKafka(t *testing.T) {
 		},
 
 		{
+			name: "messages with messageId",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var produced *common.KafkaProduceArgs
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					produced = args
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const kafka = require("mokapi/kafka")
+					kafka.produce({ topic: 'orders', messages: [{ messageId: 'orderCreated' }, { key: 'k' }] })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "orderCreated", produced.Messages[0].MessageId)
+				r.Equal(t, "", produced.Messages[1].MessageId)
+			},
+		},
+		{
+			name: "messageId of wrong type in messages",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const kafka = require("mokapi/kafka")
+					kafka.produce({ messages: [{ messageId: 12 }] })
+				`)
+				r.EqualError(t, err, "unexpected type for 'messageId': expected string, got Integer at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
+		{
+			name: "top-level messageId is not supported",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var produced *common.KafkaProduceArgs
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					produced = args
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const kafka = require("mokapi/kafka")
+					kafka.produce({ topic: 'orders', messageId: 'orderCreated' })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "", produced.Messages[0].MessageId)
+			},
+		},
+		{
 			name: "produce client error throws",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {

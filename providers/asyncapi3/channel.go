@@ -191,6 +191,14 @@ func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
 	return params, nil
 }
 
+// GetMessage returns the message registered under the given key in channels.<channel>.messages.
+func (c *Channel) GetMessage(id string) (*Message, error) {
+	if ref, ok := c.Messages[id]; ok && ref != nil && ref.Value != nil {
+		return ref.Value, nil
+	}
+	return nil, fmt.Errorf("message '%v' not found in channel '%v'", id, c.GetName())
+}
+
 func (c *Channel) GetMessageByPayload(value any) (*Message, error) {
 	// first try to get send operation
 	msg, noOperationDefined, validationErr := c.getMessageByPayload(value, "send")
