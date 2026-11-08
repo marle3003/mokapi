@@ -7,10 +7,26 @@ import (
 )
 
 func (s *Schema) Patch(patch *Schema) {
-	if patch == nil {
-		return
+	s.patch(patch, patchedPairs{})
+}
+
+// patchedPairs records which (target, patch) pairs are already patched. Resolved
+// references make schema graphs cyclic, so a pair can be reached again through its own
+// properties; patching it a second time would never end.
+type patchedPairs map[[2]*Schema]struct{}
+
+// add returns false if the pair was already recorded.
+func (p patchedPairs) add(s, patch *Schema) bool {
+	pair := [2]*Schema{s, patch}
+	if _, ok := p[pair]; ok {
+		return false
 	}
-	if s == patch {
+	p[pair] = struct{}{}
+	return true
+}
+
+func (s *Schema) patch(patch *Schema, visited patchedPairs) {
+	if patch == nil || s == patch || !visited.add(s, patch) {
 		return
 	}
 
@@ -41,28 +57,28 @@ func (s *Schema) Patch(patch *Schema) {
 		if len(s.AnyOf) == 0 {
 			s.AnyOf = cloneSchemas(patch.AnyOf, schemaCopies{})
 		} else {
-			s.AnyOf = patchComposition(s.AnyOf, patch.AnyOf)
+			s.AnyOf = patchComposition(s.AnyOf, patch.AnyOf, visited)
 		}
 	}
 	if len(patch.AllOf) > 0 {
 		if len(s.AllOf) == 0 {
 			s.AllOf = cloneSchemas(patch.AllOf, schemaCopies{})
 		} else {
-			s.AllOf = patchComposition(s.AllOf, patch.AllOf)
+			s.AllOf = patchComposition(s.AllOf, patch.AllOf, visited)
 		}
 	}
 	if len(patch.OneOf) > 0 {
 		if len(s.OneOf) == 0 {
 			s.OneOf = cloneSchemas(patch.OneOf, schemaCopies{})
 		} else {
-			s.OneOf = patchComposition(s.OneOf, patch.OneOf)
+			s.OneOf = patchComposition(s.OneOf, patch.OneOf, visited)
 		}
 	}
 
-	s.Not = patchSchema(s.Not, patch.Not)
-	s.If = patchSchema(s.If, patch.If)
-	s.Then = patchSchema(s.Then, patch.Then)
-	s.Else = patchSchema(s.Else, patch.Else)
+	s.Not = patchSchema(s.Not, patch.Not, visited)
+	s.If = patchSchema(s.If, patch.If, visited)
+	s.Then = patchSchema(s.Then, patch.Then, visited)
+	s.Else = patchSchema(s.Else, patch.Else, visited)
 
 	if patch.Enum != nil {
 		s.Enum = slices.Clone(patch.Enum)
@@ -108,18 +124,18 @@ func (s *Schema) Patch(patch *Schema) {
 	if s.Items == nil {
 		s.Items = patch.Items.Clone()
 	} else {
-		s.Items.Patch(patch.Items)
+		s.Items.patch(patch.Items, visited)
 	}
 	// prefixItems are positional, so they are merged by index and not by title
 	for i, p := range patch.PrefixItems {
 		if i < len(s.PrefixItems) {
-			s.PrefixItems[i] = patchSchema(s.PrefixItems[i], p)
+			s.PrefixItems[i] = patchSchema(s.PrefixItems[i], p, visited)
 		} else {
 			s.PrefixItems = append(s.PrefixItems, p.Clone())
 		}
 	}
-	s.UnevaluatedItems = patchSchema(s.UnevaluatedItems, patch.UnevaluatedItems)
-	s.Contains = patchSchema(s.Contains, patch.Contains)
+	s.UnevaluatedItems = patchSchema(s.UnevaluatedItems, patch.UnevaluatedItems, visited)
+	s.Contains = patchSchema(s.Contains, patch.Contains, visited)
 	if patch.MaxContains != nil {
 		s.MaxContains = clonePointer(patch.MaxContains)
 	}
@@ -143,10 +159,10 @@ func (s *Schema) Patch(patch *Schema) {
 	if s.Properties == nil {
 		s.Properties = patch.Properties.Clone()
 	} else {
-		s.Properties.Patch(patch.Properties)
+		s.Properties.patch(patch.Properties, visited)
 	}
 
-	s.PatternProperties = patchSchemaMap(s.PatternProperties, patch.PatternProperties)
+	s.PatternProperties = patchSchemaMap(s.PatternProperties, patch.PatternProperties, visited)
 
 	if patch.Required != nil {
 		s.Required = slices.Clone(patch.Required)
@@ -158,14 +174,14 @@ func (s *Schema) Patch(patch *Schema) {
 			s.DependentRequired[k] = slices.Clone(v)
 		}
 	}
-	s.DependentSchemas = patchSchemaMap(s.DependentSchemas, patch.DependentSchemas)
+	s.DependentSchemas = patchSchemaMap(s.DependentSchemas, patch.DependentSchemas, visited)
 	if s.AdditionalProperties == nil {
 		s.AdditionalProperties = patch.AdditionalProperties.Clone()
 	} else {
-		s.AdditionalProperties.Patch(patch.AdditionalProperties)
+		s.AdditionalProperties.patch(patch.AdditionalProperties, visited)
 	}
-	s.UnevaluatedProperties = patchSchema(s.UnevaluatedProperties, patch.UnevaluatedProperties)
-	s.PropertyNames = patchSchema(s.PropertyNames, patch.PropertyNames)
+	s.UnevaluatedProperties = patchSchema(s.UnevaluatedProperties, patch.UnevaluatedProperties, visited)
+	s.PropertyNames = patchSchema(s.PropertyNames, patch.PropertyNames, visited)
 	if patch.MinProperties != nil {
 		s.MinProperties = clonePointer(patch.MinProperties)
 	}
@@ -197,26 +213,26 @@ func (s *Schema) Patch(patch *Schema) {
 		s.ContentEncoding = patch.ContentEncoding
 	}
 
-	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions)
-	s.Defs = patchSchemaMap(s.Defs, patch.Defs)
+	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions, visited)
+	s.Defs = patchSchemaMap(s.Defs, patch.Defs, visited)
 }
 
 // patchSchema merges patch into s and returns the result; a missing s is replaced by a copy of patch.
-func patchSchema(s, patch *Schema) *Schema {
+func patchSchema(s, patch *Schema, visited patchedPairs) *Schema {
 	if s == nil {
 		return patch.Clone()
 	}
-	s.Patch(patch)
+	s.patch(patch, visited)
 	return s
 }
 
-func patchSchemaMap(s, patch map[string]*Schema) map[string]*Schema {
+func patchSchemaMap(s, patch map[string]*Schema, visited patchedPairs) map[string]*Schema {
 	if s == nil {
 		return cloneSchemaMap(patch, schemaCopies{})
 	}
 	for k, v := range patch {
 		if def, ok := s[k]; ok {
-			def.Patch(v)
+			def.patch(v, visited)
 		} else {
 			s[k] = v.Clone()
 		}
@@ -246,6 +262,10 @@ func (x *Xml) patch(patch *Xml) {
 }
 
 func (s *Schemas) Patch(patch *Schemas) {
+	s.patch(patch, patchedPairs{})
+}
+
+func (s *Schemas) patch(patch *Schemas, visited patchedPairs) {
 	if patch == nil {
 		return
 	}
@@ -253,7 +273,7 @@ func (s *Schemas) Patch(patch *Schemas) {
 		r := it.Value()
 		name := it.Key()
 		if v := s.Get(name); v != nil {
-			v.Patch(r)
+			v.patch(r, visited)
 		} else {
 			s.Set(it.Key(), r.Clone())
 		}
@@ -271,7 +291,7 @@ func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
 	return merged
 }
 
-func patchComposition(s []*Schema, patch []*Schema) []*Schema {
+func patchComposition(s []*Schema, patch []*Schema, visited patchedPairs) []*Schema {
 Patch:
 	for _, p := range patch {
 		if p == nil {
@@ -282,7 +302,7 @@ Patch:
 		} else {
 			for _, r := range s {
 				if r.Title == p.Title {
-					r.Patch(p)
+					r.patch(p, visited)
 					continue Patch
 				}
 			}

@@ -5,11 +5,26 @@ import "slices"
 // Patch applies patch to s. Values s adopts from patch are copied, so s never
 // shares schemas, maps or slices with patch.
 func (s *Schema) Patch(patch *Schema) {
-	s.patch(patch, schemaCopies{})
+	s.patch(patch, schemaCopies{}, patchedPairs{})
 }
 
-func (s *Schema) patch(patch *Schema, copies schemaCopies) {
-	if patch == nil {
+// patchedPairs records which (target, patch) pairs are already patched. Resolved
+// references make schema graphs cyclic, so a pair can be reached again through its own
+// properties; patching it a second time would never end.
+type patchedPairs map[[2]*Schema]struct{}
+
+// add returns false if the pair was already recorded.
+func (p patchedPairs) add(s, patch *Schema) bool {
+	pair := [2]*Schema{s, patch}
+	if _, ok := p[pair]; ok {
+		return false
+	}
+	p[pair] = struct{}{}
+	return true
+}
+
+func (s *Schema) patch(patch *Schema, copies schemaCopies, visited patchedPairs) {
+	if patch == nil || !visited.add(s, patch) {
 		return
 	}
 
@@ -65,7 +80,7 @@ func (s *Schema) patch(patch *Schema, copies schemaCopies) {
 	if s.Items == nil {
 		s.Items = patch.Items.clone(copies)
 	} else {
-		s.Items.patch(patch.Items, copies)
+		s.Items.patch(patch.Items, copies, visited)
 	}
 
 	s.UniqueItems = patch.UniqueItems
@@ -82,7 +97,7 @@ func (s *Schema) patch(patch *Schema, copies schemaCopies) {
 	if s.Properties == nil {
 		s.Properties = patch.Properties.clone(copies)
 	} else {
-		s.Properties.patch(patch.Properties, copies)
+		s.Properties.patch(patch.Properties, copies, visited)
 	}
 
 	if patch.Required != nil {
@@ -92,7 +107,7 @@ func (s *Schema) patch(patch *Schema, copies schemaCopies) {
 	if s.AdditionalProperties == nil {
 		s.AdditionalProperties = patch.AdditionalProperties.clone(copies)
 	} else {
-		s.AdditionalProperties.patch(patch.AdditionalProperties, copies)
+		s.AdditionalProperties.patch(patch.AdditionalProperties, copies, visited)
 	}
 
 	if patch.MinProperties != nil {
@@ -123,17 +138,17 @@ func (s *Schema) patch(patch *Schema, copies schemaCopies) {
 		s.ContentEncoding = patch.ContentEncoding
 	}
 
-	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions, copies)
-	s.Defs = patchSchemaMap(s.Defs, patch.Defs, copies)
+	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions, copies, visited)
+	s.Defs = patchSchemaMap(s.Defs, patch.Defs, copies, visited)
 }
 
-func patchSchemaMap(m, patch map[string]*Schema, copies schemaCopies) map[string]*Schema {
+func patchSchemaMap(m, patch map[string]*Schema, copies schemaCopies, visited patchedPairs) map[string]*Schema {
 	if m == nil {
 		return cloneSchemaMap(patch, copies)
 	}
 	for k, v := range patch {
 		if s, ok := m[k]; ok {
-			s.patch(v, copies)
+			s.patch(v, copies, visited)
 		} else {
 			m[k] = v.clone(copies)
 		}
@@ -143,10 +158,10 @@ func patchSchemaMap(m, patch map[string]*Schema, copies schemaCopies) map[string
 
 // Patch applies patch to s, see Schema.Patch.
 func (s *Schemas) Patch(patch *Schemas) {
-	s.patch(patch, schemaCopies{})
+	s.patch(patch, schemaCopies{}, patchedPairs{})
 }
 
-func (s *Schemas) patch(patch *Schemas, copies schemaCopies) {
+func (s *Schemas) patch(patch *Schemas, copies schemaCopies, visited patchedPairs) {
 	if patch == nil {
 		return
 	}
@@ -154,7 +169,7 @@ func (s *Schemas) patch(patch *Schemas, copies schemaCopies) {
 		r := it.Value()
 		name := it.Key()
 		if v := s.Get(name); v != nil {
-			v.patch(r, copies)
+			v.patch(r, copies, visited)
 		} else {
 			s.Set(name, r.clone(copies))
 		}

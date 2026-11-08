@@ -9,12 +9,14 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	oaschema "mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -517,4 +519,32 @@ func newConfig(config *openapi.Config) *dynamic.Config {
 	u, _ := url.Parse("https://mokapi.io")
 	c.Info.Url = u
 	return c
+}
+
+// Two files with the same title define the same recursive schema (Node.properties.child
+// refers to Node). Merging them must not overflow the stack.
+func TestApp_AddHttp_SameCyclicSchemaInTwoFiles(t *testing.T) {
+	newNode := func() *oaschema.Schema {
+		props := &oaschema.Schemas{}
+		props.Set("name", schematest.New("string"))
+		node := schematest.New("object", schematest.WithTitle("Node"))
+		node.Properties = props
+		props.Set("child", &oaschema.Schema{Type: jsonSchema.Types{"object"}, Properties: props})
+		return node
+	}
+	file := func(name string) *dynamic.Config {
+		c := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithComponentSchema("Node", newNode()))
+		cfg := &dynamic.Config{Data: c}
+		cfg.Info.Url, _ = url.Parse("file:///" + name)
+		return cfg
+	}
+
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	app.Http.Add(file("a.yml"))
+	app.Http.Add(file("b.yml"))
+
+	info := app.Http.Get("foo")
+	require.NotNil(t, info)
+	require.NotNil(t, info.Components.Schemas.Get("Node"))
 }

@@ -17,6 +17,8 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/json/schema"
+	"mokapi/schema/json/schema/schematest"
 	"net/url"
 	"strings"
 	"testing"
@@ -456,4 +458,32 @@ func TestKafkaStore_MergedConfigs(t *testing.T) {
 			tc.test(t, runtime.New(&static.Config{}, &dynamictest.Reader{}))
 		})
 	}
+}
+
+// Two files with the same title define the same recursive schema (Node.properties.child
+// refers to Node). Merging them must not overflow the stack.
+func TestApp_AddKafka_SameCyclicSchemaInTwoFiles(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	newNode := func() *schema.Schema {
+		props := &schema.Schemas{}
+		props.Set("name", schematest.New("string"))
+		node := schematest.New("object", schematest.WithTitle("Node"))
+		node.Properties = props
+		props.Set("child", &schema.Schema{Type: schema.Types{"object"}, Properties: props})
+		return node
+	}
+	file := func(name string) *dynamic.Config {
+		return getConfig("https://mokapi.io/"+name, asyncapi3test.NewConfig(
+			asyncapi3test.WithTitle("foo"),
+			asyncapi3test.WithComponentSchema("Node", newNode()),
+		))
+	}
+
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	_, err := app.Kafka.Add(file("a.yml"), enginetest.NewEngine())
+	require.NoError(t, err)
+	info, err := app.Kafka.Add(file("b.yml"), enginetest.NewEngine())
+	require.NoError(t, err)
+
+	require.Contains(t, info.Components.Schemas, "Node")
 }

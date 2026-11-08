@@ -838,3 +838,51 @@ func TestSchemas_Patch_DoesNotShareWithPatch(t *testing.T) {
 
 	require.Equal(t, newPatch(), patch)
 }
+
+// newCyclicNode builds the graph Parse leaves behind for a schema that refers to
+// itself (node.properties.child: $ref node): the resolved reference shares the
+// properties of node, so node.Properties -> child -> child.Properties == node.Properties.
+func newCyclicNode() *schema.Schema {
+	props := &schema.Schemas{}
+	props.Set("name", schematest.New("string"))
+	node := schematest.New("object", schematest.WithTitle("node"))
+	node.Properties = props
+	props.Set("child", &schema.Schema{Type: schema.Types{"object"}, Properties: props})
+	return node
+}
+
+// Two files with the same title that both define the same recursive schema are merged.
+// Until this is fixed, Patch recurses forever: fatal error "stack overflow" (not recoverable,
+// it aborts the whole test binary).
+func TestSchema_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
+	s := newCyclicNode()
+
+	s.Patch(newCyclicNode())
+
+	child := s.Properties.Get("child")
+	require.NotNil(t, child)
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Same(t, s.Properties, child.Properties)
+}
+
+// The target cycles over one schema, the patch over two, both with the same keys:
+// the pairs (node, a) and (node, b) recur. The properties of the longer cycle must
+// still reach the target.
+func TestSchema_Patch_CyclesOfDifferentLength(t *testing.T) {
+	s := newCyclicNode()
+
+	aProps := &schema.Schemas{}
+	a := &schema.Schema{Type: schema.Types{"object"}, Properties: aProps}
+	bProps := &schema.Schemas{}
+	b := &schema.Schema{Type: schema.Types{"object"}, Properties: bProps}
+	aProps.Set("name", schematest.New("string"))
+	aProps.Set("child", b)
+	bProps.Set("extra", schematest.New("integer"))
+	bProps.Set("child", a)
+
+	s.Patch(a)
+
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Equal(t, "integer", s.Properties.Get("extra").Type.String())
+	require.NotNil(t, s.Properties.Get("child"))
+}

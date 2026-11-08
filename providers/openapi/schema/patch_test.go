@@ -1102,3 +1102,78 @@ func TestSchema_Patch_CyclicSchema(t *testing.T) {
 	require.Equal(t, "node", cyclic.Sub.Properties.Get("child").Title)
 	require.NotEqual(t, "changed", cyclic.Title)
 }
+
+// newCyclicNode builds the graph Parse leaves behind for a schema that refers to
+// itself (node.properties.child: $ref node): the resolved reference shares the
+// properties of node, so node.Properties -> child -> child.Properties == node.Properties.
+func newCyclicNode() *schema.Schema {
+	props := &schema.Schemas{}
+	props.Set("name", schematest.New("string"))
+	node := schematest.New("object", schematest.WithTitle("node"))
+	node.Properties = props
+	props.Set("child", &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: props})
+	return node
+}
+
+// Two files with the same title that both define the same recursive schema are merged.
+// Until this is fixed, Patch recurses forever: fatal error "stack overflow" (not recoverable,
+// it aborts the whole test binary).
+func TestSchema_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
+	s := newCyclicNode()
+
+	s.Patch(newCyclicNode())
+
+	child := s.Properties.Get("child")
+	require.NotNil(t, child)
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Same(t, s.Properties, child.Properties)
+}
+
+// The target cycles over one schema, the patch over two, both with the same keys:
+// the pairs (node, a) and (node, b) recur. The properties of the longer cycle must
+// still reach the target.
+func TestSchema_Patch_CyclesOfDifferentLength(t *testing.T) {
+	s := newCyclicNode()
+
+	aProps := &schema.Schemas{}
+	a := &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: aProps}
+	bProps := &schema.Schemas{}
+	b := &schema.Schema{Type: jsonSchema.Types{"object"}, Properties: bProps}
+	aProps.Set("name", schematest.New("string"))
+	aProps.Set("child", b)
+	bProps.Set("extra", schematest.New("integer"))
+	bProps.Set("child", a)
+
+	s.Patch(a)
+
+	require.Equal(t, "string", s.Properties.Get("name").Type.String())
+	require.Equal(t, "integer", s.Properties.Get("extra").Type.String())
+	require.NotNil(t, s.Properties.Get("child"))
+}
+
+// A schema that is referenced twice is patched once, so an untitled composition
+// entry (which is appended, not merged) is not added twice.
+func TestSchema_Patch_SharedSchemaIsPatchedOnce(t *testing.T) {
+	newRoot := func(shared *schema.Schema) *schema.Schema {
+		return schematest.New("object",
+			schematest.WithProperty("a", shared),
+			schematest.WithProperty("b", shared))
+	}
+	s := newRoot(schematest.NewAny(schematest.New("string")))
+
+	s.Patch(newRoot(schematest.NewAny(schematest.New("integer"))))
+
+	require.Len(t, s.Properties.Get("a").AnyOf, 2)
+	require.Same(t, s.Properties.Get("a"), s.Properties.Get("b"))
+}
+
+func TestSchemas_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
+	target := newCyclicNode().Properties
+	patch := newCyclicNode().Properties
+
+	target.Patch(patch)
+
+	require.Equal(t, "string", target.Get("name").Type.String())
+	require.NotNil(t, target.Get("child"))
+	require.Same(t, target, target.Get("child").Properties)
+}
