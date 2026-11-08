@@ -139,3 +139,47 @@ func websocketConfigEvent(port int) dynamic.ConfigEvent {
 	)
 	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
 }
+
+func TestWebsocketManager_DeleteRemovesConfigAndStopsServer(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewWebsocketManager(nil, app)
+	defer m.Stop()
+
+	port := try.GetFreePort()
+	e := websocketConfigEvent(port)
+	m.UpdateConfig(e)
+	require.NotNil(t, app.Websocket.Get("foo"))
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Websocket.Get("foo"), "config must be removed from the Websocket store")
+	requirePortClosed(t, port)
+}
+
+func TestWebsocketManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewWebsocketManager(nil, app)
+	defer m.Stop()
+
+	kafkaCfg := &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")},
+		Data: asyncapi3test.NewConfig(
+			asyncapi3test.WithTitle("foo"),
+			asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
+		),
+	}
+	_, err := app.Kafka.Add(kafkaCfg, nil)
+	require.NoError(t, err)
+
+	port := try.GetFreePort()
+	e := websocketConfigEvent(port)
+	m.UpdateConfig(e)
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.NotNil(t, app.Kafka.Get("foo"))
+	require.NotNil(t, app.Kafka.Get("foo").Config, "kafka config must survive a Websocket delete")
+	require.Nil(t, app.Websocket.Get("foo"), "config must be removed from the Websocket store")
+	requirePortClosed(t, port)
+}

@@ -13,6 +13,7 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
+	"net"
 	"testing"
 	"time"
 
@@ -151,4 +152,56 @@ func mqttConfigEvent(port int) dynamic.ConfigEvent {
 		asyncapi3test.WithServer("mqtt", "mqtt", fmt.Sprintf("127.0.0.1:%d", port)),
 	)
 	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
+}
+
+func TestMqttManager_DeleteRemovesConfigAndStopsServer(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	port := try.GetFreePort()
+	e := mqttConfigEvent(port)
+	m.UpdateConfig(e)
+	require.NotNil(t, app.Mqtt.Get("foo"))
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Mqtt.Get("foo"), "config must be removed from the MQTT store")
+	requirePortClosed(t, port)
+}
+
+func TestMqttManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	kafkaCfg := &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")},
+		Data: asyncapi3test.NewConfig(
+			asyncapi3test.WithTitle("foo"),
+			asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
+		),
+	}
+	_, err := app.Kafka.Add(kafkaCfg, nil)
+	require.NoError(t, err)
+
+	port := try.GetFreePort()
+	e := mqttConfigEvent(port)
+	m.UpdateConfig(e)
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.NotNil(t, app.Kafka.Get("foo"))
+	require.NotNil(t, app.Kafka.Get("foo").Config, "kafka config must survive a MQTT delete")
+	require.Nil(t, app.Mqtt.Get("foo"), "config must be removed from the MQTT store")
+	requirePortClosed(t, port)
+}
+
+func requirePortClosed(t *testing.T, port int) {
+	conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	if err == nil {
+		_ = conn.Close()
+	}
+	require.Error(t, err, "port must be closed after delete")
 }

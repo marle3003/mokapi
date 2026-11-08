@@ -46,7 +46,7 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Mqtt.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.Kafka.Remove(e.Config)
+		m.app.Mqtt.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
@@ -85,7 +85,7 @@ func (m *MqttManager) removeCluster(name string) {
 	if !ok {
 		return
 	}
-	log.Infof("removing kafka cluster '%v'", name)
+	log.Infof("removing MQTT cluster '%v'", name)
 	c.close()
 	delete(m.clusters, name)
 }

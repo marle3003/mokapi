@@ -48,7 +48,7 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Websocket.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.Kafka.Remove(e.Config)
+		m.app.Websocket.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)
 			return
@@ -87,7 +87,7 @@ func (m *WebsocketManager) removeService(name string) {
 	if !ok {
 		return
 	}
-	log.Infof("removing kafka cluster '%v'", name)
+	log.Infof("removing Websocket service '%v'", name)
 	c.close()
 	delete(m.services, name)
 }
