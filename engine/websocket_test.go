@@ -11,6 +11,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/http/httptest"
@@ -248,6 +249,18 @@ func TestEvent_Websocket(t *testing.T) {
 	}
 }
 
+// waitForWebsocketConnection blocks until the store has registered the dialed client.
+// ws.Dial returns after the handshake, before the store adds the client to the channel,
+// so a send right after Dial may reach no client. The store pushes the connection event
+// right after registering the client.
+func waitForWebsocketConnection(t *testing.T, app *runtime.App) {
+	t.Helper()
+	traits := events.NewTraits().WithNamespace("websocket").With("type", "connection")
+	require.Eventually(t, func() bool {
+		return len(app.Events.GetEvents(traits)) > 0
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
 func TestWebsocketClient(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
@@ -290,6 +303,7 @@ func TestWebsocketClient(t *testing.T) {
 				c, _, err := ws.Dial(ctx, url+"/foo", &ws.DialOptions{})
 				require.NoError(t, err)
 				defer func() { _ = c.CloseNow() }()
+				waitForWebsocketConnection(t, app)
 
 				err = e.AddScript(newScript("test.js", `
 					import { app } from 'mokapi'
@@ -322,6 +336,7 @@ func TestWebsocketClient(t *testing.T) {
 				c, _, err := ws.Dial(ctx, url+"/foo", &ws.DialOptions{})
 				require.NoError(t, err)
 				defer func() { _ = c.CloseNow() }()
+				waitForWebsocketConnection(t, app)
 
 				err = e.AddScript(newScript("test.js", `
 					import { app } from 'mokapi'
@@ -354,6 +369,7 @@ func TestWebsocketClient(t *testing.T) {
 				c, _, err := ws.Dial(ctx, url+"/foo", &ws.DialOptions{})
 				require.NoError(t, err)
 				defer func() { _ = c.CloseNow() }()
+				waitForWebsocketConnection(t, app)
 
 				err = e.AddScript(newScript("test.js", `
 					import { app } from 'mokapi'
@@ -519,6 +535,7 @@ func TestWebsocketClient_Send_MessageId(t *testing.T) {
 			c, _, err := ws.Dial(ctx, serv.URL+channel, &ws.DialOptions{})
 			require.NoError(t, err)
 			defer func() { _ = c.CloseNow() }()
+			waitForWebsocketConnection(t, app)
 
 			args := tc.args
 			args.ChannelName = channel
