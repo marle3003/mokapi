@@ -12,7 +12,9 @@ import (
 	"mokapi/runtime"
 	"mokapi/server"
 	"mokapi/try"
+	"net"
 	"net/url"
+	goruntime "runtime"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -165,5 +167,45 @@ func ldapConfigEvent(port int) dynamic.ConfigEvent {
 			Info:    directory.Info{Name: "x"},
 			Address: fmt.Sprintf(":%d", port),
 		}),
+	}
+}
+
+// The tests below stop an LDAP host right after it was started and expect its port to be free
+// when the call returns. GOMAXPROCS(1) keeps the Serve goroutine from running in between.
+func TestLdapManager_PortIsFreeWhenDeleteReturns(t *testing.T) {
+	requireOldPortIsFree(t, func(m *server.LdapDirectoryManager, port int) {
+		e := ldapConfigEvent(port)
+		e.Event = dynamic.Delete
+		m.UpdateConfig(e)
+	})
+}
+
+func TestLdapManager_PortIsFreeWhenAddressChanges(t *testing.T) {
+	requireOldPortIsFree(t, func(m *server.LdapDirectoryManager, _ int) {
+		m.UpdateConfig(ldapConfigEvent(try.GetFreePort()))
+	})
+}
+
+func TestLdapManager_PortIsFreeWhenStopReturns(t *testing.T) {
+	requireOldPortIsFree(t, func(m *server.LdapDirectoryManager, _ int) { m.Stop() })
+}
+
+// requireOldPortIsFree adds an LDAP host, calls release and binds the host's first port.
+func requireOldPortIsFree(t *testing.T, release func(m *server.LdapDirectoryManager, port int)) {
+	logrus.SetOutput(io.Discard)
+	defer goruntime.GOMAXPROCS(goruntime.GOMAXPROCS(1))
+
+	for i := 0; i < 100; i++ {
+		m := server.NewLdapDirectoryManager(enginetest.NewEngine(), nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+		port := try.GetFreePort()
+		m.UpdateConfig(ldapConfigEvent(port))
+		release(m, port)
+
+		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err == nil {
+			_ = ln.Close()
+		}
+		m.Stop()
+		require.NoError(t, err, "iteration %d", i)
 	}
 }

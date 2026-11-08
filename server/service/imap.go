@@ -13,6 +13,7 @@ import (
 
 type ImapServer struct {
 	server *imap.Server
+	ln     net.Listener
 }
 
 func NewImapServer(port string, handler imap.Handler, store *cert.Store, tlsMode imap.TlsMode) *ImapServer {
@@ -39,6 +40,7 @@ func (s *ImapServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.ln = ln
 
 	go func() {
 		err := s.server.Serve(ln)
@@ -51,4 +53,8 @@ func (s *ImapServer) Start() error {
 
 func (s *ImapServer) Stop() {
 	s.server.Close()
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if s.ln != nil {
+		_ = s.ln.Close()
+	}
 }

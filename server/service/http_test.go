@@ -638,6 +638,10 @@ func TestHttpServer_Stop_RightAfterStart(t *testing.T) {
 	}
 }
 
+func TestHttpServer_Stop_FreesPort(t *testing.T) {
+	requireStopFreesPort(t, newHttpServer)
+}
+
 func newHttpServer(port string) *service.HttpServer {
 	return service.NewHttpServer(port, &events.StoreManager{})
 }

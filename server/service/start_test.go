@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"mokapi/try"
 	"net"
+	"runtime"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -53,17 +53,19 @@ func requireStartReturnsErrorWhenPortIsInUse[T starter](t *testing.T, create fun
 	s.Stop() // must not panic after a failed start
 }
 
-// requireStopFreesPort waits for the port because a listener handed to Serve after Stop is closed asynchronously.
+// requireStopFreesPort binds the port right after Stop, without waiting. GOMAXPROCS(1) keeps the
+// goroutine that runs Serve from being scheduled between Start and Stop.
 func requireStopFreesPort[T starter](t *testing.T, create func(port string) T) {
-	port, s := startOnFreePort(t, create)
-	s.Stop()
+	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(1))
 
-	require.Eventually(t, func() bool {
+	for i := 0; i < 100; i++ {
+		port, s := startOnFreePort(t, create)
+		s.Stop()
+
 		ln, err := net.Listen("tcp", ":"+port)
-		if err != nil {
-			return false
+		if err == nil {
+			_ = ln.Close()
 		}
-		_ = ln.Close()
-		return true
-	}, 5*time.Second, 10*time.Millisecond)
+		require.NoError(t, err, "iteration %d", i)
+	}
 }

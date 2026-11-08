@@ -13,6 +13,7 @@ import (
 
 type SmtpServer struct {
 	server *smtp.Server
+	ln     net.Listener
 }
 
 func NewSmtpServer(port string, handler smtp.Handler, store *cert.Store, tlsMode smtp.TlsMode) *SmtpServer {
@@ -39,6 +40,7 @@ func (s *SmtpServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.ln = ln
 
 	go func() {
 		err := s.server.Serve(ln)
@@ -51,4 +53,8 @@ func (s *SmtpServer) Start() error {
 
 func (s *SmtpServer) Stop() {
 	s.server.Close()
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if s.ln != nil {
+		_ = s.ln.Close()
+	}
 }

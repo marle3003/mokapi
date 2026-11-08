@@ -26,6 +26,7 @@ import (
 
 type HttpServer struct {
 	server   *http.Server
+	ln       net.Listener
 	handlers map[string]*HttpHost
 	eh       events.Handler
 	m        sync.RWMutex
@@ -152,6 +153,7 @@ func (s *HttpServer) Start() error {
 	if err != nil {
 		return err
 	}
+	s.ln = ln
 
 	go func() {
 		var err error
@@ -172,6 +174,10 @@ func (s *HttpServer) Stop() {
 	err := s.server.Close()
 	if err != nil {
 		log.Errorf("failed to stop %s server %s: %s", s.getProto(), s.server.Addr, err)
+	}
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if s.ln != nil {
+		_ = s.ln.Close()
 	}
 }
 

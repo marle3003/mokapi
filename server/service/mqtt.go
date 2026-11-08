@@ -11,6 +11,7 @@ import (
 
 type MqttBroker struct {
 	server *mqtt.Server
+	ln     net.Listener
 }
 
 func NewMqttBroker(port string, handler mqtt.Handler) *MqttBroker {
@@ -29,6 +30,7 @@ func (b *MqttBroker) Start() error {
 	if err != nil {
 		return err
 	}
+	b.ln = ln
 
 	go func() {
 		err := b.server.Serve(ln)
@@ -41,4 +43,8 @@ func (b *MqttBroker) Start() error {
 
 func (b *MqttBroker) Stop() {
 	b.server.Close()
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if b.ln != nil {
+		_ = b.ln.Close()
+	}
 }

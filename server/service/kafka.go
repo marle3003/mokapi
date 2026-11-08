@@ -11,6 +11,7 @@ import (
 
 type KafkaBroker struct {
 	server *kafka.Server
+	ln     net.Listener
 }
 
 func NewKafkaBroker(port string, handler kafka.Handler) *KafkaBroker {
@@ -29,6 +30,7 @@ func (b *KafkaBroker) Start() error {
 	if err != nil {
 		return err
 	}
+	b.ln = ln
 
 	go func() {
 		err := b.server.Serve(ln)
@@ -41,4 +43,8 @@ func (b *KafkaBroker) Start() error {
 
 func (b *KafkaBroker) Stop() {
 	b.server.Close()
+	// Serve only learns about the listener once its goroutine runs, so Close alone can leave the port open.
+	if b.ln != nil {
+		_ = b.ln.Close()
+	}
 }
