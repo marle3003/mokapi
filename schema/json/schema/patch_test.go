@@ -764,3 +764,77 @@ func TestSchema_Patch(t *testing.T) {
 		})
 	}
 }
+
+func TestSchema_Patch_DoesNotShareWithPatch(t *testing.T) {
+	newPatch := func() *schema.Schema {
+		return schematest.New("object",
+			schematest.WithProperty("foo", schematest.New("string")),
+			schematest.WithItemsNew(schematest.New("string")),
+			schematest.WithAdditionalProperties(schematest.New("string")),
+			schematest.WithRequired("foo"),
+			func(s *schema.Schema) {
+				s.Definitions = map[string]*schema.Schema{"def": schematest.New("string")}
+				s.Defs = map[string]*schema.Schema{"def": schematest.New("string")}
+			},
+		)
+	}
+	// changes everything the patch could share with the result
+	change := func(s *schema.Schema) {
+		s.Type[0] = "changed"
+		s.Items.Type[0] = "changed"
+		s.Properties.Get("foo").Type[0] = "changed"
+		s.Properties.Set("added", schematest.New("string"))
+		s.AdditionalProperties.Type[0] = "changed"
+		s.Required[0] = "changed"
+		s.Definitions["def"].Type[0] = "changed"
+		s.Definitions["added"] = schematest.New("string")
+		s.Defs["def"].Type[0] = "changed"
+		s.Defs["added"] = schematest.New("string")
+	}
+
+	testcases := []struct {
+		name   string
+		target *schema.Schema
+	}{
+		{name: "patch is adopted by an empty schema", target: &schema.Schema{}},
+		{
+			name: "patch adds to a schema that has other values",
+			target: schematest.New("object",
+				schematest.WithProperty("other", schematest.New("string")),
+				schematest.WithItemsNew(schematest.New("string")),
+				schematest.WithAdditionalProperties(schematest.New("string")),
+				func(s *schema.Schema) {
+					s.Definitions = map[string]*schema.Schema{"other": schematest.New("string")}
+					s.Defs = map[string]*schema.Schema{"other": schematest.New("string")}
+				},
+			),
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			patch := newPatch()
+
+			tc.target.Patch(patch)
+			change(tc.target)
+
+			require.Equal(t, newPatch(), patch)
+		})
+	}
+}
+
+func TestSchemas_Patch_DoesNotShareWithPatch(t *testing.T) {
+	newPatch := func() *schema.Schemas {
+		s := &schema.Schemas{}
+		s.Set("foo", schematest.New("string"))
+		return s
+	}
+	target := &schema.Schemas{}
+	target.Set("other", schematest.New("string"))
+	patch := newPatch()
+
+	target.Patch(patch)
+	target.Get("foo").Type[0] = "changed"
+
+	require.Equal(t, newPatch(), patch)
+}

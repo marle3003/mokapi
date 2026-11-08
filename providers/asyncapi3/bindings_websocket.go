@@ -22,12 +22,12 @@ func (b *WebsocketChannelBindings) patch(patch WebsocketChannelBindings) {
 	if b.Query != nil {
 		b.Query.Patch(patch.Query)
 	} else {
-		b.Query = patch.Query
+		b.Query = patch.Query.Clone()
 	}
 	if b.Headers != nil {
 		b.Headers.Patch(patch.Headers)
 	} else {
-		b.Headers = patch.Headers
+		b.Headers = patch.Headers.Clone()
 	}
 }
 

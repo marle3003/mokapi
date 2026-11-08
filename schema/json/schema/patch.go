@@ -1,6 +1,14 @@
 package schema
 
+import "slices"
+
+// Patch applies patch to s. Values s adopts from patch are copied, so s never
+// shares schemas, maps or slices with patch.
 func (s *Schema) Patch(patch *Schema) {
+	s.patch(patch, schemaCopies{})
+}
+
+func (s *Schema) patch(patch *Schema, copies schemaCopies) {
 	if patch == nil {
 		return
 	}
@@ -55,9 +63,9 @@ func (s *Schema) Patch(patch *Schema) {
 		s.ExclusiveMaximum = patch.ExclusiveMaximum
 	}
 	if s.Items == nil {
-		s.Items = patch.Items
+		s.Items = patch.Items.clone(copies)
 	} else {
-		s.Items.Patch(patch.Items)
+		s.Items.patch(patch.Items, copies)
 	}
 
 	s.UniqueItems = patch.UniqueItems
@@ -72,19 +80,19 @@ func (s *Schema) Patch(patch *Schema) {
 	s.ShuffleItems = patch.ShuffleItems
 
 	if s.Properties == nil {
-		s.Properties = patch.Properties
+		s.Properties = patch.Properties.clone(copies)
 	} else {
-		s.Properties.Patch(patch.Properties)
+		s.Properties.patch(patch.Properties, copies)
 	}
 
 	if patch.Required != nil {
-		s.Required = patch.Required
+		s.Required = slices.Clone(patch.Required)
 	}
 
 	if s.AdditionalProperties == nil {
-		s.AdditionalProperties = patch.AdditionalProperties
+		s.AdditionalProperties = patch.AdditionalProperties.clone(copies)
 	} else {
-		s.AdditionalProperties.Patch(patch.AdditionalProperties)
+		s.AdditionalProperties.patch(patch.AdditionalProperties, copies)
 	}
 
 	if patch.MinProperties != nil {
@@ -115,32 +123,30 @@ func (s *Schema) Patch(patch *Schema) {
 		s.ContentEncoding = patch.ContentEncoding
 	}
 
-	if s.Definitions == nil {
-		s.Definitions = patch.Definitions
-	} else {
-		for k, v := range patch.Definitions {
-			if def, ok := s.Definitions[k]; ok {
-				def.Patch(v)
-			} else {
-				s.Definitions[k] = v
-			}
-		}
-	}
-
-	if s.Defs == nil {
-		s.Defs = patch.Defs
-	} else {
-		for k, v := range patch.Defs {
-			if def, ok := s.Defs[k]; ok {
-				def.Patch(v)
-			} else {
-				s.Defs[k] = v
-			}
-		}
-	}
+	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions, copies)
+	s.Defs = patchSchemaMap(s.Defs, patch.Defs, copies)
 }
 
+func patchSchemaMap(m, patch map[string]*Schema, copies schemaCopies) map[string]*Schema {
+	if m == nil {
+		return cloneSchemaMap(patch, copies)
+	}
+	for k, v := range patch {
+		if s, ok := m[k]; ok {
+			s.patch(v, copies)
+		} else {
+			m[k] = v.clone(copies)
+		}
+	}
+	return m
+}
+
+// Patch applies patch to s, see Schema.Patch.
 func (s *Schemas) Patch(patch *Schemas) {
+	s.patch(patch, schemaCopies{})
+}
+
+func (s *Schemas) patch(patch *Schemas, copies schemaCopies) {
 	if patch == nil {
 		return
 	}
@@ -148,9 +154,9 @@ func (s *Schemas) Patch(patch *Schemas) {
 		r := it.Value()
 		name := it.Key()
 		if v := s.Get(name); v != nil {
-			v.Patch(r)
+			v.patch(r, copies)
 		} else {
-			s.Set(it.Key(), it.Value())
+			s.Set(name, r.clone(copies))
 		}
 	}
 }

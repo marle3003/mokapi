@@ -493,3 +493,20 @@ func kafkaConfigEvent(port int) dynamic.ConfigEvent {
 	)
 	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
 }
+
+func TestKafkaManager_DeleteFileStopsBrokerOnlyItDefined(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewKafkaManager(nil, app)
+	defer m.Stop()
+
+	f := newMergedFiles("kafka")
+	m.UpdateConfig(f.a)
+	m.UpdateConfig(f.b)
+
+	deleteA := f.a
+	deleteA.Event = dynamic.Delete
+	m.UpdateConfig(deleteA)
+
+	requirePortClosed(t, f.portA)
+	requirePortOpen(t, f.portB)
+}

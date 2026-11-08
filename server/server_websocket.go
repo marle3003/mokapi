@@ -53,13 +53,13 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 			m.removeService(cfg.Info.Name)
 			return
 		}
-	}
-
-	var err error
-	info, err = m.app.Websocket.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add Websocket config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Websocket.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add Websocket config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
 	m.addOrUpdateService(info)

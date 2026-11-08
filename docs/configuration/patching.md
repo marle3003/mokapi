@@ -61,6 +61,9 @@ Mokapi patches any configuration file even if the source comes from a different 
 | SMTP     | *info.title*  |
 | LDAP     | *info.title*  |
 
+For AsyncAPI, Mokapi merges servers, channels, operations and components by key, so a patch file can add
+operations as well. Values such as the `asyncapi` version, `id` and `defaultContentType` come from the first file.
+
 ## Benefits
 
 - <p><strong>Update Without Disruption:</strong><br />Easily upgrade to new versions of configurations while preserving your custom changes.</p>

@@ -51,13 +51,13 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	}
-
-	var err error
-	info, err = m.app.Mqtt.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Mqtt.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
 	m.addOrUpdateCluster(info)

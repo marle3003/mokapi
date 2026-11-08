@@ -306,14 +306,14 @@ func (r *SchemaRef) Patch(patch *SchemaRef) {
 		return
 	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = cloneSchema(patch.Value, copies{})
 	} else {
 		v1 := reflect.ValueOf(r.Value)
 		v2 := reflect.ValueOf(patch.Value)
 
 		// if patch has different schema type then simple overwrite
 		if v1.Type() != v2.Type() {
-			r.Value = patch.Value
+			r.Value = cloneSchema(patch.Value, copies{})
 		} else {
 			switch s := r.Value.(type) {
 			case *openapi.Schema:
@@ -349,7 +349,7 @@ func (m *MultiSchemaFormat) Patch(patch *MultiSchemaFormat) {
 		return
 	}
 	if m.Schema == nil {
-		m.Schema = patch.Schema
+		m.Schema = patch.Schema.clone(copies{})
 	} else {
 		m.Schema.Patch(patch.Schema)
 	}

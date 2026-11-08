@@ -56,26 +56,27 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Kafka.Get(cfg.Info.Name)
+	var servers *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]
+	if info != nil {
+		servers = info.Servers
+	}
+
 	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	}
-	var servers *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]
-	if info != nil {
-		servers = info.Servers
-	}
-	var err error
-	info, err = m.app.Kafka.Add(e.Config, m.emitter)
-	if err != nil {
-		log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
-		return
+	} else {
+		var err error
+		info, err = m.app.Kafka.Add(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
 	}
 
-	c := m.getOrCreateCluster(info)
-	c.updateBrokers(info, servers)
+	m.getOrCreateCluster(info).updateBrokers(info, servers)
 
 	log.Debugf("processed %v", e.Config.Info.Path())
 }

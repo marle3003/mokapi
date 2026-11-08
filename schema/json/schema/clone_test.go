@@ -2,12 +2,23 @@ package schema_test
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
+
+// parse unmarshals the schema and resolves its references like a loaded config.
+func parse(t *testing.T, data string) *schema.Schema {
+	t.Helper()
+	s := &schema.Schema{}
+	require.NoError(t, yaml.Unmarshal([]byte(data), &s))
+	require.NoError(t, s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{}))
+	return s
+}
 
 func TestSchema_Clone(t *testing.T) {
 	testcases := []struct {
@@ -269,6 +280,136 @@ func TestSchema_Clone(t *testing.T) {
 				require.Equal(t, schematest.New("string"), s.AnyOf[0])
 				require.Equal(t, schematest.New("string"), s.OneOf[0])
 				require.Equal(t, schematest.New("string"), s.AllOf[0])
+			},
+		},
+		{
+			name: "definitions and defs",
+			test: func(t *testing.T) {
+				s := &schema.Schema{
+					Definitions: map[string]*schema.Schema{"foo": schematest.New("string")},
+					Defs:        map[string]*schema.Schema{"bar": schematest.New("string")},
+				}
+				s2 := s.Clone()
+
+				require.Equal(t, schematest.New("string"), s2.Definitions["foo"])
+				require.Equal(t, schematest.New("string"), s2.Defs["bar"])
+
+				s2.Definitions["foo"].Type[0] = "integer"
+				s2.Definitions["baz"] = schematest.New("string")
+				s2.Defs["bar"].Type[0] = "integer"
+				s2.Defs["baz"] = schematest.New("string")
+
+				require.Equal(t, schematest.New("string"), s.Definitions["foo"])
+				require.Len(t, s.Definitions, 1)
+				require.Equal(t, schematest.New("string"), s.Defs["bar"])
+				require.Len(t, s.Defs, 1)
+			},
+		},
+		{
+			name: "exclusive limits keep their variant",
+			test: func(t *testing.T) {
+				s := &schema.Schema{
+					ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true),
+					ExclusiveMinimum: schema.NewUnionTypeA[float64, bool](1),
+				}
+				s2 := s.Clone()
+
+				require.False(t, s2.ExclusiveMaximum.IsA())
+				require.Equal(t, true, s2.ExclusiveMaximum.B)
+				require.True(t, s2.ExclusiveMinimum.IsA())
+				require.Equal(t, 1.0, s2.ExclusiveMinimum.A)
+			},
+		},
+		{
+			name: "annotations",
+			test: func(t *testing.T) {
+				s := &schema.Schema{
+					Title:       "title",
+					Description: "description",
+					Deprecated:  true,
+					Default:     "default",
+					Examples:    []schema.Example{{Value: "foo"}},
+				}
+				s2 := s.Clone()
+
+				require.Equal(t, "title", s2.Title)
+				require.Equal(t, "description", s2.Description)
+				require.True(t, s2.Deprecated)
+				require.Equal(t, "default", s2.Default)
+				require.Equal(t, []schema.Example{{Value: "foo"}}, s2.Examples)
+
+				s2.Examples[0] = schema.Example{Value: "bar"}
+				require.Equal(t, []schema.Example{{Value: "foo"}}, s.Examples)
+			},
+		},
+		{
+			name: "resolved reference",
+			test: func(t *testing.T) {
+				s := parse(t, `
+$defs:
+  foo:
+    type: string
+properties:
+  a:
+    $ref: '#/$defs/foo'
+`)
+				a := s.Properties.Get("a")
+				require.NotNil(t, a.Sub)
+
+				s2 := s.Clone()
+
+				a2 := s2.Properties.Get("a")
+				require.Equal(t, "#/$defs/foo", a2.Ref)
+				require.NotNil(t, a2.Sub)
+				require.NotSame(t, a.Sub, a2.Sub)
+				require.Equal(t, a.Sub.Type, a2.Sub.Type)
+
+				a2.Sub.Type[0] = "integer"
+				require.Equal(t, schema.Types{"string"}, a.Sub.Type)
+			},
+		},
+		{
+			name: "cyclic reference",
+			test: func(t *testing.T) {
+				s := parse(t, `
+type: object
+properties:
+  child:
+    $ref: '#'
+`)
+				child := s.Properties.Get("child")
+				require.Same(t, s, child.Sub)
+
+				s2 := s.Clone()
+
+				child2 := s2.Properties.Get("child")
+				require.NotSame(t, child, child2)
+				require.Same(t, s2, child2.Sub, "the copy has the same cycle and does not point into the original")
+			},
+		},
+		{
+			name: "keywords next to reference are kept when the copy is parsed",
+			test: func(t *testing.T) {
+				s := &schema.Schema{}
+				err := yaml.Unmarshal([]byte(`
+$defs:
+  foo:
+    type: string
+    description: from definition
+properties:
+  a:
+    $ref: '#/$defs/foo'
+    description: from reference
+`), &s)
+				require.NoError(t, err)
+
+				s2 := s.Clone()
+
+				err = s2.Parse(&dynamic.Config{Data: s2}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				a := s2.Properties.Get("a")
+				require.Equal(t, schema.Types{"string"}, a.Type)
+				require.Equal(t, "from reference", a.Description)
 			},
 		},
 	}
