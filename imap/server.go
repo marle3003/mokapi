@@ -36,18 +36,24 @@ func (s *Server) ListenAndServe() error {
 	if s.inShutdown.IsSet() {
 		return ErrServerClosed
 	}
-
-	var err error
-	s.mu.Lock()
-	s.listener, err = net.Listen("tcp", s.Addr)
-	s.mu.Unlock()
+	l, err := net.Listen("tcp", s.Addr)
 	if err != nil {
 		return err
 	}
-	return s.Serve(s.listener)
+	return s.Serve(l)
 }
 
 func (s *Server) Serve(l net.Listener) error {
+	s.mu.Lock()
+	// Close sets inShutdown before taking s.mu, so either we see it here or Close sees our listener.
+	if s.inShutdown.IsSet() {
+		s.mu.Unlock()
+		_ = l.Close()
+		return ErrServerClosed
+	}
+	s.listener = l
+	s.mu.Unlock()
+
 	for {
 		c, err := l.Accept()
 		if err != nil {

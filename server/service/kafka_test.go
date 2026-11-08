@@ -23,7 +23,7 @@ func TestKafkaBroker(t *testing.T) {
 		require.NoError(t, err)
 	})
 	b := service.NewKafkaBroker(fmt.Sprintf("%v", port), handler)
-	b.Start()
+	require.NoError(t, b.Start())
 	defer b.Stop()
 
 	client := kafkatest.NewClient(addr, "test")
@@ -34,4 +34,20 @@ func TestKafkaBroker(t *testing.T) {
 	require.True(t, called, "handler should be called")
 	require.Equal(t, fmt.Sprintf(":%v", port), b.Addr())
 
+}
+
+func newKafkaBroker(port string) *service.KafkaBroker {
+	return service.NewKafkaBroker(port, kafka.HandlerFunc(func(rw kafka.ResponseWriter, req *kafka.Request) {}))
+}
+
+func TestKafkaBroker_Start_PortIsBoundWhenStartReturns(t *testing.T) {
+	requirePortIsBoundWhenStartReturns(t, newKafkaBroker)
+}
+
+func TestKafkaBroker_Start_ReturnsErrorWhenPortIsInUse(t *testing.T) {
+	requireStartReturnsErrorWhenPortIsInUse(t, newKafkaBroker)
+}
+
+func TestKafkaBroker_Stop_FreesPort(t *testing.T) {
+	requireStopFreesPort(t, newKafkaBroker)
 }

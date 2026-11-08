@@ -17,7 +17,7 @@ import (
 
 type Broker interface {
 	Addr() string
-	Start()
+	Start() error
 	Stop()
 }
 
@@ -137,7 +137,7 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old *sortedmap.Link
 		if !found {
 			log.Infof("adding new kafka broker '%v' on port %v to cluster '%v'", name, port, cfg.Info.Name)
 			broker = service.NewKafkaBroker(port, cfg.Handler(c.monitor))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.brokers[port] = broker
 	}

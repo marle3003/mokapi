@@ -67,7 +67,7 @@ func TestSmtpServer(t *testing.T) {
 
 			port := fmt.Sprintf("%v", try.GetFreePort())
 			s := service.NewSmtpServer(port, tc.h, tc.cert(), tc.tlsMode)
-			s.Start()
+			require.NoError(t, s.Start())
 			defer s.Stop()
 
 			c := smtp.NewClient(fmt.Sprintf("localhost:%v", port))
@@ -80,4 +80,26 @@ func TestSmtpServer(t *testing.T) {
 func TestSmtpServer_Addr(t *testing.T) {
 	s := service.NewSmtpServer("1234", nil, nil, smtp.StartTls)
 	require.Equal(t, ":1234", s.Addr())
+}
+
+func newSmtpServer(tlsMode smtp.TlsMode) func(port string) *service.SmtpServer {
+	return func(port string) *service.SmtpServer {
+		store, _ := cert.NewStore(&static.Config{})
+		return service.NewSmtpServer(port, &mail.Handler{}, store, tlsMode)
+	}
+}
+
+func TestSmtpServer_Start_PortIsBoundWhenStartReturns(t *testing.T) {
+	t.Run("smtp", func(t *testing.T) { requirePortIsBoundWhenStartReturns(t, newSmtpServer(smtp.StartTls)) })
+	t.Run("smtps", func(t *testing.T) { requirePortIsBoundWhenStartReturns(t, newSmtpServer(smtp.Implicit)) })
+}
+
+func TestSmtpServer_Start_ReturnsErrorWhenPortIsInUse(t *testing.T) {
+	t.Run("smtp", func(t *testing.T) { requireStartReturnsErrorWhenPortIsInUse(t, newSmtpServer(smtp.StartTls)) })
+	t.Run("smtps", func(t *testing.T) { requireStartReturnsErrorWhenPortIsInUse(t, newSmtpServer(smtp.Implicit)) })
+}
+
+func TestSmtpServer_Stop_FreesPort(t *testing.T) {
+	t.Run("smtp", func(t *testing.T) { requireStopFreesPort(t, newSmtpServer(smtp.StartTls)) })
+	t.Run("smtps", func(t *testing.T) { requireStopFreesPort(t, newSmtpServer(smtp.Implicit)) })
 }

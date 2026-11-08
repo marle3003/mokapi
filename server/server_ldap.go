@@ -8,6 +8,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/runtime"
 	"mokapi/server/cert"
+	"net"
 	"sync"
 )
 
@@ -71,10 +72,18 @@ func (m *LdapDirectoryManager) start(cfg *runtime.LdapInfo) {
 	s := &ldap.Server{Addr: cfg.Address, Handler: cfg.Handler(m.app.Monitor.Ldap, m.app.Events)}
 	m.servers[cfg.Info.Name] = s
 	log.Infof("adding LDAP host '%v' on binding %v", cfg.Info.Name, s.Addr)
+
+	logFailure := func(err error) {
+		log.Errorf("adding LDAP host '%v' on binding %v failed: %v", cfg.Info.Name, s.Addr, err)
+	}
+	ln, err := net.Listen("tcp", s.Addr)
+	if err != nil {
+		logFailure(err)
+		return
+	}
 	go func() {
-		err := s.ListenAndServe()
-		if !errors.Is(err, ldap.ErrServerClosed) {
-			log.Errorf("adding LDAP host '%v' on binding %v failed: %v", cfg.Info.Name, s.Addr, err)
+		if err := s.Serve(ln); !errors.Is(err, ldap.ErrServerClosed) {
+			logFailure(err)
 		}
 	}()
 }

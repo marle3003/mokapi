@@ -116,7 +116,7 @@ func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt
 		} else {
 			log.Infof("adding new MQTT broker '%v' on port %v to '%v'", name, port, cfg.Info.Name)
 			broker = service.NewMqttBroker(port, cfg.Handler(monitor))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.brokers[port] = broker
 	}

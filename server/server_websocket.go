@@ -122,7 +122,7 @@ func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *mo
 				req = req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
 				h.ServeHTTP(w, req)
 			}))
-			broker.Start()
+			startAndLogError(broker)
 		}
 		c.servers[port] = broker
 	}

@@ -3,7 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
-	"mokapi/mqtt"
+	"net"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -24,13 +24,19 @@ func (b *WebsocketServer) Addr() string {
 	return b.server.Addr
 }
 
-func (b *WebsocketServer) Start() {
+func (b *WebsocketServer) Start() error {
+	ln, err := net.Listen("tcp", b.server.Addr)
+	if err != nil {
+		return err
+	}
+
 	go func() {
-		err := b.server.ListenAndServe()
-		if !errors.Is(err, mqtt.ErrServerClosed) {
+		err := b.server.Serve(ln)
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Error(err)
 		}
 	}()
+	return nil
 }
 
 func (b *WebsocketServer) Stop() {

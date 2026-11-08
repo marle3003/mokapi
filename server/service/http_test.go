@@ -601,7 +601,7 @@ func TestHttpServer_Start_PortIsBoundWhenStartReturns(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	for i := 0; i < 200; i++ {
-		port, s := startOnFreePort(t)
+		port, s := startOnFreePort(t, newHttpServer)
 
 		conn, err := net.Dial("tcp", "localhost:"+port)
 		s.Stop()
@@ -633,21 +633,11 @@ func TestHttpServer_Start_ReturnsErrorWhenPortIsInUse(t *testing.T) {
 
 func TestHttpServer_Stop_RightAfterStart(t *testing.T) {
 	for i := 0; i < 50; i++ {
-		_, s := startOnFreePort(t)
+		_, s := startOnFreePort(t, newHttpServer)
 		s.Stop()
 	}
 }
 
-// startOnFreePort retries because another process may take the port between GetFreePort and Start.
-func startOnFreePort(t *testing.T) (string, *service.HttpServer) {
-	var err error
-	for attempt := 0; attempt < 5; attempt++ {
-		port := fmt.Sprintf("%v", try.GetFreePort())
-		s := service.NewHttpServer(port, &events.StoreManager{})
-		if err = s.Start(); err == nil {
-			return port, s
-		}
-	}
-	require.NoError(t, err)
-	return "", nil
+func newHttpServer(port string) *service.HttpServer {
+	return service.NewHttpServer(port, &events.StoreManager{})
 }

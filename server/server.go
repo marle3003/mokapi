@@ -60,3 +60,10 @@ func (s *Server) Start() error {
 func (s *Server) Close() {
 	close(s.stopChan)
 }
+
+// startAndLogError keeps a server registered when its port can't be bound, so a later update doesn't start a second one.
+func startAndLogError(s interface{ Start() error }) {
+	if err := s.Start(); err != nil {
+		log.Error(err)
+	}
+}

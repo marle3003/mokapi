@@ -6,6 +6,7 @@ import (
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
 	"mokapi/try"
+	"net"
 	"testing"
 	"time"
 
@@ -101,4 +102,67 @@ func TestServer_Close(t *testing.T) {
 			t.Fatal("ListenAndServe did not return after Close")
 		}
 	})
+}
+
+func TestServer_Serve_ClosedServerClosesListener(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := l.Addr().String()
+
+	s := &mqtt.Server{}
+	s.Close()
+
+	require.ErrorIs(t, s.Serve(l), mqtt.ErrServerClosed)
+
+	l2, err := net.Listen("tcp", addr)
+	require.NoError(t, err, "listener passed to Serve is still open")
+	_ = l2.Close()
+}
+
+func TestServer_Close_ClosesListenerPassedToServe(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := l.Addr().String()
+
+	s := &mqtt.Server{}
+	done := make(chan error, 1)
+	go func() { done <- s.Serve(l) }()
+
+	// Serve registers the listener asynchronously, a successful dial shows it accepts
+	conn, err := net.Dial("tcp", addr)
+	require.NoError(t, err)
+	_ = conn.Close()
+
+	s.Close()
+	select {
+	case err = <-done:
+		require.ErrorIs(t, err, mqtt.ErrServerClosed)
+	case <-time.After(5 * time.Second):
+		t.Fatal("Serve did not return after Close")
+	}
+
+	l2, err := net.Listen("tcp", addr)
+	require.NoError(t, err, "Close did not close the listener passed to Serve")
+	_ = l2.Close()
+}
+
+func TestServer_ListenAndServe_PortInUse(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer l.Close()
+
+	s := &mqtt.Server{Addr: l.Addr().String()}
+	err = s.ListenAndServe()
+	require.Error(t, err)
+	require.NotErrorIs(t, err, mqtt.ErrServerClosed)
+}
+
+func TestServer_ListenAndServe_ClosedServerDoesNotBind(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer l.Close()
+
+	s := &mqtt.Server{Addr: l.Addr().String()}
+	s.Close()
+	require.ErrorIs(t, s.ListenAndServe(), mqtt.ErrServerClosed)
 }

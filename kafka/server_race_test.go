@@ -50,6 +50,11 @@ func TestServer_ServeAfterClose(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Serve keeps running although the server was closed before")
 	}
+
+	// the server owns the listener it was given, so the port is free again
+	l2, err := net.Listen("tcp", l.Addr().String())
+	require.NoError(t, err, "listener passed to Serve is still open")
+	_ = l2.Close()
 }
 
 func TestServer_CloseTwice(t *testing.T) {
@@ -81,5 +86,53 @@ func TestServer_CloseWithoutServe(t *testing.T) {
 		s.Close()
 		s.Close()
 	})
+	require.ErrorIs(t, s.ListenAndServe(), kafka.ErrServerClosed)
+}
+
+func TestServer_Close_ClosesListenerPassedToServe(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := l.Addr().String()
+
+	s := &kafka.Server{Handler: kafka.HandlerFunc(func(rw kafka.ResponseWriter, req *kafka.Request) {})}
+	done := make(chan error, 1)
+	go func() { done <- s.Serve(l) }()
+
+	// Serve registers the listener asynchronously, a successful dial shows it accepts
+	conn, err := net.Dial("tcp", addr)
+	require.NoError(t, err)
+	_ = conn.Close()
+
+	s.Close()
+	select {
+	case err = <-done:
+		require.ErrorIs(t, err, kafka.ErrServerClosed)
+	case <-time.After(5 * time.Second):
+		t.Fatal("Serve did not return after Close")
+	}
+
+	l2, err := net.Listen("tcp", addr)
+	require.NoError(t, err, "Close did not close the listener passed to Serve")
+	_ = l2.Close()
+}
+
+func TestServer_ListenAndServe_PortInUse(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer l.Close()
+
+	s := &kafka.Server{Addr: l.Addr().String()}
+	err = s.ListenAndServe()
+	require.Error(t, err)
+	require.NotErrorIs(t, err, kafka.ErrServerClosed)
+}
+
+func TestServer_ListenAndServe_ClosedServerDoesNotBind(t *testing.T) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer l.Close()
+
+	s := &kafka.Server{Addr: l.Addr().String()}
+	s.Close()
 	require.ErrorIs(t, s.ListenAndServe(), kafka.ErrServerClosed)
 }

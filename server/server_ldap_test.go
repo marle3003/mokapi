@@ -139,3 +139,31 @@ func newConfig(path string, data interface{}) *dynamic.Config {
 		Data: data,
 	}
 }
+
+func TestLdapManager_PortIsBoundWhenUpdateConfigReturns(t *testing.T) {
+	m := server.NewLdapDirectoryManager(enginetest.NewEngine(), nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+	defer m.Stop()
+
+	requireBoundWhenUpdateReturns(t, func(port int) { m.UpdateConfig(ldapConfigEvent(port)) })
+}
+
+func TestLdapManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
+	m := server.NewLdapDirectoryManager(enginetest.NewEngine(), nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+	defer m.Stop()
+
+	requireBindErrorIsLoggedAndServerStaysRegistered(t, true,
+		func(port int) { m.UpdateConfig(ldapConfigEvent(port)) },
+		func(port int) string {
+			return fmt.Sprintf("adding LDAP host 'x' on binding :%d failed: listen tcp :%d: bind: address already in use", port, port)
+		},
+	)
+}
+
+func ldapConfigEvent(port int) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{
+		Config: newConfig("x.yml", &directory.Config{
+			Info:    directory.Info{Name: "x"},
+			Address: fmt.Sprintf(":%d", port),
+		}),
+	}
+}

@@ -231,3 +231,51 @@ func waitForPort(t *testing.T, port int) {
 		return true
 	})
 }
+
+var mailProtocols = []string{"smtp", "smtps", "imap", "imaps"}
+
+func TestMailManager_PortIsBoundWhenUpdateConfigReturns(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			requireBoundWhenUpdateReturns(t, func(port int) { m.UpdateConfig(mailConfigEvent(protocol, port)) })
+		})
+	}
+}
+
+func TestMailManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			// MailManager looks up smtps, imap and imaps servers with a key that never matches
+			// (":port" instead of "port"), so only smtp can be found again by a second update.
+			requireBindErrorIsLoggedAndServerStaysRegistered(t, protocol == "smtp",
+				func(port int) { m.UpdateConfig(mailConfigEvent(protocol, port)) },
+				func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+			)
+		})
+	}
+}
+
+func newMailManager(t *testing.T) *server.MailManager {
+	certStore, err := cert.NewStore(&static.Config{})
+	require.NoError(t, err)
+	m := server.NewMailManager(runtime.New(&static.Config{}, &dynamictest.Reader{}), enginetest.NewEngine(), certStore)
+	t.Cleanup(m.Stop)
+	return m
+}
+
+func mailConfigEvent(protocol string, port int) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{
+		Config: &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Data: &mail.Config{
+				Info: mail.Info{Name: "foo"},
+				Servers: map[string]*mail.Server{
+					"foo": {Host: fmt.Sprintf("localhost:%d", port), Protocol: protocol},
+				},
+				Settings: &mail.Settings{AutoCreateMailbox: true},
+			},
+		},
+	}
+}

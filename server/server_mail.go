@@ -18,7 +18,7 @@ import (
 
 type MailServer interface {
 	Stop()
-	Start()
+	Start() error
 }
 
 type MailManager struct {
@@ -89,7 +89,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 
 			log.Infof("adding new SMTP host on :%v", port)
 			s := service.NewSmtpServer(port, h, m.certStore, smtp.StartTls)
-			s.Start()
+			startAndLogError(s)
 			servers[port] = s
 		case "smtps":
 			if port == "" {
@@ -103,7 +103,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 
 			log.Infof("adding new SMTPS host on %v", port)
 			s := service.NewSmtpServer(port, h, m.certStore, smtp.Implicit)
-			s.Start()
+			startAndLogError(s)
 			servers[port] = s
 		case "imap":
 			if port == "" {
@@ -117,7 +117,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 
 			log.Infof("adding new IMAP host on %v", port)
 			s := service.NewImapServer(port, h, m.certStore, imap.StartTls)
-			s.Start()
+			startAndLogError(s)
 			servers[port] = s
 		case "imaps":
 			if port == "" {
@@ -131,7 +131,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 
 			log.Infof("adding new IMAPS host on %v", port)
 			s := service.NewImapServer(port, h, m.certStore, imap.Implicit)
-			s.Start()
+			startAndLogError(s)
 			servers[port] = s
 		}
 	}

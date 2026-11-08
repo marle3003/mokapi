@@ -49,15 +49,10 @@ type Server struct {
 }
 
 func (s *Server) ListenAndServe() error {
-	// check under s.mu: a Close between the check and net.Listen would not close the new listener
-	s.mu.Lock()
 	if s.inShutdown.IsSet() {
-		s.mu.Unlock()
 		return ErrServerClosed
 	}
 	l, err := net.Listen("tcp", s.Addr)
-	s.listener = l
-	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -65,10 +60,17 @@ func (s *Server) ListenAndServe() error {
 }
 
 func (s *Server) Serve(l net.Listener) error {
-	closeCh := s.getCloseChan()
+	// register under s.mu so that Close either sees the listener or Serve sees the shutdown
+	s.mu.Lock()
 	if s.inShutdown.IsSet() {
+		s.mu.Unlock()
+		_ = l.Close()
 		return ErrServerClosed
 	}
+	closeCh := s.closeChanLocked()
+	s.listener = l
+	s.mu.Unlock()
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -177,12 +179,6 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 
 	s.activeConn[conn] = ctx
 	return ctx
-}
-
-func (s *Server) getCloseChan() chan bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.closeChanLocked()
 }
 
 // closeChanLocked creates the channel on first use, because Server is built as a struct literal

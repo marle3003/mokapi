@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mokapi/imap"
 	"mokapi/server/cert"
+	"net"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -33,13 +34,19 @@ func (s *ImapServer) Addr() string {
 	return s.server.Addr
 }
 
-func (s *ImapServer) Start() {
+func (s *ImapServer) Start() error {
+	ln, err := net.Listen("tcp", s.server.Addr)
+	if err != nil {
+		return err
+	}
+
 	go func() {
-		err := s.server.ListenAndServe()
+		err := s.server.Serve(ln)
 		if !errors.Is(err, imap.ErrServerClosed) {
 			log.Error(err)
 		}
 	}()
+	return nil
 }
 
 func (s *ImapServer) Stop() {
