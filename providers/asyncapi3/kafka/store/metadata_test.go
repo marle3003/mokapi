@@ -63,6 +63,27 @@ func TestMetadata(t *testing.T) {
 			},
 		},
 		{
+			name: "channel with empty server reference",
+			test: func(t *testing.T, s *store.Store) {
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithChannel("foo"),
+				)
+				cfg.Channels["foo"].Value.Servers = []*asyncapi3.ServerRef{nil}
+				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				s.Update(cfg)
+
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				require.NotPanics(t, func() { s.ServeMessage(rr, r) })
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 1)
+				require.Equal(t, "foo", res.Topics[0].Name)
+			},
+		},
+		{
 			name: "with specific topic and two partitions",
 			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(

@@ -154,7 +154,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 		if op.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value != ch.Value {
+		if op.Value.Channel == nil || op.Value.Channel.Value != ch.Value {
 			continue
 		}
 

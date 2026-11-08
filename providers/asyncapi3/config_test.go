@@ -835,3 +835,98 @@ channels:
 		})
 	}
 }
+
+// An entry without value (`orders:` in YAML) is a nil entry in the map. A single file
+// with such an entry must not crash Mokapi.
+func TestConfig_Parse_EmptyEntries(t *testing.T) {
+	const head = "asyncapi: 3.0.0\ninfo:\n  title: foo\n  version: '1.0'\n"
+	testcases := []struct {
+		name string
+		body string
+	}{
+		{name: "server", body: "servers:\n  dev:\n"},
+		{name: "channel", body: "channels:\n  orders:\n"},
+		{name: "server of channel", body: "channels:\n  orders:\n    servers:\n      - \n"},
+		{name: "parameter of channel", body: "channels:\n  orders:\n    parameters:\n      id:\n"},
+		{name: "operation", body: "operations:\n  send:\n"},
+		{name: "message of channel", body: "channels:\n  orders:\n    messages:\n      order:\n"},
+		{name: "message of operation", body: "operations:\n  send:\n    action: send\n    messages:\n      - \n"},
+		{name: "component server", body: "components:\n  servers:\n    dev:\n"},
+		{name: "component channel", body: "components:\n  channels:\n    orders:\n"},
+		{name: "component operation", body: "components:\n  operations:\n    send:\n"},
+		{name: "component message", body: "components:\n  messages:\n    order:\n"},
+		{name: "component schema", body: "components:\n  schemas:\n    order:\n"},
+		{name: "message payload", body: "channels:\n  orders:\n    messages:\n      order:\n        payload:\n"},
+		{name: "message headers", body: "channels:\n  orders:\n    messages:\n      order:\n        headers:\n"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var cfg *asyncapi3.Config
+			require.NoError(t, yaml.Unmarshal([]byte(head+tc.body), &cfg))
+
+			require.NotPanics(t, func() {
+				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+			})
+		})
+	}
+}
+
+// Parse removes empty entries, so that all readers see them as missing.
+func TestConfig_Parse_RemovesEmptyEntries(t *testing.T) {
+	var cfg *asyncapi3.Config
+	require.NoError(t, yaml.Unmarshal([]byte(`
+asyncapi: 3.0.0
+info: {title: foo, version: '1.0'}
+servers:
+  empty:
+  dev: {host: 'localhost:9092', protocol: kafka}
+channels:
+  empty:
+  orders:
+    servers: [null, {$ref: '#/servers/dev'}]
+    parameters: {empty: , id: {}}
+    messages: {empty: , order: {$ref: '#/components/messages/order'}}
+    tags: [null, {name: t}]
+operations:
+  empty:
+  send:
+    action: send
+    messages: [null, {$ref: '#/channels/orders/messages/order'}]
+    traits: [null]
+components:
+  servers: {empty: }
+  channels: {empty: }
+  schemas: {empty: }
+  messages: {empty: , order: {name: order, traits: [null]}}
+  operations: {empty: }
+  parameters: {empty: }
+`), &cfg))
+
+	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+
+	require.Equal(t, []string{"dev"}, cfg.Servers.Keys())
+	require.Len(t, cfg.Channels, 1)
+	require.Contains(t, cfg.Channels, "orders")
+	require.Len(t, cfg.Operations, 1)
+	require.Contains(t, cfg.Operations, "send")
+
+	orders := cfg.Channels["orders"].Value
+	require.Len(t, orders.Servers, 1)
+	require.Len(t, orders.Parameters, 1)
+	require.Len(t, orders.Messages, 1)
+	require.Len(t, orders.Tags, 1)
+
+	send := cfg.Operations["send"].Value
+	require.Len(t, send.Messages, 1)
+	require.Empty(t, send.Traits)
+
+	c := cfg.Components
+	require.Empty(t, c.Servers)
+	require.Empty(t, c.Channels)
+	require.Empty(t, c.Schemas)
+	require.Len(t, c.Messages, 1)
+	require.Empty(t, orders.Messages["order"].Value.Traits)
+	require.Empty(t, c.Operations)
+	require.Empty(t, c.Parameters)
+}

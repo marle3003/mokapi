@@ -160,3 +160,50 @@ func TestKafkaStore_MergeFilesWithIncompleteEntries(t *testing.T) {
 		})
 	}
 }
+
+// A single file with an empty entry (`foo:` without value) must not crash Mokapi, whichever
+// protocol serves the file.
+func TestAsyncApiStores_FileWithEmptyEntries(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name string
+		body string
+	}{
+		{name: "server", body: "  x:\n"},
+		{name: "channel", body: "channels:\n  orders:\n"},
+		{name: "server of channel", body: "channels:\n  orders:\n    address: orders\n    servers:\n      - \n"},
+		{name: "parameter of channel", body: "channels:\n  orders:\n    address: orders\n    parameters:\n      id:\n"},
+		{name: "message of channel", body: "channels:\n  orders:\n    address: orders\n    messages:\n      order:\n"},
+		{name: "operation", body: "operations:\n  send:\n"},
+		{name: "operation without channel", body: "operations:\n  send:\n    action: send\n"},
+		{name: "message of operation", body: "channels:\n  orders:\n    address: orders\noperations:\n  send:\n    action: send\n    channel:\n      $ref: '#/channels/orders'\n    messages:\n      - \n"},
+	}
+	stores := map[string]func(app *runtime.App, c *dynamic.Config) error{
+		"kafka": func(app *runtime.App, c *dynamic.Config) error {
+			_, err := app.Kafka.Add(c, enginetest.NewEngine())
+			return err
+		},
+		"mqtt": func(app *runtime.App, c *dynamic.Config) error {
+			_, err := app.Mqtt.Add(c, enginetest.NewEngine())
+			return err
+		},
+		"ws": func(app *runtime.App, c *dynamic.Config) error {
+			_, err := app.Websocket.Add(c, enginetest.NewEngine())
+			return err
+		},
+	}
+
+	for protocol, add := range stores {
+		for _, tc := range testcases {
+			t.Run(protocol+" "+tc.name, func(t *testing.T) {
+				content := "asyncapi: 3.0.0\ninfo:\n  title: foo\n  version: '1.0'\nservers:\n  dev:\n    host: ':1234'\n    protocol: " + protocol + "\n" + tc.body
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+				require.NotPanics(t, func() {
+					require.NoError(t, add(app, asyncApiFile(t, "https://mokapi.io/a.yml", content)))
+				})
+			})
+		}
+	}
+}

@@ -74,6 +74,12 @@ func (c *Channel) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	c.Servers = removeNilElements(c.Servers)
+	removeNilEntries(c.Messages)
+	removeNilEntries(c.Parameters)
+	c.Tags = removeNilElements(c.Tags)
+	c.ExternalDocs = removeNilElements(c.ExternalDocs)
+
 	for _, s := range c.Servers {
 		if err := s.Parse(config, reader); err != nil {
 			return err
@@ -232,7 +238,7 @@ func (c *Channel) getMessageByPayload(value any, action string) (*Message, bool,
 	var validationErr error
 
 	for _, op := range cfg.Operations {
-		if op.Value == nil || op.Value.Channel.Value == nil {
+		if op.Value == nil || op.Value.Channel == nil || op.Value.Channel.Value == nil {
 			continue
 		}
 		if op.Value.Channel.Value == c && op.Value.Action == action {

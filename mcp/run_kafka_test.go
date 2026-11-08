@@ -258,6 +258,38 @@ func TestService_Run_Kafka(t *testing.T) {
 			},
 		},
 		{
+			name: "get topic ignores operation without channel",
+			app: func() *runtime.App {
+				ch := asyncapi3test.NewChannel()
+
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.AddChannel("channel-1", ch),
+						asyncapi3test.WithOperation("noChannel",
+							asyncapi3test.WithOperationAction("receive"),
+						),
+						asyncapi3test.WithOperation("publish",
+							asyncapi3test.WithOperationAction("send"),
+							asyncapi3test.WithOperationChannel(ch),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, s *mcp.Service) {
+				r, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `mokapi.getApi('foo').getTopic('channel-1')`,
+					},
+				)
+				require.NoError(t, err)
+				topic := r.Result.(mcp.Topic)
+				require.Len(t, topic.Operations, 1)
+				require.Equal(t, "send", topic.Operations[0].Action)
+			},
+		},
+		{
 			name: "consume from topic",
 			app: func() *runtime.App {
 				msg := asyncapi3test.NewMessage(

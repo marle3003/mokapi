@@ -2,6 +2,8 @@ package store_test
 
 import (
 	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -135,4 +137,21 @@ func TestStore_ConcurrentConnectSubscribePublish(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+func TestStore_EmptyChannelNextToValidChannel(t *testing.T) {
+	cfg := asyncapi3test.NewConfig(
+		asyncapi3test.WithChannel("foo", asyncapi3test.WithMessage("msg")),
+	)
+	cfg.Channels["empty"] = nil
+	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+
+	var s *store.Store
+	require.NotPanics(t, func() {
+		s = store.New(cfg, &handlerEmitter{}, &eventstest.Handler{}, monitor.NewMqtt())
+	})
+	defer s.Close()
+
+	require.Contains(t, s.Topics, "foo")
+	require.NotContains(t, s.Topics, "empty")
 }

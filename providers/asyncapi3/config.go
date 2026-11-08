@@ -59,6 +59,10 @@ type License struct {
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	removeNilServers(c.Servers)
+	removeNilEntries(c.Channels)
+	removeNilEntries(c.Operations)
+
 	if c.Servers != nil {
 		for it := c.Servers.Iter(); it.Next(); {
 			server := it.Value()

@@ -54,6 +54,8 @@ func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	r.Value.ExternalDocs = removeNilElements(r.Value.ExternalDocs)
+
 	for _, v := range r.Value.ExternalDocs {
 		if err := v.Parse(config, reader); err != nil {
 			return err

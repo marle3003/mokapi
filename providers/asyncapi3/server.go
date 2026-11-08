@@ -52,6 +52,9 @@ func (r *ServerRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	removeNilEntries(r.Value.Variables)
+	r.Value.Tags = removeNilElements(r.Value.Tags)
+
 	for _, v := range r.Value.Variables {
 		if err := v.parse(config, reader); err != nil {
 			return err

@@ -3,6 +3,7 @@ package asyncapi3_test
 import (
 	"encoding/json"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"testing"
 
@@ -123,4 +124,32 @@ func TestChannel_Marshal(t *testing.T) {
 			tc.test(t, string(jb), string(yb), err)
 		})
 	}
+}
+
+func TestChannel_GetMessageByPayload_EmptyEntries(t *testing.T) {
+	var cfg *asyncapi3.Config
+	require.NoError(t, yaml.Unmarshal([]byte(`
+asyncapi: 3.0.0
+info: {title: foo, version: '1.0'}
+channels:
+  orders:
+    messages:
+      empty:
+      order:
+        name: order
+operations:
+  empty:
+  noChannel:
+    action: send
+  send:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+`), &cfg))
+	c := &dynamic.Config{Data: cfg}
+	require.NoError(t, cfg.Parse(c, &dynamictest.Reader{}))
+
+	m, err := cfg.Channels["orders"].Value.GetMessageByPayload(nil)
+	require.NoError(t, err)
+	require.Equal(t, "order", m.Name)
 }

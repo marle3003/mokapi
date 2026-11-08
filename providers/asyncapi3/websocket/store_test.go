@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	engine "mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
@@ -68,6 +69,25 @@ func TestStore(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 				defer func() { _ = c.CloseNow() }()
+			},
+		},
+		{
+			name: "channel next to empty channel",
+			cfg: func() *asyncapi3.Config {
+				cfg := asyncapi3test.NewConfig(asyncapi3test.WithChannel("/subscribe"))
+				cfg.Channels["/empty"] = nil
+				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				return cfg
+			}(),
+			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+				defer cancel()
+				c, _, err := ws.Dial(ctx, url+"/subscribe", nil)
+				require.NoError(t, err)
+				defer func() { _ = c.CloseNow() }()
+
+				_, _, err = ws.Dial(ctx, url+"/empty", nil)
+				require.ErrorContains(t, err, "404")
 			},
 		},
 		{
