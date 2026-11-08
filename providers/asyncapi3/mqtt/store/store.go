@@ -83,8 +83,13 @@ func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 
 	// A publish runs JavaScript handlers, which may publish themselves
 	// (mqtt.publish) and so re-enter the store. It must not hold s.m.
-	if msg, ok := req.Payload.(*mqtt.PublishRequest); ok {
+	// The same applies to a disconnect, which publishes the client's will.
+	switch msg := req.Payload.(type) {
+	case *mqtt.PublishRequest:
 		s.publish(rw, msg, req.Header.QoS, req.Header.Retain, ctx)
+		return
+	case *mqtt.DisconnectRequest:
+		s.disconnect(msg, ctx)
 		return
 	}
 
@@ -94,8 +99,6 @@ func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	switch msg := req.Payload.(type) {
 	case *mqtt.ConnectRequest:
 		s.connect(rw, msg, ctx)
-	case *mqtt.DisconnectRequest:
-		s.disconnect(rw, msg, ctx)
 	case *mqtt.SubscribeRequest:
 		s.subscribe(rw, msg, ctx)
 	case *mqtt.UnsubscribeRequest:

@@ -70,10 +70,11 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 	}
 
 	if connect.Topic != "" {
-		if _, ok := s.Topics[connect.Topic]; ok {
+		if _, ok := s.topic(connect.Topic); ok {
 
 			if connect.WillFlag {
 				c.SetWill(&Message{
+					Topic:  connect.Topic,
 					Data:   connect.Message,
 					QoS:    connect.WillQoS,
 					Retain: connect.WillRetain,
