@@ -12,6 +12,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -143,7 +144,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 						continue
 					}
 					evt.Config = e.config
-					go e.config.Listeners.Invoke(evt)
+					go invokeAll(e.config.Listeners.List(), evt)
 				} else {
 					if err := w.addOrUpdate(evt); err != nil {
 						log.Error(err)
@@ -232,7 +233,21 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 		return
 	}
 	w.m.Unlock()
+
+	if !w.reload(e, &evt) {
+		return
+	}
+
+	for _, l := range w.listener {
+		go invokeListener(l, evt)
+	}
+}
+
+// reload parses and validates the entry's config and reports whether listeners should be notified.
+// The deferred unlock keeps the entry usable if Parse or Validate panics.
+func (w *ConfigWatcher) reload(e *entry, evt *dynamic.ConfigEvent) bool {
 	e.m.Lock()
+	defer e.m.Unlock()
 
 	c := e.config
 	// set config on evt
@@ -248,30 +263,22 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
 		e.parsed.Store(false)
-		e.m.Unlock()
-		return
+		return false
 	}
 	e.parsed.Store(c.Data != nil)
 
 	if c.Data == nil {
-		e.m.Unlock()
 		log.Debugf("processed %v", c.Info.Path())
-		return
+		return false
 	}
 
 	if err = dynamic.Validate(c); err != nil {
-		e.m.Unlock()
 		log.Errorf("skipping file %v: %v", c.Info.Path(), err)
-		return
+		return false
 	}
-
-	e.m.Unlock()
 
 	log.Debugf("processed %v", c.Info.Path())
-
-	for _, l := range w.listener {
-		go l(evt)
-	}
+	return true
 }
 
 func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
@@ -297,9 +304,8 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	e.m.Unlock()
 
 	for _, l := range w.listener {
-		go l(evt)
+		go invokeListener(l, evt)
 	}
-	return
 }
 
 func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
@@ -331,11 +337,30 @@ func invokeListeners(e dynamic.ConfigEvent) {
 		if i == 0 {
 			// run parser (ConfigWatcher, first listener) synchronously
 			// this ensures config is parsed before other listeners are called
-			l(e)
+			invokeListener(l, e)
 		} else {
-			go l(e)
+			go invokeListener(l, e)
 		}
 	}
+}
+
+// invokeAll calls the listeners in order; a panicking listener does not skip the others.
+func invokeAll(listeners []dynamic.ConfigListener, e dynamic.ConfigEvent) {
+	for _, l := range listeners {
+		invokeListener(l, e)
+	}
+}
+
+// invokeListener recovers from a panic in a listener (e.g. a parser or a JavaScript handler),
+// so that a single faulty config cannot terminate Mokapi.
+func invokeListener(l dynamic.ConfigListener, e dynamic.ConfigEvent) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debugf("config listener panic: %v", string(debug.Stack()))
+			log.Errorf("config listener panic for %v: %v", e.Config.Info.Path(), r)
+		}
+	}()
+	l(e)
 }
 
 func (w *ConfigWatcher) AddProvider(name string, p dynamic.Provider) {

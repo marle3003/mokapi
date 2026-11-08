@@ -636,6 +636,154 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 	}
 }
 
+func TestConfigWatcher_PanicInListener(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "panic in registered listener does not stop later events",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Config.Info.Url.Path == "first.json" {
+						panic("TEST PANIC in listener")
+					}
+					received.Add(1)
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				sendEvent(t, ch, newPanicTestConfig("first.json", `{}`))
+				sendEvent(t, ch, newPanicTestConfig("second.json", `{}`))
+
+				require.Eventually(t, func() bool { return received.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic while parsing does not block later update of same file",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					received.Add(1)
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				sendEvent(t, ch, newPanicTestConfig("foo.json", `{"panic": true}`))
+				// the update of the same file locks the entry the panicking parse may have left locked
+				sendEvent(t, ch, newPanicTestConfig("foo.json", `{"panic": false}`))
+
+				require.Eventually(t, func() bool { return received.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic in a config listener other than the first does not stop the watcher",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var received atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) { received.Add(1) })
+				ch := startWatcherWithChannel(t, w)
+
+				c := newPanicTestConfig("first.json", `{}`)
+				panicked := make(chan struct{})
+				// the first listener runs synchronously, the following ones in their own goroutine
+				c.Listeners.Add("first", func(dynamic.ConfigEvent) {})
+				c.Listeners.Add("panic", func(dynamic.ConfigEvent) {
+					defer close(panicked)
+					panic("TEST PANIC in config listener")
+				})
+				sendEvent(t, ch, c)
+				sendEvent(t, ch, newPanicTestConfig("second.json", `{}`))
+
+				select {
+				case <-panicked:
+				case <-time.After(2 * time.Second):
+					t.Fatal("panicking listener was not called")
+				}
+				require.Eventually(t, func() bool { return received.Load() == 2 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+		{
+			name: "panic in a config listener on delete does not skip the other listeners",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				var removed atomic.Int32
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						removed.Add(1)
+					}
+				})
+				ch := startWatcherWithChannel(t, w)
+
+				c := newPanicTestConfig("first.json", `{}`)
+				var after atomic.Int32
+				c.Listeners.Add("panic", func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						panic("TEST PANIC in config listener")
+					}
+				})
+				c.Listeners.Add("after", func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						after.Add(1)
+					}
+				})
+				sendEvent(t, ch, c)
+				ch <- dynamic.ConfigEvent{Event: dynamic.Delete, Name: "first.json"}
+
+				require.Eventually(t, func() bool { return after.Load() == 1 && removed.Load() == 1 }, 2*time.Second, 5*time.Millisecond)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
+}
+
+func startWatcherWithChannel(t *testing.T, w *server.ConfigWatcher) chan dynamic.ConfigEvent {
+	var ch chan dynamic.ConfigEvent
+	w.AddProvider("foo", &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+		ch = configs
+		return nil
+	}})
+	pool := safe.NewPool(context.Background())
+	t.Cleanup(pool.Stop)
+	require.NoError(t, w.Start(pool))
+	return ch
+}
+
+// sendEvent fails instead of hanging when the watcher's event loop is stuck or gone.
+func sendEvent(t *testing.T, ch chan dynamic.ConfigEvent, c *dynamic.Config) {
+	select {
+	case ch <- dynamic.ConfigEvent{Event: dynamic.Create, Config: c}:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("watcher does not accept event for %v", c.Info.Url)
+	}
+}
+
+func newPanicTestConfig(name, raw string) *dynamic.Config {
+	return &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)},
+		Raw:  []byte(raw),
+		Data: &panicOnParse{},
+	}
+}
+
+// panicOnParse panics in Parse when the config contains "panic": true.
+type panicOnParse struct {
+	Panic bool `json:"panic"`
+}
+
+func (d *panicOnParse) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	if d.Panic {
+		panic("TEST PANIC in parse")
+	}
+	return nil
+}
+
 type parseError struct{}
 
 func (d *parseError) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
