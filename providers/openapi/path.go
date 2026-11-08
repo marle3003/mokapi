@@ -362,8 +362,62 @@ func (p *PathItems) patch(patch *PathItems) {
 		if r, ok := p.Get(path); ok && r != nil {
 			r.patch(it.Value())
 		} else {
-			p.Set(path, it.Value())
+			p.Set(path, it.Value().clone())
 		}
+	}
+}
+
+func (p *PathItems) clone() *PathItems {
+	if p == nil {
+		return nil
+	}
+	return &PathItems{LinkedHashMap: p.CloneWith((*PathRef).clone)}
+}
+
+func (r *PathRef) clone() *PathRef {
+	if r == nil {
+		return nil
+	}
+	return &PathRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+func (p *Path) clone() *Path {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	c.Errors = slices.Clone(p.Errors)
+	c.Get = p.Get.clone()
+	c.Post = p.Post.clone()
+	c.Put = p.Put.clone()
+	c.Patch = p.Patch.clone()
+	c.Delete = p.Delete.clone()
+	c.Head = p.Head.clone()
+	c.Options = p.Options.clone()
+	c.Trace = p.Trace.clone()
+	c.Query = p.Query.clone()
+	c.AdditionalOperations = cloneMap(p.AdditionalOperations, (*Operation).clone)
+	c.Parameters = p.Parameters.clone()
+	c.MethodOrder = slices.Clone(p.MethodOrder)
+	c.bindOperations()
+	return &c
+}
+
+// patchOperation merges patch into o. A missing o becomes a copy of patch.
+func patchOperation(o, patch *Operation) *Operation {
+	if o == nil {
+		return patch.clone()
+	}
+	o.patch(patch)
+	return o
+}
+
+// bindOperations points the operations back at this path, as Parse does.
+// Operations copied from another path would otherwise still point at it.
+func (p *Path) bindOperations() {
+	for method, op := range p.Operations() {
+		op.Path = p
+		op.Method = strings.ToUpper(method)
 	}
 }
 
@@ -373,7 +427,7 @@ func (r *PathRef) patch(patch *PathRef) {
 	}
 
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone()
 		return
 	} else {
 		r.Value.patch(patch.Value)
@@ -393,58 +447,29 @@ func (p *Path) patch(patch *Path) {
 		p.Description = patch.Description
 	}
 
-	if p.Get == nil {
-		p.Get = patch.Get
-	} else {
-		p.Get.patch(patch.Get)
-	}
+	p.Get = patchOperation(p.Get, patch.Get)
+	p.Post = patchOperation(p.Post, patch.Post)
+	p.Put = patchOperation(p.Put, patch.Put)
+	p.Patch = patchOperation(p.Patch, patch.Patch)
+	p.Delete = patchOperation(p.Delete, patch.Delete)
+	p.Head = patchOperation(p.Head, patch.Head)
+	p.Options = patchOperation(p.Options, patch.Options)
+	p.Trace = patchOperation(p.Trace, patch.Trace)
 
-	if p.Post == nil {
-		p.Post = patch.Post
-	} else {
-		p.Post.patch(patch.Post)
-	}
+	p.Query = patchOperation(p.Query, patch.Query)
 
-	if p.Put == nil {
-		p.Put = patch.Put
+	if p.AdditionalOperations == nil {
+		p.AdditionalOperations = cloneMap(patch.AdditionalOperations, (*Operation).clone)
 	} else {
-		p.Put.patch(patch.Put)
-	}
-
-	if p.Patch == nil {
-		p.Patch = patch.Patch
-	} else {
-		p.Patch.patch(patch.Patch)
-	}
-
-	if p.Delete == nil {
-		p.Delete = patch.Delete
-	} else {
-		p.Delete.patch(patch.Delete)
-	}
-
-	if p.Head == nil {
-		p.Head = patch.Head
-	} else {
-		p.Head.patch(patch.Head)
-	}
-
-	if p.Options == nil {
-		p.Options = patch.Options
-	} else {
-		p.Options.patch(patch.Options)
-	}
-
-	if p.Trace == nil {
-		p.Trace = patch.Trace
-	} else {
-		p.Trace.patch(patch.Trace)
+		for method, op := range patch.AdditionalOperations {
+			p.AdditionalOperations[method] = patchOperation(p.AdditionalOperations[method], op)
+		}
 	}
 
 	p.Parameters.Patch(patch.Parameters)
 
 	if len(p.MethodOrder) == 0 {
-		p.MethodOrder = patch.MethodOrder
+		p.MethodOrder = slices.Clone(patch.MethodOrder)
 	} else {
 		for _, method := range patch.MethodOrder {
 			if !slices.Contains(p.MethodOrder, method) {
@@ -452,6 +477,8 @@ func (p *Path) patch(patch *Path) {
 			}
 		}
 	}
+
+	p.bindOperations()
 }
 
 func (p *Path) RunWebhook(urlString string, args common.WebhookArgs) (*common.WebhookResponse, error) {

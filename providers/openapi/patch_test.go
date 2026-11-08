@@ -239,3 +239,41 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_Patch_MaximalConfig(t *testing.T) {
+	t.Run("fixture sets every field", func(t *testing.T) {
+		requireAllFieldsSet(t, maximalConfig(false))
+	})
+
+	t.Run("patch into empty", func(t *testing.T) {
+		result := &openapi.Config{}
+		result.Patch(maximalConfig(false))
+
+		require.Equal(t, maximalConfig(false), result)
+	})
+
+	t.Run("patch into config without values", func(t *testing.T) {
+		result := maximalConfig(true)
+		result.Patch(maximalConfig(false))
+
+		require.Equal(t, maximalConfig(false), result)
+	})
+}
+
+func TestConfig_Patch_OperationsPointAtTheirPath(t *testing.T) {
+	a := maximalConfig(false)
+	result := &openapi.Config{}
+	result.Patch(a)
+
+	paths := map[string]*openapi.Path{"hook": result.Webhooks["hook"].Value}
+	paths["/foo"] = result.Paths.Lookup("/foo").Value
+	for name, path := range paths {
+		require.NotEmpty(t, path.Operations(), name)
+		for method, op := range path.Operations() {
+			require.Same(t, path, op.Path, "%s %s", name, method)
+			require.Equal(t, method, op.Method, "%s %s", name, method)
+			require.NotSame(t, a.Paths.Lookup("/foo").Value, op.Path)
+			require.NotSame(t, a.Webhooks["hook"].Value, op.Path)
+		}
+	}
+}

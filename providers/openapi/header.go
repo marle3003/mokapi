@@ -98,6 +98,24 @@ func (r *HeaderRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return r.Value.Parse(config, reader)
 }
 
+func (h Headers) clone() Headers {
+	return cloneMap(h, (*HeaderRef).clone)
+}
+
+func (r *HeaderRef) clone() *HeaderRef {
+	if r == nil {
+		return nil
+	}
+	return &HeaderRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+func (h *Header) clone() *Header {
+	if h == nil {
+		return nil
+	}
+	return &Header{Parameter: *h.Parameter.clone()}
+}
+
 func (h Headers) patch(patch Headers) {
 	for k, p := range patch {
 		if p == nil || p.Value == nil {
@@ -106,7 +124,7 @@ func (h Headers) patch(patch Headers) {
 		if v, ok := h[k]; ok && v != nil {
 			v.patch(p)
 		} else {
-			h[k] = p
+			h[k] = p.clone()
 		}
 	}
 }
@@ -117,24 +135,14 @@ func (r *HeaderRef) patch(patch *HeaderRef) {
 	}
 
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone()
 	} else {
 		r.Value.patch(patch.Value)
 	}
 }
 
 func (h *Header) patch(patch *Header) {
-	if len(patch.Name) > 0 {
-		h.Name = patch.Name
-	}
-	if len(patch.Description) > 0 {
-		h.Description = patch.Description
-	}
-	if h.Schema == nil {
-		h.Schema = patch.Schema
-	} else {
-		h.Schema.Patch(patch.Schema)
-	}
+	h.Parameter.patch(&patch.Parameter)
 }
 
 func (h *Header) marshal(v any, rw http.ResponseWriter) error {

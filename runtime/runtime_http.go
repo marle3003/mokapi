@@ -168,11 +168,11 @@ func patchHttp(c *HttpInfo, reader dynamic.Reader) {
 	})
 
 	r := &openapi.Config{}
-	*r = *getHttpConfig(c.configs[keys[0]])
-	for _, k := range keys[1:] {
-		p := getHttpConfig(c.configs[k])
-		log.Infof("applying patch for %s: %s", c.Info.Name, k)
-		r.Patch(p)
+	for i, k := range keys {
+		if i > 0 {
+			log.Infof("applying patch for %s: %s", c.Info.Name, k)
+		}
+		r.Patch(getHttpConfig(c.configs[k]))
 	}
 
 	if len(c.configs) > 1 {

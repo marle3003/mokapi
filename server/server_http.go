@@ -82,39 +82,48 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 	}
 
 	info := m.app.Http.Get(cfg.Info.Name)
+	var servers []*openapi.Server
+	if info != nil {
+		servers = info.Servers
+	}
+
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Http.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)
 			m.stopEmptyServers()
 			return
 		}
-	}
-	var servers []*openapi.Server
-	if info != nil {
-		servers = info.Servers
-	}
-	info = m.app.Http.Add(e.Config)
-	if servers != nil {
-		m.cleanupRemovedServers(info, servers)
+	} else {
+		info = m.app.Http.Add(e.Config)
 	}
 
-	for _, s := range info.Servers {
-		u, err := parseUrl(s.Url)
-		if err != nil {
-			log.Errorf("url syntax error %v: %v", e.Config.Info.Url, err.Error())
-			continue
-		}
-
-		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events))
-		if err != nil {
-			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
-			continue
-		}
-	}
+	m.cleanupRemovedServers(info, servers)
+	m.addServices(info, e.Config.Info.Url)
 
 	m.stopEmptyServers()
 	log.Debugf("processed %v", e.Config.Info.Path())
+}
+
+// addServices registers the handler of the (merged) config on every server URL of the config.
+// file is the config file that triggered the update and only used for log messages.
+func (m *HttpManager) addServices(info *runtime.HttpInfo, file *url.URL) {
+	for _, s := range info.Servers {
+		u, err := parseUrl(s.Url)
+		if err != nil {
+			log.Errorf("url syntax error %v: %v", file, err.Error())
+			continue
+		}
+
+		err = m.AddService(info.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events))
+		if err != nil {
+			log.Warnf("unable to add '%v' on %v: %v", info.Info.Name, s.Url, err.Error())
+			continue
+		}
+	}
 }
 
 func (m *HttpManager) Stop() {

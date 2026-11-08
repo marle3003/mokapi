@@ -95,7 +95,12 @@ func (c Content) patch(patch Content) {
 		if con, ok := c[k]; ok {
 			con.patch(v)
 		} else {
-			c[k] = v
+			c[k] = v.clone()
 		}
 	}
+}
+
+//goland:noinspection GoMixedReceiverTypes
+func (c Content) clone() Content {
+	return cloneMap(c, (*MediaType).clone)
 }

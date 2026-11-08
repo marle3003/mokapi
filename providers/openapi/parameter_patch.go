@@ -9,39 +9,89 @@ Loop:
 				continue Loop
 			}
 		}
-		*p = append(*p, pParam)
+		*p = append(*p, pParam.clone())
 	}
 }
 
 func (r *ParameterRef) Patch(patch *ParameterRef) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone()
 		return
 	}
 
-	if patch.Value.Type != "" {
-		r.Value.Type = patch.Value.Type
+	r.Value.patch(patch.Value)
+}
+
+func (p *Parameter) patch(patch *Parameter) {
+	if len(patch.Name) > 0 {
+		p.Name = patch.Name
 	}
 
-	r.Value.Required = patch.Value.Required
-
-	if patch.Value.Explode != nil {
-		r.Value.Explode = patch.Value.Explode
+	if patch.Type != "" {
+		p.Type = patch.Type
 	}
 
-	if len(patch.Value.Description) > 0 {
-		r.Value.Description = patch.Value.Description
+	if patch.Required != nil {
+		p.Required = clonePointer(patch.Required)
 	}
 
-	r.Value.Deprecated = patch.Value.Deprecated
-
-	if patch.Value.Style != "" {
-		r.Value.Style = patch.Value.Style
+	if patch.Explode != nil {
+		p.Explode = clonePointer(patch.Explode)
 	}
 
-	if r.Value.Schema == nil {
-		r.Value.Schema = patch.Value.Schema
+	if patch.AllowReserved != nil {
+		p.AllowReserved = clonePointer(patch.AllowReserved)
+	}
+
+	if len(patch.Description) > 0 {
+		p.Description = patch.Description
+	}
+
+	if patch.Deprecated != nil {
+		p.Deprecated = clonePointer(patch.Deprecated)
+	}
+
+	if patch.Style != "" {
+		p.Style = patch.Style
+	}
+
+	if p.Schema == nil {
+		p.Schema = patch.Schema.Clone()
 	} else {
-		r.Value.Schema.Patch(patch.Value.Schema)
+		p.Schema.Patch(patch.Schema)
 	}
+
+	if p.Content == nil {
+		p.Content = patch.Content.clone()
+	} else {
+		p.Content.patch(patch.Content)
+	}
+}
+
+func (p Parameters) clone() Parameters {
+	return cloneSlice(p, (*ParameterRef).clone)
+}
+
+func (r *ParameterRef) clone() *ParameterRef {
+	if r == nil {
+		return nil
+	}
+	return &ParameterRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+func (p *Parameter) clone() *Parameter {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	c.Schema = p.Schema.Clone()
+	c.Required = clonePointer(p.Required)
+	c.Deprecated = clonePointer(p.Deprecated)
+	c.Explode = clonePointer(p.Explode)
+	c.AllowReserved = clonePointer(p.AllowReserved)
+	c.Content = p.Content.clone()
+	return &c
 }

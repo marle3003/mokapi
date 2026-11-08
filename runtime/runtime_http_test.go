@@ -334,6 +334,177 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 	}
 }
 
+// Two files with the same title are merged. Deleting one of them must remove
+// only its contribution and must not change the parsed config of the other.
+func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
+	newA := func() *openapi.Config {
+		return openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath("/shared",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithOperationSummary("from a"),
+					openapitest.WithResponse(http.StatusOK),
+				),
+			),
+			openapitest.WithServer("http://127.0.0.1:8001", ""),
+		)
+	}
+	newB := func() *openapi.Config {
+		return openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath("/shared",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithOperationSummary("from b"),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithResponseHeader("X-From-B", "", schematest.New("string")),
+					),
+				),
+			),
+			openapitest.WithPath("/fromB", openapitest.WithOperation(http.MethodGet)),
+			openapitest.WithServer("http://127.0.0.1:8002", ""),
+			openapitest.WithComponentSchema("FromB", schematest.New("string")),
+		)
+	}
+	file := func(name string, c *openapi.Config) *dynamic.Config {
+		cfg := &dynamic.Config{Data: c}
+		cfg.Info.Url, _ = url.Parse("file:///" + name)
+		return cfg
+	}
+
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	a := file("a.yml", newA())
+	b := file("b.yml", newB())
+	app.Http.Add(a)
+	app.Http.Add(b)
+
+	app.Http.Remove(b)
+
+	info := app.Http.Get("foo")
+	require.NotNil(t, info)
+	configs := info.Configs()
+	require.Len(t, configs, 1)
+	require.Equal(t, "file:///a.yml", configs[0].Info.Url.String())
+
+	require.Nil(t, info.Paths.Lookup("/fromB"), "path of deleted file must not be in merged config")
+	require.Len(t, info.Servers, 1)
+	require.Equal(t, "http://127.0.0.1:8001", info.Servers[0].Url)
+	require.Nil(t, info.Components.Schemas.Get("FromB"))
+	op := info.Paths.Lookup("/shared").Value.Get
+	require.Equal(t, "from a", op.Summary)
+	require.NotContains(t, op.Responses.GetResponse(http.StatusOK).Headers, "X-From-B")
+
+	require.Equal(t, newA(), a.Data, "parsed config of a.yml must not be changed by merging")
+}
+
+func TestApp_AddHttp_SingleFile(t *testing.T) {
+	newFoo := func() *openapi.Config {
+		return openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet, openapitest.WithResponse(http.StatusOK)),
+				openapitest.WithOperation(http.MethodPost, openapitest.WithResponse(http.StatusOK)),
+			),
+		)
+	}
+	parsed := newFoo()
+	// Parse sets Path and Method of the operations
+	require.NoError(t, parsed.Parse(&dynamic.Config{Data: parsed}, &dynamictest.Reader{}))
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+	info := app.Http.Add(newConfig(parsed))
+
+	t.Run("default server is added to the merged config only", func(t *testing.T) {
+		require.Len(t, info.Servers, 1)
+		require.Equal(t, "/", info.Servers[0].Url)
+		require.True(t, info.Servers[0].IsDefault)
+		require.Empty(t, parsed.Servers)
+	})
+
+	t.Run("input config is not changed", func(t *testing.T) {
+		expected := newFoo()
+		require.NoError(t, expected.Parse(&dynamic.Config{Data: expected}, &dynamictest.Reader{}))
+		require.Equal(t, expected, parsed)
+	})
+
+	t.Run("operations point into the merged config", func(t *testing.T) {
+		path := info.Paths.Lookup("/foo").Value
+		require.NotSame(t, parsed.Paths.Lookup("/foo").Value, path)
+		require.Equal(t, "/foo", path.Path)
+		for method, op := range path.Operations() {
+			require.Same(t, path, op.Path)
+			require.Equal(t, method, op.Method)
+		}
+	})
+}
+
+func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
+	newFile := func(name string, c *openapi.Config) *dynamic.Config {
+		cfg := &dynamic.Config{Data: c}
+		cfg.Info.Url, _ = url.Parse("file:///" + name)
+		return cfg
+	}
+	newA := func() *openapi.Config {
+		return openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "from a"),
+			openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithOperationSummary("from a"),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithResponseDescription("from a")),
+				),
+			),
+		)
+	}
+	newB := func() *openapi.Config {
+		return openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "from b"),
+			openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithOperationSummary("from b"),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithResponseDescription("from b")),
+				),
+			),
+		)
+	}
+
+	t.Run("two files to one is the remaining file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("a.yml", newA())
+		b := newFile("b.yml", newB())
+		app.Http.Add(a)
+		app.Http.Add(b)
+		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+
+		app.Http.Remove(b)
+
+		expected := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		expected.Http.Add(newFile("a.yml", newA()))
+		require.Equal(t, expected.Http.Get("foo").Config, app.Http.Get("foo").Config)
+		op := app.Http.Get("foo").Paths.Lookup("/foo").Value.Get
+		require.Equal(t, "from a", op.Summary)
+		require.Equal(t, "from a", op.Responses.GetResponse(http.StatusOK).Description)
+		require.Equal(t, "from a", app.Http.Get("foo").Info.Description)
+	})
+
+	t.Run("one file to zero removes the api", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("a.yml", newA())
+		app.Http.Add(a)
+
+		app.Http.Remove(a)
+
+		require.Nil(t, app.Http.Get("foo"))
+		require.Equal(t, 0, app.Http.Len())
+	})
+
+	t.Run("files are applied ordered by file name", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		c := newFile("c.yml", newB())
+		app.Http.Add(c)
+		app.Http.Add(newFile("b.yml", newB()))
+		app.Http.Add(newFile("a.yml", newA()))
+		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+
+		app.Http.Remove(c)
+
+		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+	})
+}
+
 func TestIsHttpConfig(t *testing.T) {
 	_, b := runtime.IsHttpConfig(&dynamic.Config{Data: openapitest.NewConfig("3.0")})
 	require.True(t, b)

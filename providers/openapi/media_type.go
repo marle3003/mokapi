@@ -3,6 +3,7 @@ package openapi
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
@@ -40,26 +41,59 @@ func (m *MediaType) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 }
 
 func (m *MediaType) patch(patch *MediaType) {
+	if m.ContentType.IsEmpty() {
+		m.ContentType = cloneContentType(patch.ContentType)
+	}
+	if m.Encoding == nil {
+		m.Encoding = cloneMap(patch.Encoding, (*Encoding).clone)
+	} else {
+		for name, e := range patch.Encoding {
+			if existing, ok := m.Encoding[name]; ok {
+				existing.patch(e)
+			} else {
+				m.Encoding[name] = e.clone()
+			}
+		}
+	}
+
 	if m.Schema == nil {
-		m.Schema = patch.Schema
+		m.Schema = patch.Schema.Clone()
 	} else {
 		m.Schema.Patch(patch.Schema)
 	}
 
 	if patch.Example != nil && patch.Example.Value != nil {
-		m.Example = patch.Example
+		m.Example = clonePointer(patch.Example)
 		if len(m.Examples) > 0 {
 			m.Examples = nil
 		}
 	}
 
 	if m.Examples == nil && patch.Examples != nil {
-		m.Examples = patch.Examples
+		m.Examples = patch.Examples.clone()
 		m.Example = nil
 	} else if m.Examples != nil {
 		m.Examples.patch(patch.Examples)
 		m.Example = nil
 	}
+}
+
+func (m *MediaType) clone() *MediaType {
+	if m == nil {
+		return nil
+	}
+	c := *m
+	c.Schema = m.Schema.Clone()
+	c.Example = clonePointer(m.Example)
+	c.Examples = m.Examples.clone()
+	c.ContentType = cloneContentType(m.ContentType)
+	c.Encoding = cloneMap(m.Encoding, (*Encoding).clone)
+	return &c
+}
+
+func cloneContentType(c media.ContentType) media.ContentType {
+	c.Parameters = maps.Clone(c.Parameters)
+	return c
 }
 
 func (m *MediaType) ParseData(b []byte, contentType media.ContentType) (interface{}, error) {

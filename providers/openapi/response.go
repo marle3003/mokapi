@@ -269,7 +269,7 @@ func (r *Responses) patch(patch *Responses) {
 		if v, _ := r.Get(statusCode); v != nil && v.Value != nil {
 			v.Value.patch(res.Value)
 		} else {
-			r.Set(statusCode, res)
+			r.Set(statusCode, res.clone())
 		}
 	}
 }
@@ -285,12 +285,12 @@ func (r ResponseBodies) patch(patch ResponseBodies) {
 		}
 		if e, ok := r[k]; ok {
 			if e.Value == nil {
-				r[k] = v
+				r[k] = v.clone()
 			} else {
 				e.Value.patch(v.Value)
 			}
 		} else {
-			r[k] = v
+			r[k] = v.clone()
 		}
 	}
 }
@@ -301,16 +301,44 @@ func (r *Response) patch(patch *Response) {
 	}
 
 	if r.Content == nil {
-		r.Content = patch.Content
+		r.Content = patch.Content.clone()
 	} else {
 		r.Content.patch(patch.Content)
 	}
 
 	if len(r.Headers) == 0 {
-		r.Headers = patch.Headers
+		r.Headers = patch.Headers.clone()
 	} else {
 		r.Headers.patch(patch.Headers)
 	}
+}
+
+func (r *Responses) clone() *Responses {
+	if r == nil {
+		return nil
+	}
+	return &Responses{LinkedHashMap: r.CloneWith((*ResponseRef).clone)}
+}
+
+func (r ResponseBodies) clone() ResponseBodies {
+	return cloneMap(r, (*ResponseRef).clone)
+}
+
+func (r *ResponseRef) clone() *ResponseRef {
+	if r == nil {
+		return nil
+	}
+	return &ResponseRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+func (r *Response) clone() *Response {
+	if r == nil {
+		return nil
+	}
+	c := *r
+	c.Content = r.Content.clone()
+	c.Headers = r.Headers.clone()
+	return &c
 }
 
 func isValidStatusCode(status string) bool {

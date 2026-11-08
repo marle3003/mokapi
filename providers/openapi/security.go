@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"maps"
 	"net/http"
 	"strings"
 )
@@ -15,6 +16,7 @@ type SecuritySchemes map[string]SecurityScheme
 type SecurityScheme interface {
 	Serve(req *http.Request) error
 	patch(scheme SecurityScheme)
+	clone() SecurityScheme
 }
 
 type SecurityRequirement map[string][]string
@@ -295,7 +297,7 @@ func (s SecuritySchemes) patch(patch SecuritySchemes) {
 		if v, ok := s[k]; ok && v != nil {
 			v.patch(p)
 		} else {
-			s[k] = p
+			s[k] = cloneSecurityScheme(p)
 		}
 	}
 }
@@ -344,7 +346,10 @@ func (s *OAuth2SecurityScheme) patch(patch SecurityScheme) {
 		if v, ok := s.Flows[k]; ok && v != nil {
 			v.patch(f)
 		} else {
-			s.Flows[k] = f
+			if s.Flows == nil {
+				s.Flows = map[string]*OAuth2Flow{}
+			}
+			s.Flows[k] = f.clone()
 		}
 	}
 }
@@ -360,8 +365,49 @@ func (s *OAuth2Flow) patch(patch *OAuth2Flow) {
 		s.TokenUrl = patch.TokenUrl
 	}
 	for k, p := range patch.Scopes {
+		if s.Scopes == nil {
+			s.Scopes = map[string]string{}
+		}
 		s.Scopes[k] = p
 	}
+}
+
+func (s SecuritySchemes) clone() SecuritySchemes {
+	return cloneMap(s, cloneSecurityScheme)
+}
+
+func cloneSecurityScheme(s SecurityScheme) SecurityScheme {
+	if s == nil {
+		return nil
+	}
+	return s.clone()
+}
+
+func (s *HttpSecurityScheme) clone() SecurityScheme {
+	return clonePointer(s)
+}
+
+func (s *ApiKeySecurityScheme) clone() SecurityScheme {
+	return clonePointer(s)
+}
+
+func (s *OAuth2SecurityScheme) clone() SecurityScheme {
+	c := *s
+	c.Flows = cloneMap(s.Flows, (*OAuth2Flow).clone)
+	return &c
+}
+
+func (s *OAuth2Flow) clone() *OAuth2Flow {
+	if s == nil {
+		return nil
+	}
+	c := *s
+	c.Scopes = maps.Clone(s.Scopes)
+	return &c
+}
+
+func (s *NotSupportedSecurityScheme) clone() SecurityScheme {
+	return clonePointer(s)
 }
 
 func (s *NotSupportedSecurityScheme) patch(_ SecurityScheme) {}

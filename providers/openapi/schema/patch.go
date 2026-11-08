@@ -1,6 +1,10 @@
 package schema
 
-import jsonSchema "mokapi/schema/json/schema"
+import (
+	"slices"
+
+	jsonSchema "mokapi/schema/json/schema"
+)
 
 func (s *Schema) Patch(patch *Schema) {
 	if patch == nil {
@@ -15,11 +19,19 @@ func (s *Schema) Patch(patch *Schema) {
 	}
 
 	if patch.Boolean != nil {
-		s.Boolean = patch.Boolean
+		s.Boolean = clonePointer(patch.Boolean)
+	}
+
+	if patch.Schema != "" {
+		s.Schema = patch.Schema
 	}
 
 	if patch.Anchor != "" {
 		s.Anchor = patch.Anchor
+	}
+
+	if patch.DynamicAnchor != "" {
+		s.DynamicAnchor = patch.DynamicAnchor
 	}
 
 	if len(patch.Type) > 0 {
@@ -27,34 +39,39 @@ func (s *Schema) Patch(patch *Schema) {
 	}
 	if len(patch.AnyOf) > 0 {
 		if len(s.AnyOf) == 0 {
-			s.AnyOf = patch.AnyOf
+			s.AnyOf = cloneSchemas(patch.AnyOf, schemaCopies{})
 		} else {
 			s.AnyOf = patchComposition(s.AnyOf, patch.AnyOf)
 		}
 	}
 	if len(patch.AllOf) > 0 {
 		if len(s.AllOf) == 0 {
-			s.AllOf = patch.AllOf
+			s.AllOf = cloneSchemas(patch.AllOf, schemaCopies{})
 		} else {
 			s.AllOf = patchComposition(s.AllOf, patch.AllOf)
 		}
 	}
 	if len(patch.OneOf) > 0 {
 		if len(s.OneOf) == 0 {
-			s.OneOf = patch.OneOf
+			s.OneOf = cloneSchemas(patch.OneOf, schemaCopies{})
 		} else {
 			s.OneOf = patchComposition(s.OneOf, patch.OneOf)
 		}
 	}
 
+	s.Not = patchSchema(s.Not, patch.Not)
+	s.If = patchSchema(s.If, patch.If)
+	s.Then = patchSchema(s.Then, patch.Then)
+	s.Else = patchSchema(s.Else, patch.Else)
+
 	if patch.Enum != nil {
-		s.Enum = patch.Enum
+		s.Enum = slices.Clone(patch.Enum)
 	}
 	if patch.Const != nil {
-		s.Const = patch.Const
+		s.Const = clonePointer(patch.Const)
 	}
 	if s.Xml == nil {
-		s.Xml = patch.Xml
+		s.Xml = patch.Xml.clone()
 	} else {
 		s.Xml.patch(patch.Xml)
 	}
@@ -68,64 +85,92 @@ func (s *Schema) Patch(patch *Schema) {
 		s.Pattern = patch.Pattern
 	}
 	if patch.MinLength != nil {
-		s.MinLength = patch.MinLength
+		s.MinLength = clonePointer(patch.MinLength)
 	}
 	if patch.MaxLength != nil {
-		s.MaxLength = patch.MaxLength
+		s.MaxLength = clonePointer(patch.MaxLength)
 	}
 	if patch.MultipleOf != nil {
-		s.MultipleOf = patch.MultipleOf
+		s.MultipleOf = clonePointer(patch.MultipleOf)
 	}
 	if patch.Minimum != nil {
-		s.Minimum = patch.Minimum
+		s.Minimum = clonePointer(patch.Minimum)
 	}
 	if patch.Maximum != nil {
-		s.Maximum = patch.Maximum
+		s.Maximum = clonePointer(patch.Maximum)
 	}
 	if patch.ExclusiveMinimum != nil {
-		s.ExclusiveMinimum = patch.ExclusiveMinimum
+		s.ExclusiveMinimum = clonePointer(patch.ExclusiveMinimum)
 	}
 	if patch.ExclusiveMaximum != nil {
-		s.ExclusiveMaximum = patch.ExclusiveMaximum
+		s.ExclusiveMaximum = clonePointer(patch.ExclusiveMaximum)
 	}
 	if s.Items == nil {
-		s.Items = patch.Items
+		s.Items = patch.Items.Clone()
 	} else {
 		s.Items.Patch(patch.Items)
 	}
+	// prefixItems are positional, so they are merged by index and not by title
+	for i, p := range patch.PrefixItems {
+		if i < len(s.PrefixItems) {
+			s.PrefixItems[i] = patchSchema(s.PrefixItems[i], p)
+		} else {
+			s.PrefixItems = append(s.PrefixItems, p.Clone())
+		}
+	}
+	s.UnevaluatedItems = patchSchema(s.UnevaluatedItems, patch.UnevaluatedItems)
+	s.Contains = patchSchema(s.Contains, patch.Contains)
+	if patch.MaxContains != nil {
+		s.MaxContains = clonePointer(patch.MaxContains)
+	}
+	if patch.MinContains != nil {
+		s.MinContains = clonePointer(patch.MinContains)
+	}
 
 	if patch.UniqueItems != nil {
-		s.UniqueItems = patch.UniqueItems
+		s.UniqueItems = clonePointer(patch.UniqueItems)
 	}
 
 	if patch.MinItems != nil {
-		s.MinItems = patch.MinItems
+		s.MinItems = clonePointer(patch.MinItems)
 	}
 	if patch.MaxItems != nil {
-		s.MaxItems = patch.MaxItems
+		s.MaxItems = clonePointer(patch.MaxItems)
 	}
 
 	s.ShuffleItems = patch.ShuffleItems
 
 	if s.Properties == nil {
-		s.Properties = patch.Properties
+		s.Properties = patch.Properties.Clone()
 	} else {
 		s.Properties.Patch(patch.Properties)
 	}
 
+	s.PatternProperties = patchSchemaMap(s.PatternProperties, patch.PatternProperties)
+
 	if patch.Required != nil {
-		s.Required = patch.Required
+		s.Required = slices.Clone(patch.Required)
 	}
+	if s.DependentRequired == nil {
+		s.DependentRequired = cloneDependentRequired(patch.DependentRequired)
+	} else {
+		for k, v := range patch.DependentRequired {
+			s.DependentRequired[k] = slices.Clone(v)
+		}
+	}
+	s.DependentSchemas = patchSchemaMap(s.DependentSchemas, patch.DependentSchemas)
 	if s.AdditionalProperties == nil {
-		s.AdditionalProperties = patch.AdditionalProperties
+		s.AdditionalProperties = patch.AdditionalProperties.Clone()
 	} else {
 		s.AdditionalProperties.Patch(patch.AdditionalProperties)
 	}
+	s.UnevaluatedProperties = patchSchema(s.UnevaluatedProperties, patch.UnevaluatedProperties)
+	s.PropertyNames = patchSchema(s.PropertyNames, patch.PropertyNames)
 	if patch.MinProperties != nil {
-		s.MinProperties = patch.MinProperties
+		s.MinProperties = clonePointer(patch.MinProperties)
 	}
 	if patch.MaxProperties != nil {
-		s.MaxProperties = patch.MaxProperties
+		s.MaxProperties = clonePointer(patch.MaxProperties)
 	}
 	if len(patch.Title) > 0 {
 		s.Title = patch.Title
@@ -140,10 +185,10 @@ func (s *Schema) Patch(patch *Schema) {
 	s.Deprecated = patch.Deprecated
 
 	if patch.Examples != nil {
-		s.Examples = patch.Examples
+		s.Examples = slices.Clone(patch.Examples)
 	}
 	if patch.Example != nil {
-		s.Example = patch.Example
+		s.Example = clonePointer(patch.Example)
 	}
 	if len(patch.ContentMediaType) > 0 {
 		s.ContentMediaType = patch.ContentMediaType
@@ -152,29 +197,31 @@ func (s *Schema) Patch(patch *Schema) {
 		s.ContentEncoding = patch.ContentEncoding
 	}
 
-	if s.Definitions == nil {
-		s.Definitions = patch.Definitions
-	} else {
-		for k, v := range patch.Definitions {
-			if def, ok := s.Definitions[k]; ok {
-				def.Patch(v)
-			} else {
-				s.Definitions[k] = v
-			}
-		}
-	}
+	s.Definitions = patchSchemaMap(s.Definitions, patch.Definitions)
+	s.Defs = patchSchemaMap(s.Defs, patch.Defs)
+}
 
-	if s.Defs == nil {
-		s.Defs = patch.Defs
-	} else {
-		for k, v := range patch.Defs {
-			if def, ok := s.Defs[k]; ok {
-				def.Patch(v)
-			} else {
-				s.Defs[k] = v
-			}
+// patchSchema merges patch into s and returns the result; a missing s is replaced by a copy of patch.
+func patchSchema(s, patch *Schema) *Schema {
+	if s == nil {
+		return patch.Clone()
+	}
+	s.Patch(patch)
+	return s
+}
+
+func patchSchemaMap(s, patch map[string]*Schema) map[string]*Schema {
+	if s == nil {
+		return cloneSchemaMap(patch, schemaCopies{})
+	}
+	for k, v := range patch {
+		if def, ok := s[k]; ok {
+			def.Patch(v)
+		} else {
+			s[k] = v.Clone()
 		}
 	}
+	return s
 }
 
 func (x *Xml) patch(patch *Xml) {
@@ -208,22 +255,20 @@ func (s *Schemas) Patch(patch *Schemas) {
 		if v := s.Get(name); v != nil {
 			v.Patch(r)
 		} else {
-			s.Set(it.Key(), it.Value())
+			s.Set(it.Key(), r.Clone())
 		}
 	}
 }
 
 func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
-	m := map[string]struct{}{}
-	for _, t := range origin {
-		m[t] = struct{}{}
-	}
+	// a copy, so appending never writes into the backing array of origin
+	merged := slices.Clone(origin)
 	for _, t := range patch {
-		if _, exists := m[t]; !exists {
-			origin = append(origin, t)
+		if !slices.Contains(merged, t) {
+			merged = append(merged, t)
 		}
 	}
-	return origin
+	return merged
 }
 
 func patchComposition(s []*Schema, patch []*Schema) []*Schema {
@@ -233,7 +278,7 @@ Patch:
 			continue
 		}
 		if p.Title == "" {
-			s = append(s, p)
+			s = append(s, p.Clone())
 		} else {
 			for _, r := range s {
 				if r.Title == p.Title {
@@ -241,7 +286,7 @@ Patch:
 					continue Patch
 				}
 			}
-			s = append(s, p)
+			s = append(s, p.Clone())
 		}
 	}
 	return s

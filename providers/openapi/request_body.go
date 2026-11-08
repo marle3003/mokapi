@@ -231,7 +231,7 @@ func (r RequestBodies) patch(patch RequestBodies) {
 		if v, ok := r[k]; ok && v != nil {
 			v.patch(p)
 		} else {
-			r[k] = p
+			r[k] = p.clone()
 		}
 	}
 }
@@ -241,7 +241,7 @@ func (r *RequestBodyRef) patch(patch *RequestBodyRef) {
 		return
 	}
 	if r.Value == nil {
-		r.Value = patch.Value
+		r.Value = patch.Value.clone()
 	} else {
 		r.Value.patch(patch.Value)
 	}
@@ -255,14 +255,35 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	if len(patch.Description) > 0 {
 		r.Description = patch.Description
 	}
-	r.Required = patch.Required
+	r.Required = clonePointer(patch.Required)
 
 	if len(r.Content) == 0 {
-		r.Content = patch.Content
+		r.Content = patch.Content.clone()
 		return
 	}
 
 	r.Content.patch(patch.Content)
+}
+
+func (r RequestBodies) clone() RequestBodies {
+	return cloneMap(r, (*RequestBodyRef).clone)
+}
+
+func (r *RequestBodyRef) clone() *RequestBodyRef {
+	if r == nil {
+		return nil
+	}
+	return &RequestBodyRef{Reference: r.Reference, Value: r.Value.clone()}
+}
+
+func (r *RequestBody) clone() *RequestBody {
+	if r == nil {
+		return nil
+	}
+	c := *r
+	c.Content = r.Content.clone()
+	c.Required = clonePointer(r.Required)
+	return &c
 }
 
 type urlValueDecoder struct {

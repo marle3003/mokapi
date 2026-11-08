@@ -45,6 +45,9 @@ This approach ensures that you can update configurations without modifying the o
 When Mokapi applies the changes, it tries to match each element to an element
 in the existing configuration. If there is a match, Mokapi updates the existing element. If there is no match, Mokapi inserts a new element.
 
+If you delete or change a patch file while Mokapi is running, Mokapi removes only what that file added. The other files stay
+in place, and a server that was defined only in the deleted file is stopped.
+
 ``` box=tip
 Mokapi patches any configuration file even if the source comes from a different provider.
 ```
