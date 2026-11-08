@@ -480,7 +480,7 @@ func TestKafkaManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 	m := server.NewKafkaManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
 	defer m.Stop()
 
-	requireBindErrorIsLoggedAndServerStaysRegistered(t, true,
+	requireBindErrorIsLoggedAndServerStaysRegistered(t,
 		func(port int) { m.UpdateConfig(kafkaConfigEvent(port)) },
 		func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
 	)

@@ -25,8 +25,7 @@ func requireBoundWhenUpdateReturns(t *testing.T, update func(port int)) {
 // requireBindErrorIsLoggedAndServerStaysRegistered occupies the port, expects the bind error in the log
 // and checks that the server is not created again by a second update after the port is free.
 // A manager that forgot the server would bind the freed port then.
-// Pass checkRegistered=false for servers that can't be found again by the manager (see MailManager keys).
-func requireBindErrorIsLoggedAndServerStaysRegistered(t *testing.T, checkRegistered bool, update func(port int), expectedLog func(port int) string) {
+func requireBindErrorIsLoggedAndServerStaysRegistered(t *testing.T, update func(port int), expectedLog func(port int) string) {
 	hook := test.NewGlobal()
 	defer hook.Reset()
 
@@ -39,9 +38,6 @@ func requireBindErrorIsLoggedAndServerStaysRegistered(t *testing.T, checkRegiste
 
 	require.Contains(t, errorMessages(hook), expectedLog(port))
 
-	if !checkRegistered {
-		return
-	}
 	_ = occupied.Close()
 	update(port)
 	_, err = net.Dial("tcp", fmt.Sprintf("localhost:%d", port))

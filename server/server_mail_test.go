@@ -247,9 +247,7 @@ func TestMailManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 	for _, protocol := range mailProtocols {
 		t.Run(protocol, func(t *testing.T) {
 			m := newMailManager(t)
-			// MailManager looks up smtps, imap and imaps servers with a key that never matches
-			// (":port" instead of "port"), so only smtp can be found again by a second update.
-			requireBindErrorIsLoggedAndServerStaysRegistered(t, protocol == "smtp",
+			requireBindErrorIsLoggedAndServerStaysRegistered(t,
 				func(port int) { m.UpdateConfig(mailConfigEvent(protocol, port)) },
 				func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
 			)
@@ -278,4 +276,71 @@ func mailConfigEvent(protocol string, port int) dynamic.ConfigEvent {
 			},
 		},
 	}
+}
+
+func TestMailManager_DuplicateUpdateDoesNotOrphanRunningServer(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			port := try.GetFreePort()
+
+			// e.g. the file provider reloads an unchanged mail config
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			waitForPort(t, port)
+
+			deleted := mailConfigEvent(protocol, port)
+			deleted.Event = dynamic.Delete
+			m.UpdateConfig(deleted)
+
+			requirePortIsFree(t, port)
+		})
+	}
+}
+
+func TestMailManager_ServerCanBeReAddedAfterItWasRemovedByConfigUpdate(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			port := try.GetFreePort()
+			otherPort := try.GetFreePort()
+
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			m.UpdateConfig(mailConfigEvent(protocol, otherPort))
+			requirePortIsFree(t, port)
+
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			waitForPort(t, port)
+		})
+	}
+}
+
+func TestMailManager_ServerCanBeReAddedAfterConfigWasDeleted(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			port := try.GetFreePort()
+
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			deleted := mailConfigEvent(protocol, port)
+			deleted.Event = dynamic.Delete
+			m.UpdateConfig(deleted)
+			requirePortIsFree(t, port)
+
+			m.UpdateConfig(mailConfigEvent(protocol, port))
+			waitForPort(t, port)
+		})
+	}
+}
+
+func requirePortIsFree(t *testing.T, port int) {
+	t.Helper()
+	try.WaitFor(t, func() bool {
+		l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			return false
+		}
+		_ = l.Close()
+		return true
+	})
 }
