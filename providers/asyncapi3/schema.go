@@ -302,7 +302,7 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (r *SchemaRef) Patch(patch *SchemaRef) {
-	if r == nil || patch == nil {
+	if r == nil || patch == nil || patch.Value == nil {
 		return
 	}
 	if r.Value == nil {

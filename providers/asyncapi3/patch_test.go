@@ -1,6 +1,7 @@
 package asyncapi3_test
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/schema/json/schema"
@@ -1054,4 +1055,161 @@ func TestConfig_Patch_KafkaBindingSchemas(t *testing.T) {
 	require.Equal(t, "string", op.GroupId.Type.String())
 	require.Equal(t, "string", op.ClientId.Type.String())
 	require.NotSame(t, patch.Operations["foo"].Value.Bindings.Kafka.GroupId, op.GroupId)
+}
+
+func TestConfig_Patch_NilEntriesInResultConfig(t *testing.T) {
+	testcases := []struct {
+		name  string
+		first func() *asyncapi3.Config
+		patch func() *asyncapi3.Config
+		test  func(t *testing.T, result *asyncapi3.Config)
+	}{
+		{
+			name: "server",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Servers.Set("foo", nil)
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar"))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+			},
+		},
+		{
+			name: "channel",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelDescription("bar")))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "bar", result.Channels["foo"].Value.Description)
+			},
+		},
+		{
+			name: "message of channel",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo"))
+				c.Channels["foo"].Value.Messages = map[string]*asyncapi3.MessageRef{"bar": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("bar", asyncapi3test.WithContentType("application/json"))))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "application/json", result.Channels["foo"].Value.Messages["bar"].Value.ContentType)
+			},
+		},
+		{
+			name: "operation",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				return asyncapi3test.NewConfig(asyncapi3test.WithOperation("foo", asyncapi3test.WithOperationAction("send")))
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "send", result.Operations["foo"].Value.Action)
+			},
+		},
+		{
+			name: "component message",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": nil}}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Messages: map[string]*asyncapi3.MessageRef{"foo": {Value: &asyncapi3.Message{Name: "name"}}}}
+				return c
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, "name", result.Components.Messages["foo"].Value.Name)
+			},
+		},
+		{
+			name: "component schema",
+			first: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+				return c
+			},
+			patch: func() *asyncapi3.Config {
+				c := asyncapi3test.NewConfig()
+				c.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": {Value: schematest.New("string")}}}
+				return c
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.NotNil(t, result.Components.Schemas["foo"])
+				require.Equal(t, schematest.New("string"), result.Components.Schemas["foo"].Value)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.first()
+			require.NotPanics(t, func() { result.Patch(tc.patch()) })
+			tc.test(t, result)
+		})
+	}
+}
+
+func TestConfig_Patch_NilEntriesInBothConfigs(t *testing.T) {
+	first := asyncapi3test.NewConfig()
+	first.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+	first.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+	first.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+	patch := asyncapi3test.NewConfig()
+	patch.Channels = map[string]*asyncapi3.ChannelRef{"foo": nil}
+	patch.Operations = map[string]*asyncapi3.OperationRef{"foo": nil}
+	patch.Components = &asyncapi3.Components{Schemas: map[string]*asyncapi3.SchemaRef{"foo": nil}}
+
+	require.NotPanics(t, func() { first.Patch(patch) })
+}
+
+func TestSchemaRef_Patch_WithoutValue(t *testing.T) {
+	testcases := []struct {
+		name  string
+		r     *asyncapi3.SchemaRef
+		patch *asyncapi3.SchemaRef
+	}{
+		{
+			name:  "patch has no value",
+			r:     &asyncapi3.SchemaRef{Value: schematest.New("string")},
+			patch: &asyncapi3.SchemaRef{},
+		},
+		{
+			name:  "patch has only a reference",
+			r:     &asyncapi3.SchemaRef{Value: schematest.New("string")},
+			patch: &asyncapi3.SchemaRef{Reference: dynamic.Reference[*asyncapi3.SchemaRef]{Ref: "#/components/schemas/foo"}},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() { tc.r.Patch(tc.patch) })
+			require.Equal(t, schematest.New("string"), tc.r.Value, "keeps the existing value")
+		})
+	}
+}
+
+func TestConfig_Patch_PayloadWithoutValue(t *testing.T) {
+	first := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.WithPayload(schematest.New("string")))))
+	patch := asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+		asyncapi3test.WithMessage("foo", asyncapi3test.UsePayload(&asyncapi3.SchemaRef{}))))
+
+	require.NotPanics(t, func() { first.Patch(patch) })
+	require.Equal(t, schematest.New("string"), first.Channels["foo"].Value.Messages["foo"].Value.Payload.Value)
 }

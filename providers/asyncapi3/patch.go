@@ -88,7 +88,7 @@ func (c *Config) patchServer(patch *Config, cp copies) {
 		c.Servers = cloneServers(patch.Servers, cp)
 	} else {
 		for it := patch.Servers.Iter(); it.Next(); {
-			if s, ok := c.Servers.Get(it.Key()); ok {
+			if s, ok := c.Servers.Get(it.Key()); ok && s != nil {
 				s.patch(it.Value(), cp)
 			} else {
 				c.Servers.Set(it.Key(), it.Value().clone(cp))
@@ -280,16 +280,19 @@ func (c *Config) patchComponents(patch *Config, cp copies) {
 	c.Components.ServerVariables = patchMap(c.Components.ServerVariables, p.ServerVariables, cp, (*ServerVariableRef).clone, nil)
 }
 
-// patchMap adds a copy of the entries of patch that m does not have and merges the others with merge.
-// Entries without merge function keep the value of m.
-func patchMap[V any](m, patch map[string]V, cp copies, clone func(V, copies) V, merge func(V, V, copies)) map[string]V {
+// patchMap adds a copy of the entries of patch that m does not have (or has as nil) and merges the others
+// with merge. Entries without merge function and nil entries of patch keep the value of m.
+func patchMap[V comparable](m, patch map[string]V, cp copies, clone func(V, copies) V, merge func(V, V, copies)) map[string]V {
 	if m == nil {
 		return cloneMap(patch, cp, clone)
 	}
+	var nothing V
 	for k, p := range patch {
-		if v, ok := m[k]; !ok {
+		v := m[k]
+		switch {
+		case v == nothing:
 			m[k] = clone(p, cp)
-		} else if merge != nil {
+		case p != nothing && merge != nil:
 			merge(v, p, cp)
 		}
 	}

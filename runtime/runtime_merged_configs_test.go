@@ -2,16 +2,21 @@ package runtime_test
 
 import (
 	"encoding/json"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/runtime"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"os"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -90,4 +95,68 @@ func requireExtraPropertyOnlyIn(t *testing.T, merged *asyncapi3.Config, a, b *dy
 	require.NotNil(t, mergedSchema.Properties.Get("extra"), "merged config has the property of b.yml")
 	require.True(t, extra(b))
 	require.False(t, extra(a), "a.yml must not change")
+}
+
+// asyncApiFile returns an AsyncAPI 3 file as the file provider reads it: unmarshaled from
+// YAML and parsed, so empty entries and unresolved references look like in a real file.
+func asyncApiFile(t *testing.T, url, content string) *dynamic.Config {
+	t.Helper()
+	var cfg *asyncapi3.Config
+	require.NoError(t, yaml.Unmarshal([]byte(content), &cfg))
+	c := getConfig(url, cfg)
+	require.NoError(t, cfg.Parse(c, &dynamictest.Reader{}))
+	return c
+}
+
+// Two files with the same title are merged into one config. An entry that is empty in one
+// file (`foo:` without value) must not crash Mokapi when the other file defines the same entry.
+func TestKafkaStore_MergeFilesWithIncompleteEntries(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	const head = "asyncapi: 3.0.0\ninfo:\n  title: foo\n  version: '1.0'\n"
+	testcases := []struct {
+		name  string
+		a, b  string
+		check func(t *testing.T, merged *asyncapi3.Config)
+	}{
+		{
+			name: "component message is empty in first file",
+			a:    head + "channels:\n  orders: {}\ncomponents:\n  messages:\n    order:\n",
+			b:    head + "channels:\n  orders: {}\ncomponents:\n  messages:\n    order:\n      name: order\n",
+			check: func(t *testing.T, merged *asyncapi3.Config) {
+				require.Equal(t, "order", merged.Components.Messages["order"].Value.Name)
+			},
+		},
+		{
+			name: "component schema is empty in first file",
+			a:    head + "channels:\n  orders: {}\ncomponents:\n  schemas:\n    order:\n",
+			b:    head + "channels:\n  orders: {}\ncomponents:\n  schemas:\n    order:\n      type: string\n",
+			check: func(t *testing.T, merged *asyncapi3.Config) {
+				require.NotNil(t, merged.Components.Schemas["order"], "schema of second file is not lost")
+			},
+		},
+		{
+			name: "component channel is empty in first file",
+			a:    head + "channels:\n  orders: {}\ncomponents:\n  channels:\n    order:\n",
+			b:    head + "channels:\n  orders: {}\ncomponents:\n  channels:\n    order:\n      description: foo\n",
+			check: func(t *testing.T, merged *asyncapi3.Config) {
+				require.Equal(t, "foo", merged.Components.Channels["order"].Value.Description)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+			_, err := app.Kafka.Add(asyncApiFile(t, "https://mokapi.io/a.yml", tc.a), enginetest.NewEngine())
+			require.NoError(t, err)
+
+			var info *runtime.KafkaInfo
+			require.NotPanics(t, func() {
+				info, err = app.Kafka.Add(asyncApiFile(t, "https://mokapi.io/b.yml", tc.b), enginetest.NewEngine())
+			})
+			require.NoError(t, err)
+			tc.check(t, info.Config)
+		})
+	}
 }
