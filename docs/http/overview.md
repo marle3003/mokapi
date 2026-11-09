@@ -189,13 +189,13 @@ curl http://localhost/api/v3/pet/999
 Use Mokapi Scripts to add latency:
 
 ```javascript tab=script.js
-import { on, sleep } from 'mokapi'
+import { on, delay } from 'mokapi'
 
 export default function() {
-    on('http', (request, response) => {
+    on('http', async (request, response) => {
         if (request.path.petId === 999) {
             // delay the response by 5 seconds
-            sleep('5s');
+            await delay('5s');
         }
     })
 }
