@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { inject, onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
-import { useMarkdown } from '@/composables/markdown';
+import { useReleaseNotes } from '@/composables/release-notes';
 
-const files = inject<Record<string, string>>('files')!
-const data = files['/src/assets/docs/release.md'];
-const { content } = useMarkdown(data);
+const content = useReleaseNotes()
 
 const shortcutHandler = (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName

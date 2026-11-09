@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref  } from 'vue';
-import { parseMetadata } from '@/composables/markdown'
+import docsMeta from 'virtual:docs-meta'
 import { useRoute, useRouter } from 'vue-router';
-
-const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
 const resources = nav['Resources']!
@@ -50,15 +48,15 @@ if (route.params.level1) {
 const items = computed(() => {
     const items = []
     for (const item of exampleFiles.value) {
-        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        const meta = docsMeta[item.source!]!
         items.push({ label: item, path: item.path, meta: meta, tag: 'example' })
     }
     for (const item of tutorialsFiles.value) {
-        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        const meta = docsMeta[item.source!]!
         items.push({ label: item, path: item.path, meta: meta, tag: 'tutorial' })
     }
     for (const item of blogFiles.value) {
-        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        const meta = docsMeta[item.source!]!
         items.push({ label: item, path: item.path, meta: meta, tag: 'blog' })
     }
 

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
-import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
+import { onUnmounted, inject, ref, shallowRef, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
-import Fuse from 'fuse.js';
-import { parseMarkdown } from '@/composables/markdown';
+import type Fuse from 'fuse.js';
 import { Modal } from 'bootstrap';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
@@ -32,7 +31,7 @@ if (isDashboard) {
 const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
 const nav = inject<DocConfig>('nav')!
 const route = useRoute()
-const { getBreadcrumb, getEntryBySource } = useFileResolver();
+const { getBreadcrumb } = useFileResolver();
 const navHeaders = computed(() => {
   return Object.keys(nav).map(x => Object.assign({ label: x }, nav[x])) as DocEntry[]
 })
@@ -98,28 +97,25 @@ function showItem(entry: DocEntry) {
   return !entry.hideInNavigation
 }
 
-const files = inject<Record<string, string>>('files')!
+type SearchDocument = { name: string, description: string, path: string, content: string }
+const fuse = shallowRef<Fuse<SearchDocument>>()
 
-// Transform files into an array of { name, content }
-const documents = Object.entries(files).map(([path, content]) => {
-  const doc = parseMarkdown(content)
-  return {
-    name: doc.meta.title,
-    description: doc.meta.description,
-    path: getEntryBySource(nav, path.replace('/src/assets/docs/', ''))?.path,
-    content: doc.content
-  }
-}).filter(doc => doc.path)
-
-const fuse = new Fuse(documents, {
-  keys: ['name', 'content'],
-  threshold: 0.3,
-})
+// fuse.js and the search index are only needed once the search is used
+async function loadSearchIndex() {
+  const [{ default: Fuse }, { default: documents }] = await Promise.all([
+    import('fuse.js'),
+    import('virtual:docs-search-index')
+  ])
+  fuse.value = new Fuse(documents, {
+    keys: ['name', 'content'],
+    threshold: 0.3,
+  })
+}
 
 const filtered = computed(() => {
   let result: any[] = [];
-  if (query.value) {
-    result = fuse.search(query.value).map(({ item }) => {
+  if (query.value && fuse.value) {
+    result = fuse.value.search(query.value).map(({ item }) => {
       return {
         name: item.name,
         path: item.path,
@@ -186,6 +182,7 @@ let shortcutHandler = (e: KeyboardEvent) => {
 
 onMounted(() => {
   const modalEl = document.getElementById('search-docs')!;
+  modalEl.addEventListener('show.bs.modal', loadSearchIndex, { once: true })
   modalEl.addEventListener('shown.bs.modal', () => {
     const inputs = modalEl.getElementsByTagName('input')
     inputs[0]!.focus()

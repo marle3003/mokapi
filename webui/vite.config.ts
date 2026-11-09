@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { docsIndex } from './vite-plugin-docs-index.ts'
 
 // The dashboard embedded in the Mokapi binary ships only what it needs (logos, icons), the
 // website additionally has blog images, sitemap, llms.txt and so on.
@@ -18,7 +19,7 @@ function removeWebsiteLinksFromIndexHtml(): Plugin {
 export default defineConfig(({ mode }) => {
   const isDashboard = mode === 'dashboard'
   return {
-    plugins: [vue(), ...(isDashboard ? [removeWebsiteLinksFromIndexHtml()] : [])],
+    plugins: [vue(), docsIndex(isDashboard), ...(isDashboard ? [removeWebsiteLinksFromIndexHtml()] : [])],
     publicDir: isDashboard ? 'public/dashboard' : 'public/website',
     define: {
       APP_VERSION: JSON.stringify(process.env.npm_package_version),
