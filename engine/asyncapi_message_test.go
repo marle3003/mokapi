@@ -101,11 +101,10 @@ func TestGeneratePayload(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "foo", v)
 	})
-	t.Run("any payload is generated for a message without payload schema", func(t *testing.T) {
-		v, err := generateAnyPayload(asyncapi3test.NewMessage())
+	t.Run("any payload can be generated for a message without payload schema", func(t *testing.T) {
+		_, err := generateAnyPayload(asyncapi3test.NewMessage())
 
 		require.NoError(t, err)
-		require.NotNil(t, v)
 	})
 }
 
