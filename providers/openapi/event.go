@@ -54,17 +54,11 @@ func NewEventRequest(r *http.Request, contentType media.ContentType, api string)
 	}
 
 	req.Url = common.Url{
-		Scheme: "",
+		Scheme: getScheme(r),
 		Path:   r.URL.Path,
 		Query:  r.URL.RawQuery,
 	}
 	req.Url.Host, req.Url.Port = getHostAndPort(r)
-
-	if strings.HasPrefix(r.Proto, "HTTPS") {
-		req.Url.Scheme = "https"
-	} else if strings.HasPrefix(r.Proto, "HTTP") {
-		req.Url.Scheme = "http"
-	}
 
 	setParam := func(target map[string]any, params map[string]RequestParameterValue) {
 		for k, v := range params {
@@ -164,6 +158,13 @@ func getGeneratorContext(r *common.HttpEventRequest) map[string]any {
 		}
 	}
 	return ctx
+}
+
+func getScheme(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
 }
 
 func getHostAndPort(r *http.Request) (string, int) {
