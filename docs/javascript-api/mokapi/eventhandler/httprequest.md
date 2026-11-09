@@ -14,7 +14,7 @@ The available properties depend on the OpenAPI definition and the incoming reque
 | Name        | Type   | Description                                                      |
 |-------------|--------|------------------------------------------------------------------|
 | method      | string | HTTP request method, such as `GET` or `POST`                     |
-| url         | object | Parsed URL of the request                                        |
+| url         | object | Parsed URL of the request, see [url](#url)                       |
 | key         | string | Path value that matched the OpenAPI path template                |
 | operationId | string | `operationId` defined in the OpenAPI specification               |
 | path        | object | Path parameters defined by the OpenAPI path parameters           |
@@ -23,6 +23,22 @@ The available properties depend on the OpenAPI definition and the incoming reque
 | cookie      | object | Cookie parameters defined by the OpenAPI cookie parameters       |
 | body        | any    | Request body parsed according to the OpenAPI request body schema |
 | api         | string | Name of the API, as defined in the OpenAPI `info.title` field    |
+
+## url
+
+`request.url` describes the URL the client called.
+
+| Name   | Type   | Description                                                                                       |
+|--------|--------|---------------------------------------------------------------------------------------------------|
+| scheme | string | `https` if the request was received over TLS, otherwise `http`                                    |
+| host   | string | Host name from the `Host` header of the request, without the port                                 |
+| port   | number | Port from the `Host` header. If missing, the port of the request URL, else `443` (https) or `80`  |
+| path   | string | Decoded request path, for example `/pets/my pet` for a request to `/pets/my%20pet`                |
+| query  | string | Raw query string without the leading `?`, for example `limit=10&offset=0`                         |
+
+`request.url.toString()` returns the scheme, host, path and query, for example
+`http://localhost/pets?limit=10`. The port is not part of the string. Use
+`request.query` to access parsed query parameters.
 
 ## Example
 
@@ -39,7 +55,8 @@ export default function() {
 
             response.body = {
                 id: userId,
-                details: includeDetails
+                details: includeDetails,
+                requestedPath: request.url.path
             }
         }
     })
