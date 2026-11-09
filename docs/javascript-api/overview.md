@@ -178,6 +178,7 @@ Provides core functions for scheduling jobs, handling events, and accessing envi
 | [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md)          | Runs a periodic job at a fixed interval.                    |
 | [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )                   | Registers an event handler.                                 |
 | [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                                 | Pauses execution                                            |
+| [delay( time )](/docs/javascript-api/mokapi/delay.md)                                 | Delays a handler without blocking other handlers.           |
 | [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)              | Converts a value to a marshaled string.                     |
 | [shared.get( key )](/docs/javascript-api/mokapi/shared/get.md)                        | Returns the value associated with the given key.            |
 | [shared.set( key, value )](/docs/javascript-api/mokapi/shared/set.md)                 | Sets a value for the given key.                             |

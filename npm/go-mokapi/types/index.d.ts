@@ -91,11 +91,30 @@ export function date(args?: DateArgs): string;
 
 /**
  * Suspends the execution for the specified duration.
+ * It blocks all handlers of the script file, use {@link delay} to delay only the calling handler.
  * https://mokapi.io/docs/javascript-api/mokapi/sleep
  * @param time Duration in milliseconds or duration as string with unit.
  * Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
  */
 export function sleep(time: number | string): void;
+
+/**
+ * Delays the calling handler for the specified duration without blocking other handlers.
+ * The handler must be `async` and `await` the returned `Promise`.
+ * https://mokapi.io/docs/javascript-api/mokapi/delay
+ * @param time Duration in milliseconds or duration as string with unit.
+ * Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`.
+ * A number with a fraction is truncated to whole milliseconds,
+ * zero or a negative number resolves right away.
+ * @returns A `Promise` that resolves after the given time.
+ * @example
+ * export default function() {
+ *   on('http', async (request, response) => {
+ *     await delay('500ms')
+ *   })
+ * }
+ */
+export function delay(time: number | string): Promise<void>;
 
 /**
  * Specifies the interval of a periodic job.

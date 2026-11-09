@@ -110,29 +110,29 @@ never want to trigger against a live service.
 without restarting Mokapi:
 
 ```typescript
-import { on, sleep } from 'mokapi'
+import { on, delay } from 'mokapi'
 
 export default () => {
-  let delay = undefined
+  let duration = undefined
 
   on('http', (request, response) => {
     if (request.key === '/simulations/delay') {
       switch (request.method) {
         case 'PUT':
-          delay = request.query.duration
+          duration = request.query.duration
           break
         case 'DELETE':
-          delay = undefined
+          duration = undefined
           break
       }
     }
   }, { track: true })
 
-  on('http', (request, response) => {
-    if (delay) {
-      sleep(delay)
+  on('http', async (request, response) => {
+    if (duration) {
+      await delay(duration)
     }
-  }, { track: () => delay !== undefined })
+  }, { track: () => duration !== undefined })
 }
 ```
 

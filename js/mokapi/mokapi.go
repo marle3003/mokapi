@@ -30,6 +30,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	}
 	obj := module.Get("exports").(*goja.Object)
 	_ = obj.Set("sleep", m.Sleep)
+	_ = obj.Set("delay", m.Delay)
 	_ = obj.Set("every", m.Every)
 	_ = obj.Set("cron", m.Cron)
 	_ = obj.Set("on", m.On)
@@ -45,17 +46,43 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Module) Sleep(i interface{}) {
+	time.Sleep(m.timeOrThrow(i))
+}
+
+// Delay returns a Promise that resolves after the given time. Unlike Sleep it does not block
+// the event loop, so other handlers of the script keep running while the Promise is pending.
+func (m *Module) Delay(i interface{}) *goja.Promise {
+	// like setTimeout, a float is truncated to whole milliseconds
+	if f, ok := i.(float64); ok {
+		i = m.vm.ToValue(f).ToInteger()
+	}
+	d := m.timeOrThrow(i)
+
+	p, resolve, _ := m.vm.NewPromise()
+	time.AfterFunc(d, func() {
+		m.loop.Run(func(*goja.Runtime) { _ = resolve(goja.Undefined()) })
+	})
+	return p
+}
+
+// timeOrThrow throws a JavaScript error for an invalid time argument.
+func (m *Module) timeOrThrow(i interface{}) time.Duration {
+	d, err := parseTime(i)
+	if err != nil {
+		panic(m.vm.ToValue(err.Error()))
+	}
+	return d
+}
+
+// parseTime reads a time argument of sleep and delay: milliseconds or a Go duration string.
+func parseTime(i interface{}) (time.Duration, error) {
 	switch t := i.(type) {
 	case int64:
-		time.Sleep(time.Duration(t) * time.Millisecond)
+		return time.Duration(t) * time.Millisecond, nil
 	case string:
-		d, err := time.ParseDuration(t)
-		if err != nil {
-			panic(m.vm.ToValue(err.Error()))
-		}
-		time.Sleep(d)
+		return time.ParseDuration(t)
 	default:
-		panic(m.vm.ToValue(fmt.Errorf("unexpected type for time: %v", i)))
+		return 0, fmt.Errorf("unexpected type for time: %v", i)
 	}
 }
 
