@@ -12,11 +12,18 @@ function toKey(source: string): string {
 }
 
 // Each Markdown file is its own chunk, so a page only downloads its own content.
+// A chunk that can't be loaded (offline, gone after a deploy) counts as no content and is not
+// cached, so the next navigation tries again.
 export async function loadMarkdown(source: string): Promise<string | undefined> {
   const key = toKey(source)
   const load = loaders[key]
   if (!loaded.has(key) && load) {
-    loaded.set(key, await load() as string)
+    try {
+      loaded.set(key, await load() as string)
+    } catch (error) {
+      console.error(`Failed to load Markdown of ${source}`, error)
+      return undefined
+    }
   }
   return loaded.get(key)
 }

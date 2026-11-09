@@ -27,6 +27,32 @@ test.describe('loading docs content per page', () => {
         expect(requested.filter((x) => !x.endsWith('/release.md'))).toEqual(['/src/assets/docs/http/overview.md'])
     })
 
+    test('a docs page shows page not found when its Markdown fails to load', async ({ page }) => {
+        test.skip(isPreview, 'the preview build has no Markdown files, only the dev server requests the .md file')
+
+        await page.route(/\/src\/assets\/docs\/http\/overview\.md/, (route) => route.abort())
+
+        await page.goto('/docs/http/overview')
+
+        await expect(page.getByText('Page not found')).toBeVisible()
+    })
+
+    test('a docs page whose Markdown failed to load loads when it is opened again', async ({ page }) => {
+        test.skip(isPreview, 'the preview build has no Markdown files, only the dev server requests the .md file')
+
+        const markdownOfOverview = /\/src\/assets\/docs\/http\/overview\.md/
+        await page.route(markdownOfOverview, (route) => route.abort())
+        await page.goto('/docs/http/overview')
+        await expect(page.getByText('Page not found')).toBeVisible()
+
+        await page.unroute(markdownOfOverview)
+        await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
+        await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+        await page.locator('.sidebar a[href$="/docs/http/overview"]').click()
+
+        await expect(page.getByRole('heading', { name: 'Mocking HTTP APIs' })).toBeVisible()
+    })
+
     test('the JavaScript of a docs page contains no text of other pages', async ({ page }, testInfo) => {
         test.skip(!isPreview, 'the dev server serves the Markdown files, see the previous test')
 
