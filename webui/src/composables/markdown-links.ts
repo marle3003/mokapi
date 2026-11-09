@@ -1,5 +1,6 @@
 import type { MarkdownIt } from "markdown-it"
 import { useRoute } from "vue-router"
+import { toWebsiteUrl } from "./website-url"
 
 export function MarkdownItLinks(md: MarkdownIt) {
 
@@ -24,6 +25,8 @@ export function MarkdownItLinks(md: MarkdownIt) {
                     token.attrSet('href', replace(href))
                 } else if (href.startsWith('#')) {
                     token.attrSet('href', route.path + href)
+                } else if (href.startsWith('/')) {
+                    token.attrSet('href', toWebsiteUrl(href))
                 }
             }
         }

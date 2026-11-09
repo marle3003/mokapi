@@ -16,7 +16,7 @@ const test = base.extend<{}, { sitemapContext: BrowserContext }>({
 
 test.describe.configure({ mode: 'parallel' })
 
-const sitemapXml = readFileSync('public/sitemap.xml', 'utf8')
+const sitemapXml = readFileSync('public/website/sitemap.xml', 'utf8')
 const sitemapPaths = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)]
   .map(([, url]) => new URL(url).pathname)
 

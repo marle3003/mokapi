@@ -12,7 +12,7 @@ and ensuring the mock APIs works seamlessly under various scenarios.
 
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
 
-<img src="/dashboard-overview-mock-api.png" class="image-border" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
+<img src="/docs/get-started/dashboard-overview-mock-api.png" class="image-border" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
 
 ## Working with Dashboard
 
@@ -28,14 +28,14 @@ request body, navigate to an HTTP endpoint and look for the "Example & Validate"
 In the opened dialog you can create, edit, validate, copy to the clipboard and download 
 your sample data.
 
-<img src="/dashboard-rest-api-endpoint-example-validate.jpg" alt="Localizes the sample and validation functionality in the REST API endpoint view." />
+<img src="/docs/get-started/dashboard-rest-api-endpoint-example-validate.jpg" alt="Localizes the sample and validation functionality in the REST API endpoint view." />
 
 ### Validate data
 
 In the same dialog where we can create sample data, we can also validate it. The next image
 shows an example of an HTTP REST request body that is not valid according to the specification.
 
-<img src="/dashboard-rest-api-data-validation-with-error.jpg" width="700" alt="Indicates an error validating an HTTP REST request body" />
+<img src="/docs/get-started/dashboard-rest-api-data-validation-with-error.jpg" width="700" alt="Indicates an error validating an HTTP REST request body" />
 
 ## How to customize?
 

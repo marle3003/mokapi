@@ -20,4 +20,4 @@ In the next image you can see an example of a REST API showing four Paths one is
 and therefore marked with a warning icon. In the Recent Requests section, you can see
 four HTTP requests, one of which has a validation error that is counted in the Errors metric.
 
-<img src="/dashboard-mock-rest-api.jpg" width="700" alt="Dashboard shows a REST API including metric, recent requests and config file." title="" />
+<img src="/docs/http/dashboard-mock-rest-api.jpg" width="700" alt="Dashboard shows a REST API including metric, recent requests and config file." title="" />

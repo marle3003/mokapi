@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"fmt"
+	"io/fs"
 	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
@@ -12,6 +13,7 @@ import (
 	"mokapi/webui"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"testing"
 
@@ -89,7 +91,7 @@ func TestHandler_FileServer(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/dashboard/mail.png",
+					"http://foo.api/mokapi/dashboard/icon-180.png",
 					nil,
 					"",
 					h,
@@ -100,9 +102,13 @@ func TestHandler_FileServer(t *testing.T) {
 			name:   "request jpg",
 			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
+				// docs images are bundled with a hashed file name
+				images, err := fs.Glob(webui.App, "dist/assets/*.jpg")
+				require.NoError(t, err)
+				require.NotEmpty(t, images)
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/dashboard/petstore-rest-api-endpoints.jpg",
+					"http://foo.api/mokapi/dashboard/assets/"+path.Base(images[0]),
 					nil,
 					"",
 					h,

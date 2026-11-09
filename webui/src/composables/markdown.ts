@@ -12,8 +12,8 @@ import { MarkdownItTable } from './markdown-table';
 import { imageCaption } from './markdown-image';
 import { MarkdownItCtaLinks } from './markdown-cta-links';
 import hljs from '@/plugins/highlight'
+import { images } from '#docs-images'
 
-const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
 
 export function useMarkdown(content: string | undefined, linkify = false): {content: string | undefined, metadata?: DocMeta} {

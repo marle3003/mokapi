@@ -10,6 +10,7 @@ import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
 import NavDocItem from './NavDocItem.vue';
+import { isExternalWebsiteLink, toWebsiteUrl } from '@/composables/website-url';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
@@ -89,6 +90,9 @@ function isExpanded(item: DocEntry | string) {
         return false
     }
     return item.expanded || false
+}
+function rootPath(root: DocEntry) {
+  return root.path || '/' + root.label.toLocaleLowerCase()
 }
 function showItem(entry: DocEntry) {
   return !entry.hideInNavigation
@@ -268,7 +272,10 @@ function isDashboardDisplayed() {
               <li v-if="navHeaders" class="nav-item nav-tree" v-for="root of navHeaders">
                 <div class="chapter" v-if="hasChildren(root)">
                   <div class="d-flex align-items-center justify-content-between">
-                    <router-link class="nav-link w-100" :to="{ path: root.path || '/'+root.label.toLocaleLowerCase() }">
+                    <a v-if="isExternalWebsiteLink(rootPath(root))" class="nav-link w-100" :href="toWebsiteUrl(rootPath(root))">
+                      {{ root.label }}
+                    </a>
+                    <router-link v-else class="nav-link w-100" :to="{ path: rootPath(root) }">
                       {{ root.label }}
                     </router-link>
                     <button type="button" class="btn btn-link d-md-none" :class="isActive(root) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(root)" :aria-expanded="isActive(root)" :aria-controls="getId(root)">

@@ -23,11 +23,19 @@ const config = import.meta.glob('/src/assets/docs/config.json', {
 const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json']! as string)
 app.provide('nav', nav)
 
-const files = import.meta.glob('/src/assets/docs/**/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
+// The dashboard embedded in the Mokapi binary ships the reference docs only, not the resources
+// (blogs, tutorials, examples) of the website. Rollup drops the glob of the other mode.
+const files = import.meta.env.VITE_WEBSITE === 'true'
+  ? import.meta.glob('/src/assets/docs/**/*.md', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    })
+  : import.meta.glob(['/src/assets/docs/**/*.md', '!/src/assets/docs/resources/**'], {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    })
 app.provide('files', files)
 
 app.directive('highlightjs', {

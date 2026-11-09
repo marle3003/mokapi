@@ -1,4 +1,5 @@
 import type { MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
+import { toWebsiteUrl } from "./website-url"
 
 export function MarkdownItCard(metadata: any): (md: MarkdownIt) => void {
     return function(md: MarkdownIt): void {
@@ -45,7 +46,7 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt) => void {
                 items += `<div class="col">
                             <div class="card h-100 accented">
                                 <div class="card-inner">
-                                    <a href="${item.href}" class="d-flex flex-column h-100">
+                                    <a href="${toWebsiteUrl(item.href)}" class="d-flex flex-column h-100">
                                         <div class="card-body">
                                             <div class="card-title">${item.title}</div>
                                             <div class="card-text">${item.description}</div>

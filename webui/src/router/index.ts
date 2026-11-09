@@ -383,6 +383,57 @@ else {
   }
 }
 
+// Landing pages and resources (blogs, tutorials) are only part of the website build, the
+// dashboard embedded in the Mokapi binary links to mokapi.io instead.
+const isWebsite = import.meta.env.VITE_WEBSITE === 'true'
+const websitePages: RouteRecordRaw[] = isWebsite ? [
+  {
+    path: '/home',
+    component: () => import('@/views/Home.vue')
+  },
+  {
+    path: '/http',
+    component: () => import('@/views/Http.vue')
+  },
+  {
+    path: '/kafka',
+    component: () => import('@/views/Kafka.vue')
+  },
+  {
+    path: '/mqtt',
+    component: () => import('@/views/Mqtt.vue')
+  },
+  {
+    path: '/websocket',
+    component: () => import('@/views/Websocket.vue')
+  },
+  {
+    path: '/ldap',
+    component: () => import('@/views/Ldap.vue')
+  },
+  {
+    path: '/mail',
+    component: () => import('@/views/Mail.vue')
+  },
+  {
+    path: '/compare',
+    component: () => import('@/views/Compare.vue')
+  },
+] : []
+const websiteResources: RouteRecordRaw[] = isWebsite ? [
+  {
+    path: '/resources',
+    component: () => import('@/views/DocsView.vue'),
+    children: [
+      {
+        path: ':level1/:level2?/:level3?/:level4?',
+        name: 'resources',
+        component: () => import('@/views/DocsView.vue')
+      },
+    ]
+  },
+] : []
+
 const router = createRouter({
   history: createWebHistory(base),
   scrollBehavior: async (to, from, savedPosition) => {
@@ -415,38 +466,7 @@ const router = createRouter({
   },
   routes: [
     startPageRoute,
-    {
-      path: '/home',
-      component: () => import('@/views/Home.vue')
-    },
-    {
-      path: '/http',
-      component: () => import('@/views/Http.vue')
-    },
-    {
-      path: '/kafka',
-      component: () => import('@/views/Kafka.vue')
-    },
-    {
-      path: '/mqtt',
-      component: () => import('@/views/Mqtt.vue')
-    },
-    {
-      path: '/websocket',
-      component: () => import('@/views/Websocket.vue')
-    },
-    {
-      path: '/ldap',
-      component: () => import('@/views/Ldap.vue')
-    },
-    {
-      path: '/mail',
-      component: () => import('@/views/Mail.vue')
-    },
-    {
-      path: '/compare',
-      component: () => import('@/views/Compare.vue')
-    },
+    ...websitePages,
     {
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
@@ -488,17 +508,7 @@ const router = createRouter({
         },
       ]
     },
-    {
-      path: '/resources',
-      component: () => import('@/views/DocsView.vue'),
-      children: [
-        {
-          path: ':level1/:level2?/:level3?/:level4?',
-          name: 'resources',
-          component: () => import('@/views/DocsView.vue')
-        },
-      ]
-    },
+    ...websiteResources,
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',

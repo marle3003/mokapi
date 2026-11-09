@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 
 const baseUrl = 'http://localhost:8080';
-const output = '../../public/demo'
+const output = '../../public/website/demo'
 
 export async function collectDashboard() {
   if (! await directoryExists(output)) {

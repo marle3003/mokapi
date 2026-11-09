@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount, watch  } from 'vue';
+import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount, watch, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
-import Footer from '@/components/Footer.vue'
+import KofiLink from '@/components/KofiLink.vue'
 import { Modal } from 'bootstrap'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
 import { usePromo } from '@/composables/promo.ts';
+
+// The footer (merch shop, landing pages) is not part of the dashboard build
+const Footer = import.meta.env.VITE_WEBSITE === 'true'
+  ? defineAsyncComponent(() => import('@/components/Footer.vue'))
+  : undefined
 
 const files = inject<Record<string, string>>('files')!
 
@@ -174,7 +179,10 @@ function isLast(breadcrumb: DocEntry[], index: number) {
       </div>
     </div>
   </main>
-  <Footer></Footer>
+  <component :is="Footer" v-if="Footer" />
+  <div v-else class="d-flex justify-content-center py-4">
+    <KofiLink />
+  </div>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">

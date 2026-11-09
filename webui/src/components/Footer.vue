@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import KofiLink from './KofiLink.vue'
+</script>
+
 <template>
   <footer>
     <div class="container text-lg-start text-center">
@@ -133,14 +137,7 @@
         </div>        
       </div>
       <div class="d-flex flex-column align-items-center gap-2 mt-3">
-        <!-- Ko-fi -->
-        <a href="https://ko-fi.com/mokapi" target="_blank" rel="noopener noreferrer" class="mb-1">
-          <img 
-            src="/support_me_on_kofi_dark.png" 
-            alt="Buy a Beer on Ko-fi" 
-            style="height: 41px !important;"
-          >
-        </a>
+        <KofiLink />
 
         <!-- Merch Shop -->
         <a 
