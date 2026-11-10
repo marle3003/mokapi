@@ -150,6 +150,9 @@ func (r *Responses) Resolve(token string) (interface{}, error) {
 }
 
 func (r *Responses) GetResponse(httpStatus int) *Response {
+	if r == nil {
+		return nil
+	}
 	res, _ := r.Get(fmt.Sprintf("%v", httpStatus))
 	if res == nil {
 		digit := httpStatus / 100

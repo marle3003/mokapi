@@ -277,3 +277,64 @@ func TestHandler_Health(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_CorsPreflight(t *testing.T) {
+	newHandler := func(path string) http.Handler {
+		return api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{Dashboard: true, Path: path})
+	}
+
+	testcases := []struct {
+		name     string
+		path     string
+		method   string
+		url      string
+		validate func(t *testing.T, rr *httptest.ResponseRecorder)
+	}{
+		{
+			name:   "OPTIONS on api path is answered with CORS headers",
+			method: http.MethodOptions,
+			url:    "http://foo.api/api/anything",
+			validate: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNoContent, rr.Code)
+				require.Equal(t, "*", rr.Header().Get("Access-Control-Allow-Origin"))
+				require.Equal(t, "GET, POST", rr.Header().Get("Access-Control-Allow-Methods"))
+				require.Equal(t, "Content-Type", rr.Header().Get("Access-Control-Allow-Headers"))
+				require.Empty(t, rr.Body.String())
+			},
+		},
+		{
+			name:   "OPTIONS below the configured path prefix",
+			path:   "/mokapi",
+			method: http.MethodOptions,
+			url:    "http://foo.api/mokapi/api/services/http/validate",
+			validate: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNoContent, rr.Code)
+				require.Equal(t, "GET, POST", rr.Header().Get("Access-Control-Allow-Methods"))
+			},
+		},
+		{
+			name:   "PUT on api path is still not allowed",
+			method: http.MethodPut,
+			url:    "http://foo.api/api/anything",
+			validate: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+			},
+		},
+		{
+			name:   "OPTIONS outside api path is still not allowed",
+			method: http.MethodOptions,
+			url:    "http://foo.api/dashboard",
+			validate: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			rr := httptest.NewRecorder()
+			newHandler(tc.path).ServeHTTP(rr, httptest.NewRequest(tc.method, tc.url, nil))
+			tc.validate(t, rr)
+		})
+	}
+}

@@ -259,18 +259,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *HttpError {
-	requestPath := r.URL.Path
-	if len(requestPath) > 1 {
-		requestPath = strings.TrimRight(requestPath, "/")
-	}
+	requestPath := trimTrailingSlash(r.URL.Path)
 
-	servicePath, ok := r.Context().Value("servicePath").(string)
-	if ok && servicePath != "/" {
-		servicePath = strings.TrimRight(servicePath, "/")
-		requestPath = strings.Replace(requestPath, servicePath, "", 1)
-		if requestPath == "" {
-			requestPath = "/"
-		}
+	if servicePath, ok := r.Context().Value("servicePath").(string); ok {
+		requestPath = stripBasePath(requestPath, servicePath)
 	}
 	op, errOpResolve := findOperation(r.Method, requestPath, h.config.Paths)
 	if op != nil {
@@ -279,11 +271,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			params = op.Path.Parameters
 		}
 		params = append(params, op.Parameters...)
-		route := op.Path.Path
-		if len(route) > 1 {
-			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
-			route = strings.TrimRight(route, "/")
-		}
+		route := trimTrailingSlash(op.Path.Path)
 
 		var rp *RequestParameters
 		rp, errOpResolve = FromRequest(params, route, r)
@@ -420,6 +408,28 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 	}
 }
 
+// trimTrailingSlash removes trailing slashes from a request path or route. There is no official
+// specification for trailing slash. For ease of use, mokapi considers it equivalent.
+func trimTrailingSlash(path string) string {
+	if len(path) > 1 {
+		return strings.TrimRight(path, "/")
+	}
+	return path
+}
+
+// stripBasePath removes the base path of the matched server from the request path.
+func stripBasePath(requestPath, basePath string) string {
+	basePath = strings.TrimRight(basePath, "/")
+	if basePath == "" {
+		return requestPath
+	}
+	requestPath = strings.Replace(requestPath, basePath, "", 1)
+	if requestPath == "" {
+		return "/"
+	}
+	return requestPath
+}
+
 func findOperation(method, requestPath string, paths *PathItems) (*Operation, error) {
 	var lastError error
 	var selectedOperation *Operation
@@ -434,10 +444,7 @@ func findOperation(method, requestPath string, paths *PathItems) (*Operation, er
 			}
 
 			origRoute := route
-			if len(route) > 1 {
-				// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
-				route = strings.TrimRight(route, "/")
-			}
+			route = trimTrailingSlash(route)
 
 			params, err := extractPathParams(route, requestPath)
 			if err != nil {
