@@ -22,7 +22,7 @@ export function collectedHead(): { title: string | undefined, tags: HeadTag[] } 
     return { title: collectedTitle, tags: [...collectedTags.values()] }
 }
 
-function setTitle(title: string) {
+export function setTitle(title: string) {
     if (import.meta.env.SSR) {
         collectedTitle = title
     } else {

@@ -76,6 +76,10 @@ runs:
       with:
         name: website-test-report
         path: webui/playwright-report
+    - name: test .htaccess
+      working-directory: ./webui
+      run: npm run test-htaccess
+      shell: bash
     - name: Install lftp
       run: sudo apt install lftp
       shell: bash

@@ -14,6 +14,7 @@
 //   - a route is "page not found",
 //   - a URL of sitemap.xml has no generated file,
 //   - a generated page has no <h1> (the page not found view has none either),
+//   - there is no valid 404.html or .htaccess has no `ErrorDocument 404 /404.html`,
 //   - public/website/.htaccess still switches on HTTP_USER_AGENT (every visitor gets the same files).
 // Internal links without a target are only printed.
 import fs from 'node:fs'
@@ -64,9 +65,45 @@ export function checkHtaccessIsNotUserAgentBased(file = htaccessFile) {
     : []
 }
 
+export function checkHtaccessHasErrorDocument(file = htaccessFile) {
+  return /^\s*ErrorDocument\s+404\s+\/404\.html\s*$/m.test(fs.readFileSync(file, 'utf8'))
+    ? []
+    : [`${path.relative(webuiDir, file)} has no "ErrorDocument 404 /404.html"`]
+}
+
+// the content of all robots meta tags, joined (the template has one with INDEX, FOLLOW)
+function robotsOf(html) {
+  return [...html.matchAll(/<meta\s[^>]*name="robots"[^>]*>/gi)]
+    .map(([tag]) => tag.match(/content="([^"]*)"/i)?.[1])
+    .join(',')
+}
+
+// 404.html is what the web server sends for every unknown URL, with the status 404. It is the generic
+// not found page: noindex, nothing that describes a real page (canonical, Open Graph, JSON-LD), and
+// the marker that tells the client to keep this page even where the router would match another route.
+export function checkNotFoundPage(distDir) {
+  const file = path.join(distDir, '404.html')
+  if (!fs.existsSync(file)) {
+    return ['no file for the not found page: expected 404.html']
+  }
+  const html = fs.readFileSync(file, 'utf8')
+  const checks = [
+    [/<title>Page not found \| Mokapi<\/title>/.test(html), 'must have the title "Page not found | Mokapi"'],
+    [robotsOf(html) === 'noindex', 'must have <meta name="robots" content="noindex"> and no other robots tag'],
+    [!/rel="canonical"/.test(html), 'must have no canonical link'],
+    [!/property="og:/.test(html), 'must have no og: tags'],
+    [!/application\/ld\+json/.test(html), 'must have no JSON-LD'],
+    [!/<meta\s[^>]*name="description"/.test(html), 'must have no meta description'],
+    [/<div id="app"[^>]*>[\s\S]*Page not found/.test(html), 'must show "Page not found"'],
+    [!/<h1[\s>]/.test(html), 'must have no <h1>'],
+    [/<div id="app" data-not-found>/.test(html), 'must mark #app with data-not-found'],
+  ]
+  return checks.filter(([ok]) => !ok).map(([, message]) => `404.html ${message}`)
+}
+
 // Source patterns of the unconditional redirects in .htaccess, e.g. ^docs/guides/http/?$
 // (rules after a RewriteCond, like www to non-www, don't say which pages are redirected)
-function redirectPatterns(file = htaccessFile) {
+export function redirectPatterns(file = htaccessFile) {
   const patterns = []
   let conditioned = false
   for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
@@ -168,6 +205,20 @@ export function renderPage(template, { html, head }) {
     .replace('<div id="app"></div>', () => `<div id="app">${html}</div>`)
 }
 
+// The template describes the home page (description, Open Graph), which the not found page must not.
+const notFoundUrl = '/page-not-found'
+const templateDefaultSelectors = [
+  'meta[name="description"]',
+  ...['og:url', 'og:title', 'og:description', 'og:image', 'og:image:alt', 'og:type'].map((name) => `meta[property="${name}"]`),
+]
+
+// `data-not-found` tells the client to keep this page where the router would match another route
+// (/docs/foo is DocsView), see src/router/index.ts.
+export function renderNotFoundPage(template, page) {
+  const withoutDefaults = templateDefaultSelectors.reduce((html, selector) => withoutTag(html, { selector }), template)
+  return renderPage(withoutDefaults, page).replace('<div id="app">', '<div id="app" data-not-found>')
+}
+
 export async function loadServerBundle(distDir) {
   return import(pathToFileURL(path.join(distDir, '..', 'dist-ssr', 'entry-server.js')).href)
 }
@@ -203,6 +254,13 @@ export async function prerender(distDir, { render, isRouteOfApp }) {
       }
     }
   }
+
+  const notFound = await render(notFoundUrl)
+  if (notFound.routeName === 'not-found') {
+    fs.writeFileSync(path.join(distDir, '404.html'), renderNotFoundPage(template, notFound))
+  } else {
+    errors.push(`${notFoundUrl} is a route of the app, 404.html needs an unknown URL`)
+  }
   return { rendered, linked, errors }
 }
 
@@ -212,6 +270,8 @@ export function runChecks(distDir, paths = ['/', ...sitemapPaths(distDir)]) {
     ...checkSitemapHasFiles(distDir, sitemapPaths(distDir)),
     ...checkPageHasContent(distDir, paths),
     ...checkHtaccessIsNotUserAgentBased(),
+    ...checkHtaccessHasErrorDocument(),
+    ...checkNotFoundPage(distDir),
   ]
   const warnings = findLinksWithoutTarget(distDir, paths)
   return { errors, warnings }

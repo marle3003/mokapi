@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
 
 // The website is pre-rendered: every page is served as static HTML with its content and head
 // (see ssg/prerender.js), the app then hydrates it. The checks need the files of a build, so they
@@ -232,6 +232,71 @@ test.describe('hydration', () => {
             releaseScripts()
         }
     })
+})
+
+// 404.html is what the web server answers for every unknown URL (ErrorDocument in
+// public/website/.htaccess). The preview server doesn't, so the tests serve it the same way.
+test.describe('404 page', () => {
+
+    async function notFoundHtml(request: APIRequestContext): Promise<string> {
+        const response = await request.get('/404.html')
+        expect(response.status()).toBe(200)
+        return response.text()
+    }
+
+    async function serveNotFound(page: Page, request: APIRequestContext, path: string) {
+        const body = await notFoundHtml(request)
+        await page.route(`**${path}`, (route) =>
+            route.request().resourceType() === 'document'
+                ? route.fulfill({ status: 404, contentType: 'text/html', body })
+                : route.fallback())
+    }
+
+    test('404.html contains the not found page and its head without running JavaScript', async ({ request }) => {
+        const html = await notFoundHtml(request)
+
+        expect(titleOf(html)).toBe('Page not found | Mokapi')
+        expect(metaContent(html, 'name', 'robots')).toBe('noindex')
+        expect(canonicalOf(html)).toBeUndefined()
+        expect(html).not.toMatch(/property="og:/)
+        expect(html).not.toContain('application/ld+json')
+        expect(html).toMatch(/<header/)
+        expect(html).toContain('Page not found')
+        expect(html).toContain('Back to Home')
+        expect(h1Of(html)).toBeUndefined()
+    })
+
+    for (const path of ['/does-not-exist', '/docs/foo', '/resources/foo']) {
+        test(`${path} served as 404.html keeps its DOM after hydration and has no docs layout`, async ({ page, request }) => {
+            await serveNotFound(page, request, path)
+            const releaseScripts = await holdScripts(page)
+
+            try {
+                await page.goto(path, { waitUntil: 'commit' })
+                const message = page.locator('main .message')
+                await expect(message).toHaveText('Page not found')
+                await expect(page.locator('main.has-sidebar')).toHaveCount(0)
+                expect(await isAppMounted(page)).toBe(false)
+                const prerendered = await message.elementHandle()
+
+                releaseScripts()
+                await expectAppMounted(page)
+
+                expect(await prerendered!.evaluate((node) => node === document.querySelector('main .message'))).toBe(true)
+                await expect(page.locator('main.has-sidebar')).toHaveCount(0)
+                await expect(page.locator('main .message')).toHaveText('Page not found')
+                await expect(page.locator('header')).toBeVisible()
+                expect(new URL(page.url()).pathname).toBe(path)
+                await expect(page).toHaveTitle('Page not found | Mokapi')
+                await expect(page.locator('meta[name="robots"]')).toHaveCount(1)
+                await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
+                await expect(page.locator('link[rel="canonical"]')).toHaveCount(0)
+                await expect(page.locator('meta[property^="og:"]')).toHaveCount(0)
+            } finally {
+                releaseScripts()
+            }
+        })
+    }
 })
 
 // Vue marks the container of a mounted app, also when it hydrates (data-v-app is only set when the app

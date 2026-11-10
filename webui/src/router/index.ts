@@ -513,7 +513,8 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('@/views/PageNotFound.vue')
+      component: () => import('@/views/PageNotFound.vue'),
+      meta: { noindex: true }
     }
   ]
 })
@@ -572,6 +573,28 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
     }
 
     check()
+  })
+}
+
+// to.path is encoded and the router encodes the params again
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment // malformed escape, e.g. /100%
+  }
+}
+
+// 404.html is what the web server answers for every unknown URL, also for /docs/foo, which the router
+// would match to DocsView. Its first navigation goes to the generic not found page instead, so the
+// client keeps the pre-rendered page. A guard runs before the lazy view of the matched route loads.
+if (!import.meta.env.SSR && document.getElementById('app')?.hasAttribute('data-not-found')) {
+  const removeGuard = router.beforeEach((to) => {
+    removeGuard()
+    if (to.name !== 'not-found') {
+      const pathMatch = to.path.slice(1).split('/').map(decodeSegment)
+      return { name: 'not-found', params: { pathMatch }, query: to.query, hash: to.hash, replace: true }
+    }
   })
 }
 
