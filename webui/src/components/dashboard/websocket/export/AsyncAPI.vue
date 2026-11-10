@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, useTemplateRef, watch } from 'vue'
 import { Modal } from 'bootstrap'
-import { transformPath } from '@/composables/fetch'
+import { transformPath } from '@/composables/site-base'
 import { useRoute } from '@/router'
 
 const props = defineProps({

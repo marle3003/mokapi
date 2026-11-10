@@ -12,6 +12,7 @@ import { imageCaption } from './markdown-image';
 import { MarkdownItCtaLinks } from './markdown-cta-links';
 import hljs from '@/plugins/highlight'
 import { images } from '#docs-images'
+import { sitePath } from './site-base'
 import { parseMetadata, removeMetadata, replaceAppVersion } from './markdown-text'
 
 export function useMarkdown(content: string | undefined, linkify = false): {content: string | undefined, metadata?: DocMeta} {
@@ -71,23 +72,10 @@ function replaceImageUrls(data: string) {
             if (imageUrl) {
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             } else {
-                imageUrl = transformPath(m[2]!)
+                imageUrl = sitePath(m[2]!)
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
         }
     } while(m)
     return data
-}
-
-export function transformPath(path: string): string {
-    if (path.startsWith('//')) {
-        // skip urls having https://
-        return path
-    }
-    let base = document.querySelector('base')?.href
-    if (base) {
-        base = base.substring(0, base.length - 1)
-        path = base + path
-    }
-    return path
 }

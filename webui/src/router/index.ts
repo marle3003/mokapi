@@ -1,9 +1,10 @@
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
-import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
+import { siteBasePath } from '@/composables/site-base'
+import { removeHeadTag, setHeadTag } from '@/composables/meta'
+import { createRouter, createWebHistory, createMemoryHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
 
-let base = document.querySelector("base")?.href ?? '/'
-base = base.replace(document.location.origin, '')
+const base = siteBasePath()
 
 export function useRoute() {
   const route = baseRoute()
@@ -435,7 +436,7 @@ const websiteResources: RouteRecordRaw[] = isWebsite ? [
 ] : []
 
 const router = createRouter({
-  history: createWebHistory(base),
+  history: import.meta.env.SSR ? createMemoryHistory(base) : createWebHistory(base),
   scrollBehavior: async (to, from, savedPosition) => {
     if (savedPosition) {
       return savedPosition
@@ -575,16 +576,9 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
 }
 
 router.afterEach((to) => {
-  let tag = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
-
   if (to.meta.noindex) {
-    if (!tag) {
-      tag = document.createElement('meta')
-      tag.name = 'robots'
-      document.head.appendChild(tag)
-    }
-    tag.content = 'noindex'
+    setHeadTag({ selector: 'meta[name="robots"]', tagName: 'meta', attributes: { name: 'robots', content: 'noindex' } })
   } else {
-    tag?.remove()
+    removeHeadTag('meta[name="robots"]')
   }
 })

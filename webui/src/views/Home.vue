@@ -10,6 +10,8 @@ const title = 'Mokapi: Open-Source Mock API Tool & API Simulation'
 const description = `Simulate HTTP, Kafka, MQTT, WebSocket, LDAP and mail APIs locally. Open-source mock API tool driven by OpenAPI and AsyncAPI specs.`
 
 useMeta(title, description, 'https://mokapi.io')
+// the GitHub release below replaces the version once it is known, the static page has this one
+useSoftwareApplicationMeta(APP_VERSION)
 
 const image = ref<HTMLImageElement | undefined>();
 const showImageDialog = ref<boolean>(false)

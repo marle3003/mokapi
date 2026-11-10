@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useReleaseNotes } from '@/composables/release-notes';
 import { computed, ref, watch } from 'vue';
-import { Modal } from 'bootstrap';
+import { loadModal } from '@/composables/bootstrap-modal';
 import { useLocalStorage } from '@/composables/local-storage';
 import { useDashboard } from '@/composables/dashboard';
 import type { AppInfoResponse } from '@/types/dashboard';
@@ -63,9 +63,10 @@ watch(
   { immediate: true }
 );
 
-function openDialog() {
+async function openDialog() {
   const modalEl = document.getElementById('release-notes')
   if (modalEl) {
+    const Modal = await loadModal()
     const modal = new Modal(modalEl)
     modalEl.addEventListener('hidden.bs.modal', event => {
       setItemWithExpiry("release-notes-hide", "true", 12);

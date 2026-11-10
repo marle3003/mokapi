@@ -4,7 +4,7 @@ import { onUnmounted, inject, ref, shallowRef, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
 import type Fuse from 'fuse.js';
-import { Modal } from 'bootstrap';
+import { loadModal } from '@/composables/bootstrap-modal';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
@@ -28,7 +28,10 @@ if (isDashboard) {
   })
 }
 
-const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
+// The pre-rendered page is the same for every visitor, so the promo banner (depends on the date)
+// is shown after the page is hydrated.
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
 const nav = inject<DocConfig>('nav')!
 const route = useRoute()
 const { getBreadcrumb } = useFileResolver();
@@ -192,13 +195,14 @@ onMounted(() => {
 })
 
 
-function navigateAndClose(path: string) {
+async function navigateAndClose(path: string) {
   if (document.activeElement instanceof HTMLElement) {
     // remove focus
     document.activeElement.blur();
   }
 
   const modalEl = document.getElementById('search-docs')!;
+  const Modal = await loadModal();
   const modalInstance = Modal.getInstance(modalEl);
   modalInstance?.hide();
 
@@ -214,7 +218,7 @@ function isDashboardDisplayed() {
 <template>
   <header>
 <!-- Promotion banner -->
-<div class="promo-banner" v-if="isPromoEnabled && promo.activePromotion.value">
+<div class="promo-banner" v-if="isMounted && isPromoEnabled && promo.activePromotion.value">
   <strong class="d-none d-md-inline">Shop discount!</strong>
   Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear
   <span class="d-none d-lg-inline">
@@ -231,8 +235,8 @@ function isDashboardDisplayed() {
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon ms-1">
-              <span class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
-              <span class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
+              <span class="bi bi-brightness-high-fill pe-2 icon-in-dark-theme" @click="switchTheme" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill pe-2 icon-in-light-theme" @click="switchTheme" :title="tooltipLight"></span>
             </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
@@ -299,8 +303,8 @@ function isDashboardDisplayed() {
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon ms-1">
-              <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
-              <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
+              <span class="bi bi-brightness-high-fill icon-in-dark-theme" @click="switchTheme" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill icon-in-light-theme" @click="switchTheme" :title="tooltipLight"></span>
             </button>
           </div>
         </div>
@@ -349,6 +353,11 @@ header {
 }
 header .container-fluid {
   padding: 0;
+}
+/* both theme icons are rendered, the theme is set on <html> before the page is shown */
+[data-theme="dark"] .icon-in-light-theme,
+[data-theme="light"] .icon-in-dark-theme {
+  display: none;
 }
 .promo-banner {
   background-color: var(--color-background-promo);

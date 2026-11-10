@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Modal } from 'bootstrap'
+import type { Modal } from 'bootstrap'
+import { loadModal } from '@/composables/bootstrap-modal'
 import { onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
 
 const show = defineModel<boolean>('show', { required: true })
@@ -8,9 +9,10 @@ const image = defineModel<HTMLImageElement>('image')
 const modalEl = useTemplateRef('modalEl')
 const dialog = ref<Modal>()
 
-onMounted(() => {
+onMounted(async () => {
   if (!modalEl.value) return
 
+  const Modal = await loadModal()
   dialog.value = new Modal('#imageDialog', {})
 
   modalEl.value.addEventListener('hidden.bs.modal', () => {

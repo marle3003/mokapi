@@ -59,6 +59,7 @@ runs:
         npm version ${{ steps.release.outputs.release }}
         npm run copy-docs
         npm run build-sitemap
+        # client build, server build and pre-rendering of all pages (webui/ssg/prerender.js)
         npm run build-website
       shell: bash
     - name: Install Playwright
@@ -75,10 +76,6 @@ runs:
       with:
         name: website-test-report
         path: webui/playwright-report
-    - name: prerender
-      working-directory: ./webui/ssg
-      run: node index.js
-      shell: bash
     - name: Install lftp
       run: sudo apt install lftp
       shell: bash

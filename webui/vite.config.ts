@@ -16,7 +16,7 @@ function removeWebsiteLinksFromIndexHtml(): Plugin {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isSsrBuild }) => {
   const isDashboard = mode === 'dashboard'
   return {
     plugins: [vue(), docsIndex(isDashboard), ...(isDashboard ? [removeWebsiteLinksFromIndexHtml()] : [])],
@@ -31,6 +31,10 @@ export default defineConfig(({ mode }) => {
       }
     },
     base: '', // required for relative urls for base-tag
+    // The server bundle (pre-rendering, see ssg/prerender.js) contains its dependencies, so it runs
+    // from any folder and doesn't depend on how Node loads e.g. the CommonJS Bootstrap.
+    ssr: { noExternal: true },
+    build: { copyPublicDir: !isSsrBuild },
     server: {
       proxy: {
         '/api': 'http://localhost:8090'

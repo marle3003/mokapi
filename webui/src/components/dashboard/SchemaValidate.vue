@@ -2,7 +2,7 @@
 import { watch, reactive, useId, ref, onMounted, onBeforeUnmount } from 'vue'
 import '../../plugins/ace-editor/ace-config';
 import SourceView from './SourceView.vue'
-import { transformPath } from '@/composables/fetch'
+import { transformPath } from '@/composables/site-base'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { useDashboard } from '@/composables/dashboard';
 import type { Example } from '@/types/dashboard';

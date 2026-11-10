@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CodeBlock from '@/components/CodeBlock.vue'
 import Footer from '@/components/Footer.vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
@@ -216,7 +217,7 @@ function getConsoleContent() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-1 order-lg-2 text-start">
-            <pre v-highlightjs><code class="javascript">{{ script }}</code></pre>
+            <CodeBlock :code="script" language="javascript" />
           </div>
         </div>
 

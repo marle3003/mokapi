@@ -1,16 +1,16 @@
 import type { MarkdownIt } from "markdown-it"
 import { useRouter } from "@/router"
 import { toWebsiteUrl } from "./website-url"
+import { resolveLink } from "./site-base"
 
 export function MarkdownItLinks(md: MarkdownIt) {
 
-    function replace(s: string): string {
-        s = s.replace('.md', '')
-        return new URL(s, document.location.href).toString()
-    }
-
     // not useRoute(): Vue may evaluate a computed that renders Markdown outside of a component
     const router = useRouter()
+
+    function replace(s: string): string {
+        return resolveLink(s.replace('.md', ''), router.currentRoute.value.path)
+    }
 
     md.core.ruler.after('inline', 'link', (state) => {
         for (const blockToken of state.tokens) {

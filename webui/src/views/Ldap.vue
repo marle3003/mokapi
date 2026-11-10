@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CodeBlock from '@/components/CodeBlock.vue'
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
 import { isValidImage } from '@/composables/image-dialog'
@@ -286,7 +287,7 @@ function showImage(evt: MouseEvent) {
               Reuse existing directory data and mirror production-like structures without manual setup.
             </p>
             <div class="mx-auto" style="max-width: 900px;">
-              <pre v-highlightjs><code class="ldif">{{ ldap }}</code></pre>
+              <CodeBlock :code="ldap" language="ldif" />
             </div>
 
             <div class="text-center mt-3">
@@ -307,7 +308,7 @@ function showImage(evt: MouseEvent) {
 </template>
 
 <style scoped>
-.home code.hljs {
+.home :deep(code.hljs) {
   padding: 12px;
 }
 </style>

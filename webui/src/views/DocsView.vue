@@ -6,7 +6,8 @@ import { getLoadedMarkdown, loadMarkdown } from '@/composables/docs-content'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
 import KofiLink from '@/components/KofiLink.vue'
-import { Modal } from 'bootstrap'
+import type { Modal } from 'bootstrap'
+import { loadModal } from '@/composables/bootstrap-modal'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
 import { usePromo } from '@/composables/promo.ts';
@@ -72,7 +73,8 @@ const showNavigation = computed(() => {
   return !current.value.index?.hideNavigation
 })
 
-onMounted(() => {
+onMounted(async () => {
+  const Modal = await loadModal()
   dialog.value = new Modal('#imageDialog', {})
 })
 

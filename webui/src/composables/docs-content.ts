@@ -1,3 +1,6 @@
+import type { RouteLocationNormalizedLoaded } from "vue-router"
+import { useFileResolver } from "./file-resolver"
+
 // The dashboard embedded in the Mokapi binary ships the reference docs only, not the resources
 // (blogs, tutorials, examples) of the website. Rollup drops the glob of the other mode. The same
 // rule is in vite-plugin-docs-index.ts.
@@ -31,4 +34,13 @@ export async function loadMarkdown(source: string): Promise<string | undefined> 
 // Lets a page that was loaded before render without waiting, e.g. on a change of the hash only.
 export function getLoadedMarkdown(source: string): string | undefined {
   return loaded.get(toKey(source))
+}
+
+// Loads the Markdown of the page of a route before it is rendered: for pre-rendering, and in the
+// browser before hydration, which needs the content on the first render.
+export async function preloadPageContent(nav: DocConfig, route: RouteLocationNormalizedLoaded): Promise<void> {
+  const source = useFileResolver().resolve(nav, route)?.source
+  if (source) {
+    await loadMarkdown(source)
+  }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
-import { Modal } from 'bootstrap';
+import { loadModal } from '@/composables/bootstrap-modal';
 import { useReleaseNotes } from '@/composables/release-notes';
 
 const content = useReleaseNotes()
@@ -22,9 +22,10 @@ onUnmounted(() => {
   window.removeEventListener('keydown', shortcutHandler)
 })
 
-function openDialog() {
+async function openDialog() {
   const modalEl = document.getElementById('shortcuts')
   if (modalEl) {
+    const Modal = await loadModal()
     const modal = new Modal(modalEl)
     modal.show()
   }
