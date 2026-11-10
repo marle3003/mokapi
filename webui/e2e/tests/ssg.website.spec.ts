@@ -152,6 +152,55 @@ test.describe('hydration', () => {
         })
     }
 
+    test.describe('head tags of the client over the pre-rendered ones', () => {
+
+        async function expectOneHead(page: Page, expected: { title: string, description?: string, canonical: string }) {
+            await expect(page.locator('meta[name="description"]')).toHaveCount(1)
+            await expect(page.locator('link[rel="canonical"]')).toHaveCount(1)
+            await expect(page.locator('meta[property="og:title"]')).toHaveCount(1)
+            expect(await page.locator('script[type="application/ld+json"]').count()).toBeLessThanOrEqual(1)
+
+            await expect(page).toHaveTitle(new RegExp('^' + expected.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+            await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', expected.canonical)
+            await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', await page.title())
+            if (expected.description) {
+                await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', expected.description)
+            }
+        }
+
+        test('after hydration', async ({ page }) => {
+            const http = pages[1]!
+            await page.goto(http.path)
+            await expectAppMounted(page)
+
+            await expectOneHead(page, http)
+        })
+
+        test('after a navigation to another page', async ({ page }) => {
+            await page.goto('/docs/http/overview')
+            await expectAppMounted(page)
+
+            await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
+            await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+
+            await expectOneHead(page, { title: 'HTTP Quick Start', canonical: 'https://mokapi.io/docs/http/quick-start' })
+        })
+
+        test('on the home page after the GitHub release is known', async ({ page }) => {
+            await page.route('https://api.github.com/**', (route) =>
+                route.fulfill({
+                    json: route.request().url().endsWith('/releases/latest') ? { tag_name: 'v9.9.9' } : { stargazers_count: 4242 },
+                }))
+            const home = pages[0]!
+            await page.goto(home.path)
+            await expect(page.locator('.stars')).toContainText('4242')
+
+            await expectOneHead(page, home)
+            await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1)
+            expect(JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!).softwareVersion).toBe('9.9.9')
+        })
+    })
+
     test('the page works after hydration: theme switch', async ({ page }) => {
         await page.goto('/docs/http/overview')
         await expectAppMounted(page)

@@ -15,9 +15,13 @@ export function sitePath(path: string): string {
     return isProtocolRelative(path) ? path : siteBasePath().slice(0, -1) + path
 }
 
-// Full URL for the dashboard (fetch, download links shown to the user), browser only.
+// Full URL for the dashboard (fetch, download links shown to the user), browser only. Without a
+// <base> tag the path is kept.
 export function transformPath(path: string): string {
-    return isProtocolRelative(path) ? path : document.location.origin + sitePath(path)
+    if (isProtocolRelative(path) || !document.querySelector('base')) {
+        return path
+    }
+    return document.location.origin + sitePath(path)
 }
 
 // urls having https:// are kept
