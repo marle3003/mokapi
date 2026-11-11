@@ -2,7 +2,7 @@
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { transformPath } from '@/composables/fetch';
+import { transformPath } from '@/composables/site-base'
 import { useProgressiveLoading } from '@/composables/useProgressiveLoading';
 import Http from './search/Http.vue';
 import Kafka from './search/Kafka.vue';

@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
-import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
+import { onUnmounted, inject, ref, shallowRef, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
-import Fuse from 'fuse.js';
-import { parseMarkdown } from '@/composables/markdown';
-import { Modal } from 'bootstrap';
+import type Fuse from 'fuse.js';
+import { loadModal } from '@/composables/bootstrap-modal';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
 import NavDocItem from './NavDocItem.vue';
+import { isExternalWebsiteLink, toWebsiteUrl } from '@/composables/website-url';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
@@ -28,10 +28,13 @@ if (isDashboard) {
   })
 }
 
-const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
+// The pre-rendered page is the same for every visitor, so the promo banner (depends on the date)
+// is shown after the page is hydrated.
+const isMounted = ref(false)
+onMounted(() => { isMounted.value = true })
 const nav = inject<DocConfig>('nav')!
 const route = useRoute()
-const { getBreadcrumb, getEntryBySource } = useFileResolver();
+const { getBreadcrumb } = useFileResolver();
 const navHeaders = computed(() => {
   return Object.keys(nav).map(x => Object.assign({ label: x }, nav[x])) as DocEntry[]
 })
@@ -90,32 +93,32 @@ function isExpanded(item: DocEntry | string) {
     }
     return item.expanded || false
 }
+function rootPath(root: DocEntry) {
+  return root.path || '/' + root.label.toLocaleLowerCase()
+}
 function showItem(entry: DocEntry) {
   return !entry.hideInNavigation
 }
 
-const files = inject<Record<string, string>>('files')!
+type SearchDocument = { name: string, description: string, path: string, content: string }
+const fuse = shallowRef<Fuse<SearchDocument>>()
 
-// Transform files into an array of { name, content }
-const documents = Object.entries(files).map(([path, content]) => {
-  const doc = parseMarkdown(content)
-  return {
-    name: doc.meta.title,
-    description: doc.meta.description,
-    path: getEntryBySource(nav, path.replace('/src/assets/docs/', ''))?.path,
-    content: doc.content
-  }
-}).filter(doc => doc.path)
-
-const fuse = new Fuse(documents, {
-  keys: ['name', 'content'],
-  threshold: 0.3,
-})
+// fuse.js and the search index are only needed once the search is used
+async function loadSearchIndex() {
+  const [{ default: Fuse }, { default: documents }] = await Promise.all([
+    import('fuse.js'),
+    import('virtual:docs-search-index')
+  ])
+  fuse.value = new Fuse(documents, {
+    keys: ['name', 'content'],
+    threshold: 0.3,
+  })
+}
 
 const filtered = computed(() => {
   let result: any[] = [];
-  if (query.value) {
-    result = fuse.search(query.value).map(({ item }) => {
+  if (query.value && fuse.value) {
+    result = fuse.value.search(query.value).map(({ item }) => {
       return {
         name: item.name,
         path: item.path,
@@ -182,6 +185,7 @@ let shortcutHandler = (e: KeyboardEvent) => {
 
 onMounted(() => {
   const modalEl = document.getElementById('search-docs')!;
+  modalEl.addEventListener('show.bs.modal', loadSearchIndex, { once: true })
   modalEl.addEventListener('shown.bs.modal', () => {
     const inputs = modalEl.getElementsByTagName('input')
     inputs[0]!.focus()
@@ -191,13 +195,14 @@ onMounted(() => {
 })
 
 
-function navigateAndClose(path: string) {
+async function navigateAndClose(path: string) {
   if (document.activeElement instanceof HTMLElement) {
     // remove focus
     document.activeElement.blur();
   }
 
   const modalEl = document.getElementById('search-docs')!;
+  const Modal = await loadModal();
   const modalInstance = Modal.getInstance(modalEl);
   modalInstance?.hide();
 
@@ -213,7 +218,7 @@ function isDashboardDisplayed() {
 <template>
   <header>
 <!-- Promotion banner -->
-<div class="promo-banner" v-if="isPromoEnabled && promo.activePromotion.value">
+<div class="promo-banner" v-if="isMounted && isPromoEnabled && promo.activePromotion.value">
   <strong class="d-none d-md-inline">Shop discount!</strong>
   Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear
   <span class="d-none d-lg-inline">
@@ -230,8 +235,8 @@ function isDashboardDisplayed() {
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon ms-1">
-              <span class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
-              <span class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
+              <span class="bi bi-brightness-high-fill pe-2 icon-in-dark-theme" @click="switchTheme" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill pe-2 icon-in-light-theme" @click="switchTheme" :title="tooltipLight"></span>
             </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
@@ -268,7 +273,10 @@ function isDashboardDisplayed() {
               <li v-if="navHeaders" class="nav-item nav-tree" v-for="root of navHeaders">
                 <div class="chapter" v-if="hasChildren(root)">
                   <div class="d-flex align-items-center justify-content-between">
-                    <router-link class="nav-link w-100" :to="{ path: root.path || '/'+root.label.toLocaleLowerCase() }">
+                    <a v-if="isExternalWebsiteLink(rootPath(root))" class="nav-link w-100" :href="toWebsiteUrl(rootPath(root))">
+                      {{ root.label }}
+                    </a>
+                    <router-link v-else class="nav-link w-100" :to="{ path: rootPath(root) }">
                       {{ root.label }}
                     </router-link>
                     <button type="button" class="btn btn-link d-md-none" :class="isActive(root) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(root)" :aria-expanded="isActive(root)" :aria-controls="getId(root)">
@@ -295,8 +303,8 @@ function isDashboardDisplayed() {
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon ms-1">
-              <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
-              <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
+              <span class="bi bi-brightness-high-fill icon-in-dark-theme" @click="switchTheme" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill icon-in-light-theme" @click="switchTheme" :title="tooltipLight"></span>
             </button>
           </div>
         </div>
@@ -345,6 +353,11 @@ header {
 }
 header .container-fluid {
   padding: 0;
+}
+/* both theme icons are rendered, the theme is set on <html> before the page is shown */
+[data-theme="dark"] .icon-in-light-theme,
+[data-theme="light"] .icon-in-dark-theme {
+  display: none;
 }
 .promo-banner {
   background-color: var(--color-background-promo);

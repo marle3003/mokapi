@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CodeBlock from '@/components/CodeBlock.vue'
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
 import { ref } from 'vue'
@@ -224,7 +225,7 @@ function showImage(evt: MouseEvent) {
           Add a Mokapi Script to broadcast each message to all clients in the same room.
         </p>
         <div class="col-12 col-lg-8 mx-auto">
-          <pre v-highlightjs><code class="javascript">{{ script }}</code></pre>
+          <CodeBlock :code="script" language="javascript" />
         </div>
       </div>
     </section>

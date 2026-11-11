@@ -1,0 +1,84 @@
+ErrorDocument 404 /404.html
+
+<IfModule mod_negotiation.c>
+  Options -MultiViews
+</IfModule>
+
+# /docs is docs.html next to the folder docs/: don't let mod_dir redirect /docs to /docs/ before the
+# rewrite below serves the file
+DirectorySlash Off
+Options -Indexes
+
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # redirect www to non-www
+  RewriteCond %{HTTP_HOST} ^www\.mokapi\.io$ [NC]
+  RewriteRule ^(.*)$ https://mokapi.io/$1 [R=301,L]
+
+  # redirect http to https
+  RewriteCond %{SERVER_PORT} !^443$
+  RewriteRule (.+) https://%{HTTP_HOST}/$1 [L,R=301]
+
+  # Redirect exactly /docs/examples to /resources
+  RewriteRule ^docs/examples/?$ /resources [R=301,L]
+
+  # Redirect anything under /docs/examples/ to /resources/
+  RewriteRule ^docs/examples/(.*)$ /resources/$1 [R=301,L]
+
+  # Redirect exactly /docs/blogs to /resources
+  RewriteRule ^docs/blogs/?$ /resources/blogs [R=301,L]
+
+  # Redirect anything under /docs/blogs/ to /resources/blogs/
+  RewriteRule ^docs/blogs/(.*)$ /resources/blogs/$1 [R=301,L]
+
+  # Redirect anything under /docs/resources/ to /resources/
+  RewriteRule ^docs/resources/(.*)$ /resources/$1 [R=301,L]
+
+  # Redirect old guides like /docs/guides/http to /docs/http/overview
+  RewriteRule ^docs/guides/http/?$ /docs/http/overview [R=301,L]
+  RewriteRule ^docs/guides/kafka/?$ /docs/kafka/overview [R=301,L]
+  RewriteRule ^docs/guides/ldap/?$ /docs/ldap/overview [R=301,L]
+  RewriteRule ^docs/guides/mail/?$ /docs/mail/overview [R=301,L]
+
+  # Redirect anything under /docs/guides/ to /docs/
+  RewriteRule ^docs/guides/(.*)$ /docs/$1 [R=301,L]
+
+  # Redirect exactly /smtp to /mail
+  RewriteRule ^smtp/?$ /mail [R=301,L]
+
+  # Redirect anything under /docs/guides/smtp to /docs/mail/
+  RewriteRule ^docs/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
+
+  RewriteRule ^docs/http/https-&-tls/?$ /docs/http/tls [R=301,L]
+  RewriteRule ^resources/blogs/ensuring-api-contract-compliance-with-mokapi$ /resources/blogs/guard-your-api-contracts [R=301,L]
+  RewriteRule ^resources/blogs/acceptance-testing-with-mokapi:-focus-on-what-matters$ /resources/blogs/acceptance-testing [R=301,L]
+
+  # trailing slash: /docs/http/overview/ is /docs/http/overview (the rule does not match /)
+  RewriteRule ^(.+)/$ /$1 [R=301,L]
+
+  # pre-rendered pages: /docs/http/overview is served from docs/http/overview.html
+  RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
+  RewriteCond %{REQUEST_FILENAME} !-f
+  # Only rewrite IF the .html file exists (also if there is a directory of the same name, e.g.
+  # /resources is resources.html and has the folder resources/ for its sub pages)
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
+
+  # pre-rendered home page
+  RewriteCond %{DOCUMENT_ROOT}/home.html -f
+  RewriteRule ^$ home.html [L]
+
+  # a folder without a page of its own, e.g. /docs/http, is not found (and not a redirect to /docs/http/)
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^.+$ - [R=404,L]
+
+  # rewrite for spa vuejs, only the demo dashboard; everything else without a file is a 404 (ErrorDocument)
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_URI} ^/dashboard-demo(/|$)
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{HTTP_ACCEPT} text/html
+  RewriteRule . /index.html [L]
+</IfModule>

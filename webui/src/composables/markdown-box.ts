@@ -1,6 +1,9 @@
 import type { MarkdownIt, MarkdownItOptions, Token, Renderer, RendererRule } from "markdown-it"
+import { useRouter } from "@/router"
+import { resolveLink } from "./site-base"
 
 export function MarkdownItBox(md: MarkdownIt) {
+    const router = useRouter()
     var defaultRender: RendererRule = md.renderer.rules.fence,
         unescapeAll = md.utils.unescapeAll,
         boxExpr = /box=(\w*)/,
@@ -31,7 +34,7 @@ export function MarkdownItBox(md: MarkdownIt) {
 
         var u = v[2]
         if (u?.endsWith('.md')) {
-            u = new URL(u.replace('.md', ''), document.location.href).toString()
+            u = resolveLink(u.replace('.md', ''), router.currentRoute.value.path)
         }
 
         return `<p class="mt-1 pb-2 ps-2"><a href="${u}">${v[1]}</a></p>`
@@ -49,7 +52,7 @@ export function MarkdownItBox(md: MarkdownIt) {
             if (m) {
                 var url = m[2]
                 if (url?.endsWith('.md')) {
-                    url = new URL(url.replace('.md', ''), document.location.href).toString()
+                    url = resolveLink(url.replace('.md', ''), router.currentRoute.value.path)
                 }
                 content = content.replace(m[0], `<a href="${url}">${m[1]}</a>`)
             }

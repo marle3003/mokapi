@@ -83,9 +83,18 @@ func goID() uint64 {
 
 func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
 	if loop.running.Load() {
-		loop.queueChan <- func() { fn(loop.vm) }
+		loop.enqueue(func() { fn(loop.vm) })
 	} else {
 		fn(loop.vm)
+	}
+}
+
+// enqueue hands the job to the loop. After the loop has stopped nobody reads queueChan,
+// so the job is dropped instead of blocking the caller's goroutine forever.
+func (loop *EventLoop) enqueue(job func()) {
+	select {
+	case loop.queueChan <- job:
+	case <-loop.stopped:
 	}
 }
 
@@ -241,7 +250,7 @@ func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
 	t := &timeout{}
 	t.timer = time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
 		loop.jobCount.Add(-1)
-		loop.queueChan <- run
+		loop.enqueue(run)
 	})
 
 	return loop.vm.ToValue(t)
@@ -301,8 +310,11 @@ Stop:
 		case <-i.stop:
 			i.ticker.Stop()
 			break Stop
+		case <-loop.stopped:
+			i.ticker.Stop()
+			break Stop
 		case <-i.ticker.C:
-			loop.queueChan <- i.run
+			loop.enqueue(i.run)
 		}
 	}
 }

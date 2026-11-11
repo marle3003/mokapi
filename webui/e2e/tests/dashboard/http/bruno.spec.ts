@@ -1,6 +1,7 @@
 import { test, expect } from '../../models/fixture-dashboard'
 
-test('verify bruno export dialog', async ({ dashboard, page, context }) => {
+test('verify bruno export dialog', async ({ dashboard, page, context, baseURL }) => {
+    const { host } = new URL(baseURL!)
     await dashboard.open()
 
     const serviceName = 'Swagger Petstore'
@@ -18,12 +19,12 @@ test('verify bruno export dialog', async ({ dashboard, page, context }) => {
         
         const folder = dialog.getByRole('combobox', { name: 'Folder Arrangement' })
         await folder.selectOption({ label: 'Tags' })
-        let expectedUrl = 'http://localhost:5173/api/services/http/Swagger%20Petstore/bruno.yaml?host=localhost%3A5173&folderArrangement=tags&itemName=summary'
+        let expectedUrl = `${baseURL}/api/services/http/Swagger%20Petstore/bruno.yaml?host=${encodeURIComponent(host)}&folderArrangement=tags&itemName=summary`
         await expect(downloadUrl).toHaveValue(expectedUrl)
         await expect(downloadLink).toHaveAttribute('href', expectedUrl)
 
         await folder.selectOption({ label: 'Paths' })
-        expectedUrl = 'http://localhost:5173/api/services/http/Swagger%20Petstore/bruno.yaml?host=localhost%3A5173&folderArrangement=paths&itemName=summary'
+        expectedUrl = `${baseURL}/api/services/http/Swagger%20Petstore/bruno.yaml?host=${encodeURIComponent(host)}&folderArrangement=paths&itemName=summary`
         await expect(downloadUrl).toHaveValue(expectedUrl)
         await expect(downloadLink).toHaveAttribute('href', expectedUrl)
 

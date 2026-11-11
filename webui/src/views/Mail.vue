@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CodeBlock from '@/components/CodeBlock.vue'
 import { ref } from 'vue';
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
@@ -162,10 +163,10 @@ function showImage(evt: MouseEvent) {
               </div>
               <div class="tab-content code">
                 <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
-                  <pre v-highlightjs><code class="application/yaml">{{ config }}</code></pre>
+                  <CodeBlock :code="config" language="yaml" />
                 </div>
                 <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
-                  <pre v-highlightjs><code class="javascript">{{ script }}</code></pre>
+                  <CodeBlock :code="script" language="javascript" />
                 </div>
               </div>
             </div>

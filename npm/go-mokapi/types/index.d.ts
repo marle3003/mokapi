@@ -91,11 +91,30 @@ export function date(args?: DateArgs): string;
 
 /**
  * Suspends the execution for the specified duration.
+ * It blocks all handlers of the script file, use {@link delay} to delay only the calling handler.
  * https://mokapi.io/docs/javascript-api/mokapi/sleep
  * @param time Duration in milliseconds or duration as string with unit.
  * Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
  */
 export function sleep(time: number | string): void;
+
+/**
+ * Delays the calling handler for the specified duration without blocking other handlers.
+ * The handler must be `async` and `await` the returned `Promise`.
+ * https://mokapi.io/docs/javascript-api/mokapi/delay
+ * @param time Duration in milliseconds or duration as string with unit.
+ * Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`.
+ * A number with a fraction is truncated to whole milliseconds,
+ * zero or a negative number resolves right away.
+ * @returns A `Promise` that resolves after the given time.
+ * @example
+ * export default function() {
+ *   on('http', async (request, response) => {
+ *     await delay('500ms')
+ *   })
+ * }
+ */
+export function delay(time: number | string): Promise<void>;
 
 /**
  * Specifies the interval of a periodic job.
@@ -278,25 +297,26 @@ export interface HttpResponse {
 }
 
 /**
- * Represents an URL
+ * Represents the URL of an HTTP request.
+ * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/httprequest
  */
 export interface Url {
-    /** URL scheme. */
+    /** URL scheme: `https` if the request was received over TLS, otherwise `http`. */
     readonly scheme: string;
 
-    /** URL host. */
+    /** Host name from the Host header of the request, without the port. */
     readonly host: string;
 
-    /** URL port */
+    /** Port from the Host header. If missing, the port of the request URL, else 443 (https) or 80 (http). */
     readonly port: number;
 
-    /** URL path. */
+    /** Decoded request path, e.g. `/pets/my pet` for `/pets/my%20pet`. */
     readonly path: string;
 
-    /** URL query string. */
+    /** Raw query string without the leading `?`, e.g. `limit=10&offset=0`. */
     readonly query: string;
 
-    /** Returns a string representing this Url object.  */
+    /** Returns scheme, host, path and query, e.g. `http://localhost/pets?limit=10`. The port is not included. */
     toString(): string;
 }
 

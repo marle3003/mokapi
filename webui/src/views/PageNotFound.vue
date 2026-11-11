@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Message from '@/components/Message.vue'
+import { setTitle } from '@/composables/meta'
+
+setTitle('Page not found | Mokapi')
 </script>
 
 <template>

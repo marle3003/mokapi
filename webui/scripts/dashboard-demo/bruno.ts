@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 
-const output = '../../public/demo'
+const output = '../../public/website/demo'
 
 export async function collectBruno() {
     const url = 'http://localhost:8080/api/services/http/Swagger%20Petstore/bruno.yaml?host=localhost%3A8080&folderArrangement=tags&itemName=summary';

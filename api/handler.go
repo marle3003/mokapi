@@ -142,6 +142,10 @@ func (h *handler) RegisterMcpHandler(path string, handler http.Handler) {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.isApiPreflight(r) {
+		h.servePreflight(w)
+		return
+	}
 	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
@@ -168,6 +172,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getExampleData(w, r)
 	case p == "/api/schema/validate":
 		h.validate(w, r)
+	case p == "/api/services/http/validate":
+		h.validateHttpExchange(w, r)
 	case strings.HasPrefix(p, "/api/system/"):
 		h.serveSystem(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
@@ -212,6 +218,19 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Errorf("dashboard file not found: %v", r.URL)
 		http.Error(w, "not found", http.StatusNotFound)
 	}
+}
+
+// isApiPreflight reports whether r is a CORS preflight request for the REST API, which
+// browser clients on another origin (e.g. Storybook) send before a POST with a JSON body.
+func (h *handler) isApiPreflight(r *http.Request) bool {
+	return r.Method == http.MethodOptions && strings.HasPrefix(strings.TrimPrefix(r.URL.Path, h.path), "/api/")
+}
+
+func (h *handler) servePreflight(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) getServices(w http.ResponseWriter, r *http.Request) {

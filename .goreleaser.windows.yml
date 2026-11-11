@@ -28,7 +28,7 @@ chocolateys:
     authors: Marcel Lehmann
     project_url: https://mokapi.io
     package_source_url: https://github.com/marle3003/mokapi
-    icon_url: https://cdn.jsdelivr.net/gh/marle3003/mokapi/webui/public/logo.svg
+    icon_url: https://cdn.jsdelivr.net/gh/marle3003/mokapi/webui/public/website/logo.svg
     copyright: 2021 Marcel Lehmann
     license_url: https://raw.githubusercontent.com/marle3003/mokapi/main/LICENSE
     require_license_acceptance: false

@@ -1,9 +1,8 @@
 import { expect, test } from "../models/fixture-website"
 import { config } from "./config"
 
-test('Visit Guides', async ({ page, home }) => {
-    await home.open()
-    await page.getByRole('navigation').getByRole('link', { name: 'Docs' }).click()  
+test('Visit Guides', async ({ page }) => {
+    await page.goto('/docs/welcome')
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/welcome')

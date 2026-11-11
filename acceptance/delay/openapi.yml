@@ -1,0 +1,35 @@
+openapi: 3.0.0
+info:
+  title: Delay Simulation
+  version: 1.0.0
+servers:
+  - url: http://localhost:18097
+paths:
+  /slow:
+    get:
+      responses:
+        '200':
+          description: Answers after a delay
+          content:
+            text/plain:
+              schema:
+                type: string
+  /fast:
+    get:
+      responses:
+        '200':
+          description: Answers immediately
+          content:
+            text/plain:
+              schema:
+                type: string
+  /sim/ready:
+    get:
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]

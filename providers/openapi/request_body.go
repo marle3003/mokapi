@@ -123,7 +123,13 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 		return nil, err
 	}
 
-	for _, mt := range op.RequestBody.Value.Content {
+	return parseBodyDetectContentType(data, op.RequestBody.Value.Content)
+}
+
+// parseBodyDetectContentType is used if a message has no Content-Type. It takes the first media
+// type of content that parses the data.
+func parseBodyDetectContentType(data []byte, content Content) (*Body, error) {
+	for _, mt := range content {
 		if b, err := parseBody(data, mt.ContentType, mt); err == nil {
 			return b, err
 		}

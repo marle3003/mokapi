@@ -4,11 +4,14 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
+import dashboardOverviewImage from '@/assets/docs/get-started/dashboard-overview-mock-api.png'
 
 const title = 'Mokapi: Open-Source Mock API Tool & API Simulation'
 const description = `Simulate HTTP, Kafka, MQTT, WebSocket, LDAP and mail APIs locally. Open-source mock API tool driven by OpenAPI and AsyncAPI specs.`
 
 useMeta(title, description, 'https://mokapi.io')
+// the GitHub release below replaces the version once it is known, the static page has this one
+useSoftwareApplicationMeta(APP_VERSION)
 
 const image = ref<HTMLImageElement | undefined>();
 const showImageDialog = ref<boolean>(false)
@@ -434,7 +437,7 @@ function showImage(evt: MouseEvent) {
             </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img class="img-fluid shadow rounded" style="width:90%" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+            <img class="img-fluid shadow rounded" style="width:90%" :src="dashboardOverviewImage" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
           </div>
         </div>
 

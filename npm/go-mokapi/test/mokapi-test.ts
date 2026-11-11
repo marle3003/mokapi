@@ -1,6 +1,7 @@
 import {
     cron,
     date,
+    delay,
     Delete,
     env,
     every,
@@ -144,6 +145,11 @@ date({ timestamp: 123 });
 sleep({});
 sleep(12);
 sleep("1s");
+
+// @ts-expect-error
+delay({});
+const d: Promise<void> = delay(12);
+delay("1s").then(() => {});
 
 let h: HttpEventHandler = () => {};
 h = () => {};

@@ -1,5 +1,6 @@
 import {reactive, ref, watchEffect} from "vue";
-import {transformPath, useFetch} from "./fetch";
+import { useFetch } from "./fetch";
+import { transformPath } from "./site-base";
 import type {
     Dashboard,
     EventQuery,

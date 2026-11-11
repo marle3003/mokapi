@@ -4,7 +4,6 @@ import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/markdown-links';
 import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
-import { load as loadYaml } from 'js-yaml'
 import { MarkdownItBlockquote } from './markdown-blockquote';
 import { MarkdownItTabContent } from './markdown-tab-content';
 import { MarkdownItTitle } from './markdown-title';
@@ -12,9 +11,9 @@ import { MarkdownItTable } from './markdown-table';
 import { imageCaption } from './markdown-image';
 import { MarkdownItCtaLinks } from './markdown-cta-links';
 import hljs from '@/plugins/highlight'
-
-const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
-const metadataRegex = /^---([\s\S]*?)---/;
+import { images } from '#docs-images'
+import { sitePath } from './site-base'
+import { parseMetadata, removeMetadata, replaceAppVersion } from './markdown-text'
 
 export function useMarkdown(content: string | undefined, linkify = false): {content: string | undefined, metadata?: DocMeta} {
     if (!content) {
@@ -23,8 +22,7 @@ export function useMarkdown(content: string | undefined, linkify = false): {cont
     try {
         const metadata = parseMetadata(content)
 
-        content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
-        content = content.replace(metadataRegex, '')
+        content = removeMetadata(replaceAppVersion(content, APP_VERSION))
 
         if (content) {
             const md = new MarkdownIt({
@@ -74,44 +72,10 @@ function replaceImageUrls(data: string) {
             if (imageUrl) {
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             } else {
-                imageUrl = transformPath(m[2]!)
+                imageUrl = sitePath(m[2]!)
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
         }
     } while(m)
     return data
-}
-
-export function parseMetadata(data: string): DocMeta {
-    if (!data) {
-        return {} as DocMeta
-    }
-
-    const metadataMatch = data.match(metadataRegex)
-    if (!metadataMatch) {
-        return {} as DocMeta
-    }
-  
-    return loadYaml(metadataMatch[1]!) as DocMeta
-}
-
-export function transformPath(path: string): string {
-    if (path.startsWith('//')) {
-        // skip urls having https://
-        return path
-    }
-    let base = document.querySelector('base')?.href
-    if (base) {
-        base = base.substring(0, base.length - 1)
-        path = base + path
-    }
-    return path
-}
-
-export function parseMarkdown(markdown: string): { meta: DocMeta, content: string } {
-    const metadata = parseMetadata(markdown)
-    let content = replaceImageUrls(markdown).replace(metadataRegex, '')
-
-    content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
-    return { meta: metadata, content: content }
 }

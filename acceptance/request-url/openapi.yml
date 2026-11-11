@@ -1,0 +1,27 @@
+openapi: 3.0.0
+info:
+  title: Request URL
+  version: 1.0.0
+servers:
+  - url: https://localhost:18098
+  - url: http://localhost:18099
+paths:
+  /url:
+    get:
+      responses:
+        '200':
+          description: Answers with the request url seen by the event handler
+          content:
+            application/json:
+              schema:
+                type: object
+  /sim/ready:
+    get:
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]

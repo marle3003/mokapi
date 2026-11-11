@@ -21,6 +21,9 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(MqttSuite))
 	suite.Run(t, new(WebsocketSuite))
 	suite.Run(t, new(HttpSuite))
+	suite.Run(t, new(DelaySuite))
+	suite.Run(t, new(RequestUrlSuite))
+	suite.Run(t, new(HttpValidateSuite))
 }
 
 // waitForScript waits until the fixture script of a simulation endpoint has run. The script

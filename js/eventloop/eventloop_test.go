@@ -4,6 +4,10 @@ import (
 	"errors"
 	"mokapi/engine/enginetest"
 	"mokapi/js/eventloop"
+	"mokapi/js/jstest"
+	"runtime"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -407,4 +411,62 @@ func TestEventLoop_Stop_Twice(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("second Stop did not return in time")
 	}
+}
+
+// TestEventLoop_Stop_TimerGoroutinesExit verifies that goroutines started for timers and for
+// Run don't wait forever on a stopped loop. The goroutine count is taken before the loop
+// starts, so the loop's own goroutine is part of what has to be gone afterwards.
+// The tests must not run in parallel, other tests change the number of goroutines.
+func TestEventLoop_Stop_TimerGoroutinesExit(t *testing.T) {
+	t.Run("setTimeout", func(t *testing.T) {
+		before := runtime.NumGoroutine()
+		loop := startLoop(t)
+		for i := 0; i < 10; i++ {
+			_, err := loop.RunSync(script(`setTimeout(() => {}, 20)`))
+			require.NoError(t, err)
+		}
+
+		loop.Stop()
+		// the timers fire after the loop is gone
+		time.Sleep(100 * time.Millisecond)
+
+		jstest.RequireGoroutinesAtMost(t, before)
+	})
+
+	t.Run("setInterval", func(t *testing.T) {
+		before := runtime.NumGoroutine()
+		loop := startLoop(t)
+		_, err := loop.RunSync(script(`setInterval(() => {}, 1)`))
+		require.NoError(t, err)
+
+		loop.Stop()
+
+		jstest.RequireGoroutinesAtMost(t, before)
+	})
+
+	t.Run("Run after Stop", func(t *testing.T) {
+		loop := startLoop(t)
+		loop.Stop()
+		time.Sleep(50 * time.Millisecond)
+
+		// queueChan has room for one job, so one call alone would not block
+		var ran atomic.Bool
+		var wg sync.WaitGroup
+		for i := 0; i < 3; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				loop.Run(func(*goja.Runtime) { ran.Store(true) })
+			}()
+		}
+		done := make(chan struct{})
+		go func() { wg.Wait(); close(done) }()
+
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			t.Fatal("Run blocks on a stopped loop")
+		}
+		require.False(t, ran.Load(), "a job must not run once the loop is stopped")
+	})
 }

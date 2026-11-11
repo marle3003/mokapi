@@ -1,37 +1,54 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount, watch  } from 'vue';
+import { onMounted, ref, inject, computed, watch, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
+import { getLoadedMarkdown, loadMarkdown } from '@/composables/docs-content'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
-import Footer from '@/components/Footer.vue'
-import { Modal } from 'bootstrap'
+import KofiLink from '@/components/KofiLink.vue'
+import type { Modal } from 'bootstrap'
+import { loadModal } from '@/composables/bootstrap-modal'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
 import { usePromo } from '@/composables/promo.ts';
 
-const files = inject<Record<string, string>>('files')!
+// The footer (merch shop, landing pages) is not part of the dashboard build
+const Footer = import.meta.env.VITE_WEBSITE === 'true'
+  ? defineAsyncComponent(() => import('@/components/Footer.vue'))
+  : undefined
 
 const nav = inject<DocConfig>('nav')!
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
-const contentElement = useTemplateRef<HTMLElement>('content')
 
 const route = useRoute()
 const { resolve, getBreadcrumb } = useFileResolver()
 const current = computed(() => resolve(nav, route))
 
-const data = computed(() => {
-  if (!current.value) {
-    return undefined;
+const raw = ref<string>()
+const loading = ref(false)
+
+watch(current, async (entry) => {
+  const source = entry?.source
+  raw.value = source ? getLoadedMarkdown(source) : undefined
+  if (!source || raw.value !== undefined) {
+    loading.value = false
+    return
   }
-  const data = files[`/src/assets/docs/${current.value.source}`];
-  return useMarkdown(data)
-})
+
+  loading.value = true
+  const markdown = await loadMarkdown(source)
+  if (current.value === entry) {
+    raw.value = markdown
+    loading.value = false
+  }
+}, { immediate: true })
+
+const data = computed(() => useMarkdown(raw.value))
 
 const metadata = computed(() => {
-  const meta =  data.value?.metadata
+  const meta = data.value?.metadata
   if (meta) {
     return meta
   }
@@ -56,24 +73,12 @@ const showNavigation = computed(() => {
   return !current.value.index?.hideNavigation
 })
 
-onMounted(() => {
-  setTimeout(() => {
-    for (var pre of document.querySelectorAll('pre')) {
-      pre.addEventListener("dblclick", (e) => {
-        const range = document.createRange()
-        range.selectNodeContents(e.target as HTMLElement)
-        const selection = getSelection()
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-      })
-    }
-  }, 1000)
-  
+onMounted(async () => {
+  const Modal = await loadModal()
   dialog.value = new Modal('#imageDialog', {})
-  contentElement.value?.addEventListener('click', copyToClipboard);
 })
 
-watch(() => current.value, () => {
+watch([current, metadata], () => {
   if (current.value && metadata.value && breadcrumb.value) {
     let extension = ''
     if (breadcrumb.value.length >= 3) {
@@ -91,11 +96,8 @@ watch(() => current.value, () => {
       useMeta(title, metadata.value.description, getCanonicalUrl(current.value), metadata.value.image)
     }
   }
-}, { deep: true, immediate: true })
+}, { immediate: true })
 
-onBeforeUnmount(() => {
-  contentElement.value?.removeEventListener('click', copyToClipboard);
-})
 function getCanonicalUrl(entry: DocEntry) {
   if (entry.canonical) {
     return entry.canonical
@@ -104,6 +106,10 @@ function getCanonicalUrl(entry: DocEntry) {
     return 'https://mokapi.io' + entry.path
   }
   throw new Error('canonical url')
+}
+function onContentClick(event: MouseEvent) {
+  showImage(event.target)
+  copyToClipboard(event)
 }
 function showImage(target: EventTarget | null) {
   if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
@@ -116,6 +122,17 @@ function showImage(target: EventTarget | null) {
 }
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+function selectCode(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('pre')) {
+    return
+  }
+  const range = document.createRange()
+  range.selectNodeContents(target)
+  const selection = getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
 }
 async function copyToClipboard(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -168,13 +185,16 @@ function isLast(breadcrumb: DocEntry[], index: number) {
         </ol>
       </nav>
       <div :style="showNavigation ? 'max-width:50em;' : ''">
-        <div v-if="data?.content" v-html="data.content" class="content" @click="showImage($event.target)" ref="content"></div>
+        <div v-if="data?.content" v-html="data.content" class="content" @click="onContentClick" @dblclick="selectCode"></div>
         <div v-else-if="component" class="content"><component :is="component" /></div>
-        <page-not-found v-else />
+        <page-not-found v-else-if="!loading" />
       </div>
     </div>
   </main>
-  <Footer></Footer>
+  <component :is="Footer" v-if="Footer" />
+  <div v-else class="d-flex justify-content-center py-4">
+    <KofiLink />
+  </div>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "run-p type-check build-only",
     "build-dashboard": "vite build --mode dashboard",
-    "build-website": "vite build --mode website",
+    "build-website": "vite build --mode website && vite build --mode website --ssr src/entry-server.ts --outDir dist-ssr && node ssg/prerender.js",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "build-only": "vite build",
@@ -15,7 +15,8 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "copy-docs": "ncp ../docs ./src/assets/docs",
     "clean": "del-cli ./src/assets/docs",
-    "build-sitemap": "node build-sitemap.js"
+    "build-sitemap": "node build-sitemap.js",
+    "test-htaccess": "node ssg/test-htaccess.js"
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",

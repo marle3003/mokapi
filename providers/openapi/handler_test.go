@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1031,6 +1032,28 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "Testing", er.Api)
 				require.Equal(t, "/foo/{id}", er.Key)
 				require.Equal(t, "foo-operation", er.OperationId)
+			},
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request
+				return nil
+			},
+		},
+		{
+			name: "request url scheme is https for TLS request",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation(http.MethodGet, op))
+				r := httptest.NewRequest(http.MethodGet, "https://localhost/foo", nil)
+				r.TLS = &tls.ConnectionState{}
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				var er *common.HttpEventRequest
+				err := json.Unmarshal(rr.Body.Bytes(), &er)
+				require.NoError(t, err)
+
+				require.Equal(t, common.Url{Scheme: "https", Host: "localhost", Port: 443, Path: "/foo"}, er.Url)
 			},
 			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
 				response.Data = request

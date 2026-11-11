@@ -10,6 +10,12 @@ import { devices } from '@playwright/test'
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+// The dashboard project needs a server in dashboard mode (VITE_WEBSITE=false). On CI the
+// `vite preview` server on 5173 serves the dashboard build, locally `vite dev` (all modes enabled
+// by .env) is joined by a second dev server in dashboard mode.
+const dashboardPort = process.env.CI ? 5173 : 5174
+const dashboardURL = `http://localhost:${dashboardPort}`
+
 const config: PlaywrightTestConfig = {
   testDir: './e2e/tests',
   /* Maximum time one test can run for. */
@@ -67,11 +73,12 @@ const config: PlaywrightTestConfig = {
       name: 'dashboard',
       use: {
         ...devices['Desktop Chrome'],
+        baseURL: dashboardURL,
         storageState: {
           cookies: [],
           origins: [
             {
-              origin: 'http://localhost:5173',
+              origin: dashboardURL,
               localStorage: [
                 {
                   name: 'theme', value: 'dark'
@@ -174,16 +181,27 @@ const config: PlaywrightTestConfig = {
   // outputDir: 'test-results/',
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    /**
-     * Use the dev server by default for faster feedback loop.
-     * Use the preview server on CI for more realistic testing.
-    Playwright will re-use the local server if there is already a dev-server running.
-     */
-    command: process.env.CI ? 'vite preview --port 5173' : 'vite dev',
-    port: 5173,
-    reuseExistingServer: !process.env.CI
-  }
+  webServer: [
+    {
+      /**
+       * Use the dev server by default for faster feedback loop.
+       * Use the preview server on CI for more realistic testing.
+      Playwright will re-use the local server if there is already a dev-server running.
+       */
+      command: process.env.CI ? 'vite preview --port 5173' : 'vite dev',
+      port: 5173,
+      reuseExistingServer: !process.env.CI
+    },
+    ...(process.env.CI
+      ? []
+      : [
+          {
+            command: `vite dev --mode dashboard --port ${dashboardPort}`,
+            port: dashboardPort,
+            reuseExistingServer: true
+          }
+        ])
+  ]
 }
 
 export default config

@@ -1,9 +1,10 @@
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
-import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
+import { siteBasePath } from '@/composables/site-base'
+import { removeHeadTag, setHeadTag } from '@/composables/meta'
+import { createRouter, createWebHistory, createMemoryHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
 
-let base = document.querySelector("base")?.href ?? '/'
-base = base.replace(document.location.origin, '')
+const base = siteBasePath()
 
 export function useRoute() {
   const route = baseRoute()
@@ -383,8 +384,59 @@ else {
   }
 }
 
+// Landing pages and resources (blogs, tutorials) are only part of the website build, the
+// dashboard embedded in the Mokapi binary links to mokapi.io instead.
+const isWebsite = import.meta.env.VITE_WEBSITE === 'true'
+const websitePages: RouteRecordRaw[] = isWebsite ? [
+  {
+    path: '/home',
+    component: () => import('@/views/Home.vue')
+  },
+  {
+    path: '/http',
+    component: () => import('@/views/Http.vue')
+  },
+  {
+    path: '/kafka',
+    component: () => import('@/views/Kafka.vue')
+  },
+  {
+    path: '/mqtt',
+    component: () => import('@/views/Mqtt.vue')
+  },
+  {
+    path: '/websocket',
+    component: () => import('@/views/Websocket.vue')
+  },
+  {
+    path: '/ldap',
+    component: () => import('@/views/Ldap.vue')
+  },
+  {
+    path: '/mail',
+    component: () => import('@/views/Mail.vue')
+  },
+  {
+    path: '/compare',
+    component: () => import('@/views/Compare.vue')
+  },
+] : []
+const websiteResources: RouteRecordRaw[] = isWebsite ? [
+  {
+    path: '/resources',
+    component: () => import('@/views/DocsView.vue'),
+    children: [
+      {
+        path: ':level1/:level2?/:level3?/:level4?',
+        name: 'resources',
+        component: () => import('@/views/DocsView.vue')
+      },
+    ]
+  },
+] : []
+
 const router = createRouter({
-  history: createWebHistory(base),
+  history: import.meta.env.SSR ? createMemoryHistory(base) : createWebHistory(base),
   scrollBehavior: async (to, from, savedPosition) => {
     if (savedPosition) {
       return savedPosition
@@ -415,38 +467,7 @@ const router = createRouter({
   },
   routes: [
     startPageRoute,
-    {
-      path: '/home',
-      component: () => import('@/views/Home.vue')
-    },
-    {
-      path: '/http',
-      component: () => import('@/views/Http.vue')
-    },
-    {
-      path: '/kafka',
-      component: () => import('@/views/Kafka.vue')
-    },
-    {
-      path: '/mqtt',
-      component: () => import('@/views/Mqtt.vue')
-    },
-    {
-      path: '/websocket',
-      component: () => import('@/views/Websocket.vue')
-    },
-    {
-      path: '/ldap',
-      component: () => import('@/views/Ldap.vue')
-    },
-    {
-      path: '/mail',
-      component: () => import('@/views/Mail.vue')
-    },
-    {
-      path: '/compare',
-      component: () => import('@/views/Compare.vue')
-    },
+    ...websitePages,
     {
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
@@ -488,21 +509,12 @@ const router = createRouter({
         },
       ]
     },
-    {
-      path: '/resources',
-      component: () => import('@/views/DocsView.vue'),
-      children: [
-        {
-          path: ':level1/:level2?/:level3?/:level4?',
-          name: 'resources',
-          component: () => import('@/views/DocsView.vue')
-        },
-      ]
-    },
+    ...websiteResources,
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('@/views/PageNotFound.vue')
+      component: () => import('@/views/PageNotFound.vue'),
+      meta: { noindex: true }
     }
   ]
 })
@@ -564,17 +576,32 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
   })
 }
 
-router.afterEach((to) => {
-  let tag = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
+// to.path is encoded and the router encodes the params again
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment // malformed escape, e.g. /100%
+  }
+}
 
-  if (to.meta.noindex) {
-    if (!tag) {
-      tag = document.createElement('meta')
-      tag.name = 'robots'
-      document.head.appendChild(tag)
+// 404.html is what the web server answers for every unknown URL, also for /docs/foo, which the router
+// would match to DocsView. Its first navigation goes to the generic not found page instead, so the
+// client keeps the pre-rendered page. A guard runs before the lazy view of the matched route loads.
+if (!import.meta.env.SSR && document.getElementById('app')?.hasAttribute('data-not-found')) {
+  const removeGuard = router.beforeEach((to) => {
+    removeGuard()
+    if (to.name !== 'not-found') {
+      const pathMatch = to.path.slice(1).split('/').map(decodeSegment)
+      return { name: 'not-found', params: { pathMatch }, query: to.query, hash: to.hash, replace: true }
     }
-    tag.content = 'noindex'
+  })
+}
+
+router.afterEach((to) => {
+  if (to.meta.noindex) {
+    setHeadTag({ selector: 'meta[name="robots"]', tagName: 'meta', attributes: { name: 'robots', content: 'noindex' } })
   } else {
-    tag?.remove()
+    removeHeadTag('meta[name="robots"]')
   }
 })

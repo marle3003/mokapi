@@ -102,6 +102,34 @@ paths:
           description: http service openapi spec
           content:
             '*/*': {}
+  /api/services/http/validate:
+    post:
+      summary: validates a request/response pair against the OpenAPI contracts without serving it
+      operationId: httpValidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HttpValidateRequest'
+      responses:
+        "200":
+          description: validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpValidateResult'
+        "400":
+          description: malformed payload
+          $ref: '#/components/responses/Error'
+        "404":
+          description: api not found
+          $ref: '#/components/responses/Error'
+    options:
+      summary: preflight
+      responses:
+        204:
+          description: no content
   /api/services/kafka/{name}:
     get:
       summary: Information about the kafka cluster
@@ -667,6 +695,68 @@ components:
           type: [ 'array', 'null' ]
           items:
             $ref: '#/components/schemas/FakerTree'
+    HttpValidateRequest:
+      type: object
+      required: [request, response]
+      properties:
+        api:
+          type: string
+          description: info.title of the API, searches all APIs if omitted
+        request:
+          type: object
+          required: [method, url]
+          properties:
+            method:
+              type: string
+            url:
+              type: string
+              description: path and query
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+            body:
+              type: string
+        response:
+          type: object
+          required: [statusCode]
+          properties:
+            statusCode:
+              type: integer
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+            body:
+              type: string
+    HttpValidateResult:
+      type: object
+      required: [valid, errors]
+      properties:
+        valid:
+          type: boolean
+        operation:
+          type: object
+          required: [api, method, path]
+          properties:
+            api:
+              type: string
+            method:
+              type: string
+            path:
+              type: string
+        errors:
+          type: array
+          items:
+            type: object
+            required: [location, message]
+            properties:
+              location:
+                type: string
+              schema:
+                type: string
+              message:
+                type: string
     SearchResult:
       type: object
       properties:

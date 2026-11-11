@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { useMarkdown } from '@/composables/markdown';
-import { computed, inject, ref, watch } from 'vue';
-import { Modal } from 'bootstrap';
+import { useReleaseNotes } from '@/composables/release-notes';
+import { computed, ref, watch } from 'vue';
+import { loadModal } from '@/composables/bootstrap-modal';
 import { useLocalStorage } from '@/composables/local-storage';
 import { useDashboard } from '@/composables/dashboard';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useRoute } from '@/router';
 
 const route = useRoute();
-const files = inject<Record<string, string>>('files')!
 const { dashboard } = useDashboard()
 let appInfo = ref<AppInfoResponse | null>(null)
 
-const data = files['/src/assets/docs/release.md'];
-const { content } = useMarkdown(data);
+const content = useReleaseNotes()
 const dismissedVersion = useLocalStorage<string>(`release-notes-version`, '')
 const dismissed = useLocalStorage<boolean>(`release-notes-dismissed`, false)
 const displayed = ref(false)
@@ -25,7 +23,7 @@ const version = computed(() => {
   return appInfo.value.data.version
 })
 
-watch(appInfo, () => {
+watch([appInfo, content], () => {
   if (!appInfo.value || displayed.value) {
     return;
   }
@@ -33,7 +31,7 @@ watch(appInfo, () => {
     return
   }
 
-  if (!version.value || !content) {
+  if (!version.value || !content.value) {
     return
   }
   if (import.meta.env.DEV) {
@@ -65,9 +63,10 @@ watch(
   { immediate: true }
 );
 
-function openDialog() {
+async function openDialog() {
   const modalEl = document.getElementById('release-notes')
   if (modalEl) {
+    const Modal = await loadModal()
     const modal = new Modal(modalEl)
     modalEl.addEventListener('hidden.bs.modal', event => {
       setItemWithExpiry("release-notes-hide", "true", 12);

@@ -57,42 +57,15 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 			continue
 		}
 		pv := ref.Value
-		var v *RequestParameterValue
-		var err error
-		switch pv.Type {
-		case ParameterCookie:
-			v, err = parseCookie(pv, r)
-			if err != nil {
-				return nil, fmt.Errorf("parse cookie parameter '%v' failed: %w", pv.Name, err)
-			}
-			if v != nil {
-				parameters.Cookie[pv.Name] = *v
-			}
-		case ParameterPath:
+		if pv.Type == ParameterPath {
 			pathParams = append(pathParams, pv)
-		case ParameterQuery:
-			v, err = parseQuery(pv, r.URL)
-			if err != nil {
-				return nil, fmt.Errorf("parse query parameter '%v' failed: %w", pv.Name, err)
-			}
-			if v != nil {
-				parameters.Query[pv.Name] = *v
-			}
-		case ParameterHeader:
-			v, err = parseHeader(pv, r.Header)
-			if err != nil {
-				return nil, fmt.Errorf("parse header parameter '%v' failed: %w", pv.Name, err)
-			}
-			if v != nil {
-				parameters.Header[pv.Name] = *v
-			}
-		case ParameterQueryString:
-			v, err = parseQueryString(pv, r)
-			if err != nil {
-				return nil, fmt.Errorf("parse querystring parameter '%v' failed: %w", pv.Name, err)
-			}
-			parameters.QueryString = v
+			continue
 		}
+		v, err := parseParameter(pv, r)
+		if err != nil {
+			return nil, fmt.Errorf("parse %s parameter '%v' failed: %w", pv.Type, pv.Name, err)
+		}
+		parameters.set(pv, v)
 	}
 
 	var err error
@@ -109,6 +82,38 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 	validate(route, parameters)
 
 	return parameters, nil
+}
+
+// parseParameter parses a cookie, query, header or querystring parameter from the request.
+// It returns nil if the parameter is not present and not required.
+func parseParameter(param *Parameter, r *http.Request) (*RequestParameterValue, error) {
+	switch param.Type {
+	case ParameterCookie:
+		return parseCookie(param, r)
+	case ParameterQuery:
+		return parseQuery(param, r.URL)
+	case ParameterHeader:
+		return parseHeader(param, r.Header)
+	case ParameterQueryString:
+		return parseQueryString(param, r)
+	}
+	return nil, nil
+}
+
+func (rp *RequestParameters) set(param *Parameter, v *RequestParameterValue) {
+	if v == nil {
+		return
+	}
+	switch param.Type {
+	case ParameterCookie:
+		rp.Cookie[param.Name] = *v
+	case ParameterQuery:
+		rp.Query[param.Name] = *v
+	case ParameterHeader:
+		rp.Header[param.Name] = *v
+	case ParameterQueryString:
+		rp.QueryString = v
+	}
 }
 
 func parseObject(p *Parameter, value string, separator string, explode bool, decode decoder) (map[string]interface{}, error) {
