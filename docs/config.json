@@ -754,7 +754,7 @@
         },
         "items": [
           {
-            "label": "Storybook Stories That Check Your OpenAPI Contract: Switch Between MSW and Mokapi",
+            "label": "Storybook Stories That Check Your OpenAPI Contract with Mokapi",
             "source": "resources/blogs/storybook-msw-mokapi.md",
             "path": "/resources/blogs/storybook-msw-mokapi",
             "hideNavigation": true
