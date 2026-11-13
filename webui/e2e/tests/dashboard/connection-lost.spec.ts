@@ -29,6 +29,7 @@ async function openHttpRequests(page: Page) {
 
 const requestRows = (page: Page) => page.getByRole('table', { name: 'Recent Requests' }).locator('tbody tr')
 const loadingSpinner = (page: Page) => page.locator('main').getByRole('status')
+const recentRequestsSpinner = (page: Page) => page.getByRole('region', { name: 'Recent Requests' }).getByRole('status')
 const connectionRefused = (route: Route) => route.abort('connectionrefused')
 const serverError = (route: Route) => route.fulfill({ status: 500, body: 'Internal Server Error' })
 const notFound = (route: Route) => route.fulfill({ status: 404, json: { message: 'not found' } })
@@ -258,10 +259,12 @@ test.describe('Connection lost', () => {
 
     test('list page without data shows the loading spinner instead of an empty table', async ({ page, dashboard }) => {
         await page.route('**/api/events?*', connectionRefused)
+        // the service list shows its own spinner while loading, hold it back to test that state every time
+        await page.route(/\/api\/services\?type=http$/, () => { /* never answer */ })
         await openAndPauseClock(page, '/dashboard/http')
 
         await expect(dashboard.connectionLostToast).toBeVisible()
-        await expect(loadingSpinner(page)).toBeVisible()
+        await expect(recentRequestsSpinner(page)).toBeVisible()
         await expect(requestRows(page)).toHaveCount(0)
     })
 
