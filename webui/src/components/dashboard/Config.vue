@@ -34,7 +34,7 @@ const contentType = computed(() => {
     return defaultContentType
 })
 
-function toString(arg: any): string {
+function toString(arg: unknown): string {
     if (typeof arg === 'string') {
         return arg
     }
@@ -70,7 +70,7 @@ const provider = computed(() => {
                             <p aria-labelledby="url">{{ config.url }}</p>
                         </div>
                         <div class="col text-end">
-                            <span v-if="config.tags" v-for="tag of config.tags" class="badge bg-primary ms-1">
+                            <span v-for="tag of config.tags" :key="tag" class="badge bg-primary ms-1">
                                 {{ tag }}
                             </span>
                             <span class="badge bg-secondary ms-1">Config</span>

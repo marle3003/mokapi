@@ -12,7 +12,7 @@ const props = defineProps({
 const { formatSchema } = usePrettyLanguage()
 
 const sorted = computed(() => {
-    const result = props.parameters.sort((p1, p2) => {
+    const result = [...props.parameters].sort((p1, p2) => {
         if (p1.value && p2.value) {
             return p1.name.localeCompare(p2.name)
         }
@@ -31,7 +31,7 @@ const dialogShowRaw = ref(false)
 const selected = ref<HttpEventParameter & { schema?: Schema} | undefined>()
 const dialogRef = useTemplateRef('dialogRef')
 const dialog = ref<Modal | undefined>()
-function renderJsonValue(value: any) {
+function renderJsonValue(value: unknown) {
     try {
         const parsed = typeof value === 'string' ? JSON.parse(value) : value;
         if (typeof parsed === 'string') {
@@ -81,7 +81,7 @@ function schema(p: HttpEventParameter) {
             </tr>
         </thead>
         <tbody>
-            <tr v-for="p in sorted"  @click="openDialog(p)" class="table-row-clickable">
+            <tr v-for="p in sorted" :key="`${p.type}-${p.name}`"  @click="openDialog(p)" class="table-row-clickable">
                 <td v-if="useValueSwitcher">
                     <button v-if="p.value && p.rendered !== p.raw && p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
                         @click.stop="showRaw[p.name] = !showRaw[p.name]">

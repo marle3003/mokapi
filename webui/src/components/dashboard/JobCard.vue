@@ -143,7 +143,7 @@ function getStatus(data: JobExecution) {
                     </tr>
                 </thead>
                 <tbody>
-                    <template v-for="(event, index) of events" >
+                    <template v-for="(event, index) of events" :key="event.id" >
                         <tr data-bs-toggle="collapse" :data-bs-target="'#event_'+index" aria-expanded="false" :set="data = eventData(event)" >
                             <td style="padding-left: 5px;"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
                             <td :set="status = getStatus(data!)">
@@ -186,7 +186,7 @@ function getStatus(data: JobExecution) {
                                     <h5>Logs</h5>
                                     <div class="mb-3">
                                     <ul class="list-group">
-                                        <li v-for="log in data.logs" class="list-group-item">
+                                        <li v-for="(log, logIndex) in data.logs" :key="logIndex" class="list-group-item">
                                             <span class="text-body log">
                                                 <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
                                                 <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
@@ -216,7 +216,7 @@ function getStatus(data: JobExecution) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <template v-for="(value, key) of data.tags">
+                                            <template v-for="(value, key) of data.tags" :key="key">
                                                 <tr>
                                                     <td>{{ key }}</td>
                                                     <td>

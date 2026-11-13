@@ -25,7 +25,7 @@ const responses = computed(() => {
     if (!props.operation.responses){
         return []
     }
-    return props.operation.responses.sort((r1, r2) => {
+    return [...props.operation.responses].sort((r1, r2) => {
         if (typeof r1.statusCode === 'string') {
             return 1
         } else if (typeof r2.statusCode === 'string') {
@@ -36,18 +36,18 @@ const responses = computed(() => {
     })
 })
 
-for (let response of responses.value) {
+for (const response of responses.value) {
     if (!response.contents) {
         continue
     }
     selected.contents[response.statusCode] = response.contents[0]!
 }
 
-function selectedContentChange(event: any, statusCode: number | string){
-    for (let response of props.operation.responses){
+function selectedContentChange(event: Event, statusCode: number | string){
+    for (const response of props.operation.responses){
         if (response.statusCode == statusCode){
-            for (let content of response.contents){
-                if (content.type == event.target.value) {
+            for (const content of response.contents){
+                if (content.type == (event.target as HTMLSelectElement).value) {
                     selected.contents[statusCode] = content
                 }
             }
@@ -65,14 +65,14 @@ const examplePath = computed(() => {
             <h2 id="response" class="card-title text-center">Response</h2>
             <div class="d-flex align-items-start align-items-stretch">
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                    <button v-for="(response, index) of operation.responses" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" :aria-selected="index === 0">{{ formatStatusCode(response.statusCode) }}</button>
+                    <button v-for="(response, index) of responses" :key="response.statusCode" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" :aria-selected="index === 0">{{ formatStatusCode(response.statusCode) }}</button>
                 </div>
                 <div class="tab-content ms-3 ps-3 responses-tab" style="width: 100%" id="v-pills-tabContent">
-                    <div v-for="(response, index) of responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
+                    <div v-for="(response, index) of responses" :key="response.statusCode" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
                         <p class="label">Description</p>
-                        <p>
+                        <div class="mb-1">
                             <div v-html="useMarkdown(response.description).content" class="description" aria-label="Response body description"></div>
-                        </p>
+                        </div>
                         <div v-if="response.contents || response.headers">
                             <ul class="nav nav-pills response-tab" role="tabList">
                                 <li class="nav-link" id="pills-body-tab" :class="response.contents ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
@@ -95,7 +95,7 @@ const examplePath = computed(() => {
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">
-                                                <option v-for="content in response.contents">{{ content.type }}</option>
+                                                <option v-for="content in response.contents" :key="content.type">{{ content.type }}</option>
                                             </select>
                                         </div>
                                     </div>

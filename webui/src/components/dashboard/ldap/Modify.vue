@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Actions from '../Actions.vue'
-import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps<{
    event: ServiceEvent
 }>()
-
-const { format, duration } = usePrettyDates()
 
 const data = computed((): {data: LdapEventData, request: LdapModifyRequest, response: LdapResponse} => {
     const data = <LdapEventData>props.event.data
@@ -34,10 +31,10 @@ const hasActions = computed(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="item of data.request.items">
+                            <tr v-for="(item, itemIndex) of data.request.items" :key="itemIndex">
                                 <td>{{ item.modification }}</td>
                                 <td>{{ item.attribute.type }}</td>
-                                <td><p v-for="v of item.attribute.values">{{ v }}</p></td>
+                                <td><p v-for="(v, vIndex) of item.attribute.values" :key="vIndex">{{ v }}</p></td>
                             </tr>
                         </tbody>
                     </table>

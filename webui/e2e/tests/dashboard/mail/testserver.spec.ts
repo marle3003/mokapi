@@ -46,7 +46,7 @@ test('Visit Mail Testserver', async ({ page }) => {
     await test.step('Check mailboxes', async () => {
         await page.getByRole('tab', { name: 'Mailboxes' }).click()
 
-        let table = page.getByRole('table', { name: 'Mailboxes' })
+        const table = page.getByRole('table', { name: 'Mailboxes' })
         await expect(table).toBeVisible()
     
         const mailboxes = useTable(table, ['Mailbox', 'Username', 'Password', 'Description', 'Received Messages'])
@@ -62,7 +62,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(row.getCellByName('Username')).toHaveText('bob')
         await expect(row.getCellByName('Password')).toHaveText('foo')
         await expect(row.getCellByName('Description')).toHaveText('')
-        await expect(row.getCellByName('Received Messages')).toHaveText('1')
+        await expect(row.getCellByName('Received Messages')).toHaveText('2')
 
         await row.click()
 
@@ -85,7 +85,7 @@ test('Visit Mail Testserver', async ({ page }) => {
     await test.step('Check rules', async () => {
         await page.getByRole('tab', { name: 'Rules '}).click()
 
-        let table = page.getByRole('table', { name: 'Rules' })
+        const table = page.getByRole('table', { name: 'Rules' })
         await expect(table).toBeVisible()
     
         const rules = useTable(table, ['Name', 'Action', 'Sender', 'Recipient', 'Subject', 'Body'])
@@ -114,7 +114,7 @@ test('Visit Mail Testserver', async ({ page }) => {
     })
 
     await test.step('Check mail message', async () => {
-        let table = page.getByRole('table', { name: 'Recent Mails' })
+        const table = page.getByRole('table', { name: 'Recent Mails' })
         await expect(table).toBeVisible()
 
         await table.getByRole('row').nth(1).click()
@@ -145,4 +145,21 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(icon.getByLabel('Disposition')).toHaveText('inline')
         await expect(icon.getByLabel('Size')).toHaveText('372 B')
     })
+})
+
+test('Visit plain text mail message', async ({ page }) => {
+    const { tabs, open } = useDashboard(page)
+    await open()
+    await tabs.mail.click()
+    await page.getByRole('table', { name: 'Mail Servers' }).getByText('Mail Testserver').click()
+
+    const table = page.getByRole('table', { name: 'Recent Mails' })
+    await table.getByRole('row').filter({ hasText: 'A plain text mail' }).click()
+
+    const info = page.getByRole('region', { name: 'Info' })
+    await expect(info.getByLabel('Subject')).toHaveText('A plain text mail')
+    await expect(info.getByLabel('From')).toHaveText('Alice <alice@mokapi.io>')
+
+    const body = page.getByRole('region', { name: 'Mail Body' })
+    await expect(body).toContainText('Plain text message from Alice')
 })

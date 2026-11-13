@@ -4,8 +4,10 @@ import { transformPath } from './site-base'
 import { useConnection } from './connection'
 
 export interface Response {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- response body and error depend on the endpoint, callers narrow them
     data: any
     isLoading: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- response body and error depend on the endpoint, callers narrow them
     error: any
     close: () => void
     refs: number
@@ -86,7 +88,7 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
 
     async function readBody(res: globalThis.Response) {
         if (!res.ok) {
-            let text = await res.text()
+            const text = await res.text()
             throw new Error(res.statusText + ': ' + text)
         }
         const contentType = res.headers.get("content-type");

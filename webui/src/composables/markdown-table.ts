@@ -3,7 +3,7 @@ import type { MarkdownIt } from "markdown-it"
 export function MarkdownItTable(md: MarkdownIt) {
 
     // Override table_open
-    md.renderer.rules.table_open = function (tokens, idx, options, env, self) {
+    md.renderer.rules.table_open = function () {
         return (
         '<div class="table-responsive-sm">\n' +
         '<table class="table">\n'
@@ -11,7 +11,7 @@ export function MarkdownItTable(md: MarkdownIt) {
     }
 
     // Override table_close
-    md.renderer.rules.table_close = function (tokens, idx, options, env, self) {
+    md.renderer.rules.table_close = function () {
         return '</table>\n</div>\n'
     }
 };

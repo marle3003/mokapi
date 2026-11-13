@@ -101,7 +101,7 @@ const filteredEvents = computed(() => {
                             </td>
                             <td>{{ eventData(event).from }}</td>
                             <td class="address-list">
-                                <div v-for="address in eventData(event).to">
+                                <div v-for="address in eventData(event).to" :key="address">
                                 {{ address }}
                                 </div>
                             </td>

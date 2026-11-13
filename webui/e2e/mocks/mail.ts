@@ -59,7 +59,7 @@ export default function () {
         })
 }
 
-export let mails = [
+export const mails = [
     {
         from: [{name: 'Alice', address: 'alice@mokapi.io'}],
         to: [{name: 'Bob', address: 'bob@mokapi.io'}, {address: 'carol@mokapi.io'}],
@@ -109,9 +109,21 @@ export let mails = [
             }
         ]
     },
+    {
+        from: [{name: 'Alice', address: 'alice@mokapi.io'}],
+        to: [{name: 'Bob', address: 'bob@mokapi.io'}],
+        date: '2023-02-22T10:15:00+01:00',
+        contentType: 'text/plain',
+        encoding: '7bit',
+        messageId: '20230222-101500.123-1111@mokapi.io',
+        subject: 'A plain text mail',
+        body: 'Plain text message from Alice',
+        attachments: [],
+        duration: 120,
+    },
 ]
 
-export let services = [
+export const services = [
     {
         name: 'Mail Testserver',
         description: 'This is a sample smtp server',
@@ -132,24 +144,24 @@ export let services = [
         ],
         mailboxes: [
             {
-                name: 'alice@mokapi.io',
-                username: 'alice',
-                password: 'foo',
-                description: 'a description using *markdown*',
-                numMessages: 0,
-                folders: []
-            },
-            {
                 name: 'bob@mokapi.io',
                 username: 'bob',
                 password: 'foo',
-                numMessages: 1,
+                numMessages: 2,
                 folders: [
                     {
                         name: 'INBOX',
                         messages: mails
                     }
                 ]
+            },
+            {
+                name: 'alice@mokapi.io',
+                username: 'alice',
+                password: 'foo',
+                description: 'a description using *markdown*',
+                numMessages: 0,
+                folders: []
             },
         ],
         rules: [
@@ -160,7 +172,7 @@ export let services = [
     }
 ]
 
-export let mailEvents = [
+export const mailEvents = [
     {
         id: "273cd167-f5a5-4da1-969e-d44213686491",
         traits: {
@@ -176,10 +188,25 @@ export let mailEvents = [
             duration: 30016,
         },
     },
+    {
+        id: "0b0f1b9e-1e4c-4a5b-8d0e-6f1d2a7c9e11",
+        traits: {
+            namespace: "mail",
+            name: "Mail Testserver",
+        },
+        time:  '2023-02-22T10:15:00.482366+01:00',
+        data: {
+            from: 'alice@mokapi.io',
+            to: ['bob@mokapi.io'],
+            messageId: '20230222-101500.123-1111@mokapi.io',
+            subject: 'A plain text mail',
+            duration: 120,
+        },
+    },
 ]
 
 export function getMail(messageId: string) {
-    for (let m of mails) {
+    for (const m of mails) {
         if (m.messageId === messageId) {
             return m
         }
@@ -193,7 +220,7 @@ export function getAttachment(messageId: string, attachmentName: string) {
         return null
     }
 
-    for (let a of mail.attachments) {
+    for (const a of mail.attachments) {
         if (a.name === attachmentName) {
             return a
         }

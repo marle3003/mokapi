@@ -28,7 +28,7 @@ export function useDashboard() {
 }
 
 export const getRouteName = (name: string) => {
-    return computed<string>(x => {
+    return computed<string>(() => {
         return mode.value === 'live' ? name : name + '-demo'
     })
     

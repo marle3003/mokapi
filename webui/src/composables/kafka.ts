@@ -1,4 +1,3 @@
-import { useRoute } from 'vue-router'
 import { computed, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
 import type { KafkaChannelResult, KafkaTopicResult } from '@/types/dashboard'

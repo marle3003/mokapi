@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMqtt } from '@/composables/mqtt';
 
-const props = defineProps<{
+defineProps<{
   request: MqttDisconnecRequest
 }>();
 

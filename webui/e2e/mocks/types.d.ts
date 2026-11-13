@@ -32,5 +32,6 @@ interface ServiceEvent {
     id: string;
     traits: Traits;
     time: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event data differs per namespace (http, kafka, mail, ...)
     data: any
 }

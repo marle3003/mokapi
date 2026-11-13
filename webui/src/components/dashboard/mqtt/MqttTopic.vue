@@ -13,7 +13,7 @@ const props = defineProps<{
   service?: MqttService,
 }>()
 
-const { data, channelName } = useChannel<MqttTopic, MqttService>(() => props.service, 'mqtt')
+const { data, channelName } = useChannel<MqttTopic, MqttService>(() => props.service)
 const serviceRoute = computed(() => ({
   name: getRouteName('mqttService').value,
   params: { service: props.service?.name },
@@ -46,7 +46,7 @@ useBreadcrumb(() => {
       <template v-if="data.channel.instances && !data.instance">
         <channel-instance-view v-if="data.channel.instances"
           :service-name="service.name" :channel="data.channel" :instances="data.channel.instances"
-          instances-label="Topics", instance-label="Topic" channel-route="mqttTopic">
+          instances-label="Topics" instance-label="Topic" channel-route="mqttTopic">
         </channel-instance-view>
         <div class="card-group">
         <messages-card :service="service" :topic-name="channelName" />

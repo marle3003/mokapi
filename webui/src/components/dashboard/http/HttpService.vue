@@ -28,13 +28,13 @@ const { service } = useService<HttpService>('http')
 const exportOpenAPIDialogVisible = ref(false)
 const exportBrunoDialogVisible = ref(false)
 
-let endpoint = computed(() => {
+const endpoint = computed(() => {
     const endpoint = getEndpoint()
     if (!service.value || !endpoint){
         return null
     }
 
-    for (let p of service.value.paths){
+    for (const p of service.value.paths){
         if (p.path.substring(1) == endpoint){
             return {path: p}
         }
@@ -43,7 +43,7 @@ let endpoint = computed(() => {
     const segments = endpoint.split('/')
     const method = segments.pop()
     const path = segments.join('/')
-    for (let p of service.value.paths){
+    for (const p of service.value.paths){
         if (p.path.substring(1) === path){
             const operation = p.operations.find((op) => op.method === method)
             if (!operation) {
@@ -92,7 +92,7 @@ const status = computed(() => {
         return { status: 'valid', errors: [] }
     }
     let status = 'valid'
-    let errors: Error[] = []
+    const errors: Error[] = []
     for (const path of service.value.paths) {
         if (path.status !== 'valid') {
             if (status === 'valid') {

@@ -6,16 +6,16 @@ import { app } from 'mokapi'
 export default function () {
     app.http()
         .operation('metrics', (req, res) => {
-            let names = req.query['names']
+            const names = req.query['names']
             res.data = !names ? metrics : metrics.filter(x => names.includes(x.name))
         })
         .operation('metricsType', (req, res) => {
-            let type = req.path['type']
+            const type = req.path['type']
             res.data = metrics.filter(x => x.name.startsWith(type + '_'))
         })
 }
 
-export let metrics = [
+export const metrics = [
     {
         name: 'app_start_timestamp',
         value:  1652025690 //app_start.getTime() / 1000,// 1652025690,
@@ -164,7 +164,7 @@ export function sum(name: string, ...labels: Label[]){
     }
 
     let sum = 0
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -182,7 +182,7 @@ export function max(name: string, ...labels: Label[]) {
     }
 
     let max = 0
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -203,7 +203,7 @@ export function filter(name: string, ...labels: Label[]) {
         return [];
     }
 
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -230,7 +230,7 @@ export function parseLabels(metric: { name: string }) {
 }
 
 function matchLabels(metric: { name: string }, labels: Label[]){
-    for (var label of labels){
+    for (const label of labels){
         const s = `${label.name}="${label.value}"`
         if (!metric.name.includes(s)){
             return false

@@ -22,10 +22,10 @@ if (props.configs === undefined) {
 
 const configs = computed(() => {
     if (props.configs) {
-        return props.configs.sort(compareConfig)
+        return [...props.configs].sort(compareConfig)
     }
     if (data && data.value) {
-        return data.value.sort(compareConfig)
+        return [...data.value].sort(compareConfig)
     }
     return [];
 })

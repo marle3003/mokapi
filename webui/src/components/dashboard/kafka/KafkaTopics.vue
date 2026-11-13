@@ -19,7 +19,7 @@ const allTags = computed(() => {
         return [];
     }
     const result: Tag[] = [];
-    const names: { [name: string]: any } = {}
+    const names: { [name: string]: Tag } = {}
 
     for (const topic of props.service.topics) {
         if (!topic.tags) {
@@ -38,7 +38,7 @@ const topics = computed(() => {
     if (!props.service.topics) {
         return []
     }
-    let result = props.service.topics.sort(compareTopics)
+    let result = [...props.service.topics].sort(compareTopics)
     if (!tags.value.includes('__all')) {
         result = result.filter((t) => {
             if (t.tags && t.tags.some(tag => tags.value.some(x => x == tag.name))) {

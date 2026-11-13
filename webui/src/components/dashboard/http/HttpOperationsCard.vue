@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { type PropType, computed } from 'vue';
 import { useRouter, useRoute } from '@/router';
-import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps({
@@ -9,14 +8,13 @@ const props = defineProps({
     path: { type: Object as PropType<HttpPath>, required: true }
 })
 
-const { sum } = useMetrics()
 const { format } = usePrettyDates()
 
 const operations = computed(() => {
     if (!props.path.operations) {
         return [];
     }
-    return props.path.operations.sort(comparePath)
+    return [...props.path.operations].sort(comparePath)
 })
 
 function comparePath(o1: HttpOperationInfo, o2: HttpOperationInfo) {
@@ -44,7 +42,7 @@ function showWarningColumn(){
     if (!operations.value){
         return false
     }
-    for (let operation of operations.value){
+    for (const operation of operations.value){
         if (operation.deprecated){
             return true
         }
@@ -97,7 +95,7 @@ function errorMessages(operation: HttpOperationInfo): string {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)" @mousedown.middle="goToOperation(operation, true)">
+                        <tr v-for="operation in operations" :key="operation.method" @click="goToOperation(operation)" @mousedown.middle="goToOperation(operation, true)">
                             <td>
                                 <router-link @click.stop :to="route.httpOperation(props.service, props.path, operation)" :title="errorMessages(operation)">
                                     <span class="badge operation" :class="operationCssClass(operation)">{{ operation.method.toUpperCase() }}

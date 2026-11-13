@@ -7,7 +7,7 @@ export default function () {
         })
 }
 
-export let servers = [
+export const servers = [
     {
         name: "LDAP Testserver",
         description: "This is a sample LDAP server",
@@ -101,8 +101,16 @@ export const searches = [
                 dn: 'cn=alice,cn=users,dc=mokapi,dc=io',
                 attributes: [
                     {
-                        type: 'foo',
-                        values: [ 'bar1', 'bar2' ]
+                        type: 'sn',
+                        values: [ 'Smith' ]
+                    },
+                    {
+                        type: 'objectClass',
+                        values: [ 'top', 'person' ]
+                    },
+                    {
+                        type: 'cn',
+                        values: [ 'alice' ]
                     }
                 ]
             },

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { Popover } from 'bootstrap'
+import { computed } from 'vue'
 import { useRouter } from '@/router';
 import { getRouteName } from '@/composables/dashboard';
 import { useWebsocket } from '@/composables/websocket';
@@ -17,7 +16,7 @@ const clients = computed(() => {
         return []
     }
 
-    return props.service.clients.sort((c1: WebsocketClient, c2: WebsocketClient) => {
+    return [...props.service.clients].sort((c1: WebsocketClient, c2: WebsocketClient) => {
         return c1.id.localeCompare(c2.id)
     })
 })

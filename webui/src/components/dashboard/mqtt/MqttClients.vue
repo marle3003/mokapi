@@ -17,14 +17,14 @@ const clients = computed(() => {
         return []
     }
 
-    return props.service.clients.sort((c1: MqttClient, c2: MqttClient) => {
+    return [...props.service.clients].sort((c1: MqttClient, c2: MqttClient) => {
         return c1.clientId.localeCompare(c2.clientId)
     })
 })
 
 onMounted(() => {
     const elements = document.querySelectorAll('.has-popover')
-    const popovers = [...elements].map(x => {
+    elements.forEach(x => {
         new Popover(x, {
             customClass: 'custom-popover',
             trigger: 'hover',

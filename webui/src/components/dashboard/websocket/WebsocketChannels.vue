@@ -19,7 +19,7 @@ const allTags = computed(() => {
         return [];
     }
     const result: Tag[] = [];
-    const names: { [name: string]: any } = {}
+    const names: { [name: string]: Tag } = {}
 
     for (const channel of props.service.channels) {
         if (!channel.tags) {
@@ -38,7 +38,7 @@ const channels = computed(() => {
     if (!props.service.channels) {
         return []
     }
-    let result = props.service.channels.sort(compareChannels)
+    let result = [...props.service.channels].sort(compareChannels)
     if (!tags.value.includes('__all')) {
         result = result.filter((t) => {
             if (t.tags && t.tags.some(tag => tags.value.some(x => x == tag.name))) {

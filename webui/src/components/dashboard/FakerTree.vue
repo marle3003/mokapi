@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useFetch } from "@/composables/fetch"
+import { useFetch, type Response as FetchResponse } from "@/composables/fetch"
 import VueTree from "@ssthouse/vue3-tree-chart"
 import "@ssthouse/vue3-tree-chart/dist/vue3-tree-chart.css"
 import { computed, ref, useTemplateRef } from "vue"
@@ -30,15 +30,14 @@ declare interface Data {
 
 const response = useFetch('/api/faker/tree', undefined, false)
 const selected = ref<Data | null>(null);
-const example = ref<any>(undefined)
+const example = ref<FetchResponse | undefined>(undefined)
 const dialogRef = useTemplateRef('dialogRef')
 const dialog = ref<Modal | undefined>()
 const data = computed(() => {
   if (!response.data) {
     return []
   }
-  response.data.name = 'root'
-  return map(response.data)
+  return map({ ...response.data, name: 'root' })
   //return response.data
 })
 
@@ -53,7 +52,7 @@ function map(node: Node) {
     path: node.path,
     custom: node.custom,
     weight: node.weight,
-    children: [] as any[],
+    children: [],
     attributes: node.attributes?.map(x => { return { name: x } }),
     dependsOn: node.dependsOn?.map(x => { return { name: x } }),
     hasFakeFunc: node.hasFakeFunc
@@ -86,7 +85,7 @@ function handleScroll(event: WheelEvent) {
   }
   event.preventDefault()
 }
-function openDialog(node: Data, event: MouseEvent) {
+function openDialog(node: Data) {
   selected.value = node;
   example.value = undefined
   getExample()
@@ -111,7 +110,7 @@ async function getExample() {
       <vue-tree ref="tree" class="region" :dataset="data"
         :config="{ nodeWidth: 170, nodeHeight: 100, levelHeight: 150 }" :collapse-enabled="false" linkStyle="straight">
         <template v-slot:node="{ node }">
-          <div class="rich-media-node" @click="openDialog(node, $event)">
+          <div class="rich-media-node" @click="openDialog(node)">
             <span class="name" v-html="node.name"></span>
             <span v-if="node.custom" class="bi bi-person-fill-gear" title="customized node"></span>
           </div>

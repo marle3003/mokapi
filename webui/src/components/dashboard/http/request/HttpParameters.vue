@@ -19,25 +19,25 @@ const opened = ref<{[name: string]: boolean}>({})
 const examples = computed(() => {
     const result: {[key: string]: ExampleResult} = {}
     if (props.parameters){
-        for (let parameter of props.parameters){
+        for (const parameter of props.parameters){
             if (!parameter.schema || !opened.value[parameter.name]) {
                 continue;
             }
             const { dashboard } = useDashboard()
-            let example = dashboard.value.getExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
+            const example = dashboard.value.getExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
             result[parameter.name+parameter.type] = example
         }
     }
     return result
 })
 const sortedParameters = computed(() => {
-    return props.parameters?.sort((p1, p2) => {
+    return props.parameters ? [...props.parameters].sort((p1, p2) => {
         const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
         if (r !== 0) {
             return r
         }
         return p1.name.localeCompare(p2.name)
-    })
+    }) : undefined
 })
 function getParameterTypeSortOrder(type: string): number{
     switch (type) {
@@ -66,7 +66,7 @@ function showWarningColumn(){
     if (!props.parameters){
         return false
     }
-    for (let parameter of props.parameters){
+    for (const parameter of props.parameters){
         if (parameter.deprecated){
             return true
         }
@@ -104,7 +104,7 @@ function showWarningColumn(){
             </tr>
         </tbody>
     </table>
-    <div v-for="(parameter, index) in parameters" :key="'parameter-'+index">
+    <div v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index">
         <div class="modal fade" :id="'modal-parameter-'+index" tabindex="-1" aria-hidden="true" :aria-labelledby="'modal-parameter-'+index+'title'">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">

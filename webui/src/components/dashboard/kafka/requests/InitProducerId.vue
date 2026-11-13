@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate';
 
-const props = defineProps<{
+defineProps<{
   request: KafkaInitProducerIdRequest
   response: KafkaInitProducerIdResponse
   version: number

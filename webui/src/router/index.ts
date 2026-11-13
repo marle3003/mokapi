@@ -567,7 +567,7 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
         } else {
           requestAnimationFrame(check)
         }
-      } catch(e) {
+      } catch {
         resolve(false)
       }
     }

@@ -6,7 +6,7 @@ import Delete from './Delete.vue'
 import ModifyDN from './ModifyDN.vue'
 import Compare from './Compare.vue'
 import { useRoute } from 'vue-router'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
 import Message from '@/components/Message.vue'
 import Loading from '@/components/Loading.vue'
@@ -32,19 +32,6 @@ const data = computed(() => {
         return undefined;
     }
     return <LdapEventData>event.value?.data
-})
-const request = computed(() => {
-    if (!data.value) {
-        return ''
-    }
-    switch (data.value.request.operation) {
-        case 'Search': return data.value.request.filter;
-        case 'Add': return data.value.request.dn;
-        case 'Compare': return data.value.request.dn;
-        case 'Modify': return data.value.request.dn;
-        case 'ModifyDN': return data.value.request.dn;
-        case 'Delete': return data.value.request.dn;
-    }
 })
 
 </script>

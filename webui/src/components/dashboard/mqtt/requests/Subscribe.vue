@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMqtt } from '@/composables/mqtt';
 
-const props = defineProps<{
+defineProps<{
   request: MqttSubscribeRequest
   response: MqttSubscribeResponse
 }>();
@@ -46,7 +46,7 @@ const { formatQoS } = useMqtt()
               </tr>
             </thead>
             <tbody>
-              <tr v-for="code in response.reasonCodes">
+              <tr v-for="(code, codeIndex) in response.reasonCodes" :key="codeIndex">
                 <td>{{ code }}</td>
               </tr>
             </tbody>

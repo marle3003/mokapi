@@ -3,6 +3,12 @@ import { sum, max, metrics, filter as filterMetrics, parseLabels } from './metri
 import { base64 } from 'mokapi/encoding';
 import { getInfo, matchTraits } from './helpers';
 
+function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
+    const copy: Partial<T> = { ...obj }
+    delete copy[key]
+    return copy as Omit<T, K>
+}
+
 export default function () {
     app.http()
         .operation('serviceKafka', (_, res) => {
@@ -47,7 +53,7 @@ export default function () {
                 res.rebuild(404)
                 return
             }
-            const { partitions, ...channel } = topic
+            const channel = omit(topic, 'partitions')
             res.data = {
                 ...channel,
                 ...getChannelInfo(topic)
@@ -68,7 +74,7 @@ export default function () {
                 res.rebuild(404)
                 return
             }
-            const { parameters, ...data } = topic
+            const data = omit(topic, 'parameters')
             res.data = {
                 ...data,
                 ...('parameters' in topic ? { parameters: topic.parameters }: {}),
@@ -284,7 +290,7 @@ export const configs = {
     }
 }
 
-export let clusters = [
+export const clusters = [
     {
         name: 'Kafka World',
         description: 'To ours significant why upon tomorrow her faithful many motionless.',
@@ -513,6 +519,13 @@ export let clusters = [
                         software: 'mokapi 1.0',
                         heartbeat: 1654721269,
                         partitions: { 'mokapi.shop.userSignedUp': [0] }
+                    },
+                    {
+                        name: 'ursula',
+                        addr: '127.0.0.1:15004',
+                        software: 'mokapi 1.0',
+                        heartbeat: 1654721269,
+                        partitions: { 'mokapi.shop.userSignedUp': [1] }
                     }
                 ],
                 leader: 'george',
@@ -567,7 +580,7 @@ export let clusters = [
     }
 ]
 
-export let events = [
+export const events = [
     {
         id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
         traits: {
@@ -738,12 +751,12 @@ export let events = [
     },
 ]
 
-function getChannelInfo(c: any) {
+function getChannelInfo(c: (typeof clusters)[number]["topics"][number]) {
     return {
         name: c.name,
         ...c.summary === undefined ? {} : { summary: c.summary },
         ...('parameters' in c ? { parameters: c.parameters } : {}),
-        ...('instances' in c ? { instances: c.instances?.map((i: any) => (
+        ...('instances' in c ? { instances: c.instances?.map((i) => (
             {
                 ...i,
                 metrics: {

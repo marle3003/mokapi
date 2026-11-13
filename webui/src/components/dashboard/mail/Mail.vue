@@ -11,7 +11,7 @@ import { ref, watch } from "vue";
 
 const { format } = usePrettyDates()
 const route = useRoute()
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 
 const mail = ref<Message | null>(null);
 const isLoading = ref<boolean>(true)
@@ -57,7 +57,7 @@ watch(() => dashboard.value,
             <div class="col">
               <p id="from-label" class="label">From</p>
               <ul class="list-unstyled address-list" aria-labelledby="from-label">
-                <li v-for="(addr, index) of mail.data.from">
+                <li v-for="(addr, index) of mail.data.from" :key="index">
                   <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
                   <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
@@ -70,7 +70,7 @@ watch(() => dashboard.value,
             <div class="col">
               <p id="to-label" class="label">To</p>
               <ul class="list-unstyled address-list" aria-labelledby="to-label">
-                <li v-for="(addr, index) of mail.data.to">
+                <li v-for="(addr, index) of mail.data.to" :key="index">
                   <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
                   <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
@@ -83,7 +83,7 @@ watch(() => dashboard.value,
             <div class="col">
               <p id="cc-label" class="label">Cc</p>
               <ul class="list-unstyled address-list" aria-labelledby="cc-label">
-                <li v-for="(addr, index) of mail.data.cc">
+                <li v-for="(addr, index) of mail.data.cc" :key="index">
                   <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
                   <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
@@ -96,7 +96,7 @@ watch(() => dashboard.value,
             <div class="col">
               <p id="bcc-label" class="label">Bcc</p>
               <ul class="list-unstyled address-list" aria-labelledby="bcc-label">
-                <li v-for="(addr, index) of mail.data.bcc">
+                <li v-for="(addr, index) of mail.data.bcc" :key="index">
                   <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
                   <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>

@@ -90,6 +90,7 @@ declare interface HttpResponse {
 declare interface HttpMediaType {
     type: string
     schema: Schema
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
     example: any
 }
 
@@ -117,6 +118,7 @@ declare interface HttpServer {
 declare interface Action {
     duration: number
     tags: Tags
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
     parameters: any[]
     logs: { level: string, message: string}[]
     error?: { message: string }
@@ -137,6 +139,7 @@ declare interface HttpSecurity {
 
 declare interface HttpSecurityScheme {
     scopes: string[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
     configs: { [ name: string ]: any }
 }
 

@@ -1,7 +1,7 @@
 import { test as base, expect, type BrowserContext } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
-const test = base.extend<{}, { sitemapContext: BrowserContext }>({
+const test = base.extend<Record<string, never>, { sitemapContext: BrowserContext }>({
   sitemapContext: [async ({ browser }, use) => {
     const context = await browser.newContext()
     await context.addInitScript(() => {

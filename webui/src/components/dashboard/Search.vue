@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import router from '@/router';
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { transformPath } from '@/composables/site-base'
 import { useConnection } from '@/composables/connection'
@@ -214,7 +214,7 @@ function facetTitle(s: string) {
                         {{ facetTitle(name) }}
                       </option>
 
-                      <option v-for="v in searchResult.facets[name]" :value="v.value">
+                      <option v-for="v in searchResult.facets[name]" :key="v.value" :value="v.value">
                         {{ v.value }} ({{ v.count }})
                       </option>
                     </select>
@@ -278,7 +278,7 @@ function facetTitle(s: string) {
 
             <div class="search-results">
 
-              <div v-for="item of searchResult.results" class="card result-card mb-3 shadow-sm border-0">
+              <div v-for="(item, itemIndex) of searchResult.results" :key="itemIndex" class="card result-card mb-3 shadow-sm border-0">
                 <Http :item="item" v-if="item.params.type === 'http'" />
 
                 <Kafka :item="item" v-else-if="item.params.type === 'kafka'" />

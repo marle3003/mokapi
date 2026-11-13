@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Actions from '../Actions.vue'
-import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps<{
    event: ServiceEvent
 }>()
-
-const { format, duration } = usePrettyDates()
 
 const data = computed((): {data: LdapEventData, request: LdapAddRequest, response: LdapResponse} => {
     const data = <LdapEventData>props.event.data

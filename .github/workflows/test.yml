@@ -26,9 +26,28 @@ permissions:
   contents: write
 
 jobs:
+  lint-webui:
+    name: Lint and type-check webui
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: 'webui'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 26
+      - name: Type-check and lint (vue-tsc, ESLint)
+        working-directory: webui
+        run: |
+          npm ci
+          npx vue-tsc
+          npx eslint .
+
   build:
     name: Build mokapi
     runs-on: ubuntu-latest
+    needs: [ lint-webui ]
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

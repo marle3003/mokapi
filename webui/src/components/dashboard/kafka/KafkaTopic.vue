@@ -143,7 +143,7 @@ useBreadcrumb(() => {
                 <template v-if="channel.instances && !instance">
                   <channel-instance-view
                     :service-name="service.name" :channel="channel" :instances="channel.instances"
-                    instances-label="Topics", instance-label="Topic" channel-route="kafkaTopic">
+                    instances-label="Topics" instance-label="Topic" channel-route="kafkaTopic">
                   </channel-instance-view>
                   <div class="card-group">
                     <kafka-messages-card :service="service" :topic-name="channel.name" />

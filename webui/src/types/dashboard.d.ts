@@ -166,7 +166,3 @@ export interface HttpEventFilter {
     responseHeaders?: { name: string, value: string }[]
     clientIP?: string
 }
-
-export interface KafkaEventFilter {
-
-}

@@ -16,7 +16,7 @@ export function usePrettyDates() {
         return dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss')
     }
     function duration(value: number): string{
-        let d = dayjs.duration(value)
+        const d = dayjs.duration(value)
         if (d.seconds() < 1){
             return d.milliseconds() + ' [ms]'
         } else if (d.minutes() < 1){

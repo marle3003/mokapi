@@ -66,7 +66,7 @@ function isExpanded(item: DocEntry | string) {
       :class="{ show: isActive(current) || isExpanded(current) || current.type === 'headline', chapter: current.type !== 'headline' }"
       :id="getId(current)" :aria-labelledby="'section-' + getId(current)">
       <ul v-if="hasChildren(current)" class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item" v-for="item of current.items">
+        <li class="nav-item" v-for="item of current.items" :key="item.label">
           <nav-doc-item :current="item" :actives="actives" />
         </li>
       </ul>

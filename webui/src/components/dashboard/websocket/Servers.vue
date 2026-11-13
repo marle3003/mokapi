@@ -14,7 +14,7 @@ const router = useRouter();
 
 onMounted(() => {
     const elements = document.querySelectorAll('.has-popover')
-    const popovers = [...elements].map(x => {
+    elements.forEach(x => {
         new Popover(x, {
             customClass: 'custom-popover',
             trigger: 'hover',
@@ -29,7 +29,7 @@ const servers = computed(() => {
     if (!props.servers) {
         return undefined;
     }
-    return props.servers.sort((x: WebsocketServer, y: WebsocketServer) => {
+    return [...props.servers].sort((x: WebsocketServer, y: WebsocketServer) => {
         return x.name.localeCompare(y.name);
     })
 })
@@ -76,7 +76,7 @@ function goToServer(server: WebsocketServer, openInNewTab = false) {
                     </td>
                     <td>
                         <ul class="tags">
-                            <li v-for="tag in server.tags" class="has-popover">
+                            <li v-for="tag in server.tags" :key="tag.name" class="has-popover">
                                 {{ tag.name }}
                                 <span style="display:none">{{ tag.description }}</span>
                             </li>

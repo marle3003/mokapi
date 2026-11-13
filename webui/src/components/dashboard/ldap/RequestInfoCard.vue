@@ -17,6 +17,7 @@ const request = computed(() => {
         case 'Modify': return data.value.request.dn;
         case 'ModifyDN': return data.value.request.dn;
         case 'Delete': return data.value.request.dn;
+        default: return undefined;
     }
 })
 </script>

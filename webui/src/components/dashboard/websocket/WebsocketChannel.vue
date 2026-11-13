@@ -11,7 +11,7 @@ import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
 const props = defineProps<{ service?: WebsocketService }>()
 
-const { data, channelName } = useChannel<WebsocketChannel, WebsocketService>(() => props.service, 'websocket')
+const { data, channelName } = useChannel<WebsocketChannel, WebsocketService>(() => props.service)
 const serviceRoute = computed(() => ({
   name: getRouteName('websocketService').value,
   params: { service: props.service?.name },
@@ -44,7 +44,7 @@ useBreadcrumb(() => {
       <template v-if="data.channel.instances && !data.instance">
         <channel-instance-view v-if="data.channel.instances"
           :service-name="service.name" :channel="data.channel" :instances="data.channel.instances"
-          instances-label="Paths", instance-label="Path" channel-route="websocketChannel">
+          instances-label="Paths" instance-label="Path" channel-route="websocketChannel">
         </channel-instance-view>
         <div class="card-group">
         <websocket-messages-card :service="service" :channelName="channelName" />

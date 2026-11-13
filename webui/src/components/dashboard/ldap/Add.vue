@@ -15,7 +15,7 @@ const hasActions = computed(() => {
     return data.value.data.actions?.length > 0
 })
 const attributes = computed(() => {
-    return data.value.request.attributes.sort((x: LdapAttribute, y: LdapAttribute) => x.type.localeCompare(y.type));
+    return [...data.value.request.attributes].sort((x: LdapAttribute, y: LdapAttribute) => x.type.localeCompare(y.type));
 })
 </script>
 
@@ -33,10 +33,10 @@ const attributes = computed(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="attr of attributes">
+                            <tr v-for="attr of attributes" :key="attr.type">
                                 <td>{{ attr.type }}</td>
                                 <td>
-                                    <p v-for="v of attr.values">{{ v }}</p>
+                                    <p v-for="(v, vIndex) of attr.values" :key="vIndex">{{ v }}</p>
                                 </td>
                             </tr>
                         </tbody>

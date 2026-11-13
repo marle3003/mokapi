@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useMarkdown } from '@/composables/markdown';
 import { useToolbarItems } from '@/composables/toolbar-items';
-import { useRoute, useRouter } from '@/router';
+import { useRoute } from '@/router';
 import { Dropdown } from 'bootstrap';
 
 const props = defineProps<{

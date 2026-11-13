@@ -11,7 +11,7 @@ import type { Example } from '@/types/dashboard';
 declare interface State {
     source: { preview: Data | undefined, binary: Data | undefined }
     errors: string
-    result: any
+    result: unknown
     validated: boolean
     validating: boolean
     view: 'preview' | 'binary'
@@ -54,7 +54,7 @@ const state = reactive<State>({
 
 type ExampleHandle = ReturnType<typeof dashboard.value.getExample>
 
-let example: ExampleHandle | null = null
+let currentExample: ExampleHandle | null = null
 let isOpen = false
 
 function buildExampleRequest() {
@@ -71,19 +71,19 @@ function buildExampleRequest() {
 
 function loadExample() {
     if (!props.exampleEnabled) return
-    example = dashboard.value.getExample(buildExampleRequest())
+    currentExample = dashboard.value.getExample(buildExampleRequest())
 }
 
 // Schema/Source haben sich geändert: altes Example verwerfen.
 // Neu geladen wird nur, wenn der Dialog gerade offen ist.
 function invalidateExample() {
-    example = null
+    currentExample = null
     if (isOpen) loadExample()
 }
 
 function onShow() {
     isOpen = true
-    if (!example) loadExample()
+    if (!currentExample) loadExample()
 }
 function onHidden() {
     isOpen = false
@@ -110,8 +110,8 @@ watch(() => props.source, (source) => {
 watch([() => props.schema, () => props.example], invalidateExample)
 
 function setExample() {
-    if (!example) loadExample()
-    const ex = example
+    if (!currentExample) loadExample()
+    const ex = currentExample
     if (!ex) return
 
     if (ex.error) {
@@ -206,12 +206,12 @@ function switchSource(e: 'preview' | 'binary') {
     state.view = e
 }
 
-function formatResult(result: any): string {
+function formatResult(result: unknown): string {
     const [html, count] = formatResultItem(result)
     return `<div>error count ${count}: ${html}</div>`
 }
 
-function formatResultItem(result: any): [string, number] {
+function formatResultItem(result: unknown): [string, number] {
     if (Array.isArray(result)) {
         let html = '<ul>'
         let sum = 0
@@ -223,14 +223,15 @@ function formatResultItem(result: any): [string, number] {
         return [html + '</ul>', sum]
     }
     if (result !== null && typeof result === 'object') {
-        const head = `${result.schema}: ${result.message}`
-        if (Array.isArray(result.errors)) {
-            const [list, count] = formatResultItem(result.errors)
+        const { schema, message, errors } = result as { schema: string, message: string, errors?: unknown }
+        const head = `${schema}: ${message}`
+        if (Array.isArray(errors)) {
+            const [list, count] = formatResultItem(errors)
             return [head + list, count]
         }
         return [head, 1]
     }
-    return [result, 1]
+    return [String(result), 1]
 }
 </script>
 

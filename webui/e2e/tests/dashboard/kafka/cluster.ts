@@ -112,7 +112,7 @@ export const cluster = {
             protocol: 'Range',
             generation: '-',
             lastRebalancing: '-',
-            members: 1
+            members: 2
         }
     ]
 }

@@ -2,6 +2,7 @@ interface Event {
     id: string;
     traits: Traits;
     time: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event data differs per namespace (http, kafka, mail, ...)
     data: any
 }
 
@@ -48,6 +49,7 @@ export function match(e: Event, q?: Query): boolean {
                 return false
             }
             for (const h of q.http.requestHeaders) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event data differs per namespace (http, kafka, mail, ...)
                 const found = e.data.request.parameters.find((x: any) => x.type === 'header' && x.name === h.name)
                 if (!found) {
                     return false
@@ -129,7 +131,7 @@ export function match(e: Event, q?: Query): boolean {
 }
 
 export function matchTraits(e: ServiceEvent, labels: Label[]) {
-    for (let label of labels) {
+    for (const label of labels) {
         if (e.traits[label.name] !== label.value) {
             return false
         }

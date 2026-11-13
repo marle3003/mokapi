@@ -3,9 +3,9 @@ import { useDashboard } from '../../components/dashboard'
 import { useKafkaGroups, useKafkaMessages, useKafkaPartitions } from '../../components/kafka'
 import { test, expect } from '../../models/fixture-dashboard'
 import { useSourceView } from '../../components/source'
-import type { Locator } from '@playwright/test'
 
-const ace = { edit: (id: any) => { return { setValue: (s: string) => {} } } }
+// ace is a global of the dashboard page; page.evaluate runs in the browser
+declare const ace: { edit(id: string | null): { setValue(value: string): void } }
 
 test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
@@ -57,7 +57,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await tabList.getByRole('tab', { name: 'Groups' }).click()
         const table = page.getByRole('tabpanel', { name: 'Groups' }).getByRole('table', { name: 'Topic Groups' })
         await expect(table).toBeVisible()
-        const group = useKafkaGroups(table, 'mokapi.shop.products')
+        const group = useKafkaGroups(table)
         await group.testGroup(0, cluster.groups[0], '10')
     })
 
@@ -162,9 +162,3 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         })
     })
 })
-
-async function writeToAceEditor(locator: Locator, s: string) {
-    for (const key of s) {
-        await locator.press(key)
-    }
-}

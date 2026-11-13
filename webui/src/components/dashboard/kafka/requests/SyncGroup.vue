@@ -87,7 +87,7 @@ function goToTopic(topic: string, openInNewTab = false) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(assign, memberId) in request.groupAssignments" @click.left="goToMember(memberId)"
+              <tr v-for="(assign, memberId) in request.groupAssignments" :key="memberId" @click.left="goToMember(memberId)"
                 @mousedown.middle="goToMember(memberId, true)">
                 <td>
                   <router-link @click.stop class="row-link"
@@ -97,7 +97,7 @@ function goToTopic(topic: string, openInNewTab = false) {
                 </td>
                 <td>{{ assign.version }}</td>
                 <td>
-                  <span v-for="(partitions, topic) in assign.topics">
+                  <span v-for="(partitions, topic) in assign.topics" :key="topic">
                     {{ topic }}: {{ partitions.join(', ') }}
                   </span>
                 </td>
@@ -138,7 +138,7 @@ function goToTopic(topic: string, openInNewTab = false) {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(partitions, topic) in response.assignment.topics" @click.left="goToTopic(topic)"
+                <tr v-for="(partitions, topic) in response.assignment.topics" :key="topic" @click.left="goToTopic(topic)"
                   @mousedown.middle="goToTopic(topic, true)">
                   <td>
                     <router-link @click.stop class="row-link"

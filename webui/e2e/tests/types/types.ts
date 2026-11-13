@@ -1,1 +1,1 @@
-type ExpectedString = string|RegExp|ReadonlyArray<string|RegExp>
+export type ExpectedString = string|RegExp|ReadonlyArray<string|RegExp>

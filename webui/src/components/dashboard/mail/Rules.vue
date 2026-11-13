@@ -7,7 +7,7 @@ defineProps({
   rules: { type: Array as PropType<Array<SmtpRule>>, required: true },
 });
 
-let rule = ref<SmtpRule | null>(null);
+const rule = ref<SmtpRule | null>(null);
 const ruleModal = ref<Element | null>(null);
 let dialog: Modal;
 

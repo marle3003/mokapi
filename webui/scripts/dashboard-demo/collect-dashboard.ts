@@ -42,7 +42,7 @@ export async function collectDashboard() {
     configs: { path: '/api/configs', loader: loadConfigs },
   }
 
-  const snapshot: Record<string, any> = {}
+  const snapshot: Record<string, unknown> = {}
 
   for (const [key, obj] of Object.entries(endpoints)) {
     const url = baseUrl + obj.path;
@@ -52,20 +52,21 @@ export async function collectDashboard() {
   await fs.writeFile(output + '/dashboard.json', JSON.stringify(snapshot, null, 2));
 }
 
-async function load(url: string, key: string, snapshot: Record<string, any>) {
+async function load(url: string, key: string, snapshot: Record<string, unknown>) {
   const res = await fetch(url)
   snapshot[key] = await res.text()
 }
 
-async function loadJson(url: string, key: string, snapshot: Record<string, any>) {
+async function loadJson(url: string, key: string, snapshot: Record<string, unknown>) {
   snapshot[key] = await fetchJson(url)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSON of the dashboard API is stored as is in the snapshot
 async function fetchJson(url: string): Promise<any> {
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        let text = await res.text()
+        const text = await res.text()
         throw new Error(res.statusText + ': ' + text)
       }
       return await res.json()
@@ -78,12 +79,12 @@ async function directoryExists(path: string) {
   try {
     const stats = await fs.stat(path);
     return stats.isDirectory();
-  } catch (err: any) {
+  } catch {
     return false
   }
 }
 
-async function fetchEvents(url: string, key: string, snapshot: Record<string, any>) {
+async function fetchEvents(url: string, key: string, snapshot: Record<string, unknown>) {
   const page = await fetchJson(url);
   snapshot[key] = page.items
 
@@ -111,11 +112,12 @@ async function fetchEvents(url: string, key: string, snapshot: Record<string, an
   snapshot['mails'] = mails
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- a failed request is logged and yields undefined, callers write the result as is
 async function fetchBinary(url: string): Promise<any> {
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        let text = await res.text()
+        const text = await res.text()
         throw new Error(res.statusText + ': ' + text)
       }
       const arrayBuffer = await res.arrayBuffer();
@@ -133,7 +135,7 @@ function getFilenameWithRegex(contentType: string) {
     return null;
 }
 
-async function loadConfigs(url: string, key: string, snapshot:  Record<string, any>) {
+async function loadConfigs(url: string, key: string, snapshot:  Record<string, unknown>) {
     const configs = await fetchJson(url);
     snapshot[key] = configs;
 

@@ -74,8 +74,8 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
             ]
     }
     
-    let list = []
-    for (let p of action.parameters) {
+    const list = []
+    for (const p of action.parameters) {
         list.push({ value: formatLanguage(p, 'application/json') })
     }
     return list
@@ -108,11 +108,11 @@ function getStatus(action: Action) {
     return 'success'
 }
 
-const isTruncated = function(v: any): v is Truncated {
-  return v !== null && typeof v === 'object' && v.truncated === true
+const isTruncated = function(v: unknown): v is Truncated {
+  return v !== null && typeof v === 'object' && (v as Truncated).truncated === true
 }
 
-function formatParam(raw: any) {
+function formatParam(raw: string) {
   const truncated: Truncated[] = []
   const token = `__TRUNCATED_${crypto.randomUUID()}_`
   const obj = JSON.parse(raw, (_key, value) => {
@@ -147,7 +147,7 @@ function formatParam(raw: any) {
             </tr>
         </thead>
         <tbody>
-            <template v-for="(action, index) of actions">
+            <template v-for="(action, index) of actions" :key="index">
                 <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
                     <td><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
                     <td :set="status = getStatus(action)">
@@ -169,7 +169,7 @@ function formatParam(raw: any) {
                                 <h5>Parameters</h5>
                                 <div class="accordion mb-3" id="parametersAccordion">
       
-                                    <div class="accordion-item" v-for="(item, paramIndex) in formatParameters(action)">
+                                    <div class="accordion-item" v-for="(item, paramIndex) in formatParameters(action)" :key="paramIndex">
                                         <h2 class="accordion-header mt-0" :id="'action-'+index+'param-heading-'+paramIndex">
                                         <button class="accordion-button p-2 collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#action-'+index+'-param-'+paramIndex" aria-expanded="false" :aria-controls="'action-'+index+'-param-'+paramIndex">
                                             {{ item.name ?? paramIndex }}
@@ -187,7 +187,7 @@ function formatParam(raw: any) {
                             <h5>Logs</h5>
                             <div class="mb-3">
                                 <ul class="list-group">
-                                    <li v-for="log in action.logs" class="list-group-item">
+                                    <li v-for="(log, logIndex) in action.logs" :key="logIndex" class="list-group-item">
                                         <span class="text-body log">
                                             <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
                                             <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
@@ -213,7 +213,7 @@ function formatParam(raw: any) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template v-for="(value, key) of action.tags">
+                                    <template v-for="(value, key) of action.tags" :key="key">
                                         <tr>
                                             <td>{{ key }}</td>
                                             <td>

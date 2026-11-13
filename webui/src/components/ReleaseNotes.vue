@@ -9,7 +9,7 @@ import { useRoute } from '@/router';
 
 const route = useRoute();
 const { dashboard } = useDashboard()
-let appInfo = ref<AppInfoResponse | null>(null)
+const appInfo = ref<AppInfoResponse | null>(null)
 
 const content = useReleaseNotes()
 const dismissedVersion = useLocalStorage<string>(`release-notes-version`, '')
@@ -68,7 +68,7 @@ async function openDialog() {
   if (modalEl) {
     const Modal = await loadModal()
     const modal = new Modal(modalEl)
-    modalEl.addEventListener('hidden.bs.modal', event => {
+    modalEl.addEventListener('hidden.bs.modal', () => {
       setItemWithExpiry("release-notes-hide", "true", 12);
     })
     modal.show()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
     errors?: Error[]
 }>()
 </script>
@@ -17,7 +17,7 @@ const props = defineProps<{
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="err of errors">
+                            <tr v-for="(err, errIndex) of errors" :key="errIndex">
                                 <td>{{ err.message }}</td>
                             </tr>
                         </tbody>

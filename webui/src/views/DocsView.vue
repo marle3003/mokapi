@@ -10,7 +10,6 @@ import type { Modal } from 'bootstrap'
 import { loadModal } from '@/composables/bootstrap-modal'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
-import { usePromo } from '@/composables/promo.ts';
 
 // The footer (merch shop, landing pages) is not part of the dashboard build
 const Footer = import.meta.env.VITE_WEBSITE === 'true'
@@ -178,7 +177,7 @@ function isLast(breadcrumb: DocEntry[], index: number) {
       <!--Breadcrumbs should include only site pages, not logical categories in your IA. -->
       <nav aria-label="breadcrumb" v-if="route.name === 'resources' && route.params.level2" class="mb-3">
         <ol class="breadcrumb" v-if="breadcrumb">
-          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :class="isLast(breadcrumb, index) ? 'active' : ''">
+          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :key="item.label" :class="isLast(breadcrumb, index) ? 'active' : ''">
             <router-link v-if="item.path && !isLast(breadcrumb, index)" :to="{ path: item.path }">{{ item.label }}</router-link>
             <template v-else>{{ item.label }}</template>
           </li>

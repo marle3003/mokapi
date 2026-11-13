@@ -109,15 +109,6 @@ const state = computed<{ [name: string]: boolean }>(() => {
     }
 })
 
-const typeLinks = computed(() => {
-    return [
-        { text: 'All', url: getTypeUrl('all'), disabled: false, isActive: type.value === 'all' },
-        { text: 'Tutorials', url: getTypeUrl('tutorial'), disabled: !state.value.tutorial, isActive: type.value === 'tutorial' },
-        { text: 'Examples', url: getTypeUrl('example'), disabled: !state.value.example, isActive: type.value === 'example' },
-        { text: 'Blogs', url: getTypeUrl('blog'), disabled: !state.value.blog, isActive: type.value === 'blog' }
-    ]
-})
-
 function isTechAvailable(s: string) {
     if (type.value === 'all') {
         return true
@@ -145,19 +136,6 @@ function isTypeAvailable(type: string) {
         }
     }
     return false
-}
-function getTypeUrl(s: string) {
-    if (s !== 'all' && !state.value[s]) {
-        return undefined
-    }
-    if (!isTechAvailable(tech.value)) {
-        tech.value = 'all'
-    }
-    if (s === 'all') {
-        return router.resolve({ path: '/resources' }).href
-    } else {
-        return router.resolve({ name: 'resources', params: { level1: s + 's' } }).href
-    }
 }
 function setType(s: string) {
     type.value = s
@@ -214,7 +192,7 @@ function setType(s: string) {
             </div>
 
             <div class="row row-cols-1 row-cols-md-3 g-2">
-                <div v-for="item of filtered" class="col mb-3">
+                <div v-for="item of filtered" :key="item.path" class="col mb-3">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>

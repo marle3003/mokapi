@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onUnmounted, type PropType } from 'vue'
-import { useRoute } from '@/router';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
 import ServiceStatus from '../ServiceStatus.vue'
@@ -11,13 +10,12 @@ const props = defineProps({
     path: { type: Object as PropType<HttpPath>, required: true }
 })
 
-const route = useRoute()
 
 function allOperationsDeprecated(): boolean{
     if (!props.path || !props.path.operations){
         return false
     }
-    for (var op of props.path.operations){
+    for (const op of props.path.operations){
         if (!op.deprecated){
             return false
         }
@@ -30,7 +28,7 @@ onUnmounted(() => {
 })
 const status = computed(() => {
     let status = props.path.status
-    let errors: Error[] = []
+    const errors: Error[] = []
     for (const op of props.path.operations) {
         if (op.status === 'valid') {
             continue

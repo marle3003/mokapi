@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref, useId, watch } from 'vue';
+import { ref, useId, watch } from 'vue';
 
 
 const model = defineModel<string | undefined>();
 const id = useId();
 const regex = ref<RegExp | undefined>()
-const regexError = ref<any>(null)
+const regexError = ref<unknown>(null)
 defineExpose({ regex, regexError })
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
-watch(model, (value) => {
+watch(model, () => {
     if (debounceTimer) {
         clearTimeout(debounceTimer)
     }

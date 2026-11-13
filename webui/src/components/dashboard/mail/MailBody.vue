@@ -41,7 +41,7 @@ function setBody() {
 
   for (const sheet of shadowRoot.styleSheets) {
     for (const rule of sheet.cssRules) {
-      const r: any = rule
+      const r = rule as CSSMediaRule
       if (r.media?.mediaText === '(prefers-color-scheme: dark)') {
         r.media.mediaText = isDark.value ? '' : '(original-prefers-color-scheme)'
       }
@@ -69,10 +69,10 @@ function switchTheme() {
           <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></span>
         </div>
         <div class="row">
-          <p class="col">
+          <div class="col">
             <div id="body" v-if="contentType.startsWith('text/html')" style="display: inline-block; width: 100%;" :style="isDark ? 'color: #fff;' : 'color: #000;'"></div>
             <p v-else>{{ body }}</p>
-          </p>
+          </div>
         </div>
       </div>
     </section>

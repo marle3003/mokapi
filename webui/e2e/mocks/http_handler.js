@@ -1,12 +1,7 @@
-import { on, sleep } from 'mokapi'
-import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka.ts'
-import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './http'
-import { services as mailServices, mailEvents, getMail, getAttachment } from './mail'
-import { server as ldapServers, searches } from './ldap'
-import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
-import { services as websocketServices, events as websocketEvents } from './websocket'
-import { metrics, sum, max } from './metrics.ts'
-import { get, post, fetch } from 'mokapi/http'
+import { on } from 'mokapi'
+import { configs as kafkaConfigs } from './kafka.ts'
+import { configs as httpConfigs } from './http'
+import { get, fetch } from 'mokapi/http'
 
 const configs = {}
 
@@ -51,38 +46,6 @@ export default async function() {
                 'Content-Disposition': `inline; filename="${config.filename}"`
             }
         }
-    }
-}
-
-function getConfig(id) {
-    if (httpConfigs[id]) {
-        return httpConfigs[id]
-    }
-    if (kafkaConfigs[id]) {
-        return kafkaConfigs[id]
-    }
-    if (jobConfig[id]) {
-        return jobConfig[id]
-    }
-    return null
-}
-
-function getConfigs() {
-    return [
-        ...Object.values(httpConfigs),
-        ...Object.values(kafkaConfigs),
-        ...Object.values(jobConfig)
-    ]
-}
-
-const jobConfig = {
-    '6f5cab53-9f51-4bbe-bb32-fe41ee71d542': {
-        id: '6f5cab53-9f51-4bbe-bb32-fe41ee71d542',
-        url: 'file://cron.js',
-        provider: 'file',
-        time: '2025-05-01T08:49:25.482366+01:00',
-        data: "import { every } from 'mokapi'; export default function() { every('1s', function() {}); }",
-        filename: 'cron.js'
     }
 }
 

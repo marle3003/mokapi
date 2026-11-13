@@ -29,8 +29,6 @@ export function useLdap() {
                 return result.join('<br />')
             case 'ModifyDN':
                 return data.request.newRdn
-            default:
-                undefined;
         }
     }
 

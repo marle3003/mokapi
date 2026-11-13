@@ -1,7 +1,7 @@
 import { reactive, ref, watchEffect } from "vue";
 import { useFetch } from "./fetch";
 import { transformPath } from "./site-base";
-import type { AppInfoResponse, EventQuery, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { AppInfoResponse, EventQuery, Dashboard, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
 import type { Response } from "./fetch";
 import { match, matchTraits } from '../../lib/events'
 
@@ -45,7 +45,7 @@ export function useDemoDashboard() {
                 }
                 let result = []
                 if (type) {
-                    for (let service of db.data['services']) {
+                    for (const service of db.data['services']) {
                         if (service.type == type) {
                             result.push(service)
                         }
@@ -195,7 +195,7 @@ export function useDemoDashboard() {
             return { event, isLoading, close: () => {} }
         },
 
-        getMetrics(type?: string) {
+        getMetrics() {
             const response: Response = reactive({
                 data: null,
                 isLoading: false,
@@ -215,7 +215,7 @@ export function useDemoDashboard() {
             return response
         },
 
-        getExample(request: ExampleRequest) {
+        getExample() {
             const response: ExampleResult = {
                 data: [],
                 next: () => {},
@@ -249,7 +249,7 @@ export function useDemoDashboard() {
 
                 const result = [];
                 for (const mail of db.data['mails']) {
-                    if (mail.data.to.filter((x: any) => x.address === mailbox).length > 0) {
+                    if (mail.data.to.filter((x: MailAddress) => x.address === mailbox).length > 0) {
                         result.push({
                             messageId: mail.data.messageId,
                             subject: mail.data.subject,
@@ -274,7 +274,7 @@ export function useDemoDashboard() {
                 if (!db.data) {
                     return
                 }
-                mail.value = db.data['mails'].find((x: any) => x.data.messageId === messageId);
+                mail.value = db.data['mails'].find((x: Message) => x.data.messageId === messageId);
                 isLoading.value = db.isLoading
             })
             return { mail, isLoading, close: () => {} }
@@ -286,7 +286,7 @@ export function useDemoDashboard() {
                 return '';
             }
             const mail = result.mail.value;
-            const attachment = mail.data.attachments.find((x: any) => x.name === name);
+            const attachment = mail.data.attachments.find((x) => x.name === name);
             if (!attachment) {
                 return '';
             }

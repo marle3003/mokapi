@@ -61,7 +61,7 @@ onUnmounted(() => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)"
+                        <tr v-for="service in services" :key="service.name" @mouseup.left="goToService(service)"
                             @mousedown.middle="goToService(service, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">

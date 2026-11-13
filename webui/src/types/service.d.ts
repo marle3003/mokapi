@@ -4,6 +4,7 @@ declare interface Service {
     version: string
     contact: Contact | null
     type: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
     metrics: Record<string, any>
     configs: Config[]
     status?: string

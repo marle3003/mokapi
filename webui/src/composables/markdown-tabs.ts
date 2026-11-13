@@ -1,20 +1,20 @@
-import type { MarkdownIt, Token, MarkdownItOptions, Renderer } from "markdown-it"
+import type { Env, MarkdownIt, Token, MarkdownItOptions, Renderer } from "markdown-it"
 
 
 export function MarkdownItTabs(md: MarkdownIt) {
-    var defaultRender = md.renderer.rules.fence!,
+    const defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
         simple = /tab=([^\s]*)/,
         quote = /tab="([^"]*)/,
-        style = /style=([^\s]*)/,
-        counter = 0
+        style = /style=([^\s]*)/
+    let counter = 0
 
     function getInfo(token: Token) {
         return token.info ? unescapeAll(token.info).trim() : ''
     }
 
     function getTabName(token: Token) {
-        var info = getInfo(token)
+        const info = getInfo(token)
         const r = quote.exec(info)
         if (r && r.length > 1) {
             return r.slice(1).toString()
@@ -46,7 +46,7 @@ export function MarkdownItTabs(md: MarkdownIt) {
     }
 
     function getStyle(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
 
         const r = style.exec(info)
         if (r && r.length > 1) {
@@ -55,7 +55,7 @@ export function MarkdownItTabs(md: MarkdownIt) {
         return 'default'
     }
 
-    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
+    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: Env | undefined, slf: Renderer): string {
         const token = tokens[idx]
         if (!token || token.hidden) return ''
 

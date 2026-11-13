@@ -19,7 +19,7 @@ export function getInfo(config: Config, type: string) {
 }
 
 export function matchTraits(e: ServiceEvent, traits: Traits) {
-    for (let t in traits) {
+    for (const t in traits) {
         if (e.traits[t] !== traits[t]) {
             return false
         }

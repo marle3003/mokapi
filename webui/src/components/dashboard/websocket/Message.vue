@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { useRoute } from "@/router";
-import { computed, onUnmounted, watchEffect, ref, type Ref, onMounted, watch } from "vue";
+import { computed, watchEffect, ref, type Ref, watch } from "vue";
 import SourceView from '../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
-import { useMeta } from "@/composables/meta";
 import Actions from '../Actions.vue'
 import { useWebsocket } from "@/composables/websocket.ts";
 import WebsocketValidationErrors from "./WebsocketValidationErrors.vue";
@@ -49,13 +48,13 @@ watchEffect(() => {
   if (!event.value) {
     return
   }
-  const result = dashboard.value.getService(event.value?.traits.name!, 'websocket')
+  const result = dashboard.value.getService(event.value.traits.name, 'websocket')
   service.value = (result.service as Ref<WebsocketService | null>).value
   if (!service.value) {
     return null
   }
   if (service.value.channels) {
-    for (let ch of service.value?.channels){
+    for (const ch of service.value?.channels){
       if (ch.name == event.value.traits.channel) {
         channel.value = ch
       }
@@ -127,9 +126,6 @@ function getMessageConfig(): WebsocketMessage | undefined {
       }
   }
   return undefined
-}
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
 }
 function isClientAvailable(id: string) {
   return clients.value.find(x => x.id === id) !== undefined
@@ -219,6 +215,6 @@ const hasActions = computed(() => {
   </div>
   <loading v-if="!event && isLoading"></loading>
   <div v-if="!event && !isLoading">
-    <message message="WebSocket Message not found"></message>
+    <Message message="WebSocket Message not found"></Message>
   </div>
 </template>

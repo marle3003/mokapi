@@ -5,14 +5,12 @@ import { useRoute, useRouter } from '@/router';
 import { computed, ref, watch, type Ref } from 'vue';
 import Message from '../../Message.vue';
 import { useKafka } from '@/composables/kafka';
-import { useMetrics } from '@/composables/metrics';
 
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
 const { formatAddress } = useKafka();
 const { dashboard } = useDashboard();
-const { value, filter, parseLabels, } = useMetrics();
 
 const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
@@ -94,7 +92,7 @@ const partitions = computed(() => {
   if (!group.value) {
     return []
   }
-  let result: { topic: string, partition: number, commit: number, lag: number }[] = []
+  const result: { topic: string, partition: number, commit: number, lag: number }[] = []
   for (const topic in group.value.metrics.topics) {
     const topicMetrics = group.value.metrics.topics[topic]
     for (const partition of topicMetrics) {

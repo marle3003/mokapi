@@ -10,7 +10,7 @@ test.describe('Visit HTTP dashboard', () => {
         await tabs.http.click()
         
         const table = page.getByRole('table', { name: 'Recent Requests' });
-        let rows = table.locator('tbody tr');
+        const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(6)
 
         const filterButton = page.getByRole('button', { name: 'Filter' })

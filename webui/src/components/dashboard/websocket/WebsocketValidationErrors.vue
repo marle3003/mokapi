@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { useMarkdown } from '@/composables/markdown';
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaValidate from '../SchemaValidate.vue'
@@ -34,8 +33,8 @@ const errors = computed(() => {
 })
 
 // prevent selection text closes the accordeon
-addEventListener('click', function (event: any) {
-    const trigger = event.target.closest('[data-bs-toggle="collapse"]');
+addEventListener('click', function (event: MouseEvent) {
+    const trigger = (event.target as Element).closest('[data-bs-toggle="collapse"]');
     if (trigger) {
         const hasSelection = getSelection()?.toString();
 
@@ -64,7 +63,7 @@ addEventListener('click', function (event: any) {
                     </div>
 
                     <!-- Clickable summary Row -->
-                    <div v-for="err of errors" class="table-row" role="rowgroup">
+                    <div v-for="err of errors" :key="err.safeId" class="table-row" role="rowgroup">
                         <div class="row data align-items-center border-bottom m-0" :class="{ 'bg-hover': err.list }" role="row"
                             :data-bs-toggle="err.list ? 'collapse' : ''" :data-bs-target="'#' + err.safeId" :aria-expanded="false"
                             :aria-controls="err.safeId">

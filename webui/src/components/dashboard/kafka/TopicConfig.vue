@@ -17,7 +17,7 @@ const types: { [name: string]: string } = {
     'application/xml': '.xml'
 }
 
-let selected = ref<KafkaMessage | null>(null)
+const selected = ref<KafkaMessage | null>(null)
 
 function filename() {
     let ext = '.dat'
@@ -44,10 +44,10 @@ onMounted(() => {
 
 })
 
-function selectedMessageChange(event: any){
+function selectedMessageChange(event: Event){
     for (const messageId in props.channel.messages){
         const msg = props.channel.messages[messageId]!
-        if (msg.name == event.target.value){
+        if (msg.name == (event.target as HTMLSelectElement).value){
             selected.value = msg
         }
     }
@@ -118,7 +118,7 @@ const examplePath = computed(() => {
             <div class="col-auto">
                 <p id="message-name" class="label">Name</p>
                 <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(channel.messages).length > 1">
-                    <option v-for="msg in messages(channel)" :selected="msg == selected.name">{{ msg }}</option>
+                    <option v-for="msg in messages(channel)" :key="msg" :selected="msg == selected.name">{{ msg }}</option>
                 </select>
                 <p aria-labelledby="message-name" v-else>{{ selected.name }}</p>
             </div>

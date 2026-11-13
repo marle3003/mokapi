@@ -12,6 +12,7 @@ declare interface MqttServer {
   summary: string
   description: string;
   tags: MqttTag[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   configs: { [key: string]: any }
 }
 

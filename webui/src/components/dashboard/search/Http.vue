@@ -2,7 +2,6 @@
 import { usePrettyHttp } from '@/composables/http';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 
 const props = defineProps<{
     item: SearchItem
@@ -12,7 +11,7 @@ const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
 const type = computed(() => {

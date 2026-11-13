@@ -4,7 +4,7 @@ import MetricCard from './MetricCard.vue'
 import { useMetrics } from '@/composables/metrics';
 import { useDashboard } from '@/composables/dashboard';
 
-const props = defineProps({
+defineProps({
     labels: { type: Object as PropType<Label[]> },
 })
 

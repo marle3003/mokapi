@@ -6,11 +6,9 @@ test.use({ colorScheme: 'light' })
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test('Visit Petstore Demo', async ({ page, baseURL }) => {
-    let dashboard = '/dashboard'
     if (baseURL === 'http://localhost:8080') {
         await page.goto('/dashboard')
     } else {
-        dashboard = '/dashboard-demo'
         await page.goto('/dashboard-demo')
     }
 
@@ -92,7 +90,7 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
 
         await page.getByRole('tab', { name: 'Paths' }).click();
         const table = page.getByRole('table', { name: 'Recent Requests' });
-        let rows = table.locator('tbody tr');
+        const rows = table.locator('tbody tr');
 
         await expect(rows).toHaveCount(13);
         await expect(await getCellByColumnName(table, 'Method', rows.nth(11))).toHaveText('POST');

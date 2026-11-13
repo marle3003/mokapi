@@ -1,10 +1,10 @@
 import { ref, watch, type Ref } from 'vue';
 
-const store = new Map<string, any>();
+const store = new Map<string, Ref<unknown>>();
 
 export function useLocalStorage<T>(key: string, defaultValue: T): Ref<T> {
     if (store.has(key)) {
-        return store.get(key);
+        return store.get(key) as Ref<T>;
     }
 
     const stored = localStorage.getItem(key);

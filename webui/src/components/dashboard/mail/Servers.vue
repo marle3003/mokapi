@@ -10,7 +10,7 @@ const servers = computed(() => {
     if (!props.service.servers) {
         return undefined
     }
-    return props.service.servers.sort((x: MailServer, y: MailServer) => x.name.localeCompare(y.name));
+    return [...props.service.servers].sort((x: MailServer, y: MailServer) => x.name.localeCompare(y.name));
 })
 </script>
 

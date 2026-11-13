@@ -27,7 +27,11 @@ onBeforeUnmount(() => {
 watch(show, (value) => {
   if (!dialog.value) return
 
-  value ? dialog.value.show() : dialog.value.hide()
+  if (value) {
+    dialog.value.show()
+  } else {
+    dialog.value.hide()
+  }
 })
 </script>
 

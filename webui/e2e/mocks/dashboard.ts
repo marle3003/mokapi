@@ -198,6 +198,7 @@ const events = [
     ...jobs
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- nested query parameters are free-form, shape depends on the request
 function query(q: Record<string, any>): Query {
     const result: Query = { labels: Object.keys(q.traits).map(x => ({ name: x, value: q.traits[x] })) }
 

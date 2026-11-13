@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useRoute } from "@/router";
 import {  onUnmounted, type PropType } from 'vue';
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Message from "@/components/Message.vue";
@@ -16,7 +15,6 @@ const props = defineProps({
 const { dashboard } = useDashboard()
 const { mailbox, isLoading } = dashboard.value.getMailbox(props.service.name, props.mailboxName)
 const { messages, close } = dashboard.value.getMailboxMessages(props.service.name, props.mailboxName)
-const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
 
@@ -49,7 +47,7 @@ useBreadcrumb(() => {
   <div v-if="!mailbox && !isLoading">
         <message :message="`Mailbox ${mailboxName} not found`"></message>
   </div>
-  <div v-else="!isLoading">
+  <div v-else>
     <div class="card-group">
       <section class="card" aria-label="Mailbox">
         <div class="card-body" v-if="mailbox">
@@ -130,7 +128,7 @@ useBreadcrumb(() => {
                 </td>
                 <td class="address-list">
                   <ul class="list-unstyled">
-                    <li v-for="addr of message.from">
+                    <li v-for="addr of message.from" :key="addr.address">
                       <strong v-if="addr.name">{{ addr.name }}</strong>
                       <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                       <span v-else>{{ addr.address }}</span>
@@ -139,7 +137,7 @@ useBreadcrumb(() => {
                 </td>
                 <td class="address-list">
                   <ul class="list-unstyled">
-                    <li v-for="addr of message.to">
+                    <li v-for="addr of message.to" :key="addr.address">
                       <strong v-if="addr.name">{{ addr.name }}</strong>
                       <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                       <span v-else>{{ addr.address }}</span>

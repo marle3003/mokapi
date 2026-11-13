@@ -11,7 +11,7 @@ const Measurement = {
   },
 };
 
-export let clusters = [
+export const clusters = [
   {
     name: 'MQTT Temperature Sensor API',
     description:
@@ -36,22 +36,6 @@ export let clusters = [
       },
     ],
     topics: [
-      {
-        name: 'home/livingroom/temperature',
-        summary: 'Channel for messages FROM the sensor (Publish)',
-        messages: {
-          TemperatureMeasurement: {
-            name: 'TemperatureMeasurement',
-            title: 'Temperature Measurement',
-            payload: { schema: Measurement },
-            contentType: 'application/json',
-          },
-        },
-        bindings: {
-          qos: 1,
-          retain: false,
-        },
-      },
       {
         name: 'sensors/{sensorId}/data',
         messages: {
@@ -85,11 +69,27 @@ export let clusters = [
           }
         ]
       },
+      {
+        name: 'home/livingroom/temperature',
+        summary: 'Channel for messages FROM the sensor (Publish)',
+        messages: {
+          TemperatureMeasurement: {
+            name: 'TemperatureMeasurement',
+            title: 'Temperature Measurement',
+            payload: { schema: Measurement },
+            contentType: 'application/json',
+          },
+        },
+        bindings: {
+          qos: 1,
+          retain: false,
+        },
+      },
     ],
     metrics: metrics.filter((x) => x.name.includes('mqtt')),
     clients: [
-      { clientId: 'mqtt-client-1', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 4 },
-      { clientId: 'mqtt-client-2', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 5 }
+      { clientId: 'mqtt-client-2', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 5 },
+      { clientId: 'mqtt-client-1', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 4 }
     ]
   },
 ];
@@ -112,7 +112,7 @@ export default async function () {
                   ...('description' in x ? { description: x.description } : {}),
                   messages: x.messages,
                   ...('parameters' in x ? { parameters: x.parameters} : {}),
-                  ...('instances' in x ? { instances: x.instances?.map((i: any) => (
+                  ...('instances' in x ? { instances: x.instances?.map((i) => (
                     {
                       ...i,
                       metrics: {
@@ -133,7 +133,7 @@ export default async function () {
   });
 }
 
-export let events = [
+export const events = [
   {
     id: '9f8bd24d-1480-4d2d-a1b4-f022aeddeaf8',
     traits: {

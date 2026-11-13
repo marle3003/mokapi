@@ -8,7 +8,6 @@ import { computed, ref, watch, type Component } from 'vue';
 import Connect from './requests/Connect.vue';
 import Subscribe from './requests/Subscribe.vue';
 import Disconnect from './requests/Disconnect.vue';
-import type { EventResult } from '@/types/dashboard';
 import { useMqtt } from '@/composables/mqtt';
 
 const detail: { [apiKey: number]: Component } = {

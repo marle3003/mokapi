@@ -179,7 +179,9 @@ watch(
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- template function refs hand over an element or a component instance
 const requestHeaderValueRefs = ref<any[]>([])
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- template function refs hand over an element or a component instance
 const responseHeaderValueRefs = ref<any[]>([])
 const urlCell = useTemplateRef<HTMLElement>('urlCell');
 const dynamicLimit = ref(80);
@@ -284,6 +286,7 @@ const service = computed({
         }
         return filter.service.value
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v-model value is a string (single) or a string array (multi)
     set: function(val: any) {
         if (filter.service.state === 'Single') {
             if (!val) {
@@ -297,7 +300,7 @@ const service = computed({
     }
 })
 const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'QUERY', 'CUSTOM']
-const method = computed({
+const selectedMethods = computed({
     get: function() {
         if (filter.method.state === 'Single') {
             if (filter.method.value?.length === 0) {
@@ -308,6 +311,7 @@ const method = computed({
         }
         return filter.method.value
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v-model value is a string (single) or a string array (multi)
     set: function(val: any) {
         if (filter.method.state === 'Single') {
             if (!val) {
@@ -443,7 +447,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
             mergeDeep(targetValue, sourceValue);
         } else if (sourceValue !== undefined) {
             // Primitive or array: overwrite
-            target[key] = sourceValue as any;
+            target[key] = sourceValue as T[typeof key];
         }
     }
     return target;
@@ -544,12 +548,14 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <div class="col">
                             <div class="row me-0">
                                 <select class="form-select form-select-sm" v-model="service" aria-label="Service" v-if="filter.service.state === 'Single'" id="service-single">
-                                    <option v-for="service of services">{{ service.name }}</option>
+                                    <option v-for="service of services" :key="service.name">{{ service.name }}</option>
                                 </select>
-                                <div class="form-check" v-for="s of services" v-if="filter.service.state === 'Multi'">
-                                    <input class="form-check-input" name="service" :value="s.name" v-model="service" type="checkbox" :id="getId(s.name)">
-                                    <label class="form-check-label" :for="getId(s.name)">{{ s.name }}</label>
-                                </div>
+                                <template v-if="filter.service.state === 'Multi'">
+                                    <div class="form-check" v-for="s of services" :key="s.name">
+                                        <input class="form-check-input" name="service" :value="s.name" v-model="service" type="checkbox" :id="getId(s.name)">
+                                        <label class="form-check-label" :for="getId(s.name)">{{ s.name }}</label>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -564,13 +570,15 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col">
                             <div class="row me-0">
-                                <select class="form-select form-select-sm" v-model="method" aria-label="Method" v-if="filter.method.state === 'Single'" id="method-single">
-                                    <option v-for="method of methods">{{ method }}</option>
+                                <select class="form-select form-select-sm" v-model="selectedMethods" aria-label="Method" v-if="filter.method.state === 'Single'" id="method-single">
+                                    <option v-for="method of methods" :key="method">{{ method }}</option>
                                 </select>
-                                <div class="form-check" v-for="m of methods" v-if="filter.method.state === 'Multi'">
-                                    <input class="form-check-input" name="method" :value="m" v-model="method" type="checkbox" :id="getId(m)">
-                                    <label class="form-check-label" :for="getId(m)">{{ m }}</label>
-                                </div>
+                                <template v-if="filter.method.state === 'Multi'">
+                                    <div class="form-check" v-for="m of methods" :key="m">
+                                        <input class="form-check-input" name="method" :value="m" v-model="selectedMethods" type="checkbox" :id="getId(m)">
+                                        <label class="form-check-label" :for="getId(m)">{{ m }}</label>
+                                    </div>
+                                </template>
                             </div>
                             <div class="row mt-2 me-0" v-if="filter.method.checkbox && filter.method.value.includes('CUSTOM')">
                                 <input type="text" class="form-control form-control-sm" id="method-custom" v-model="filter.method.custom" placeholder="LINK CONNECT...">
@@ -607,8 +615,8 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             </div>
                         </div>
                         <div class="col" v-if="filter.request.headers.checkbox">
-                            <div  v-for="(hf, i) in filter.request.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': (i as number) < (filter.request.headers.value.length - 1)}" >
+                            <div  v-for="(hf, i) in filter.request.headers.value" :key="i">
+                                <div class="row me-0" :class="{ 'mb-2': (i as number) < (filter.request.headers.value.length - 1)}" >
                                     <div class="col ps-0 pe-1">
                                         <input type="text" class="form-control form-control-sm" :id="'reqeuest-header-name_'+ i" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, (i as number) )" :aria-label="'Request Header Name '+((i as number)+1)">
                                     </div>
@@ -630,7 +638,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <div class="invalid-feedback" style="display: inline;">
                             Invalid regular expression:
                             <ul>
-                                <li v-for="err in requestHeaderErrors">{{ err }}</li>
+                                <li v-for="(err, errIndex) in requestHeaderErrors" :key="errIndex">{{ err }}</li>
                             </ul>
                         </div>
                     </div>
@@ -661,8 +669,8 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             </div>
                         </div>
                         <div class="col" v-if="filter.response.headers.checkbox">
-                            <div  v-for="(hf, i) in filter.response.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': (i as number)  < filter.response.headers.value.length - 1 }" >
+                            <div  v-for="(hf, i) in filter.response.headers.value" :key="i">
+                                <div class="row me-0" :class="{ 'mb-2': (i as number)  < filter.response.headers.value.length - 1 }" >
                                     <div class="col ps-0 pe-1">
                                         <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, (i as number) )" :aria-label="'Response Header Name '+((i as number)+1)">
                                     </div>
@@ -684,7 +692,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <div class="invalid-feedback" style="display: inline;">
                             Invalid regular expression:
                             <ul>
-                                <li v-for="err in responseHeaderErrors">{{ err }}</li>
+                                <li v-for="(err, errIndex) in responseHeaderErrors" :key="errIndex">{{ err }}</li>
                             </ul>
                         </div>
                     </div>

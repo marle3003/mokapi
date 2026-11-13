@@ -10,7 +10,7 @@ import { getRouteName, useDashboard } from "@/composables/dashboard";
 import Actions from '../Actions.vue'
 
 const route = useRoute();
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 
@@ -41,12 +41,12 @@ watchEffect(() => {
   if (!event.value) {
     return
   }
-  const result = dashboard.value.getService(event.value?.traits.name!, 'mqtt')
+  const result = dashboard.value.getService(event.value.traits.name, 'mqtt')
   const service = result.service as Ref<MqttService | null>
   if (!service.value) {
     return null
   }
-  for (let t of service.value?.topics){
+  for (const t of service.value?.topics){
     if (t.name == event.value.traits.topic) {
       topic.value = t
     }
@@ -116,9 +116,6 @@ function getMessageConfig(): MqttMessage | undefined {
       }
   }
   return undefined
-}
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
 }
 const hasActions = computed(() => {
     if (!data.value) {
@@ -204,6 +201,6 @@ const hasActions = computed(() => {
   </div>
   <loading v-if="!event && isLoading"></loading>
   <div v-if="!event && !isLoading">
-    <message message="MQTT Message not found"></message>
+    <Message message="MQTT Message not found"></Message>
   </div>
 </template>

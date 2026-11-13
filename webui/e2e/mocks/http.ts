@@ -53,7 +53,7 @@ export default function () {
                 }
                 const method = req.query['method']
                 const path = req.query['path']
-                let operations = []
+                const operations = []
                 for (const p of service.paths) {
                     if (!path || p.path === path) {
                         for (const o of p.operations) {
@@ -221,7 +221,7 @@ export const configs = {
     }
 }
 
-export let apps = [
+export const apps = [
     {
         name: "Swagger Petstore",
         description: "This is a sample server Petstore server. You can find out more about at [http://swagger.io](http://swagger.io)",
@@ -365,114 +365,6 @@ export let apps = [
                 ]
             },
             {
-                path: "/pet/{petId}",
-                status: 'valid',
-                operations: [
-                    {
-                        method: "post",
-                        summary: "Updates a pet in the store with form data",
-                        tags: ["pet", "post"],
-                        status: 'valid',
-                        parameters: [
-                            {
-                                name: "petId",
-                                type: "path",
-                                description: "ID of pet that needs to be updated",
-                                schema: {
-                                    type: "integer",
-                                    format: "int64"
-                                },
-                                required: false,
-                                deprecated: false,
-                                explode: false,
-                                allowReserved: false
-                            },
-                            {
-                                name: "name",
-                                type: "formData",
-                                description: "Updated name of the pet",
-                                schema: {
-                                    type: "string"
-                                },
-                                required: false,
-                                deprecated: false,
-                                explode: false,
-                                allowReserved: false
-                            },
-                            {
-                                name: "status",
-                                type: "formData",
-                                description: "Updated status of the pet",
-                                schema: {
-                                    type: "string"
-                                },
-                                required: false,
-                                deprecated: false,
-                                explode: false,
-                                allowReserved: false
-                            }
-                        ],
-                        responses: [
-                            {
-                                statusCode: 200,
-                                contents: [
-                                    {
-                                        type: "application/json",
-                                        schema: {
-                                            type: "object",
-                                            properties: {
-                                                id: {
-                                                    type: "integer",
-                                                    format: "int64"
-                                                },
-                                                name: {
-                                                    type: "string"
-                                                },
-                                                status: {
-                                                    type: "string"
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        method: "get",
-                        summary: "Returns a single pet",
-                        tags: ["pet"],
-                        status: 'valid',
-                        parameters: [
-                            {
-                                name: "petId",
-                                type: "path",
-                                description: "ID of pet to return",
-                                schema: {
-                                    type: "integer",
-                                    format: "int64"
-                                },
-                                required: false,
-                                deprecated: false,
-                                explode: false,
-                                allowReserved: false
-                            }
-                        ],
-                        responses: [
-                            {
-                                statusCode: 200,
-                                contents: [
-                                    {
-                                        type: "application/json",
-                                        schema: pet
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 path: "/pet/findByStatus",
                 status: 'valid',
                 operations: [
@@ -564,6 +456,114 @@ export let apps = [
                 ]
             },
             {
+                path: "/pet/{petId}",
+                status: 'valid',
+                operations: [
+                    {
+                        method: "post",
+                        summary: "Updates a pet in the store with form data",
+                        tags: ["pet", "post"],
+                        status: 'valid',
+                        parameters: [
+                            {
+                                name: "name",
+                                type: "formData",
+                                description: "Updated name of the pet",
+                                schema: {
+                                    type: "string"
+                                },
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
+                            },
+                            {
+                                name: "status",
+                                type: "formData",
+                                description: "Updated status of the pet",
+                                schema: {
+                                    type: "string"
+                                },
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
+                            },
+                            {
+                                name: "petId",
+                                type: "path",
+                                description: "ID of pet that needs to be updated",
+                                schema: {
+                                    type: "integer",
+                                    format: "int64"
+                                },
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
+                            }
+                        ],
+                        responses: [
+                            {
+                                statusCode: 200,
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "object",
+                                            properties: {
+                                                id: {
+                                                    type: "integer",
+                                                    format: "int64"
+                                                },
+                                                name: {
+                                                    type: "string"
+                                                },
+                                                status: {
+                                                    type: "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        method: "get",
+                        summary: "Returns a single pet",
+                        tags: ["pet"],
+                        status: 'valid',
+                        parameters: [
+                            {
+                                name: "petId",
+                                type: "path",
+                                description: "ID of pet to return",
+                                schema: {
+                                    type: "integer",
+                                    format: "int64"
+                                },
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
+                            }
+                        ],
+                        responses: [
+                            {
+                                statusCode: 200,
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: pet
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 path: "/Zorem/ipsum/dolor/sit/amet/consetetur/sadipscing/elitr/sed/diam/nonumy/eirmod",
                 summary: "A long path example",
                 status: 'valid',
@@ -584,14 +584,8 @@ export let apps = [
                         },
                         responses: [
                             {
-                                statusCode: 200,
-                                description: "Successful operation",
-                                contents: [
-                                    {
-                                        type: "application/json",
-                                        schema: pet
-                                    }
-                                ]
+                                statusCode: 'default',
+                                description: 'Unexpected error'
                             },
                             {
                                 statusCode: 400,
@@ -607,8 +601,14 @@ export let apps = [
                                 ]
                             },
                             {
-                                statusCode: 'default',
-                                description: 'Unexpected error'
+                                statusCode: 200,
+                                description: "Successful operation",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: pet
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -712,7 +712,7 @@ export let apps = [
     }
 ]
 
-export let events = [
+export const events = [
     {
         id: "9e058601-562a-4063-a3b2-066ba624893a",
         traits: {

@@ -21,9 +21,9 @@ const selected = reactive({
 if (props.operation.requestBody?.contents?.length > 0){
     selected.content = props.operation.requestBody.contents[0]!
 }
-function selectedContentChange(event: any){
-    for (let content of props.operation.requestBody.contents){
-        if (content.type == event.target.value){
+function selectedContentChange(event: Event){
+    for (const content of props.operation.requestBody.contents){
+        if (content.type == (event.target as HTMLSelectElement).value){
             selected.content = content
         }
     }
@@ -31,7 +31,7 @@ function selectedContentChange(event: any){
 
 onMounted(() => {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl))
+    tooltipTriggerList.forEach(tooltipTriggerEl => new Tooltip(tooltipTriggerEl))
 })
 
 const name = computed(() => {
@@ -137,7 +137,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                             </div>
                             <div class="col-auto px-2">
                                 <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">
-                                    <option v-for="content in operation.requestBody.contents">{{ content.type }}</option>
+                                    <option v-for="content in operation.requestBody.contents" :key="content.type">{{ content.type }}</option>
                                 </select>
                             </div>
                         </div>
@@ -149,8 +149,8 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                 <div class="tab-pane fade security" :class="!operation.security ? 'show active' : ''" id="security" role="tabpanel" aria-labelledby="security-tab">
                     <div class="d-flex">
                         <ul id="security-list" class="list-group nav nav-pills" v-if="!hasOneSecurityScheme">
-                            <li v-for="(sec, index) of operation.security" class="list-group-item">
-                                <button class="badge" v-for="(name, index2) of Object.keys(sec)" type="button" role="tab"
+                            <li v-for="(sec, index) of operation.security" :key="index" class="list-group-item">
+                                <button class="badge" v-for="(name, index2) of Object.keys(sec)" :key="name" type="button" role="tab"
                                     :id="`sec-scheme-${index}-${index2}-tab`" :class="getSchemeClass(sec[name]!) + (index === 0 && index2 === 0 ? ' active' : '')"
                                     data-bs-toggle="pill" :data-bs-target="`#sec-scheme-${index}-${index2}`"
                                 :aria-controls="`sec-scheme-${index}-${index2}`" :aria-selected="index === 0 && index2 === 0"
@@ -160,7 +160,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                             </li>
                         </ul>
                         <div class="tab-content ms-3 ps-3 w-100">
-                            <div v-for="(scheme, name) of schemes"
+                            <div v-for="(scheme, name) of schemes" :key="name"
                                 class="tab-pane fade"
                                 :class="name === '0-0' ? 'show active' : ''" :id="`sec-scheme-${name}`" role="tabpanel" :aria-labelledby="`sec-scheme-${name}-tab`"
                             >
@@ -220,10 +220,10 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="(flow, name) of scheme.configs.flows">
+                                                    <tr v-for="(flow, name) of scheme.configs.flows" :key="name">
                                                         <td>{{ name }}</td>
                                                         <td>
-                                                            <div v-for="scope of Object.keys(flow.scopes)" :data-bs-title="flow.scopes[scope]" data-bs-toggle="tooltip" data-bs-placement="top">
+                                                            <div v-for="scope of Object.keys(flow.scopes)" :key="scope" :data-bs-title="flow.scopes[scope]" data-bs-toggle="tooltip" data-bs-placement="top">
                                                                 {{ scope }}
                                                             </div>
                                                         </td>

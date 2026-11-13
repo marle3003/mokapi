@@ -9,7 +9,7 @@ const props = defineProps<{
 const { adaptiveTruncate } = usePrettyText()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
 const route = computed(() => {

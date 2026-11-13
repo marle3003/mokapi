@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Pager from './Pager.vue';
 
-const props = defineProps<{
+defineProps<{
     count: number
     total: number
     options?: number[]

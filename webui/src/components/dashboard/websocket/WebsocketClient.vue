@@ -26,7 +26,7 @@ const client = computed(() => {
   if (!service.value || !service.value.data || !service.value.data.clients) {
     return null;
   }
-  for (let client of service.value.data.clients){
+  for (const client of service.value.data.clients){
     if (client.id == clientId) {
       return client;
     }

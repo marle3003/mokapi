@@ -40,7 +40,7 @@ const router = useRouter();
 const { getLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
 
-let current = ref<{data: Data, type: string}>()
+const current = ref<{data: Data, type: string}>()
 if (props.source.preview) {
   current.value = { data: props.source.preview, type: 'preview' }
 } else if (props.source.binary) {
@@ -86,7 +86,7 @@ const viewHeight = computed(() => {
     return props.height
   }
   if (props.readonly) {
-    let height = lines.value * 23 + 10
+    const height = lines.value * 23 + 10
     if (props.maxHeight && height > props.maxHeight) {
       return props.maxHeight
     }
@@ -101,8 +101,8 @@ const theme = computed(() => {
 })
 
 function download(event: MouseEvent) {
-  var element = document.createElement('a')
-  element.setAttribute('href', `data:${current.value?.data.contentType};charset=utf-8,${encodeURIComponent(current.value?.data.content!)}`)
+  const element = document.createElement('a')
+  element.setAttribute('href', `data:${current.value?.data.contentType};charset=utf-8,${encodeURIComponent(current.value?.data.content ?? '')}`)
   let filename = props.filename
   if (!filename) {
     filename = 'file.dat'
@@ -117,7 +117,7 @@ function download(event: MouseEvent) {
 }
 
 function copyToClipboard(event: MouseEvent) {
-  navigator.clipboard.writeText(current.value?.data.content!)
+  navigator.clipboard.writeText(current.value?.data.content ?? '')
   event.preventDefault()
 }
 
@@ -151,10 +151,10 @@ function updateSelectionDirect(startRow: number, endRow: number) {
     false // back layer
   )
 
-  updateGutterMarker(startRow, endRow);
+  updateGutterMarker(startRow);
 }
 
-function updateGutterMarker(startRow: number, endRow: number) {
+function updateGutterMarker(startRow: number) {
   if (!editor.value) return
 
   const session = editor.value.session
@@ -188,7 +188,7 @@ const onEditorInit = (e: typeof VAceEditor) => {
 
   // Gutter drag logic
   editor.value.on('guttermousedown', (e: AceMouseEvent) => {
-    let row = e.getDocumentPosition().row
+    const row = e.getDocumentPosition().row
     let from: number
     let to: number
     if (e.domEvent.shiftKey && startRow.value) {

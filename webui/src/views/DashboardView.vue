@@ -115,7 +115,7 @@ const description = `Quickly analyze and inspect all requests and responses in t
 router.afterEach((to) => {
     const resolver = to.meta.title
 
-    let title =
+    const title =
         typeof resolver === "function"
             ? resolver(to)
             : resolver ?? "Mokapi";

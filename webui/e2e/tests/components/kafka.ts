@@ -33,11 +33,11 @@ export interface Group {
     members: number
 }
 
-export function useKafkaGroups(table: Locator, topic?: string) {
+export function useKafkaGroups(table: Locator) {
     return {
         async testGroup(row: number, group: Group, lags?: string) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
-                let columns = ['Name', 'State', 'Protocol', 'Generation', 'Last Rebalancing', 'Members']
+                const columns = ['Name', 'State', 'Protocol', 'Generation', 'Last Rebalancing', 'Members']
                 if (lags) {
                     columns.push('Lag')
                 }
@@ -81,7 +81,7 @@ export function useKafkaMessages(page: Page) {
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
             await test.step('Check messages log', async () => {
-                let columns = ['Topic', 'Key', 'Value', 'Time']
+                const columns = ['Topic', 'Key', 'Value', 'Time']
                 if (!withTopic) {
                     columns.splice(0,1)
                 }

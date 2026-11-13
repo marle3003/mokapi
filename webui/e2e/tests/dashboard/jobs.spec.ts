@@ -10,7 +10,7 @@ test.describe('Visit Jobs dashboard', () => {
         await tabs.jobs.click()
 
         const table = page.getByRole('table', { name: 'Recent Jobs' });
-        let rows = table.locator('> tbody > tr:not(.collapse-row)');
+        const rows = table.locator('> tbody > tr:not(.collapse-row)');
         await expect(rows).toHaveCount(3)
      })
 })

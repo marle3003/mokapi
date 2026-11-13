@@ -2,7 +2,6 @@ import ace from "ace-builds/src-noconflict/ace";
 
 ace.define("ace/mode/ldif", function(require, exports) {
   const TextMode = require("ace/mode/text").Mode;
-  const Tokenizer = require("ace/tokenizer").Tokenizer;
   const TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
   // Proper highlight rules class

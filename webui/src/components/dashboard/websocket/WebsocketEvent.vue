@@ -5,7 +5,6 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import { computed, ref, watch } from 'vue';
-import type { EventResult } from '@/types/dashboard';
 import { useWebsocket } from '@/composables/websocket';
 import Actions from '../Actions.vue'
 

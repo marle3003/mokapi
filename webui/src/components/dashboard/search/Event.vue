@@ -11,7 +11,7 @@ const { adaptiveTruncate } = usePrettyText()
 const { format } = usePrettyDates()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
 
@@ -41,7 +41,7 @@ const route = computed(() => {
         return { name: 'kafkaMessage', params: props.item.params }
     }
     if (isMail()) {
-        return { name: 'smtpMail', params: Object.assign(props.item.params, { id: props.item.params.messageId }) }
+        return { name: 'smtpMail', params: { ...props.item.params, id: props.item.params.messageId } }
     }
     if (isLdap()) {
         return { name: 'ldapRequest', params: props.item.params }

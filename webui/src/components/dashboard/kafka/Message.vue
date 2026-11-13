@@ -52,7 +52,7 @@ watch(
     if (!event.value) {
       return
     }
-    const result = dashboard.value.getKafkaChannel(event.value?.traits.name!, event.value.traits.topic)
+    const result = dashboard.value.getKafkaChannel(event.value.traits.name, event.value.traits.topic)
 
     const stop = watch(
       () => result.channel.value,
@@ -270,6 +270,6 @@ const hasActions = computed(() => {
   </div>
   <loading v-if="!event && isLoading"></loading>
   <div v-else-if="!event && !isLoading">
-      <message message="Kafka Message not found"></message>
+      <Message message="Kafka Message not found"></Message>
   </div>
 </template>

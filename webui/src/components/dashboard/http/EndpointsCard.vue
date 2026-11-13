@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { type PropType, computed } from 'vue';
 import { useRouter, useRoute } from '@/router';
@@ -7,7 +6,6 @@ import { useLocalStorage } from '@/composables/local-storage';
 
 const route = useRoute()
 const router = useRouter()
-const { sum } = useMetrics()
 const { format } = usePrettyDates()
 
 const props = defineProps({
@@ -41,7 +39,7 @@ const paths = computed(() => {
     if (!props.service.paths) {
         return []
     }
-    let result = props.service.paths.sort(comparePath)
+    let result = [...props.service.paths].sort(comparePath)
     if (!tags.value.includes('__all')) {
         result = result.filter((p) => {
             for (const o of p.operations) {
@@ -108,7 +106,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
     if (!path.operations) {
         return false;
     }
-    for (var op of path.operations){
+    for (const op of path.operations){
         if (!op.deprecated){
             return false
         }
@@ -121,7 +119,7 @@ function operations(path: HttpPath) {
         return []
     }
 
-    let result = path.operations
+    let result = [...path.operations]
     if (!tags.value.includes('__all')) {
         result = result.filter((o) => {
             if (o.tags && o.tags.some(t => tags.value.some(x => x == t))) {
@@ -219,7 +217,7 @@ function operationCssClass(operation: HttpOperationInfo): string {
                 </div>
 
                 <div id="tag-list" style="display: inline-block">
-                    <div class="form-check form-check-inline" v-for="tag in allTags" :title="tag.summary">
+                    <div class="form-check form-check-inline" v-for="tag in allTags" :key="tag.name" :title="tag.summary">
                         <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" 
                             :value="tag.name" @change="toggleTag(tag.name)"
                             :checked="tags.includes(tag.name) || tags.includes('__all')"

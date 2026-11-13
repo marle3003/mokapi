@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { computed, type PropType } from 'vue';
+import { useRouter } from 'vue-router'
 import { getRouteName } from '@/composables/dashboard';
 import { useMarkdown } from '@/composables/markdown';
 
@@ -8,7 +8,6 @@ const props = defineProps({
     service: { type: Object as PropType<MailService>, required: true },
 })
 
-const route = useRoute()
 const router = useRouter()
 
 const anyDescription = computed(() => {
@@ -28,7 +27,7 @@ const mailboxes = computed(() => {
   if (!props.service.mailboxes) {
     return undefined
   }
-  return props.service.mailboxes.sort((x, y) => x.name.localeCompare(y.name))
+  return [...props.service.mailboxes].sort((x, y) => x.name.localeCompare(y.name))
 });
 
 function goToMailbox(mb: SmtpMailbox, openInNewTab = false){

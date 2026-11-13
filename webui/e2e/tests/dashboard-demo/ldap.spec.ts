@@ -46,7 +46,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     await test.step('Verify Recent Requests', async () => {
         const table = page.getByRole('table', { name: 'Recent Requests' });
-        let rows = table.locator('tbody tr');
+        const rows = table.locator('tbody tr');
 
         // Unbind
         await expect(await getCellByColumnName(table, 'Operation', rows.nth(0))).toHaveText('Unbind');

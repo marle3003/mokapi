@@ -17,7 +17,7 @@ const clients = [
   { id: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e', address: '127.0.0.1:53200', serverAddress: 'localhost:8080' },
 ]
 
-export let services = [
+export const services = [
   {
     name: 'WebSocket Chat API',
     description:
@@ -44,18 +44,6 @@ export let services = [
     ],
     channels: [
       {
-        name: '/chat',
-        summary: 'Single WS endpoint carrying all chat messages',
-        messages: {
-          ChatMessage: {
-            name: 'ChatMessage',
-            title: 'Chat Message',
-            payload: { schema: ChatMessage },
-            contentType: 'application/json',
-          }
-        },
-      },
-      {
         name: '/chats/{chatId}',
         messages: {
           ChatMessage: {
@@ -81,6 +69,18 @@ export let services = [
           }
         ],
       },
+      {
+        name: '/chat',
+        summary: 'Single WS endpoint carrying all chat messages',
+        messages: {
+          ChatMessage: {
+            name: 'ChatMessage',
+            title: 'Chat Message',
+            payload: { schema: ChatMessage },
+            contentType: 'application/json',
+          }
+        },
+      },
     ],
     metrics: metrics.filter((x) => x.name.includes('websocket')),
     clients: clients
@@ -97,7 +97,7 @@ export default async function () {
           version: services[0].version,
           contact: services[0].contact,
           servers: services[0].servers,
-          channels: services[0].channels.map((x: any) => {
+          channels: services[0].channels.map((x) => {
             return {
               name: x.name,
               ...('title' in x ? { title: x.title } : {}),
@@ -105,7 +105,7 @@ export default async function () {
               ...('description' in x ? { description: x.description } : {}),
               messages: x.messages,
               ...('parameters' in x ? { parameters: x.parameters} : {}), 
-              ...('instances' in x ? { instances: x.instances.map((i: any) => (
+              ...('instances' in x ? { instances: x.instances.map((i) => (
                 {
                   ...i,
                   metrics: {
@@ -126,7 +126,7 @@ export default async function () {
   });
 }
 
-export let events = [
+export const events = [
   {
     id: 'a1b2c3d4-0001-4d2d-a1b4-f022aeddeaf8',
     traits: {
