@@ -52,6 +52,7 @@ export interface AppInfoResponse {
 
 export interface ServicesResult {
     services: Ref<Service[]>
+    isLoading: Ref<boolean>
     close(): void
 }
 
@@ -81,6 +82,7 @@ export interface KafkaTopicResult {
 
 export interface EventsResult {
     data: Ref<ServiceEventPage>
+    isLoading: Ref<boolean>
     close(): void
 }
 

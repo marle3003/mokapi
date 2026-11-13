@@ -8,6 +8,7 @@ import { MailModel } from './mail'
 export class DashboardModel extends MokapiModel {
     readonly tabs: Locator
     readonly activeTab: Locator
+    readonly connectionLostToast: Locator
 
     readonly http: HttpModel
     readonly kafka: KafkaModel
@@ -20,6 +21,7 @@ export class DashboardModel extends MokapiModel {
         super(page)
         this.tabs = page.locator('.dashboard-tabs')
         this.activeTab = page.locator('.dashboard .router-link-active')
+        this.connectionLostToast = page.getByRole('status').filter({ hasText: 'Connection lost' })
 
         this.http = new HttpModel(page.locator('main'))
         this.kafka = new KafkaModel(page.locator('main'))

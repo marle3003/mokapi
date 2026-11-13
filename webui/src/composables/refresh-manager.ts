@@ -11,6 +11,7 @@ let startTime = Date.now(), timer = ref<ReturnType<typeof setInterval> | undefin
 const isActive = computed(() => 
     timer.value !== undefined
 )
+let isPaused = false
 
 export function useRefreshManager() {
 
@@ -22,18 +23,28 @@ export function useRefreshManager() {
         tasks.value.delete(id);
     }
 
+    function refreshAll() {
+        for (const callback of tasks.value.values()) {
+            callback();
+        }
+    }
+
     function tick() {
         const now = Date.now();
         const elapsed = now - startTime;
         progress.value = Math.min((elapsed / interval.value) * 100, 100);
 
         if (elapsed >= interval.value) {
-            for (const [_, callback] of tasks.value.entries()) {
-                callback();
-            }
+            refreshAll();
             startTime = now;
             progress.value = 0;
         }
+    }
+
+    function startTimer() {
+        startTime = Date.now();
+        progress.value = 0;
+        timer.value = setInterval(tick, 100);
     }
 
     function start() {
@@ -46,7 +57,24 @@ export function useRefreshManager() {
     function stop() {
         clearInterval(timer.value);
         timer.value = undefined;
+        isPaused = false;
     }
 
-    return { add, remove, start, stop, progress, isActive }
+    // Pausing hides the progress bar and stops the refresh cycle, resuming restarts it at 0.
+    // Without a running cycle nothing is paused or resumed.
+    function pause() {
+        if (timer.value) {
+            stop();
+            isPaused = true;
+        }
+    }
+
+    function resume() {
+        if (isPaused) {
+            isPaused = false;
+            startTimer();
+        }
+    }
+
+    return { add, remove, refreshAll, start, stop, pause, resume, progress, isActive }
 }

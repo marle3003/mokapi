@@ -5,6 +5,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
 import { useWebsocket } from '@/composables/websocket';
 import { usePageSize } from '@/composables/paging';
+import Loading from '@/components/Loading.vue'
 
 const props = defineProps<{
   service: WebsocketService,
@@ -29,6 +30,7 @@ const paging = reactive({
 
 const { dashboard } = useDashboard()
 const result = ref<ServiceEventPage | null>(null);
+const isLoading = ref(true)
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -39,7 +41,7 @@ watch(
       labels: labels.value,
     })
 
-    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
 
     onCleanup(() => {
       stop()
@@ -104,6 +106,7 @@ function goToEvent(eventId: string, openInNewTab = false) {
         </table>
       </div>
 
+      <loading v-if="isLoading && events.length === 0" />
       <Paging v-if="result"
           :count="events.length"
           :total="result.total"

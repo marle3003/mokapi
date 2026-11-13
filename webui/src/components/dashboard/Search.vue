@@ -3,6 +3,7 @@ import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { transformPath } from '@/composables/site-base'
+import { useConnection } from '@/composables/connection'
 import { useProgressiveLoading } from '@/composables/useProgressiveLoading';
 import Http from './search/Http.vue';
 import Kafka from './search/Kafka.vue';
@@ -20,6 +21,7 @@ const searchResult = ref<SearchResult | undefined>();
 const showTips = ref(false)
 const facets = ref<{ [name: string]: string | undefined }>({})
 const loading = useProgressiveLoading()
+const connection = useConnection()
 
 let timeout: ReturnType<typeof setTimeout>;
 watch(queryText, async () => {
@@ -122,7 +124,7 @@ async function search() {
   }
 
   errorMessage.value = undefined
-  const res = await fetch(transformPath(path))
+  const res = await connection.monitoredFetch(transformPath(path))
     .then(async (res) => {
       if (!res.ok) {
         const data = await res.json()

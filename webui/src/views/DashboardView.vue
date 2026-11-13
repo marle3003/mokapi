@@ -41,7 +41,7 @@ import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
@@ -51,13 +51,17 @@ import { useDashboard, getRouteName } from '@/composables/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
 import { useRouter } from '@/router'
 import WebsocketService from '@/components/dashboard/websocket/WebsocketService.vue'
+import ConnectionLostToast from '@/components/dashboard/ConnectionLostToast.vue'
+import { useConnection } from '@/composables/connection'
 
 const route = useRoute()
 const router = useRouter();
-const { progress, start, isActive } = useRefreshManager();
+const { progress, start, isActive, pause, resume } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
+const connection = useConnection()
+watch(connection.isConnected, (connected) => connected ? resume() : pause())
 const { dashboard, setMode, getMode } = useDashboard();
 if (route.meta.mode) {
     setMode(route.meta.mode as 'live' | 'demo')
@@ -81,12 +85,14 @@ const shortcutHandler = (e: KeyboardEvent) => {
 onMounted(() => {
     if (route.meta.mode === 'live') {
         start();
+        connection.start()
     }
     window.addEventListener('keydown', shortcutHandler)
 })
 
 onUnmounted(() => {
     appInfo.value?.close();
+    connection.stop()
     window.removeEventListener('keydown', shortcutHandler)
 })
 
@@ -284,6 +290,7 @@ router.afterEach((to) => {
             <loading v-if="isInitLoading()"></loading>
         </section>
     </main>
+    <connection-lost-toast />
 </template>
 
 <style scoped>

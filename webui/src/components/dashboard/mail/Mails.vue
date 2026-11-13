@@ -4,6 +4,7 @@ import { type PropType, computed, reactive, ref, watch } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePageSize } from '@/composables/paging';
+import Loading from '@/components/Loading.vue'
 
 const props = defineProps({
     service: { type: Object as PropType<MailService> },
@@ -25,6 +26,7 @@ const { format, duration } = usePrettyDates()
 
 const { dashboard } = useDashboard()
 const result = ref<ServiceEventPage | null>(null);
+const isLoading = ref(true)
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels ],
@@ -35,7 +37,7 @@ watch(
       labels: labels,
     })
 
-    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
 
     onCleanup(() => {
       stop()
@@ -110,6 +112,7 @@ const filteredEvents = computed(() => {
                 </table>
             </div>
 
+            <loading v-if="isLoading && events.length === 0" />
             <Paging v-if="result"
                 :count="events.length"
                 :total="result.total"

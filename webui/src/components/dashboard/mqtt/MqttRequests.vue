@@ -8,6 +8,7 @@ import SubscribeSummary from './requests/SubscribeSummary.vue';
 import DisconnectSummary from './requests/DisconnectSummary.vue';
 import { useMqtt } from '@/composables/mqtt';
 import { usePageSize } from '@/composables/paging.ts';
+import Loading from '@/components/Loading.vue'
 
 const props = defineProps<{
   service: MqttService,
@@ -38,6 +39,7 @@ const paging = reactive({
 
 const { dashboard } = useDashboard()
 const result = ref<ServiceEventPage | null>(null);
+const isLoading = ref(true)
 const requests = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -48,7 +50,7 @@ watch(
       labels: labels.value,
     })
 
-    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
 
     onCleanup(() => {
       stop()
@@ -111,6 +113,7 @@ function goToRequest(eventId: string, openInNewTab = false) {
           </tbody>
         </table>
       </div>
+      <loading v-if="isLoading && requests.length === 0" />
       <Paging v-if="result"
           :count="requests.length"
           :total="result.total"

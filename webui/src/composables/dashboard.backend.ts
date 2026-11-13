@@ -23,15 +23,17 @@ export const dashboard: Dashboard = {
         const path = type ? `/api/services?type=${type}` : '/api/services'
         const response = useFetch(path, {}, doRefresh)
         const services = ref<Service[]>([])
+        const isLoading = ref<boolean>(true)
 
         watchEffect(() => {
+            isLoading.value = response.isLoading
             if (!response.data){
                 services.value = []
                 return
             }
             services.value = response.data .sort(compareService)
         })
-        return { services, close: response.close }
+        return { services, isLoading, close: response.close }
     },
 
     getService(name, type) {
@@ -158,8 +160,10 @@ export const dashboard: Dashboard = {
        
         const res = useFetch(url)
         const data = ref<ServiceEventPage>({ items: [], page: 1, size: 25, total: 0 })
+        const isLoading = ref<boolean>(true)
 
         watchEffect(() => {
+            isLoading.value = res.isLoading
             if (!res.data){
                 data.value.items = []
                 data.value.total = 0
@@ -167,7 +171,7 @@ export const dashboard: Dashboard = {
             }
             data.value = res.data
         })
-        return { data, close: res.close }
+        return { data, isLoading, close: res.close }
     },
 
     getEvent(id: string){

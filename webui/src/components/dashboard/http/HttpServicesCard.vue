@@ -3,12 +3,13 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import { onUnmounted } from 'vue';
 import { useDashboard } from '@/composables/dashboard';
+import Loading from '@/components/Loading.vue'
 import { useMarkdown } from '@/composables/markdown';
 
 const { format } = usePrettyDates()
 const { service: serviceRoute, router } = useRoute()
 const { dashboard } = useDashboard()
-const { services, close } = dashboard.value.getServices('http')
+const { services, isLoading, close } = dashboard.value.getServices('http')
 
 function lastRequest(s: Service) {
     const n = s.metrics.request_timestamp
@@ -80,6 +81,7 @@ onUnmounted(() => {
                         </tr>
                     </tbody>
                 </table>
+                <loading v-if="isLoading && services.length === 0" />
             </div>
         </div>
     </div>

@@ -4,11 +4,12 @@ import { onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import Loading from '@/components/Loading.vue'
 import { useMarkdown } from '@/composables/markdown';
 
 const {sum} = useMetrics()
 const { dashboard } = useDashboard();
-const {services, close} = dashboard.value.getServices('ldap')
+const { services, isLoading, close } = dashboard.value.getServices('ldap')
 const {format} = usePrettyDates()
 const router = useRouter()
 
@@ -68,6 +69,7 @@ onUnmounted(() => {
                     </tr>
                 </tbody>
             </table>
+            <loading v-if="isLoading && services.length === 0" />
         </div>
     </div>
 </template>

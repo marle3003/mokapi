@@ -9,6 +9,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePrettyText } from '@/composables/usePrettyText'
 import type { HttpEventFilter } from '@/types/dashboard.js'
 import Paging from '../Paging.vue'
+import Loading from '@/components/Loading.vue'
 import { usePageSize } from '@/composables/paging.ts'
 
 const props = defineProps({
@@ -116,6 +117,7 @@ const filters = computed<HttpEventFilter & { labels?: Label[] }>(() => {
 const router = useRouter()
 const { dashboard } = useDashboard()
 const result = ref<ServiceEventPage | null>(null);
+const isLoading = ref(true)
 const events = computed(() => result.value?.items ?? [])
 watch(
   [() => dashboard.value, () => paging.current, () => paging.size, labels, filters ],
@@ -131,7 +133,7 @@ watch(
       http: filters.value,
     })
 
-    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
 
     onCleanup(() => {
       stop()
@@ -511,6 +513,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                 </table>
             </div>
 
+            <loading v-if="isLoading && events.length === 0" />
             <Paging v-if="result"
                 :count="events.length"
                 :total="result.total"

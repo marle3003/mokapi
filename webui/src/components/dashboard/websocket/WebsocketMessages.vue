@@ -6,6 +6,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useWebsocket } from '@/composables/websocket.ts'
 import { usePrettyText } from '@/composables/usePrettyText.ts'
 import { usePageSize } from '@/composables/paging'
+import Loading from '@/components/Loading.vue'
 import Paging from '../Paging.vue'
 
 const props = defineProps<{
@@ -48,6 +49,7 @@ const { formatAddress } = useWebsocket()
 
 const { dashboard } = useDashboard()
 const result = ref<ServiceEventPage | null>(null);
+const isLoading = ref(true)
 const events = computed(() => result.value?.items ?? [])
 watch(
     [() => dashboard.value, () => paging.current, () => paging.size, labels],
@@ -58,7 +60,7 @@ watch(
             labels: labels.value,
         })
 
-        const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+        const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
 
         onCleanup(() => {
             stop()
@@ -170,6 +172,7 @@ const isTemplateChannel = computed(() => {
         </table>
     </div>
     
+    <loading v-if="isLoading && events.length === 0" />
     <Paging v-if="result"
         :count="events.length"
         :total="result.total"

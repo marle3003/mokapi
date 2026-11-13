@@ -24,19 +24,22 @@ export function useDemoDashboard() {
             })
 
             watchEffect(() => {
+                response.isLoading = db.isLoading
+                response.error = db.error
                 if (!db.data) {
                     return
                 }
                 response.data = db.data.info
-                response.isLoading = db.isLoading
             })
             return response
         },
 
         getServices(type) {
             const services = ref<Service[]>([])
+            const isLoading = ref<boolean>(true)
 
             watchEffect(() => {
+                isLoading.value = db.isLoading
                 if (!db.data) {
                     return
                 }
@@ -52,7 +55,7 @@ export function useDemoDashboard() {
                 }
                 services.value = result.sort(compareService)
             })
-            return { services, close: () => {} } 
+            return { services, isLoading, close: () => {} }
         },
 
         getService(name) {
@@ -153,6 +156,7 @@ export function useDemoDashboard() {
             const isLoading = ref<boolean>(true)
 
             watchEffect(() => {
+                isLoading.value = db.isLoading
                 if (!db.data) {
                     return
                 }
@@ -173,7 +177,6 @@ export function useDemoDashboard() {
 
                 data.value.items = result.slice((page - 1) * size, page * size)
                 data.value.total = result.length
-                isLoading.value = db.isLoading
             })
             return { data, isLoading, close: () => {} }
         },

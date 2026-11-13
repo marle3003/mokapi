@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { useRefreshManager } from './refresh-manager';
 import { transformPath } from './site-base'
+import { useConnection } from './connection'
 
 export interface Response {
     data: any
@@ -14,6 +15,16 @@ export interface Response {
 
 const cache: { [name: string]: Response } = {}
 const manager = useRefreshManager();
+const connection = useConnection();
+// Fetches without refresh are not reloaded by the refresh manager, so the ones that never reached
+// Mokapi are repeated once after reconnect.
+const failedOneOffFetches = new Set<() => void>()
+connection.onReconnect(manager.refreshAll)
+connection.onReconnect(() => {
+    const fetches = [...failedOneOffFetches]
+    failedOneOffFetches.clear()
+    fetches.forEach(doFetch => doFetch())
+})
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
     path = transformPath(path)
@@ -37,35 +48,54 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
     }
 
     function doFetch() {
+        failedOneOffFetches.delete(doFetch)
         response.isLoading = true
-        fetch(path, options)
-            .then(async (res) => {
-                if (!res.ok) {
-                    let text = await res.text()
-                    throw new Error(res.statusText + ': ' + text)
-                }
-                const contentType = res.headers.get("content-type");
-                response.header = res.headers
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return res.json()
-                } else{
-                    return res.text()
-                }
-            })
-            .then((res) => {
-                response.data = res
+        connection.monitoredFetch(path, options).then(readResult, handleNetworkError)
+    }
+
+    // While the connection is monitored, keep data and stay loading until it is back.
+    function handleNetworkError(err: Error) {
+        if (!connection.isMonitoring()) {
+            handleError(err)
+            return
+        }
+        if (!doRefresh) {
+            failedOneOffFetches.add(doFetch)
+        }
+    }
+
+    function readResult(res: globalThis.Response) {
+        return readBody(res)
+            .then((body) => {
+                response.data = body
                 response.isLoading = false
             })
-            .catch((err) => {
-                let msg = err.toString()
-                if (!msg) {
-                    msg = 'Network connection error'
-                }
-                console.error(err)
-                response.error = msg
-                response.data = null
-                response.isLoading = false
-            })
+            .catch(handleError)
+    }
+
+    function handleError(err: Error) {
+        let msg = err.toString()
+        if (!msg) {
+            msg = 'Network connection error'
+        }
+        console.error(err)
+        response.error = msg
+        response.data = null
+        response.isLoading = false
+    }
+
+    async function readBody(res: globalThis.Response) {
+        if (!res.ok) {
+            let text = await res.text()
+            throw new Error(res.statusText + ': ' + text)
+        }
+        const contentType = res.headers.get("content-type");
+        response.header = res.headers
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return res.json()
+        } else{
+            return res.text()
+        }
     }
 
     if (doRefresh){

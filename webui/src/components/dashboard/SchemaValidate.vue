@@ -5,6 +5,7 @@ import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/site-base'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { useDashboard } from '@/composables/dashboard';
+import { useConnection } from '@/composables/connection';
 import type { Example } from '@/types/dashboard';
 
 declare interface State {
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<{
 
 const { formatLanguage } = usePrettyLanguage()
 const { dashboard } = useDashboard()
+const connection = useConnection()
 const id = useId()
 const modal = ref<HTMLElement>()
 
@@ -151,7 +153,7 @@ async function validate() {
         : ''
 
     try {
-        const res = await fetch(transformPath('/api/schema/validate' + query), {
+        const res = await connection.monitoredFetch(transformPath('/api/schema/validate' + query), {
             method: 'POST',
             body: JSON.stringify(body),
             headers: { 'Content-Type': 'application/json' }

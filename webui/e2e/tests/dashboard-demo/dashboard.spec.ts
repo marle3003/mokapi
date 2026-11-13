@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { test, expect } from '../models/fixture-website'
 import { getCellByColumnName } from '../helpers/table'
 
@@ -55,5 +56,38 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
         const row = table.getByRole('row').filter({ hasText: 'HR Employee Directory' })
         await expect(row).toBeVisible()
         await expect(await getCellByColumnName(table, 'Requests', row)).toHaveText('10')
+    })
+})
+
+test.describe('Connection to Mokapi', () => {
+    // the live dashboard (baseURL :8080) monitors the connection, only the demo dashboard doesn't
+    test.skip(({ baseURL }) => baseURL === 'http://localhost:8080')
+
+    const toast = (page: Page) => page.getByRole('status').filter({ hasText: 'Connection lost' })
+
+    test('Demo dashboard sends no heartbeat', async ({ page }) => {
+        await page.clock.install()
+        const infoRequests: string[] = []
+        page.on('request', r => {
+            if (r.url().endsWith('/api/info')) infoRequests.push(r.url())
+        })
+
+        await page.goto('/dashboard-demo')
+        await expect(page.locator('main').getByLabel('Uptime Since')).not.toHaveText('-')
+        await page.clock.runFor(10000)
+
+        expect(infoRequests).toHaveLength(0)
+        await expect(toast(page)).toHaveCount(0)
+    })
+
+    test('Demo dashboard shows no toast and no endless spinner when the recording cannot be loaded', async ({ page }) => {
+        await page.route('**/demo/dashboard.json', r => r.abort('connectionrefused'))
+        const failed = page.waitForEvent('requestfailed')
+
+        await page.goto('/dashboard-demo/http')
+        await failed
+
+        await expect(toast(page)).toHaveCount(0)
+        await expect(page.locator('main .spinner-border')).toHaveCount(0)
     })
 })
