@@ -127,7 +127,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             // first we try data that are wrong against the schema
             const id = await dialog.locator('.modal-dialog .ace_editor').getAttribute('id')
             await page.evaluate((id) => {
-                ace.edit(id).setValue('{"price":"bar"}')
+                ace.edit(id).setValue('{"features":"foo","price":"bar"}')
                 return id
             }, id)
             await dialog.getByRole('button', { name: 'Validate' }).click()
@@ -142,7 +142,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
             // now with a valid one
             await page.evaluate((id) => {
-                ace.edit(id).setValue('{"price":12}')
+                ace.edit(id).setValue('{"features":"foo","price":12}')
                 return id
             }, id)
             await dialog.getByRole('button', { name: 'Validate' }).click()

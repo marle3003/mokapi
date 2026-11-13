@@ -50,8 +50,8 @@ export const cluster = {
                     description: 'More info about how the order notifications are created and used.',
                     contentType: 'application/json',
                     value: {
-                        lines: '32 lines',
-                        size: '464 B'
+                        lines: '35 lines',
+                        size: '500 B'
                     }
                 }
             ]

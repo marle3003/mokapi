@@ -227,7 +227,8 @@ const Product = {
         subcategory: {
             type: 'string'
         }
-    }
+    },
+    required: ['features']
 }
 
 const Order = {
