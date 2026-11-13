@@ -28,8 +28,8 @@ async function openHttpRequests(page: Page) {
 }
 
 const requestRows = (page: Page) => page.getByRole('table', { name: 'Recent Requests' }).locator('tbody tr')
-const loadingSpinner = (page: Page) => page.locator('main').getByRole('status')
-const recentRequestsSpinner = (page: Page) => page.getByRole('region', { name: 'Recent Requests' }).getByRole('status')
+const loadingSpinner = (page: Page) => page.locator('main').getByRole('status').filter({ hasText: 'Loading...' })
+const recentRequestsSpinner = (page: Page) => page.getByRole('region', { name: 'Recent Requests' }).getByRole('status').filter({ hasText: 'Loading...' })
 const connectionRefused = (route: Route) => route.abort('connectionrefused')
 const serverError = (route: Route) => route.fulfill({ status: 500, body: 'Internal Server Error' })
 const notFound = (route: Route) => route.fulfill({ status: 404, json: { message: 'not found' } })
