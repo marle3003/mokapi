@@ -162,9 +162,13 @@ test.describe('Connection lost', () => {
         // refreshAll() loads once, the restarted cycle must not add an immediate second load
         await expect.poll(() => eventRequests.length).toBe(requestsWhenDisconnected + 1)
 
-        await page.clock.runFor(500)
+        // the cycle restarted at 0, so the next periodic load comes a full interval later
+        await page.clock.runFor(900)
+        await page.waitForTimeout(200)
         await expect(progressBar).toBeVisible()
-        await page.clock.runFor(500)
+        expect(eventRequests).toHaveLength(requestsWhenDisconnected + 1)
+
+        await page.clock.runFor(100)
         await expect.poll(() => eventRequests.length).toBe(requestsWhenDisconnected + 2)
     })
 

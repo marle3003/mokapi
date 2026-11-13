@@ -89,5 +89,8 @@ test.describe('Connection to Mokapi', () => {
 
         await expect(toast(page)).toHaveCount(0)
         await expect(page.locator('main .spinner-border')).toHaveCount(0)
+        // the page shows its empty request table instead
+        await expect(page.getByRole('heading', { name: 'Recent Requests' })).toBeVisible()
+        await expect(page.getByRole('table', { name: 'Recent Requests' }).locator('tbody tr')).toHaveCount(0)
     })
 })
