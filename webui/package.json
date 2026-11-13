@@ -12,7 +12,7 @@
     "test:e2e": "playwright test",
     "build-only": "vite build",
     "type-check": "vue-tsc",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "lint": "eslint . --fix",
     "copy-docs": "ncp ../docs ./src/assets/docs",
     "clean": "del-cli ./src/assets/docs",
     "build-sitemap": "node build-sitemap.js",
@@ -52,7 +52,6 @@
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
-    "@rushstack/eslint-patch": "1.16.1",
     "@types/js-yaml": "4.0.9",
     "@types/markdown-it-container": "4.0.1",
     "@types/node": "26.6.6",
