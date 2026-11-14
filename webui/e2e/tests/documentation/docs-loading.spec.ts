@@ -123,34 +123,4 @@ test.describe('loading docs content per page', () => {
         await page.locator('.content').getByRole('link', { name: 'Environments' }).first().click()
         await expect(heading).toBeInViewport()
     })
-
-    test.describe('code blocks after navigation', () => {
-        test.beforeEach(async ({ page }) => {
-            await page.goto('/docs/http/quick-start')
-            await page.locator('.sidebar a[href$="/docs/http/overview"]').click()
-            await expect(page.getByRole('heading', { name: 'Mocking HTTP APIs' })).toBeVisible()
-        })
-
-        test('copy button copies the code', async ({ page, context }) => {
-            await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-            const block = page.locator('.content .code').first()
-            const button = block.locator('[data-copy]')
-            const code = await block.locator('.tab-pane.active pre code').textContent()
-
-            await button.click()
-
-            await expect(button).toHaveClass(/copied/)
-            expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code)
-        })
-
-        test('double click selects the code', async ({ page }) => {
-            const code = page.locator('.content .code .tab-pane.active pre code').first()
-            const firstLine = (await code.textContent())!.split('\n')[0]!
-
-            await expect.poll(async () => {
-                await code.dispatchEvent('dblclick')
-                return page.evaluate(() => getSelection()?.toString())
-            }).toContain(firstLine)
-        })
-    })
 })

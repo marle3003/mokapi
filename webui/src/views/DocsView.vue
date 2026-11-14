@@ -10,6 +10,7 @@ import type { Modal } from 'bootstrap'
 import { loadModal } from '@/composables/bootstrap-modal'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
+import { copyCode, selectCode } from '@/composables/code-block'
 
 // The footer (merch shop, landing pages) is not part of the dashboard build
 const Footer = import.meta.env.VITE_WEBSITE === 'true'
@@ -108,7 +109,7 @@ function getCanonicalUrl(entry: DocEntry) {
 }
 function onContentClick(event: MouseEvent) {
   showImage(event.target)
-  copyToClipboard(event)
+  copyCode(event)
 }
 function showImage(target: EventTarget | null) {
   if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
@@ -121,47 +122,6 @@ function showImage(target: EventTarget | null) {
 }
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-function selectCode(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  if (!target.closest('pre')) {
-    return
-  }
-  const range = document.createRange()
-  range.selectNodeContents(target)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
-async function copyToClipboard(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  const button = target.closest('[data-copy]')
-  if (!button) {
-    return
-  }
-
-  const codeBlock = button.closest('.code')
-  if (!codeBlock) {
-    return
-  }
-  const activePane = codeBlock.querySelector('.tab-pane.active')
-  if (!activePane) {
-    return
-  }
-  const codeElement = activePane.querySelector('pre code')
-  if (!codeElement) {
-    return
-  }
-
-  const text = codeElement.textContent ?? ''
-
-  try {
-    await navigator.clipboard.writeText(text)
-    button.classList.add('copied')
-    setTimeout(() => button.classList.remove('copied'), 1500)
-  } catch (err) {
-    console.error('Failed to copy code:', err)
-  }
 }
 function isLast(breadcrumb: DocEntry[], index: number) {
   return breadcrumb.length - 1 === index
