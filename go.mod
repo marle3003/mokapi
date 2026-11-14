@@ -6,13 +6,13 @@ require (
 	github.com/blevesearch/bleve/v2 v2.6.3
 	github.com/blevesearch/bleve_index_api v1.4.1
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
-	github.com/brianvoe/gofakeit/v7 v7.18.1
+	github.com/brianvoe/gofakeit/v7 v7.18.3
 	github.com/cbroglie/mustache v1.4.2
 	github.com/coder/websocket v1.8.15
 	github.com/dop251/goja v0.0.0-20261107161106-d6eaa50db8bc
 	github.com/evanw/esbuild v0.28.2
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/go-co-op/gocron/v2 v2.23.0
+	github.com/go-co-op/gocron/v2 v2.23.1
 	github.com/go-git/go-git/v5 v5.19.3
 	github.com/go-sprout/sprout v1.1.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
