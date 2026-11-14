@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig, type Plugin } from 'vite'
+import type { Plugin } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { docsIndex } from './vite-plugin-docs-index.ts'
 
@@ -26,6 +27,8 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     },
     resolve: {
       alias: {
+        // unit tests (CI) run without src/assets/docs, see src/test-support/image-stub.ts; must precede '@'
+        ...(process.env.VITEST ? { '@/assets/docs/get-started/dashboard-overview-mock-api.png': fileURLToPath(new URL('./src/test-support/image-stub.ts', import.meta.url)) } : {}),
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         '#docs-images': fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url))
       }
@@ -39,6 +42,10 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       proxy: {
         '/api': 'http://localhost:8090'
       }
+    },
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.test.ts']
     }
   }
 })

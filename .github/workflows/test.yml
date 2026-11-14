@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   lint-webui:
-    name: Lint and type-check webui
+    name: Lint, type-check and unit-test webui
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -43,6 +43,9 @@ jobs:
           npm ci
           npx vue-tsc
           npx eslint .
+      - name: Unit tests (Vitest)
+        working-directory: webui
+        run: npm run test:unit
 
   build:
     name: Build mokapi

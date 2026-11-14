@@ -201,6 +201,17 @@ test.describe('hydration', () => {
         })
     })
 
+    test('the structured data of the home page is gone after a navigation to another page', async ({ page }) => {
+        await page.goto(pages[0]!.path)
+        await expectAppMounted(page)
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1)
+
+        await page.getByRole('link', { name: 'HTTP', exact: true }).first().click()
+        await expect(page.getByRole('heading', { name: pages[1]!.h1, level: 1 })).toBeVisible()
+
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0)
+    })
+
     test('the page works after hydration: theme switch', async ({ page }) => {
         await page.goto('/docs/http/overview')
         await expectAppMounted(page)
