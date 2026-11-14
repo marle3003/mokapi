@@ -8,6 +8,8 @@ import (
 	"mokapi/js/eventloop"
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,6 +67,26 @@ func awaitPromiseResult(t *testing.T, loop *eventloop.EventLoop, name string) (g
 	}
 }
 
+// scriptFieldNameMapper names fields and methods as a script sees them in Mokapi: the json tag
+// or the uncapitalized Go name (e.g. MqttPublishResult.Api is `api`). goja.TagFieldNameMapper
+// keeps the Go name of fields without a tag, which would hide naming bugs.
+type scriptFieldNameMapper struct{}
+
+func (scriptFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
+	if tag, _, _ := strings.Cut(f.Tag.Get("json"), ","); tag != "" {
+		return tag
+	}
+	return uncapitalize(f.Name)
+}
+
+func (scriptFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
+	return uncapitalize(m.Name)
+}
+
+func uncapitalize(s string) string {
+	return strings.ToLower(s[:1]) + s[1:]
+}
+
 // newModuleLoop returns a started event loop with the mokapi module enabled. The loop is
 // stopped when the test ends.
 func newModuleLoop(t *testing.T) (*eventloop.EventLoop, *enginetest.Host) {
@@ -74,7 +96,7 @@ func newModuleLoop(t *testing.T) (*eventloop.EventLoop, *enginetest.Host) {
 	reg.RegisterNativeModule("mokapi", mokapi.Require)
 
 	vm := goja.New()
-	vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+	vm.SetFieldNameMapper(scriptFieldNameMapper{})
 	host := &enginetest.Host{}
 	loop := eventloop.New(vm, host)
 	loop.StartLoop()

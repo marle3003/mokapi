@@ -203,12 +203,8 @@ m.app.kafka().produce('foo', { }, { result: (r) => result = r })
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
 				v, err := evalOnLoop(loop, "result")
 				r.NoError(t, err)
-				r.Equal(t, common.KafkaMessageResult{
-					Key:       "foo",
-					Value:     "",
-					Offset:    0,
-					Headers:   map[string]string(nil),
-					Partition: 0,
+				r.Equal(t, &common.KafkaProduceResult{
+					Messages: []common.KafkaMessageResult{{Key: "foo"}},
 				}, v)
 			},
 		},
@@ -226,13 +222,59 @@ const p = m.app.kafka().produceAsync('foo', { }, { result: (r) => result = r })
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
 				v, err := evalOnLoop(loop, "result")
 				r.NoError(t, err)
-				r.Equal(t, common.KafkaMessageResult{
-					Key:       "foo",
-					Value:     "",
-					Offset:    0,
-					Headers:   map[string]string(nil),
-					Partition: 0,
+				r.Equal(t, &common.KafkaProduceResult{
+					Messages: []common.KafkaMessageResult{{Key: "foo"}},
 				}, v)
+			},
+		},
+		{
+			name:          "produce calls result function once with the whole result",
+			produceResult: twoMessagesResult(),
+			script: `
+const m = require('mokapi')
+` + recordResultCalls + `
+m.app.kafka().produce('foo', [{ key: 'key-1' }, { key: 'key-2' }], { result: (r) => calls.push(summarize(r)) })
+`,
+			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
+				requireResultCallbackCalledOnceWithWholeResult(t, loop)
+			},
+		},
+		{
+			name:          "produceAsync calls result function once with the whole result",
+			awaitPromise:  "p",
+			produceResult: twoMessagesResult(),
+			script: `
+const m = require('mokapi')
+` + recordResultCalls + `
+const p = m.app.kafka().produceAsync('foo', [{ key: 'key-1' }, { key: 'key-2' }], { result: (r) => calls.push(summarize(r)) })
+`,
+			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
+				requireResultCallbackCalledOnceWithWholeResult(t, loop)
+			},
+		},
+		{
+			name:          "topic produce calls result function once with the whole result",
+			produceResult: twoMessagesResult(),
+			script: `
+const m = require('mokapi')
+` + recordResultCalls + `
+m.app.kafka().topic('foo').produce([{ key: 'key-1' }, { key: 'key-2' }], { result: (r) => calls.push(summarize(r)) })
+`,
+			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
+				requireResultCallbackCalledOnceWithWholeResult(t, loop)
+			},
+		},
+		{
+			name:          "topic produceAsync calls result function once with the whole result",
+			awaitPromise:  "p",
+			produceResult: twoMessagesResult(),
+			script: `
+const m = require('mokapi')
+` + recordResultCalls + `
+const p = m.app.kafka().topic('foo').produceAsync([{ key: 'key-1' }, { key: 'key-2' }], { result: (r) => calls.push(summarize(r)) })
+`,
+			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, loop *eventloop.EventLoop, err error) {
+				requireResultCallbackCalledOnceWithWholeResult(t, loop)
 			},
 		},
 		{
@@ -270,7 +312,7 @@ m.app.kafka().produce('foo', { }, { retry: { maxRetryTime: '1s', initialRetryTim
 			r.NoError(t, err)
 
 			vm := goja.New()
-			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+			vm.SetFieldNameMapper(scriptFieldNameMapper{})
 			host := &enginetest.Host{}
 			loop := eventloop.New(vm, host)
 			defer loop.Stop()
@@ -461,3 +503,40 @@ func TestModule_AppKafka_Produce_Errors(t *testing.T) {
 		})
 	}
 }
+
+// the script must see the same result in the callback as the client returned:
+// api, topic and messages, once per call and not once per message
+func requireResultCallbackCalledOnceWithWholeResult(t *testing.T, loop *eventloop.EventLoop) {
+	t.Helper()
+
+	n, err := evalOnLoop(loop, "calls.length")
+	r.NoError(t, err)
+	r.Equal(t, int64(1), n)
+
+	v, err := evalOnLoop(loop, "calls[0]")
+	r.NoError(t, err)
+	r.Equal(t, map[string]any{
+		"api":   "cluster",
+		"topic": "foo",
+		"messages": []any{
+			map[string]any{"offset": int64(10), "partition": int64(1), "key": "key-1"},
+			map[string]any{"offset": int64(11), "partition": int64(2), "key": "key-2"},
+		},
+	}, v)
+}
+
+func twoMessagesResult() *common.KafkaProduceResult {
+	return &common.KafkaProduceResult{
+		Api:   "cluster",
+		Topic: "foo",
+		Messages: []common.KafkaMessageResult{
+			{Key: "key-1", Offset: 10, Partition: 1},
+			{Key: "key-2", Offset: 11, Partition: 2},
+		},
+	}
+}
+
+// recordResultCalls defines `calls` and `summarize` for scripts that record what a result
+// callback sees, as the script sees it.
+const recordResultCalls = `const calls = [];
+function summarize(r) { return { api: r.api, topic: r.topic, messages: r.messages === undefined ? undefined : Array.from(r.messages, (x) => ({ offset: x.offset, partition: x.partition, key: x.key })) } }`

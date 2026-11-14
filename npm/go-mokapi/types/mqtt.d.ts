@@ -67,22 +67,21 @@ export interface PublishArgs {
 }
 
 /**
- * Contains information of the written Kafka message.
- * https://mokapi.io/docs/javascript-api/mokapi-kafka/produceresult
+ * Contains information of the published MQTT message.
  * @example
  * export default function() {
- *   const res = produce({ topic: 'foo' })
- *   console.log(`new kafka message written with offset: ${res.offset}`)
+ *   const res = publish({ topic: 'foo' })
+ *   console.log(`message published to topic ${res.topic} of ${res.api}`)
  * }
  */
 export interface PublishResult {
-    /** Name of the Kafka cluster where the message was written. */
-    readonly cluster: string;
+    /** Name of the MQTT broker (AsyncAPI `info.title`) where the message was published. */
+    readonly api: string;
 
-    /** Kafka topic name where the message was written. */
+    /** MQTT topic name where the message was published. */
     readonly topic: string;
 
-    /** The value of the written message. */
+    /** The value of the published message. */
     readonly value: string;
 }
 

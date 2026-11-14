@@ -55,9 +55,9 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		return nil, err
 	}
 	return &common.MqttPublishResult{
-		Cluster: m.Info.Name,
-		Topic:   t.Name,
-		Value:   string(payload),
+		Api:   m.Info.Name,
+		Topic: t.Name,
+		Value: string(payload),
 	}, nil
 }
 

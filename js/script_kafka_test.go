@@ -219,6 +219,44 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
+			name: "result as seen by the script",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{
+						Api:      "Cluster",
+						Topic:    "Topic",
+						Messages: []common.KafkaMessageResult{{Key: "foo", Offset: 3451345, Partition: 99}},
+					}, nil
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	const res = produce()
+						  	return {
+						  		api: res.api,
+						  		topic: res.topic,
+						  		offset: res.messages[0].offset,
+						  		cluster: res.cluster,
+						  		partitionOnResult: res.partition,
+						  		offsetOnResult: res.offset,
+						  	}
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"api":               "Cluster",
+					"topic":             "Topic",
+					"offset":            int64(3451345),
+					"cluster":           nil,
+					"partitionOnResult": nil,
+					"offsetOnResult":    nil,
+				}, v.Export())
+			},
+		},
+		{
 			name: "default retry",
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {

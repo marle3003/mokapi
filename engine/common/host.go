@@ -188,9 +188,9 @@ type MqttPublishArgs struct {
 }
 
 type MqttPublishResult struct {
-	Cluster string
-	Topic   string
-	Value   string
+	Api   string
+	Topic string
+	Value string
 }
 
 type Action struct {

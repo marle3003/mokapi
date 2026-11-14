@@ -2586,7 +2586,7 @@ export interface KafkaProduceArgs {
  * @example
  * app.kafka().produce('order-placed', { data: { id: 1 } }, {
  *   result: (r) => {
- *     console.log(r.cluster)             // e.g. 'Order Events'
+ *     console.log(r.api)                 // e.g. 'Order Events'
  *     console.log(r.topic)               // e.g. 'order-placed'
  *     console.log(r.messages[0].offset)  // e.g. 42
  *   }

@@ -6,6 +6,9 @@ publish(1);
 // @ts-expect-error
 publish({ topic: 123 });
 const result: PublishResult = publish({ value: "foo" });
+result.api;
+result.topic;
+result.value;
 // @ts-expect-error
 publish({ cluster: 123 });
 // @ts-expect-error
@@ -31,7 +34,7 @@ publishAsync({ topic: "foo", value: "foo" });
 
 const args: PublishResult = publish({ value: "foo" });
 // @ts-expect-error
-args.cluster = "foo";
+args.api = "foo";
 // @ts-expect-error
 args.topic = "foo";
 // @ts-expect-error

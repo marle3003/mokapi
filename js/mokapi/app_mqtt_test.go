@@ -222,6 +222,24 @@ const p = m.app.mqtt().publishAsync('foo', { }, { result: (r) => result = r })
 			},
 		},
 		{
+			name: "publish calls result function with api, topic and value",
+			publishResult: &common.MqttPublishResult{
+				Api:   "broker",
+				Topic: "foo",
+				Value: "bar",
+			},
+			script: `
+const m = require('mokapi')
+let result;
+m.app.mqtt().publish('foo', { }, { result: (r) => result = { api: r.api, topic: r.topic, value: r.value, cluster: r.cluster } })
+`,
+			test: func(t *testing.T, handlers []handler, publishes []*common.MqttPublishArgs, loop *eventloop.EventLoop, err error) {
+				v, err := evalOnLoop(loop, "result")
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"api": "broker", "topic": "foo", "value": "bar", "cluster": nil}, v)
+			},
+		},
+		{
 			name: "publish using retry with numbers",
 			script: `
 const m = require('mokapi')
@@ -256,7 +274,7 @@ m.app.mqtt().publish('foo', { }, { retry: { maxRetryTime: '1s', initialRetryTime
 			r.NoError(t, err)
 
 			vm := goja.New()
-			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+			vm.SetFieldNameMapper(scriptFieldNameMapper{})
 			host := &enginetest.Host{}
 			loop := eventloop.New(vm, host)
 			defer loop.Stop()
