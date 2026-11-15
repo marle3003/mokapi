@@ -738,42 +738,42 @@ a.search-result:focus-visible {
   color: var(--color-text-light);
 }
 
-/* HTTP request log: table beside the detail panel, filter chips and popover */
-.request-log {
+/* Log of requests or messages: table beside the detail panel, filter chips and popover */
+.log-layout {
   display: flex;
   flex: 1 1 0;
   align-items: flex-start;
   min-width: 0;
 }
-.request-log > .card {
+.log-layout > .card {
   flex: 1 1 0;
   min-width: 0;
 }
 /* beside the panel the table has little room: its cells wrap instead of widening it */
-.request-log.has-panel .table-responsive table.dataTable th,
-.request-log.has-panel .table-responsive table.dataTable td {
+.log-layout.has-panel .table-responsive table.dataTable th,
+.log-layout.has-panel .table-responsive table.dataTable td {
   white-space: normal;
 }
-.request-log.has-panel table.dataTable th[class*="col"] {
+.log-layout.has-panel table.dataTable th[class*="col"] {
   width: auto;
 }
-.request-log table.dataTable tr[aria-selected="true"] td {
+.log-layout table.dataTable tr[aria-selected="true"] td {
   background-color: var(--layout-selected-background);
 }
-.request-log-toolbar {
+.log-toolbar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
-.request-log-pause {
+.log-pause {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex: none;
 }
-.request-log-filters {
+.log-filters {
   position: relative;
   display: flex;
   flex-wrap: wrap;
@@ -858,7 +858,7 @@ a.search-result:focus-visible {
   font-size: 0.75rem;
 }
 
-.request-detail-panel {
+.log-detail-panel {
   flex: 0 0 var(--layout-panel-width);
   width: var(--layout-panel-width);
   min-width: 0;
@@ -876,50 +876,50 @@ a.search-result:focus-visible {
   color: var(--layout-text);
   font-size: 0.9rem;
 }
-.request-detail-actions {
+.log-detail-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
 /* the panel shows the info card without its own frame, in the width of the panel */
-.dashboard .request-detail-panel .card,
-[data-theme="light"] .dashboard .request-detail-panel .card {
+.dashboard .log-detail-panel .card,
+[data-theme="light"] .dashboard .log-detail-panel .card {
   margin: 0 0 0.5rem;
   border: 0;
   background-color: transparent;
   box-shadow: none;
 }
-.request-detail-panel .card .card-body {
+.log-detail-panel .card .card-body {
   padding: 0;
 }
 /* the light theme sets its card border with !important */
-[data-theme="light"] .request-detail-panel .card:not(.accented) {
+[data-theme="light"] .log-detail-panel .card:not(.accented) {
   border: 0 !important;
 }
-.request-detail-panel .card .row > [class*="col"] {
+.log-detail-panel .card .row > [class*="col"] {
   flex: 1 1 40%;
   width: auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.request-detail-panel .card .row > .header {
+.log-detail-panel .card .row > .header {
   flex-basis: 100%;
 }
-.dashboard .request-detail-panel .card .header p:not(.label) {
+.dashboard .log-detail-panel .card .header p:not(.label) {
   font-size: 1rem;
 }
-.request-detail-content {
+.log-detail-content {
   padding-top: 0.8rem;
 }
 
 @media only screen and (max-width: 767.98px) {
   /* below the table instead of beside it */
-  .request-log {
+  .log-layout {
     flex-direction: column;
     align-items: stretch;
   }
-  .request-detail-panel {
+  .log-detail-panel {
     flex: none;
     align-self: stretch;
     width: auto;

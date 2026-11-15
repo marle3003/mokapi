@@ -9,7 +9,6 @@ import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import { useMarkdown } from '@/composables/markdown'
 import ChannelInstanceView from '@/components/dashboard/asyncapi/ChannelInstanceView.vue'
-import KafkaMessagesCard from './KafkaMessagesCard.vue'
 import { splitTemplate } from '@/composables/channel'
 import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 import { useChannel } from '@/composables/kafka.ts'
@@ -146,10 +145,12 @@ useBreadcrumb(() => {
                     instances-label="Topics" instance-label="Topic" channel-route="kafkaTopic">
                   </channel-instance-view>
                   <div class="card-group">
-                    <kafka-messages-card :service="service" :topic-name="channel.name" />
+                    <kafka-messages :service="service" :topic-name="channel.name" />
                   </div>
                 </template>
-                <kafka-messages v-else :service="service" :topic-name="channel.name" :instance-name="instance?.name ?? ''" />
+                <div v-else class="card-group">
+                  <kafka-messages :service="service" :topic-name="channel.name" :instance-name="instance?.name ?? ''" />
+                </div>
               </div>
               <div v-if="topic" class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-partitions' }" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">
                 <kafka-partition :topic="topic" />

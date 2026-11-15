@@ -12,7 +12,7 @@ import HttpRequests from './http/Requests.vue'
 import KafkaMessageMetricCard from './kafka/KafkaMessageMetricCard.vue'
 import KafkaClustersCard from './kafka/KafkaServicesCard.vue'
 import KafkaService from './kafka/KafkaService.vue'
-import KafkaMessagesCard from '@/components/dashboard/kafka/KafkaMessagesCard.vue'
+import KafkaMessages from '@/components/dashboard/kafka/KafkaMessages.vue'
 
 import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
 import LdapService from './ldap/Service.vue'
@@ -118,6 +118,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('kafkaLog').value">
+        <div class="card-group">
+            <kafka-messages />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('kafka').value">
         <div class="card-group">
             <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
@@ -126,7 +132,7 @@ function isAnyServiceAvailable() {
             <kafka-clusters-card />
         </div>
         <div class="card-group" v-if="isServiceAvailable('kafka')">
-            <kafka-messages-card />
+            <kafka-messages />
         </div>
     </div>
 

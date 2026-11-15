@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { logKeyAction, neighbourId, selectedRequestId, withSelection } from './request-selection'
+import { logKeyAction, neighbourId, selectedLogId, withSelection } from './log-selection'
 
 function keyEvent(key: string, init: KeyboardEventInit = {}, target?: Element): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, ...init })
@@ -12,36 +12,36 @@ function keyEvent(key: string, init: KeyboardEventInit = {}, target?: Element): 
 
 const open = { panelOpen: true, popoverOpen: false }
 
-describe('request selection', () => {
-  describe('selectedRequestId', () => {
+describe('log selection', () => {
+  describe('selectedLogId', () => {
     it('reads the request of the query', () => {
-      expect(selectedRequestId({ request: 'abc' })).toBe('abc')
+      expect(selectedLogId({ request: 'abc' }, 'request')).toBe('abc')
     })
 
     it('takes the first when the key is repeated', () => {
-      expect(selectedRequestId({ request: ['abc', 'def'] })).toBe('abc')
+      expect(selectedLogId({ request: ['abc', 'def'] }, 'request')).toBe('abc')
     })
 
     it('has no selection without a usable value', () => {
-      expect(selectedRequestId({})).toBeUndefined()
-      expect(selectedRequestId({ request: '' })).toBeUndefined()
-      expect(selectedRequestId({ request: null })).toBeUndefined()
-      expect(selectedRequestId({ request: [] })).toBeUndefined()
-      expect(selectedRequestId({ request: [null] })).toBeUndefined()
+      expect(selectedLogId({}, 'request')).toBeUndefined()
+      expect(selectedLogId({ request: '' }, 'request')).toBeUndefined()
+      expect(selectedLogId({ request: null }, 'request')).toBeUndefined()
+      expect(selectedLogId({ request: [] }, 'request')).toBeUndefined()
+      expect(selectedLogId({ request: [null] }, 'request')).toBeUndefined()
     })
   })
 
   describe('withSelection', () => {
     it('adds the request and keeps the other parameters', () => {
-      expect(withSelection({ refresh: '5' }, 'abc')).toEqual({ refresh: '5', request: 'abc' })
+      expect(withSelection({ refresh: '5' }, 'request', 'abc')).toEqual({ refresh: '5', request: 'abc' })
     })
 
     it('replaces the selected request', () => {
-      expect(withSelection({ request: 'abc', refresh: '5' }, 'def')).toEqual({ refresh: '5', request: 'def' })
+      expect(withSelection({ request: 'abc', refresh: '5' }, 'request', 'def')).toEqual({ refresh: '5', request: 'def' })
     })
 
     it('removes the key on close, and keeps refresh', () => {
-      const result = withSelection({ request: 'abc', refresh: '5' }, undefined)
+      const result = withSelection({ request: 'abc', refresh: '5' }, 'request', undefined)
 
       expect(result).toEqual({ refresh: '5' })
       expect('request' in result).toBe(false)
@@ -50,9 +50,24 @@ describe('request selection', () => {
     it('does not change the given query', () => {
       const query = { request: 'abc' }
 
-      withSelection(query, undefined)
+      withSelection(query, 'request', undefined)
 
       expect(query).toEqual({ request: 'abc' })
+    })
+  })
+
+  describe('with the message key', () => {
+    it('reads and sets the selected message, and ignores a selected request', () => {
+      expect(selectedLogId({ message: 'abc', request: 'def' }, 'message')).toBe('abc')
+      expect(selectedLogId({ request: 'def' }, 'message')).toBeUndefined()
+      expect(withSelection({ refresh: '5' }, 'message', 'abc')).toEqual({ refresh: '5', message: 'abc' })
+    })
+
+    it('removes only the message key on close, and keeps refresh', () => {
+      const result = withSelection({ message: 'abc', refresh: '5' }, 'message', undefined)
+
+      expect(result).toEqual({ refresh: '5' })
+      expect('message' in result).toBe(false)
     })
   })
 

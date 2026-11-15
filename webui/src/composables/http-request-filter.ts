@@ -1,4 +1,5 @@
 import type { HttpEventFilter } from '@/types/dashboard.js'
+import { shorten, type FilterChip } from '@/composables/filter-chip'
 
 // The filter of an HTTP request log as the user edits it. Every filter has a checkbox that
 // switches it on, so a value stays while the filter is off.
@@ -36,13 +37,6 @@ export interface HttpRequestFilter {
 
 export type FilterField = 'service' | 'method' | 'url' | 'requestHeaders' | 'statusCode' | 'responseHeaders' | 'clientIP'
 
-export interface FilterChip {
-    field: FilterField
-    label: string
-    // the full text, the label is cut when it is long
-    title: string
-}
-
 export interface FilterContext {
     // set when the log belongs to one API: the API is not a filter then
     serviceName?: string
@@ -50,7 +44,6 @@ export interface FilterContext {
 
 export type EventQuery = HttpEventFilter & { labels?: Label[] }
 
-const maxLabelLength = 40
 const fieldNames: { field: FilterField, label: string }[] = [
     { field: 'service', label: 'API Name' },
     { field: 'method', label: 'Method' },
@@ -148,7 +141,7 @@ export function toEventQuery(filter: HttpRequestFilter, { serviceName }: FilterC
 }
 
 // A chip exists for every filter that is active and has something to match.
-export function filterChips(filter: HttpRequestFilter, context: FilterContext): FilterChip[] {
+export function filterChips(filter: HttpRequestFilter, context: FilterContext): FilterChip<FilterField>[] {
     const chips: { field: FilterField, text: string }[] = []
 
     if (context.serviceName === undefined && filter.service.state !== 'Not') {
@@ -242,10 +235,6 @@ function hasHeaders(item: FilterItem<HeaderFilter[]>): boolean {
 
 function headerNames(headers: HeaderFilter[]): string {
     return filledHeaders(headers).map(h => `${h.name}:${h.value}`).join(', ')
-}
-
-function shorten(text: string): string {
-    return text.length <= maxLabelLength ? text : text.slice(0, maxLabelLength - 1) + '…'
 }
 
 const checkboxStates: CheckboxState[] = ['Not', 'Single', 'Multi']

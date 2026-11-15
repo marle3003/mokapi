@@ -2,25 +2,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
-import { useRequestSelection } from './use-request-selection'
+import { useLogSelection } from './use-log-selection'
 
 const ids = ['a', 'b', 'c']
 
-describe('request selection', () => {
+describe('log selection', () => {
   let router: Router
   let wrapper: VueWrapper
-  let selection: ReturnType<typeof useRequestSelection>
+  let selection: ReturnType<typeof useLogSelection>
   let popoverOpen: boolean
   const closePopover = vi.fn()
   const onMoved = vi.fn()
 
-  async function mountLog(url: string) {
+  async function mountLog(url: string, key = 'request') {
     router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/start', component: { template: '<div/>' } }, { path: '/log', component: { template: '<div/>' } }] })
     await router.push('/start')
     await router.push(url)
     wrapper = mount(defineComponent({
       setup() {
-        selection = useRequestSelection({ ids: () => ids, popoverOpen: () => popoverOpen, closePopover, onMoved })
+        selection = useLogSelection(key, { ids: () => ids, popoverOpen: () => popoverOpen, closePopover, onMoved })
         return () => null
       },
     }), { global: { plugins: [router] } })
@@ -41,6 +41,15 @@ describe('request selection', () => {
 
   it('reads the selected request from the address', async () => {
     await mountLog('/log?request=b')
+
+    expect(selection.selectedId.value).toBe('b')
+  })
+
+  it('selects a message with the message key and keeps a selected request', async () => {
+    await mountLog('/log?request=a', 'message')
+
+    selection.onRowClick(new MouseEvent('click'), 'b')
+    await vi.waitFor(() => expect(router.currentRoute.value.query).toEqual({ request: 'a', message: 'b' }))
 
     expect(selection.selectedId.value).toBe('b')
   })

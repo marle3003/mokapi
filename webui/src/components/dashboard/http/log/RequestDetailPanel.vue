@@ -4,6 +4,7 @@ import RequestInfoCard from '../RequestInfoCard.vue'
 import HttpEventParameters from '../HttpEventParameters.vue'
 import HttpBody from '../HttpBody.vue'
 import HttpEventHeader from '../HttpEventHeader.vue'
+import LogDetailPanel from '../../log/LogDetailPanel.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName } from '@/composables/dashboard'
@@ -25,11 +26,8 @@ const requestHeaders = computed(() => Object.fromEntries(
 </script>
 
 <template>
-    <section class="request-detail-panel" aria-label="Request details">
-        <div class="request-detail-actions">
-            <router-link :to="{ name: getRouteName('httpRequest').value, params: { id: requestId } }">Open as tab</router-link>
-            <button type="button" class="btn-close" aria-label="Close" @click="$emit('close')"></button>
-        </div>
+    <log-detail-panel label="Request details" :full-view="{ name: getRouteName('httpRequest').value, params: { id: requestId } }"
+        @close="$emit('close')">
 
         <template v-if="event && eventData">
             <request-info-card :event="event" />
@@ -40,7 +38,7 @@ const requestHeaders = computed(() => Object.fromEntries(
                     {{ tab }}
                 </button>
             </div>
-            <div class="request-detail-content" role="tabpanel">
+            <div class="log-detail-content" role="tabpanel">
                 <template v-if="activeTab === 'Response'">
                     <http-body :content-type="responseContentType" :body="eventData.response.body" :size="eventData.response.size" />
                 </template>
@@ -62,5 +60,5 @@ const requestHeaders = computed(() => Object.fromEntries(
         </template>
         <loading v-if="!event && isLoading" />
         <message v-if="!event && !isLoading" message="HTTP Request not found" />
-    </section>
+    </log-detail-panel>
 </template>

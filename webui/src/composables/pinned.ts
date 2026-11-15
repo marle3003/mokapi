@@ -29,10 +29,10 @@ type PinService = Pick<Service, 'name' | 'type' | 'items'>
 
 // Where the service and its items are in the path of a protocol: `service` is the segment before the
 // service name, `item` the one before an item name (HTTP endpoints are the rest of the path), `log`
-// the one before the service name of its request log. Other pages of a service (servers, groups, clients) have no item and only need the service.
+// the one before the service name of its request or message log. Other pages of a service (servers, groups, clients) have no item and only need the service.
 const protocolRoutes: Record<string, { service: string, item?: string, log?: string }> = {
     http: { service: 'services', log: 'log' },
-    kafka: { service: 'service', item: 'topics' },
+    kafka: { service: 'service', item: 'topics', log: 'log' },
     mqtt: { service: 'service', item: 'topics' },
     websocket: { service: 'service', item: 'channels' },
     // 'maiboxes' (sic) is the existing route path in router/index.ts, don't fix it here alone

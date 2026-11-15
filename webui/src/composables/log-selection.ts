@@ -1,29 +1,28 @@
 import type { LocationQuery, LocationQueryRaw } from 'vue-router'
 
-const selectionKey = 'request'
-
 export type LogKeyAction = 'up' | 'down' | 'close-popover' | 'close-panel'
 
-// The selected request of a log is in the URL (`?request=<id>`), so a link opens the panel.
-export function selectedRequestId(query: LocationQuery): string | undefined {
-    const value = query[selectionKey]
+// The selected row of a log is in the URL (`?request=<id>`, `?message=<id>`: the query key says
+// which log), so a link opens the panel.
+export function selectedLogId(query: LocationQuery, key: string): string | undefined {
+    const value = query[key]
     const id = Array.isArray(value) ? value[0] : value
     return id || undefined
 }
 
-// The query with the selected request, other parameters (refresh) stay. Without id the key is removed.
-export function withSelection(query: LocationQuery, id: string | undefined): LocationQueryRaw {
+// The query with the selected row, other parameters (refresh) stay. Without id the key is removed.
+export function withSelection(query: LocationQuery, key: string, id: string | undefined): LocationQueryRaw {
     const result: LocationQueryRaw = { ...query }
     if (id === undefined) {
-        delete result[selectionKey]
+        delete result[key]
     } else {
-        result[selectionKey] = id
+        result[key] = id
     }
     return result
 }
 
 // The row above or below the current one. It stops at the first and last row, and selects the first
-// row when the current request is not on the page.
+// row when the current row is not on the page.
 export function neighbourId(ids: string[], currentId: string | undefined, direction: 'up' | 'down'): string | undefined {
     const index = currentId === undefined ? -1 : ids.indexOf(currentId)
     if (index < 0) {

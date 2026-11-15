@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 import { Metric } from './metric'
 import { ServiceInfoModel } from './service-info'
+import { LogModel } from './log'
 
 export class HttpModel {
     readonly metricHttpRequests: Metric
@@ -125,36 +126,10 @@ export class ExampleModel {
     }
 }
 
-// The request log with its detail panel, filter chips and Pause button. The accessible names are
-// the contract of the UI: region "Recent Requests" (table, chips, Pause), region "Request details"
-// (the panel, beside the log region), list "Active filters", button "Add filter".
-export class HttpRequestLogModel {
-    readonly log: Locator
-    readonly table: Locator
-    readonly rows: Locator
-    readonly selectedRow: Locator
-    readonly pageSize: Locator
-    readonly panel: HttpRequestPanelModel
-    readonly chips: Locator
-    readonly addFilter: Locator
-    readonly addFilterMenu: Locator
-    readonly pause: Locator
-    readonly resume: Locator
-    readonly paused: Locator
-
-    constructor(private page: Page) {
-        this.log = page.getByRole('region', { name: 'Recent Requests' })
-        this.table = this.log.getByRole('table', { name: 'Recent Requests' })
-        this.rows = this.table.locator('tbody tr')
-        this.selectedRow = this.table.getByRole('row', { selected: true })
-        this.pageSize = this.log.getByRole('combobox').filter({ has: page.getByRole('option', { name: '10', exact: true }) })
-        this.panel = new HttpRequestPanelModel(page.getByRole('region', { name: 'Request details' }))
-        this.chips = this.log.getByRole('list', { name: 'Active filters' }).getByRole('listitem')
-        this.addFilter = this.log.getByRole('button', { name: 'Add filter' })
-        this.addFilterMenu = page.getByRole('menu')
-        this.pause = this.log.getByRole('button', { name: 'Pause', exact: true })
-        this.resume = this.log.getByRole('button', { name: 'Resume', exact: true })
-        this.paused = this.log.getByText('Paused', { exact: true })
+// The request log of the HTTP dashboard: region "Recent Requests", panel "Request details".
+export class HttpRequestLogModel extends LogModel<'API Name' | 'Method' | 'URL' | 'Request Header' | 'Status Code' | 'Response Header' | 'Client IP'> {
+    constructor(page: Page) {
+        super(page, { log: 'Recent Requests', panel: 'Request details' })
     }
 
     // The row of a request, found by the link to its full view.
@@ -165,44 +140,5 @@ export class HttpRequestLogModel {
     cell(row: Locator, column: 'Method' | 'URL' | 'Status Code' | 'Time' | 'Duration'): Locator {
         const index = ['Method', 'URL', 'Status Code', 'Time', 'Duration'].indexOf(column)
         return row.getByRole('cell').nth(index)
-    }
-
-    chip(label: string): HttpFilterChipModel {
-        return new HttpFilterChipModel(this.chips.filter({ hasText: label }), label)
-    }
-
-    // Opens the popover of a field through "Add filter". The popover is a dialog named like the field.
-    async openAddFilter(field: 'API Name' | 'Method' | 'URL' | 'Request Header' | 'Status Code' | 'Response Header' | 'Client IP'): Promise<Locator> {
-        await this.addFilter.click()
-        await this.addFilterMenu.getByRole('menuitem', { name: field, exact: true }).click()
-        return this.page.getByRole('dialog', { name: field, exact: true })
-    }
-}
-
-export class HttpRequestPanelModel {
-    readonly closeButton: Locator
-    readonly openAsTab: Locator
-    readonly tabs: Locator
-    readonly content: Locator
-
-    constructor(readonly element: Locator) {
-        this.closeButton = element.getByRole('button', { name: 'Close', exact: true })
-        this.openAsTab = element.getByRole('link', { name: 'Open as tab' })
-        this.tabs = element.getByRole('tab')
-        this.content = element.getByRole('tabpanel')
-    }
-
-    tab(name: 'Response' | 'Request' | 'Headers'): Locator {
-        return this.element.getByRole('tab', { name, exact: true })
-    }
-}
-
-export class HttpFilterChipModel {
-    readonly edit: Locator
-    readonly remove: Locator
-
-    constructor(readonly element: Locator, label: string) {
-        this.edit = element.getByRole('button', { name: label, exact: true })
-        this.remove = element.getByRole('button', { name: `Remove ${label}`, exact: true })
     }
 }

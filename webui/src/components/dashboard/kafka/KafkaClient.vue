@@ -4,7 +4,7 @@ import { useKafka } from '@/composables/kafka';
 import { useRoute, useRouter } from '@/router';
 import { ref, watch } from 'vue';
 import Message from '../../Message.vue';
-import KafkaMessagesCard from './KafkaMessagesCard.vue'
+import KafkaMessages from './KafkaMessages.vue'
 import KafkaRequests from './KafkaRequests.vue'
 import { useBreadcrumb } from '@/composables/breadcrumb.ts';
 
@@ -151,7 +151,7 @@ useBreadcrumb(() => {
         </section>
       </div>
       <div class="card-group" v-if="service">
-        <kafka-messages-card :service="service" :client-id="clientId" :hide-when-empty="true" />
+        <kafka-messages :service="service" :client-id="clientId" :hide-when-empty="true" />
       </div>
       <div class="card-group" v-if="service">
         <kafka-requests :service="service" :client-id="clientId" />

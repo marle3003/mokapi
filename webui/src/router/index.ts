@@ -127,6 +127,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka – ${params.service}` }
           },
           {
+            path: 'log/:service',
+            name: getRouteName('kafkaServiceLog'),
+            component: dashboardView,
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka – ${params.service} messages` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('kafkaLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - Kafka – Messages' }
+          },
+          {
             path: 'service/:service/servers/:server',
             name: getRouteName('kafkaServer'),
             component: dashboardView,

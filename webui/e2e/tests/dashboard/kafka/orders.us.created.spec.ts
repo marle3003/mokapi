@@ -46,7 +46,7 @@ test('Visit Kafka topic orders.{region}.{eventType}', async ({ page, context }) 
 
             await expect(messages.locator('thead th')).toHaveText(['Key', 'Value', 'Time'])
             rows = messages.locator('tbody tr')
-            await expect(rows).toHaveCount(1)
+            await expect(rows).toHaveCount(3)
             await expect(await getCellByColumnName(messages, 'Key', rows.nth(0))).toHaveText('a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d');
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('"orderId":"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'));
@@ -56,7 +56,7 @@ test('Visit Kafka topic orders.{region}.{eventType}', async ({ page, context }) 
 
         await expect(messages.locator('thead th')).toHaveText(['Topic','Key', 'Value', 'Time'])
         rows = messages.locator('tbody tr')
-        await expect(rows).toHaveCount(1)
+        await expect(rows).toHaveCount(3)
         await expect(await getCellByColumnName(messages, 'Topic', rows.nth(0))).toHaveText('orders.us.created');
         await expect(await getCellByColumnName(messages, 'Key', rows.nth(0))).toHaveText('a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d');
         await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('"orderId":"a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d"');

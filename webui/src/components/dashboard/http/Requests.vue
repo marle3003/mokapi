@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref, nextTick } from 'vue'
+import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
-import { getRouteName, useDashboard } from '@/composables/dashboard'
+import { getRouteName } from '@/composables/dashboard'
 import { usePrettyText } from '@/composables/usePrettyText'
 import {
     filterStorageKey, loadFilter, saveFilter, toEventQuery,
     type FilterField, type HttpRequestFilter,
 } from '@/composables/http-request-filter'
-import { useRequestSelection } from '@/composables/use-request-selection'
-import { useLogPause } from '@/composables/log-pause'
+import { scrollSelectedRowIntoView, useLogSelection } from '@/composables/use-log-selection'
+import { useEventLog } from '@/composables/use-event-log'
+import { useServiceList } from '@/composables/use-service-list'
 import Paging from '../Paging.vue'
 import Loading from '@/components/Loading.vue'
+import LogPauseButton from '../log/LogPauseButton.vue'
 import RequestLogFilters from './log/RequestLogFilters.vue'
 import RequestDetailPanel from './log/RequestDetailPanel.vue'
-import { usePageSize } from '@/composables/paging.ts'
 
 const props = defineProps({
     serviceName: { type: String, required: false},
@@ -33,87 +34,28 @@ if (props.serviceName){
     }
 }
 
-const paging = reactive({
-    current: 1,
-    size: usePageSize(25),
-})
-
 const storageKey = filterStorageKey(props.serviceName, props.path, props.method)
 const filter = reactive<HttpRequestFilter>(loadFilter(storageKey))
 const filters = computed(() => toEventQuery(filter, { serviceName: props.serviceName }))
 const editingFilter = ref<FilterField>()
 
-const { dashboard, getMode } = useDashboard()
-// The demo has no live requests, so there is nothing to pause.
-const canPause = getMode() === 'live'
-const { paused, toggle: togglePause, resume } = useLogPause()
-const result = ref<ServiceEventPage | null>(null);
-const isLoading = ref(true)
-const events = computed(() => result.value?.items ?? [])
-
-// A new filter or page asks for other requests, which ends the pause.
-watch([() => paging.current, () => paging.size, filters], resume)
-watch(
-  [() => dashboard.value, () => paging.current, () => paging.size, labels, filters, paused ],
-  ([db], _, onCleanup) => {
-    // closing the previous fetch (onCleanup) stops its reload, the last result stays on the screen
-    if (paused.value) {
-        return
-    }
-    const queryLabels = [...labels.value]
-    if (filters.value.labels) {
-        queryLabels.push(...filters.value.labels)
-    }
-    const res = db.getEvents({
-      page: paging.current,
-      size: paging.size,
-      labels: queryLabels,
-      http: filters.value,
-    })
-
-    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
-
-    onCleanup(() => {
-      stop()
-      res.close()
-    })
-  },
-  { immediate: true }
-);
+const { paging, result, isLoading, events, paused, canPause, togglePause } = useEventLog(() => ({
+    labels: [...labels.value, ...(filters.value.labels ?? [])],
+    http: filters.value,
+}))
 
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
 
-const services = ref<HttpService[] | null>(null)
-const serviceNames = computed(() => services.value?.map(s => s.name) ?? [])
-watch(
-  () => dashboard.value,
-  (db, _, onCleanup) => {
-    if (props.serviceName) {
-        return
+const services = useServiceList('http', !props.serviceName)
+const serviceNames = computed(() => services.value.map(s => s.name))
+// the log of all APIs starts with the first one
+watch(services, list => {
+    if (filter.service.value.length === 0 && list.length > 0) {
+        filter.service.value = [list[0].name]
     }
-
-    const res = db.getServices('http', false)
-    
-    const stop = watch(
-      () => res.services.value,
-      (v) => {
-        services.value = v as HttpService[]
-        if (filter.service.value.length === 0 && services.value.length > 0) {
-            filter.service.value = [services.value[0].name]
-        }
-      },
-      { immediate: true }
-    )
-
-    onCleanup(() => {
-      stop();
-      res.close();
-    });
-  },
-  { immediate: true }
-);
+}, { immediate: true })
 
 const table = useTemplateRef<HTMLElement>('table')
 const urlCell = useTemplateRef<HTMLElement>('urlCell');
@@ -153,28 +95,22 @@ const hasDeprecatedRequests = computed(() => {
     return false    
 })
 
-const { selectedId, select, onRowClick, onLinkClick } = useRequestSelection({
+const { selectedId, select, onRowClick, onLinkClick } = useLogSelection('request', {
     ids: () => events.value.map(x => x.id),
     popoverOpen: () => editingFilter.value !== undefined,
     closePopover: () => { editingFilter.value = undefined },
-    onMoved: () => nextTick(() => table.value?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' })),
+    onMoved: () => scrollSelectedRowIntoView(table.value),
 })
 </script>
 
 <template>
-    <div class="request-log" :class="{ 'has-panel': selectedId }">
+    <div class="log-layout" :class="{ 'has-panel': selectedId }">
         <section class="card" aria-labelledby="requests">
             <div class="card-body">
                 <h2 id="requests" class="card-title text-center">Recent Requests</h2>
-                <div class="request-log-toolbar">
+                <div class="log-toolbar">
                     <request-log-filters v-model="filter" v-model:editing="editingFilter" :service-name="serviceName" :service-names="serviceNames" />
-                    <div class="request-log-pause" v-if="canPause">
-                        <span v-if="paused" class="badge text-bg-warning">Paused</span>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @click="togglePause">
-                            <i class="bi" :class="paused ? 'bi-play-fill' : 'bi-pause-fill'" aria-hidden="true"></i>
-                            {{ paused ? 'Resume' : 'Pause' }}
-                        </button>
-                    </div>
+                    <log-pause-button v-if="canPause" :paused="paused" @toggle="togglePause" />
                 </div>
 
                 <div class="table-responsive">

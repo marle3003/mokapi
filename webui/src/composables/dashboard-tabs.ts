@@ -22,8 +22,10 @@ export function emptyTabs(): TabsState {
 }
 
 // Parameters that change how a view looks, not what it shows: the refresh interval is a setting of
-// the dashboard, `request` selects a row of a request log.
-const viewStateParameters = ['refresh', 'request']
+// the dashboard, `request` and `message` select a row of a request or message log.
+const refreshParameter = 'refresh'
+const selectionParameters = ['request', 'message']
+const viewStateParameters = [refreshParameter, ...selectionParameters]
 
 // The hash selects a sub tab of the view. Neither it nor a view-state parameter is part of what a
 // tab shows.
@@ -31,11 +33,11 @@ export function tabIdentity(fullPath: string): string {
     return withoutParameters(fullPath.split('#')[0], viewStateParameters)
 }
 
-// Identifies the rendered view: a new key mounts the view again. The selected request is state of
-// the view, so selecting a row must keep it (and the log with its pause and filters) mounted.
+// Identifies the rendered view: a new key mounts the view again. The selected row is state of
+// the view, so selecting it must keep the view (and the log with its pause and filters) mounted.
 export function viewKey(fullPath: string): string {
     const [pathAndQuery, hash] = splitAt(fullPath, '#')
-    return withoutParameters(pathAndQuery, ['request']) + (hash === undefined ? '' : `#${hash}`)
+    return withoutParameters(pathAndQuery, selectionParameters) + (hash === undefined ? '' : `#${hash}`)
 }
 
 function withoutParameters(pathAndQuery: string, names: string[]): string {

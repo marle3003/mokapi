@@ -20,7 +20,7 @@ import ExportBruno from './export/Bruno.vue'
 import Breadcrumb from '../Breadcrumb.vue'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import { useService } from '@/composables/service.ts'
-import { withSelection } from '@/composables/request-selection'
+import { withSelection } from '@/composables/log-selection'
 
 const route = useRoute()
 const router = useRouter();
@@ -61,7 +61,7 @@ const activeTab = ref('tab-paths');
 
 function setTab(tab: string) {
     router.replace({
-        query: withSelection(route.query, undefined),
+        query: withSelection(route.query, 'request', undefined),
         hash: `#${tab}`
     });
 }

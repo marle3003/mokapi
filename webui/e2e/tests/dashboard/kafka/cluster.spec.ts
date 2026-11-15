@@ -47,6 +47,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await topics.testTopic(2, cluster.topics[1])
     })
 
+    await page.getByRole('tab', { name: 'Messages', exact: true }).click()
     await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
 
     await test.step('Check groups section', async () => {

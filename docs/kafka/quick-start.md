@@ -166,10 +166,14 @@ Instead of writing a consumer just to check that a message arrived, you can use 
 to inspect Kafka traffic directly. This is often the fastest way to debug message flow during development.
 
 1. Open the dashboard, by default at http://localhost:8080.
-2. Go to the Kafka tab.
-3. Click on the mocked Kafka API.
-4. Select the orders topic to see all messages that have been produced to it, including their key,
-value, and headers.
+2. Click **Kafka** in the sidebar and then the mocked Kafka API.
+3. Open the **Messages** sub tab to see the messages produced to the cluster, or select the
+   `orders` topic and open its **Messages** tab to see only the messages of this topic.
+4. Click a message to see its value, headers and details next to the table. Click **Open as tab**
+   to show it in the full view.
+
+Filter by topic, partition or client with **+ Add filter**. See
+[Analyze your mocked Kafka API in Dashboard](/docs/kafka/dashboard.md) for the details.
 
 ## Schema Validation
 

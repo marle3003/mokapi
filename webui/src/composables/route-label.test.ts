@@ -27,6 +27,19 @@ describe('routeLabel', () => {
     expect(routeLabel('httpLog-demo', {})).toBe('Requests')
   })
 
+  it('names the message log of one cluster after the cluster', () => {
+    expect(routeLabel('kafkaServiceLog', { service: 'Kafka World' })).toBe('Kafka World messages')
+  })
+
+  it('names the message log of all clusters "Messages"', () => {
+    expect(routeLabel('kafkaLog', {})).toBe('Messages')
+  })
+
+  it('treats a demo message log like the live one', () => {
+    expect(routeLabel('kafkaServiceLog-demo', { service: 'Kafka World' })).toBe('Kafka World messages')
+    expect(routeLabel('kafkaLog-demo', {})).toBe('Messages')
+  })
+
   it.each([
     ['httpService', { service: 'Books API' }, 'Books API'],
     ['kafkaService', { service: 'Orders' }, 'Orders'],

@@ -84,6 +84,11 @@
                 "label": "Config",
                 "source": "kafka/config.md",
                 "path": "/docs/kafka/config"
+              },
+              {
+                "label": "Dashboard",
+                "source": "kafka/dashboard.md",
+                "path": "/docs/kafka/dashboard"
               }
             ]
           },

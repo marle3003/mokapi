@@ -370,6 +370,11 @@ describe('dashboard tabs', () => {
       expect(tabIdentity('/dashboard/http/log?request=abc#tab-requests')).toBe('/dashboard/http/log')
     })
 
+    it('removes the selected Kafka message like the selected request', () => {
+      expect(tabIdentity('/dashboard/kafka/log?message=abc')).toBe('/dashboard/kafka/log')
+      expect(tabIdentity('/dashboard/kafka/log?a=1&message=abc&refresh=5&b=2')).toBe('/dashboard/kafka/log?a=1&b=2')
+    })
+
     it('keeps a parameter that only starts with a view-state name', () => {
       expect(tabIdentity('/dashboard/search?requests=1&refreshing=2')).toBe('/dashboard/search?requests=1&refreshing=2')
     })
@@ -387,13 +392,19 @@ describe('dashboard tabs', () => {
       expect(viewKey('/dashboard/http/log?a=1&request=abc&b=2')).toBe('/dashboard/http/log?a=1&b=2')
     })
 
+    it('stays the same when a Kafka message is selected', () => {
+      expect(viewKey('/dashboard/kafka/log?message=abc')).toBe('/dashboard/kafka/log')
+      expect(viewKey('/dashboard/kafka/log?message=abc&refresh=5')).toBe('/dashboard/kafka/log?refresh=5')
+      expect(viewKey('/dashboard/kafka/log?a=1&message=abc&b=2')).toBe('/dashboard/kafka/log?a=1&b=2')
+    })
+
     it('still changes with the refresh interval and the hash', () => {
       expect(viewKey('/dashboard/configs?refresh=20')).toBe('/dashboard/configs?refresh=20')
       expect(viewKey('/dashboard/configs?request=abc#tab-servers')).toBe('/dashboard/configs#tab-servers')
     })
 
     it('keeps a parameter that only starts with request', () => {
-      expect(viewKey('/dashboard/search?requests=1')).toBe('/dashboard/search?requests=1')
+      expect(viewKey('/dashboard/search?requests=1&messages=2')).toBe('/dashboard/search?requests=1&messages=2')
     })
   })
 

@@ -585,6 +585,23 @@ export const clusters = [
     }
 ]
 
+const headers = {
+    foo: { value: 'bar', binary: '' },
+    bar: { value: '', binary: 'dmFsdWUgYXMgYmluYXJ5' }
+}
+
+const actions = [
+    {
+        duration: 20,
+        tags: {
+            name: "kafka",
+            file: "examples/mokapi/kafka.js",
+            fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+            event: "kafka"
+        }
+    }
+]
+
 export const events = [
     {
         id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
@@ -754,7 +771,76 @@ export const events = [
             messageId: 'shopOrder',
         }
     },
+    // messages for the message log: more than one page, two partitions and two clients per topic
+    productMessage('a0000000-0000-4000-8000-000000000001', { partition: 0, offset: 2, clientId: 'consumer-1', key: 'GGOEWXXX0829', time: '2025-03-01T10:00:00+01:00', actions }),
+    productMessage('a0000000-0000-4000-8000-000000000002', { partition: 0, offset: 3, clientId: 'consumer-2', key: 'GGOEWXXX0830', time: '2025-03-01T10:01:00+01:00', headers }),
+    productMessage('a0000000-0000-4000-8000-000000000003', { partition: 1, offset: 2, clientId: 'consumer-1', key: 'GGOEWXXX0831', time: '2025-03-01T10:02:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000004', { partition: 2, offset: 0, clientId: 'consumer-2', key: 'GGOEWXXX0832', time: '2025-03-01T10:03:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000005', { partition: 2, offset: 1, clientId: 'consumer-1', key: 'GGOEWXXX0833', time: '2025-03-01T10:04:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000006', { partition: 2, offset: 2, clientId: 'consumer-2', key: 'GGOEWXXX0834', time: '2025-03-01T10:05:00+01:00' }),
+    orderMessage('a0000000-0000-4000-8000-000000000007', { offset: 1, clientId: 'consumer-1', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c01', time: '2025-03-01T10:06:00+01:00' }),
+    orderMessage('a0000000-0000-4000-8000-000000000008', { offset: 2, clientId: 'consumer-2', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c02', time: '2025-03-01T10:07:00+01:00' }),
 ]
+
+function productMessage(id: string, m: { partition: number, offset: number, clientId: string, key: string, time: string, headers?: object, actions?: object[] }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'message',
+            topic: 'mokapi.shop.products',
+            partition: `${m.partition}`,
+            clientId: m.clientId
+        },
+        time: m.time,
+        data: {
+            topic: 'mokapi.shop.products',
+            offset: m.offset,
+            key: { value: m.key },
+            message: {
+                value: JSON.stringify({
+                    id: m.key,
+                    name: `Waze Tee ${m.key}`,
+                    price: '18.99',
+                    category: 'apparel'
+                })
+            },
+            partition: m.partition,
+            messageId: 'shopOrder',
+            clientId: m.clientId,
+            ...(m.headers ? { headers: m.headers } : {}),
+            ...(m.actions ? { actions: m.actions } : {})
+        }
+    }
+}
+
+function orderMessage(id: string, m: { offset: number, clientId: string, orderId: string, time: string }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'message',
+            topic: 'orders.{region}.{eventType}',
+            instance: 'orders.us.created',
+            partition: '0',
+            clientId: m.clientId
+        },
+        time: m.time,
+        data: {
+            topic: 'orders.us.created',
+            offset: m.offset,
+            key: { value: m.orderId },
+            message: {
+                value: JSON.stringify({ orderId: m.orderId, amount: 99.5, timestamp: '2026-10-17T10:15:30' })
+            },
+            partition: 0,
+            messageId: 'shopOrder',
+            clientId: m.clientId
+        }
+    }
+}
 
 function getChannelInfo(c: (typeof clusters)[number]["topics"][number]) {
     return {

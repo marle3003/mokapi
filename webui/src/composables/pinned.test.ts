@@ -43,6 +43,13 @@ describe('pinned entries', () => {
       expect(isPinned(pinned, '/dashboard/http/log?request=def')).toBe(true)
     })
 
+    it('ignores the selected message of a Kafka log', () => {
+      const pinned = togglePin([], '/dashboard/kafka/log?message=abc')
+
+      expect(pinned).toEqual(['/dashboard/kafka/log'])
+      expect(isPinned(pinned, '/dashboard/kafka/log?message=def')).toBe(true)
+    })
+
     it('keeps other query parameters', () => {
       expect(togglePin([], '/dashboard/search?q=pet&refresh=20')).toEqual(['/dashboard/search?q=pet'])
     })
@@ -131,6 +138,15 @@ describe('pinned entries', () => {
         ['/dashboard/http/log/Gone', false],
         ['/dashboard-demo/http/log/Swagger%20Petstore', true],
       ])('request log %s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
+        ['/dashboard/kafka/log', true],
+        ['/dashboard/kafka/log/Kafka%20World', true],
+        ['/dashboard/kafka/log/Gone', false],
+        ['/dashboard-demo/kafka/log/Kafka%20World', true],
+      ])('message log %s', (path, expected) => {
         expect(available(path)).toBe(expected)
       })
 

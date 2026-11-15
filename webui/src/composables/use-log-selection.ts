@@ -1,12 +1,12 @@
-import { computed, onUnmounted, watch } from 'vue'
+import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { logKeyAction, neighbourId, selectedRequestId, withSelection } from '@/composables/request-selection'
+import { logKeyAction, neighbourId, selectedLogId, withSelection } from '@/composables/log-selection'
 
-// Connects the selection of a request log with the router and the keyboard. The selected request
-// is in the address, so a link opens the panel. A selection replaces the history entry: stepping
-// through requests is not navigation.
-export function useRequestSelection(log: {
-    // the requests of the current page, top to bottom
+// Connects the selection of a log (query key `request` or `message`) with the router and the
+// keyboard. The selected row is in the address, so a link opens the panel. A selection replaces the
+// history entry: stepping through rows is not navigation.
+export function useLogSelection(key: string, log: {
+    // the rows of the current page, top to bottom
     ids: () => string[]
     popoverOpen: () => boolean
     closePopover: () => void
@@ -16,10 +16,10 @@ export function useRequestSelection(log: {
     const route = useRoute()
     const router = useRouter()
 
-    const selectedId = computed(() => selectedRequestId(route.query))
+    const selectedId = computed(() => selectedLogId(route.query, key))
 
     function select(id: string | undefined) {
-        router.replace({ query: withSelection(route.query, id), hash: route.hash })
+        router.replace({ query: withSelection(route.query, key, id), hash: route.hash })
     }
 
     // A click that opens a new tab (Ctrl/Cmd, middle button) is not ours: the link keeps its address.
@@ -66,4 +66,9 @@ export function useRequestSelection(log: {
     onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
     return { selectedId, select, onRowClick, onLinkClick }
+}
+
+// After an arrow key the selected row may be out of view.
+export function scrollSelectedRowIntoView(table: HTMLElement | null | undefined) {
+    return nextTick(() => table?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }))
 }

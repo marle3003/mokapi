@@ -144,9 +144,14 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
 
     const messages = page.getByRole('table', { name: 'Recent Messages' });
 
+    // a click selects the message and shows it beside the log, the full view opens with "Open as tab"
+    async function openFullView() {
+        await page.getByRole('region', { name: 'Message details' }).getByRole('link', { name: 'Open as tab' }).click();
+    }
+
     await test.step('Verify Recent Messages', async () => {
 
-        await page.getByRole('tab', { name: 'Topics' }).click();
+        await page.getByRole('tab', { name: 'Messages', exact: true }).click();
         const region = page.getByRole('region', { name: 'Recent Messages' });
         await expect(region).toBeVisible();
 
@@ -173,6 +178,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await test.step('Verify Message 1', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
+            await openFullView();
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
@@ -205,6 +211,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await test.step('Verify Message 2', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'random-message-1' }).click();
+            await openFullView();
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('random-message-1');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');

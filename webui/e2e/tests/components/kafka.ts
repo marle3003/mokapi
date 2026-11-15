@@ -78,6 +78,12 @@ export function useKafkaPartitions(table: Locator) {
 }
 
 export function useKafkaMessages(page: Page) {
+    // A click selects the row and shows the message beside the log, the full view opens with "Open as tab".
+    async function openFullView(row: Locator) {
+        await row.click()
+        await page.getByRole('region', { name: 'Message details' }).getByRole('link', { name: 'Open as tab' }).click()
+    }
+
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
             await test.step('Check messages log', async () => {
@@ -95,7 +101,7 @@ export function useKafkaMessages(page: Page) {
                 }
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
 
-                await message.click()
+                await openFullView(message)
                 await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0827')
                 await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
                 await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
@@ -118,7 +124,7 @@ export function useKafkaMessages(page: Page) {
                 }
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
 
-                await message.click()
+                await openFullView(message)
                 await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0828')
                 await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
                 await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
