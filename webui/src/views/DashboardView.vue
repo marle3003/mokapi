@@ -13,6 +13,8 @@ import { useConnection } from '@/composables/connection'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { useDashboardLayout } from '@/composables/dashboard-layout'
+import { sectionVisibility } from '@/composables/dashboard-sections'
+import { useNarrowWindow } from '@/composables/narrow-window'
 import ClassicLayout from '@/components/dashboard/ClassicLayout.vue'
 import TabbedLayout from '@/components/dashboard/layout/TabbedLayout.vue'
 
@@ -29,7 +31,8 @@ if (route.meta.mode) {
     setMode(route.meta.mode as 'live' | 'demo')
 }
 
-const { layout } = useDashboardLayout()
+const { layout, openSearch } = useDashboardLayout()
+const isNarrow = useNarrowWindow()
 
 const appInfo = computed(() => {
     return dashboard.value.getAppInfo()
@@ -40,8 +43,13 @@ const shortcutHandler = (e: KeyboardEvent) => {
     if (tag === 'INPUT' || tag === 'TEXTAREA' || e.isComposing) {
         return
     }
-    if (e.key === '/') {
-        router.push({ name: getRouteName('search').value })
+    // hasJobs doesn't matter for the search
+    if (e.key === '/' && appInfo.value?.data && sectionVisibility(appInfo.value.data, false, getMode()).search) {
+        if (layout.value === 'classic') {
+            router.push({ name: getRouteName('search').value })
+        } else {
+            openSearch(isNarrow.value)
+        }
         e.preventDefault();
     }
 }

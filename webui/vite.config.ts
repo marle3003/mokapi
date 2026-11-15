@@ -45,7 +45,12 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     },
     test: {
       environment: 'jsdom',
-      include: ['src/**/*.test.ts']
+      include: ['src/**/*.test.ts'],
+      coverage: {
+        provider: 'v8',
+        include: ['src/composables/**/*.ts'],
+        exclude: ['src/**/*.test.ts']
+      }
     }
   }
 })

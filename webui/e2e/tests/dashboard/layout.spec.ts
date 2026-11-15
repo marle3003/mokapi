@@ -9,7 +9,7 @@ test.describe('Dashboard layout: activity bar', () => {
         await page.goto('/dashboard')
 
         await expect(activityBar.getByRole('button', { name: 'Services' })).toBeVisible()
-        await expect(activityBar.getByRole('link', { name: 'Search' })).toBeVisible()
+        await expect(activityBar.getByRole('button', { name: 'Search' })).toBeVisible()
         await expect(activityBar.getByRole('link', { name: 'Jobs' })).toBeVisible()
         await expect(activityBar.getByRole('link', { name: 'Configs' })).toBeVisible()
         await expect(activityBar.getByRole('link', { name: 'Faker' })).toBeVisible()
@@ -33,7 +33,7 @@ test.describe('Dashboard layout: activity bar', () => {
         await page.goto('/dashboard')
 
         await expect(activityBar.getByRole('link', { name: 'Configs' })).toBeVisible()
-        await expect(activityBar.getByRole('link', { name: 'Search' })).toHaveCount(0)
+        await expect(activityBar.getByRole('button', { name: 'Search' })).toHaveCount(0)
     })
 
     test('hides Jobs when no job ran', async ({ page }) => {

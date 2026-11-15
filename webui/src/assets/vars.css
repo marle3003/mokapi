@@ -131,6 +131,9 @@
     --layout-text-subtle:            #a99a8f;
     --layout-accent:                 #eabaab;
     --layout-error-dot:              #ff4d64;
+    --layout-row-separator:          #1e1d25;
+    --layout-status-error:           #ff7a8c;
+    --layout-status-other:           #f5a524;
 }
 
 [data-theme="light"] {
@@ -238,4 +241,7 @@
     --layout-text-subtle:            rgb(87, 96, 106);
     --layout-accent:                 rgb(8, 109, 215);
     --layout-error-dot:              rgb(208, 35, 59);
+    --layout-row-separator:          rgba(0, 0, 0, 0.08);
+    --layout-status-error:           #b3122e;
+    --layout-status-other:           #7a4a00;
 }

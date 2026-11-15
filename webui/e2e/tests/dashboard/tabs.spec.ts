@@ -445,15 +445,16 @@ test.describe('Dashboard tabs: history', () => {
 })
 
 test.describe('Dashboard tabs: search shortcut', () => {
-    test('/ opens the Search tab', async ({ page }) => {
-        const { tabs, activeTab } = layoutLocators(page)
+    test('/ opens the search panel and leaves the tabs alone', async ({ page }) => {
+        const { tabs, searchPanel } = layoutLocators(page)
         await page.goto('/dashboard')
         await expect(tabs).toHaveText(['Overview'])
 
         await page.keyboard.press('/')
 
-        await expect(page).toHaveURL(/\/dashboard\/search/)
-        await expect(activeTab).toHaveText('Search')
+        await expect(searchPanel).toBeVisible()
+        await expect(page).toHaveURL(/\/dashboard$/)
+        await expect(tabs).toHaveText(['Overview'])
     })
 })
 
@@ -571,9 +572,9 @@ test.describe('Dashboard tabs: several browser windows', () => {
         await expect(b.tabs).toHaveText(['Overview', 'Configs'])
         const before = await state(other)()
 
-        await a.activityBar.getByRole('link', { name: 'Search' }).click(newTab)
-        await expect(a.tabs).toHaveText(['Overview', 'Search'])
-        await a.tab('Search').getByRole('button', { name: /Close/ }).click()
+        await a.activityBar.getByRole('link', { name: 'Configs' }).click(newTab)
+        await expect(a.tabs).toHaveText(['Overview', 'Configs'])
+        await a.tab('Configs').getByRole('button', { name: /Close/ }).click()
         await a.tab('Overview').getByRole('button', { name: /Close/ }).click()
 
         await expectStable(other, async () => {

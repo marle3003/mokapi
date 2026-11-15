@@ -1,12 +1,13 @@
 import type { Page } from '@playwright/test'
 
-// The landmarks of the new dashboard layout: activity bar, sidebar, tab bar.
+// The landmarks of the new dashboard layout: activity bar, sidebar (or search panel), tab bar.
 export function layoutLocators(page: Page) {
     const tabBar = page.getByRole('navigation', { name: 'Tabs' })
     const tabs = tabBar.getByRole('list', { name: 'Open tabs' }).getByRole('listitem')
     return {
         activityBar: page.getByRole('navigation', { name: 'Activity bar' }),
         sidebar: page.getByRole('complementary', { name: 'Sidebar' }),
+        searchPanel: page.getByRole('complementary', { name: 'Search' }),
         breadcrumb: page.getByRole('navigation', { name: 'Breadcrumb' }),
         tabBar,
         tabs,

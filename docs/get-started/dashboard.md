@@ -29,12 +29,14 @@ The icons of the activity bar open the main areas:
 | Icon     | Description                                                                         |
 |----------|-------------------------------------------------------------------------------------|
 | Services | Shows the sidebar. Click it again to collapse or expand the sidebar.                |
-| Search   | Opens the search as a tab. Shown only if search is enabled.                         |
+| Search   | Shows the search panel in the sidebar. Click it again to collapse or expand the sidebar. Shown only if search is enabled, not in the demo. |
 | Jobs     | Opens the scheduled jobs as a tab. Shown only if at least one job exists.           |
 | Configs  | Opens all configuration files as a tab.                                             |
 | Faker    | Opens the Faker tree as a tab. Shown only in the live dashboard, not in the demo.   |
 
-Press `/` anywhere in the dashboard to open Search.
+Press `/` anywhere in the dashboard to open the search panel and focus its input. If the sidebar
+is collapsed, Mokapi expands it, or opens the overlay in a narrow window. In the Classic view,
+`/` opens the search page.
 
 ### Sidebar
 
@@ -66,6 +68,38 @@ filter ignores case and matches:
 The sidebar then shows the matches grouped by service, with a summary such as "5 matches in 2
 services". For each service it lists at most 6 items. If there are more, the entry "N more in
 `<service>`" opens the service view. Use the clear button or press `Escape` to empty the filter.
+
+### Search panel
+
+The search panel searches across your HTTP requests, Kafka messages, mails, LDAP entries,
+configuration files and events. Open it with the Search icon or the `/` key. Mokapi runs the
+search one second after your last key press if the text has at least 3 characters and doesn't
+end with `:`. Press `Enter` to search immediately.
+
+<!-- screenshot: search panel with results, facet selects and the Search tips section -->
+
+If the API returns facets, the panel shows one select for each of them, for example Type, to
+restrict the results. The panel shows "Showing 20 of 57 results" and loads 20 results at a time.
+Click **Load more** to append the next 20.
+
+Results don't refresh by themselves. The search runs again when you click **Refresh**, change
+the text or a facet, or open the panel.
+
+Each result has two lines. The first shows a badge with the HTTP method or the type, the title
+and the status. The second shows the service, the time and the matched text. The result that is
+open in the active tab is highlighted.
+
+Click a result to open it in the active tab. Ctrl+click, Cmd+click or middle click opens it in a
+new tab, as described in [Tabs](#tabs).
+
+Click **Search tips** to show or hide the query syntax. **Open all results** opens the full
+search page with the same text and facets. It's hidden while the input is empty.
+
+Press `Escape` in an empty input to switch back to Services. If the input contains text,
+`Escape` does nothing, so you don't lose your search by accident.
+
+Mokapi saves the search text and the facets in the browser, separately for each window, and
+restores them after a reload. After a reload the sidebar shows Services.
 
 ### Tabs
 

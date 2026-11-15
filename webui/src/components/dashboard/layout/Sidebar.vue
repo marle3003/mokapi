@@ -5,6 +5,7 @@ import { useDashboardLayout } from '@/composables/dashboard-layout'
 import { useNarrowWindow } from '@/composables/narrow-window'
 import { buildSidebarGroups } from '@/composables/sidebar-groups'
 import PinnedList from '@/components/dashboard/layout/PinnedList.vue'
+import SearchPanel from '@/components/dashboard/layout/SearchPanel.vue'
 import SidebarFilter from '@/components/dashboard/layout/SidebarFilter.vue'
 import SidebarGroup from '@/components/dashboard/layout/SidebarGroup.vue'
 import { isFilterActive } from '@/composables/sidebar-filter'
@@ -21,7 +22,7 @@ const { services, isLoading, close } = dashboard.value.getServices()
 // stays true once the first answer arrived, a refresh must not mark pinned entries as missing
 const servicesLoaded = ref(false)
 watch(isLoading, loading => { if (!loading) servicesLoaded.value = true }, { immediate: true })
-const { closeOverlay } = useDashboardLayout()
+const { closeOverlay, sidebarMode } = useDashboardLayout()
 const isNarrow = useNarrowWindow()
 
 const groups = computed(() => buildSidebarGroups(services.value, props.appInfo.activeServices ?? []))
@@ -37,7 +38,8 @@ onUnmounted(close)
 </script>
 
 <template>
-    <aside class="dashboard-sidebar" aria-label="Sidebar" @click="closeOverlayAfterNavigation">
+    <search-panel v-if="sidebarMode === 'search'" @click="closeOverlayAfterNavigation" />
+    <aside v-else class="dashboard-sidebar" aria-label="Sidebar" @click="closeOverlayAfterNavigation">
         <sidebar-filter v-model="filterQuery" :services="services" />
         <template v-if="!isFilterActive(filterQuery)">
             <ul class="sidebar-overview">

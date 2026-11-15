@@ -122,4 +122,17 @@ test.describe('Demo dashboard layout', () => {
         const viewport = page.viewportSize()!
         expect(activity!.y + activity!.height).toBeLessThanOrEqual(viewport.height)
     })
+
+    test('has no Search icon and / does nothing', async ({ page }) => {
+        const { activityBar, sidebar } = new DashboardModel(page)
+        await page.goto('/dashboard-demo')
+        await expect(sidebar).toBeVisible()
+
+        await expect(activityBar.getByRole('button', { name: 'Search' })).toHaveCount(0)
+        await page.keyboard.press('/')
+
+        await expect(page.getByRole('complementary', { name: 'Search' })).toHaveCount(0)
+        await expect(sidebar).toBeVisible()
+        await expect(page).toHaveURL(/\/dashboard-demo$/)
+    })
 })

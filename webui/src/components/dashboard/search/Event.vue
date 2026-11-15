@@ -2,6 +2,7 @@
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
+import { resultRoute } from '@/composables/search-result';
 
 const props = defineProps<{
     item: SearchItem
@@ -30,24 +31,7 @@ function isMail() {
 function isLog() {
     return props.item.params['traits.type'] === 'log'
 }
-const route = computed(() => {
-    if (isHttp()) {
-        if (isLog()) {
-            return null
-        }
-        return { name: 'httpRequest', params: props.item.params }
-    }
-    if (isKafka()) {
-        return { name: 'kafkaMessage', params: props.item.params }
-    }
-    if (isMail()) {
-        return { name: 'smtpMail', params: { ...props.item.params, id: props.item.params.messageId } }
-    }
-    if (isLdap()) {
-        return { name: 'ldapRequest', params: props.item.params }
-    }
-    throw new Error('Unknown event type')
-})
+const route = computed(() => resultRoute(props.item))
 </script>
 
 <template>

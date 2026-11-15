@@ -1,37 +1,27 @@
 <script setup lang="ts">
 import router from '@/router';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { transformPath } from '@/composables/site-base'
-import { useConnection } from '@/composables/connection'
-import { useProgressiveLoading } from '@/composables/useProgressiveLoading';
+import { facetTitle, searchTotalLabel, useSearch, type SearchFacets } from '@/composables/search'
 import Http from './search/Http.vue';
 import Kafka from './search/Kafka.vue';
 import Event from './search/Event.vue';
 import Ldap from './search/Ldap.vue';
 import Mail from './search/Mail.vue';
 import Config from './search/Config.vue';
+import SearchTips from './SearchTips.vue';
 import Pager from './Pager.vue';
 
 const route = useRoute()
-const queryText = ref<string>(route.query.q?.toString() ?? '')
-const pageIndex = ref(getIndex())
-const errorMessage = ref<string | undefined>()
-const searchResult = ref<SearchResult | undefined>();
 const showTips = ref(false)
-const facets = ref<{ [name: string]: string | undefined }>({})
-const loading = useProgressiveLoading()
-const connection = useConnection()
-
-let timeout: ReturnType<typeof setTimeout>;
-watch(queryText, async () => {
-  if (!queryText.value || queryText.value.length < 3 || queryText.value.endsWith(':')) {
-    return
-  }
-  // debounced
-  clearTimeout(timeout)
-  timeout = setTimeout(async () => { await search() }, 1000)
+const search = useSearch({
+  limit: 10,
+  queryText: ref<string>(route.query.q?.toString() ?? ''),
+  facets: ref<SearchFacets>({})
 })
+const { queryText, facets, pageIndex, loading, errorMessage } = search
+const searchResult = search.result
+pageIndex.value = getIndex()
 
 onMounted(async () => {
   for (const param in route.query) {
@@ -43,7 +33,7 @@ onMounted(async () => {
     }
   }
   if (queryText.value !== '') {
-    await search()
+    await search.showPage(pageIndex.value)
   } else {
     const btn = document.getElementById('search-input');
     if (btn && getComputedStyle(btn).visibility !== 'hidden') {
@@ -93,7 +83,7 @@ async function search_clicked() {
   const r = await router.replace({ query: newQuery })
   if (r) {
     // navigation was redundant, so search manually
-    search()
+    search.showPage(pageIndex.value)
   }
 }
 
@@ -106,52 +96,6 @@ function search_keypressed(event: KeyboardEvent) {
 function pageIndex_click(index: number) {
   pageIndex.value = index
   search_clicked()
-}
-
-async function search() {
-  loading.start()
-
-  let path = `/api/search/query?q=${encodeURIComponent(queryText.value)}`
-  if (pageIndex.value !== 0) {
-    path += `&index=${pageIndex.value}`
-  }
-
-  for (const facetName in facets.value) {
-    const v = facets.value[facetName]
-    if (v) {
-      path += `&${facetName}=${encodeURIComponent(v)}`
-    }
-  }
-
-  errorMessage.value = undefined
-  const res = await connection.monitoredFetch(transformPath(path))
-    .then(async (res) => {
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.message)
-      }
-      return res.json()
-    })
-    .then(res => {
-      loading.stop()
-      return res
-    })
-    .catch((s) => {
-      errorMessage.value = s
-    })
-  searchResult.value = res
-
-  for (const facetName in searchResult.value?.facets) {
-    if (!facets.value[facetName]) {
-      facets.value[facetName] = ''
-    }
-  }
-}
-function facetTitle(s: string) {
-  switch (s) {
-    case 'type': return 'Type';
-    default: return `title for '${s}' not defined`
-  }
 }
 </script>
 
@@ -188,18 +132,9 @@ function facetTitle(s: string) {
               <!-- Result Count -->
               <div class="col-4 d-flex align-items-center">
                 <div class="small text-body-secondary" v-if="searchResult">
-                  <template v-if="searchResult.total <= 10">
-                    Showing
-                    <strong>{{ searchResult.total }}</strong>
-                    {{ searchResult.total === 1 ? 'result' : 'results' }}
-                  </template>
-
-                  <template v-else>
-                    Showing
-                    <strong>{{ searchResult.results.length }}</strong>
-                    of
-                    <strong>{{ searchResult.total }}</strong>
-                    results
+                  <template v-for="(part, i) in searchTotalLabel(searchResult.results.length, searchResult.total).split(/(\d+)/)" :key="i">
+                    <strong v-if="i % 2 === 1">{{ part }}</strong>
+                    <template v-else>{{ part }}</template>
                   </template>
                 </div>
               </div>
@@ -237,31 +172,8 @@ function facetTitle(s: string) {
             </div>
 
             <!-- Tips -->
-            <div v-if="showTips" class="alert alert-light border small mt-3 mb-0 search-tips">
-
-              By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to
-              enforce
-              stricter matches.
-              <h5>Refine Your Results</h5>
-              <ul>
-                <li><code>+petstore -kafka</code> - Must include "petstore", Must Not include "kafka".</li>
-                <li><code>petstore kafka</code> - Returns results containing "petstore" OR "kafka" (default).</li>
-                <li><code>"Swagger Petstore"</code> - Matches the exact phrase.</li>
-              </ul>
-              <h5>Fields & Logic</h5>
-              <ul>
-                <li><code>name:petstore</code> - Search for "petstore" specifically in the name field.</li>
-                <li><code>+method:GET 404 500</code> - Must be GET and must contain either 404 or 500.</li>
-                <li><code>+statusCode:>=300</code> - Must be response with status code greater than or equal to 300.
-                </li>
-                <li><code>path:/pets^2</code> - Boost matches in the path field (scores them higher).</li>
-              </ul>
-              <h5>Wildcards & Fuzzy</h5>
-              <ul>
-                <li><code>pet*</code> - Wildcard (matches "pet", "pets", "petstore").</li>
-                <li><code>pet~</code> - Fuzzy match (matches "pets", "pest" or slight typos).</li>
-              </ul>
-
+            <div v-if="showTips" class="alert alert-light border small mt-3 mb-0">
+              <SearchTips />
             </div>
 
             <!-- Loading -->
@@ -382,21 +294,6 @@ function facetTitle(s: string) {
 .search-results .badge {
   font-size: 0.7rem;
   background-color: var(--badge-background) !important;
-}
-
-.search-tips {
-  font-size: 0.9rem;
-}
-
-.search-tips h5 {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.search-tips ul {
-  padding-left: 1.5rem;
-  margin-bottom: 0;
 }
 </style>
 

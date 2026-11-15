@@ -2,7 +2,7 @@
 import { computed, type PropType } from 'vue'
 import { getRouteName } from '@/composables/dashboard'
 import { useSectionVisibility } from '@/composables/dashboard-sections'
-import { useDashboardLayout } from '@/composables/dashboard-layout'
+import { useDashboardLayout, type SidebarMode } from '@/composables/dashboard-layout'
 import { useNarrowWindow } from '@/composables/narrow-window'
 import type { AppInfo } from '@/types/dashboard'
 
@@ -11,11 +11,14 @@ const props = defineProps({
 })
 
 const sections = useSectionVisibility(() => props.appInfo)
-const { isSidebarOpen, toggleSidebar } = useDashboardLayout()
+const { isSidebarOpen, sidebarMode, selectSidebarMode } = useDashboardLayout()
 const isNarrow = useNarrowWindow()
 
+function isShown(mode: SidebarMode) {
+    return isSidebarOpen(isNarrow.value) && sidebarMode.value === mode
+}
+
 const links = computed(() => [
-    { label: 'Search', icon: 'bi-search', isVisible: sections.value.search, to: { name: getRouteName('search').value } },
     { label: 'Jobs', icon: 'bi-clock-history', isVisible: sections.value.jobs, to: { name: getRouteName('jobs').value } },
     { label: 'Configs', icon: 'bi-file-earmark-code', isVisible: true, to: { name: getRouteName('configs').value } },
     { label: 'Faker', icon: 'bi-magic', isVisible: sections.value.faker, to: { name: getRouteName('tree').value } },
@@ -24,10 +27,15 @@ const links = computed(() => [
 
 <template>
     <nav class="activity-bar" aria-label="Activity bar">
-        <button type="button" class="activity-bar-item" :class="{ active: isSidebarOpen(isNarrow) }"
-            aria-label="Services" title="Services" :aria-pressed="isSidebarOpen(isNarrow)"
-            @click="toggleSidebar(isNarrow)">
+        <button type="button" class="activity-bar-item" :class="{ active: isShown('services') }"
+            aria-label="Services" title="Services" :aria-pressed="isShown('services')"
+            @click="selectSidebarMode('services', isNarrow)">
             <i class="bi bi-layout-sidebar" aria-hidden="true"></i>
+        </button>
+        <button v-if="sections.search" type="button" class="activity-bar-item" :class="{ active: isShown('search') }"
+            aria-label="Search" title="Search" :aria-pressed="isShown('search')"
+            @click="selectSidebarMode('search', isNarrow)">
+            <i class="bi bi-search" aria-hidden="true"></i>
         </button>
         <template v-for="link in links" :key="link.label">
             <router-link v-if="link.isVisible" class="activity-bar-item" :to="link.to"

@@ -659,11 +659,7 @@ paths:
         - in: query
           name: type
           schema:
-            type: array
-            items:
-              type: string
-          style: matrix
-          explode: true
+            type: string
       responses:
         "200":
           description: search results
