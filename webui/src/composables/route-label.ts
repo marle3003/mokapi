@@ -24,6 +24,7 @@ const pageLabels: Record<string, string> = {
     kafkaMessage: 'Kafka Message',
     ldapRequest: 'LDAP Request',
     smtpMail: 'Mail',
+    mqttLog: 'Messages',
     mqttRequest: 'MQTT Request',
     mqttMessage: 'MQTT Message',
     websocketMessage: 'Websocket Message',
@@ -65,7 +66,7 @@ export function routeLabel(routeName: string | symbol | undefined | null, params
     if (name === 'httpServiceLog') {
         return `${params.service} requests`
     }
-    if (name === 'kafkaServiceLog') {
+    if (name === 'kafkaServiceLog' || name === 'mqttServiceLog') {
         return `${params.service} messages`
     }
     const nameParam = nameParams[name]

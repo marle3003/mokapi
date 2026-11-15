@@ -123,6 +123,30 @@ func TestPublish(t *testing.T) {
 			},
 		},
 		{
+			name: "script message records the script file in the event",
+			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("test-server", "", ""),
+					asyncapi3test.WithChannel("/foo/bar",
+						asyncapi3test.WithMessage("msg-name"),
+					),
+				))
+
+				reason, err := s.Publish(
+					&mqtt.PublishRequest{Topic: "/foo/bar", Data: []byte("hello world")},
+					store.PublishArgs{ClientId: "mokapi-script", ScriptFile: "script.js"},
+				)
+				require.NoError(t, err)
+				require.Equal(t, mqtt.PublishSuccess, reason)
+
+				evts := eh.GetEvents(events.NewTraits().WithNamespace("mqtt").With("type", "message"))
+				require.Len(t, evts, 1)
+				d := evts[0].Data.(*store.LogMessage)
+				require.Equal(t, "mokapi-script", d.ClientId)
+				require.Equal(t, "script.js", d.ScriptFile)
+			},
+		},
+		{
 			name: "publish QoS=1 topic specified message not valid",
 			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
 				s.Update(asyncapi3test.NewConfig(

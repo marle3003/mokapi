@@ -1,15 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch, reactive, useTemplateRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard'
 import { messageKey } from '@/composables/kafka'
-import {
-    filterChips, filterStorageKey, loadFilter, saveFilter, toEventQuery,
-    type KafkaMessageFilter, type KafkaMessageFilterField,
-} from '@/composables/kafka-message-filter'
-import { scrollSelectedRowIntoView, useLogSelection } from '@/composables/use-log-selection'
-import { useEventLog } from '@/composables/use-event-log'
-import { useServiceList } from '@/composables/use-service-list'
+import * as kafkaMessageFilter from '@/composables/kafka-message-filter'
+import { useMessageLog } from '@/composables/use-message-log'
 import Loading from '@/components/Loading.vue'
 import Paging from '../Paging.vue'
 import LogPauseButton from '../log/LogPauseButton.vue'
@@ -23,78 +18,19 @@ const props = defineProps<{
     topicName?: string
     instanceName?: string
     clientId?: string
-    // a log without messages, filters and selection is not worth the space (the client view)
     hideWhenEmpty?: boolean
 }>()
 
-// What the place of the log fixes. The filter doesn't offer these fields.
-const context = computed(() => ({
-    serviceName: props.service?.name,
-    topic: props.topicName,
-    instance: props.instanceName || undefined,
-    clientId: props.clientId,
-}))
-
-const fixedLabels = computed(() => {
-    const result: Label[] = [{ name: 'namespace', value: 'kafka' }]
-    if (props.service) {
-        result.push({ name: 'name', value: props.service.name })
-    }
-    if (props.topicName) {
-        result.push({ name: 'topic', value: props.topicName })
-    }
-    if (props.instanceName) {
-        result.push({ name: 'instance', value: props.instanceName })
-    }
-    result.push({ name: 'type', value: 'message' })
-    if (props.clientId) {
-        result.push({ name: 'clientId', value: props.clientId })
-    }
-    return result
-})
-
-const storageKey = filterStorageKey(context.value)
-const filter = reactive<KafkaMessageFilter>(loadFilter(storageKey))
-const filters = computed(() => toEventQuery(filter, context.value))
-const hasFilter = computed(() => filterChips(filter, context.value).length > 0)
-const editingFilter = ref<KafkaMessageFilterField>()
-watch(filter, () => saveFilter(storageKey, filter))
-
-const { paging, result, isLoading, events, paused, canPause, togglePause } = useEventLog(() => ({
-    labels: [...fixedLabels.value, ...(filters.value.labels ?? [])],
-}))
-
-// The clusters and topics the filter suggests: the one of the log, or all of them.
-const services = useServiceList('kafka', !props.service)
-const clusterNames = computed(() => props.service ? [props.service.name] : services.value.map(s => s.name))
-const topicNames = computed(() => props.service
-    ? props.service.topics.map(t => t.name)
-    : [...new Set(services.value.flatMap(s => (s.items ?? []).map(i => i.name)))])
-
-const isTemplateTopic = computed(() => {
-    if (!props.service || !props.topicName) {
-        return false
-    }
-    const topic = props.service.topics.find(x => x.name === props.topicName)
-    return (topic?.instances?.length ?? -1) >= 0 && !props.instanceName
-})
-// The topic is known in a topic view, except for a template topic with its instances.
-const showTopicColumn = computed(() => !props.topicName || isTemplateTopic.value)
+const table = useTemplateRef<HTMLElement>('table')
+const {
+    context, filter, editingFilter, hide, paging, result, isLoading, events, paused, canPause, togglePause,
+    clusterNames, topicNames, showTopicColumn, selectedId, select, onRowClick, onLinkClick,
+} = useMessageLog('kafka', props, kafkaMessageFilter, table)
 
 const messages = computed(() => events.value.map(event => {
     const data = <KafkaMessageData>event.data
     return { id: event.id, time: event.time, topic: data.topic, key: messageKey(data.key), value: data.message.value ?? data.message.binary, deleted: data.deleted }
 }))
-
-const table = useTemplateRef<HTMLElement>('table')
-const { selectedId, select, onRowClick, onLinkClick } = useLogSelection('message', {
-    ids: () => events.value.map(x => x.id),
-    popoverOpen: () => editingFilter.value !== undefined,
-    closePopover: () => { editingFilter.value = undefined },
-    onMoved: () => scrollSelectedRowIntoView(table.value),
-})
-
-const hide = computed(() => props.hideWhenEmpty && events.value.length === 0 && !hasFilter.value && !selectedId.value)
 </script>
 
 <template>

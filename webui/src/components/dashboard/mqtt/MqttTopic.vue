@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import ChannelView from '@/components/dashboard/asyncapi/ChannelView.vue'
 import ChannelInstanceView from '@/components/dashboard/asyncapi/ChannelInstanceView.vue'
 import Messages from './MqttMessages.vue'
-import MessagesCard from './MqttMessagesCard.vue'
 import TopicConfig from './MqttTopicConfig.vue'
 import { getRouteName } from '@/composables/dashboard'
 import { useChannel } from '@/composables/channel.ts'
@@ -49,10 +48,12 @@ useBreadcrumb(() => {
           instances-label="Topics" instance-label="Topic" channel-route="mqttTopic">
         </channel-instance-view>
         <div class="card-group">
-        <messages-card :service="service" :topic-name="channelName" />
+          <messages :service="service" :topic-name="channelName" />
         </div>
       </template>
-      <messages v-else :service="service" :topic-name="data.channel.name" :instance-name="data.instance?.name" />
+      <div v-else class="card-group">
+        <messages :service="service" :topic-name="data.channel.name" :instance-name="data.instance?.name" />
+      </div>
     </template>
     <template #config>
       <topic-config :topic="data.channel" />

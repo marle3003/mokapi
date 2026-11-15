@@ -50,6 +50,13 @@ describe('pinned entries', () => {
       expect(isPinned(pinned, '/dashboard/kafka/log?message=def')).toBe(true)
     })
 
+    it('ignores the selected message of an MQTT log', () => {
+      const pinned = togglePin([], '/dashboard/mqtt/log?message=abc')
+
+      expect(pinned).toEqual(['/dashboard/mqtt/log'])
+      expect(isPinned(pinned, '/dashboard/mqtt/log?message=def')).toBe(true)
+    })
+
     it('keeps other query parameters', () => {
       expect(togglePin([], '/dashboard/search?q=pet&refresh=20')).toEqual(['/dashboard/search?q=pet'])
     })
@@ -138,6 +145,15 @@ describe('pinned entries', () => {
         ['/dashboard/http/log/Gone', false],
         ['/dashboard-demo/http/log/Swagger%20Petstore', true],
       ])('request log %s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
+        ['/dashboard/mqtt/log', true],
+        ['/dashboard/mqtt/log/MQTT%20Sensors', true],
+        ['/dashboard/mqtt/log/Gone', false],
+        ['/dashboard-demo/mqtt/log/MQTT%20Sensors', true],
+      ])('MQTT message log %s', (path, expected) => {
         expect(available(path)).toBe(expected)
       })
 

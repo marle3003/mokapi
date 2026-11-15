@@ -33,7 +33,7 @@ type PinService = Pick<Service, 'name' | 'type' | 'items'>
 const protocolRoutes: Record<string, { service: string, item?: string, log?: string }> = {
     http: { service: 'services', log: 'log' },
     kafka: { service: 'service', item: 'topics', log: 'log' },
-    mqtt: { service: 'service', item: 'topics' },
+    mqtt: { service: 'service', item: 'topics', log: 'log' },
     websocket: { service: 'service', item: 'channels' },
     // 'maiboxes' (sic) is the existing route path in router/index.ts, don't fix it here alone
     mail: { service: 'service', item: 'maiboxes' },

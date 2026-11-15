@@ -1,6 +1,7 @@
 import { test, expect } from '../models/fixture-dashboard'
 import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
+import { useMqttMessages } from '../components/mqtt'
 
 test('Visit MQTT overview', async ({ page, baseURL }) => {
     if (baseURL === 'http://localhost:8080') {
@@ -9,6 +10,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
     const { sidebar } = new DashboardModel(page)
+    const { openFullView } = useMqttMessages(page)
 
     await test.step('Verify Dashboard', async () => {
 
@@ -79,8 +81,8 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Topic')).toHaveText('sensors/12345/data');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -109,7 +111,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                     const rows = messages.locator('tbody tr');
                     await expect(rows).toHaveCount(1);
 
-                    await rows.nth(0).click()
+                    await openFullView(rows.nth(0))
 
                 })
 
@@ -129,6 +131,16 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
             await expect(await getCellByColumnName(clients, 'Client Id', rows.nth(0))).toContainText('mqttjs');
             await expect(await getCellByColumnName(clients, 'Address', rows.nth(0))).not.toBeEmpty();
             await expect(await getCellByColumnName(clients, 'Protocol Version', rows.nth(0))).toHaveText('4 (v3.1.1)');
+
+        })
+
+        await test.step('Verify Messages', async () => {
+
+            await page.getByRole('tab', { name: 'Messages', exact: true }).click();
+
+            const messages = page.getByRole('region', { name: 'Recent Messages' }).getByRole('table', { name: 'Recent Messages' });
+            await expect(messages.locator('tbody tr')).toHaveCount(1);
+            await expect(page.getByRole('link', { name: 'Open as tab' })).toBeVisible();
 
         })
 

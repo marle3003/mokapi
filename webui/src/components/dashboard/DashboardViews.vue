@@ -27,7 +27,7 @@ import Mails from '@/components/dashboard/mail/Mails.vue'
 import MqttMessageMetricCard from './mqtt/MqttMessageMetricCard.vue'
 import MqttClustersCard from './mqtt/MqttServicesCard.vue'
 import MqttService from './mqtt/MqttService.vue'
-import MqttMessagesCard from '@/components/dashboard/mqtt/MqttMessagesCard.vue'
+import MqttMessages from '@/components/dashboard/mqtt/MqttMessages.vue'
 
 import WebsocketMessageMetricCard from './websocket/WebsocketMessageMetricCard.vue'
 import WebsocketServicesCard from './websocket/WebsocketServicesCard.vue'
@@ -136,6 +136,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('mqttLog').value">
+        <div class="card-group">
+            <mqtt-messages />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('mqtt').value">
         <div class="card-group">
             <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
@@ -144,7 +150,7 @@ function isAnyServiceAvailable() {
             <mqtt-clusters-card />
         </div>
         <div class="card-group" v-if="isServiceAvailable('mqtt')">
-            <mqtt-messages-card />
+            <mqtt-messages />
         </div>
     </div>
 

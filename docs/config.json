@@ -104,6 +104,11 @@
                 "label": "Quick Start",
                 "source": "mqtt/quick-start.md",
                 "path": "/docs/mqtt/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "mqtt/dashboard.md",
+                "path": "/docs/mqtt/dashboard"
               }
             ]
           },

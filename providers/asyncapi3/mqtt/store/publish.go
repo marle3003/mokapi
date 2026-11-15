@@ -202,10 +202,11 @@ func (s *Store) logMessage(apiName string, messageId string, topic *Topic, publi
 			Value:  string(publish.Data),
 			Binary: publish.Data,
 		},
-		Retain:   args.Retain,
-		Api:      apiName,
-		ClientId: args.ClientId,
-		Actions:  actions,
+		Retain:     args.Retain,
+		Api:        apiName,
+		ClientId:   args.ClientId,
+		ScriptFile: args.ScriptFile,
+		Actions:    actions,
 	}, traits)
 	if err != nil {
 		log.Errorf("mqtt: failed to log message: %s", err)

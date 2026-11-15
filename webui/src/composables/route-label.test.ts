@@ -40,6 +40,19 @@ describe('routeLabel', () => {
     expect(routeLabel('kafkaLog-demo', {})).toBe('Messages')
   })
 
+  it('names the message log of one MQTT cluster after the cluster', () => {
+    expect(routeLabel('mqttServiceLog', { service: 'MQTT World' })).toBe('MQTT World messages')
+  })
+
+  it('names the message log of all MQTT clusters "Messages"', () => {
+    expect(routeLabel('mqttLog', {})).toBe('Messages')
+  })
+
+  it('treats a demo MQTT message log like the live one', () => {
+    expect(routeLabel('mqttServiceLog-demo', { service: 'MQTT World' })).toBe('MQTT World messages')
+    expect(routeLabel('mqttLog-demo', {})).toBe('Messages')
+  })
+
   it.each([
     ['httpService', { service: 'Books API' }, 'Books API'],
     ['kafkaService', { service: 'Orders' }, 'Orders'],

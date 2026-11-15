@@ -260,6 +260,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service}` }
           },
           {
+            path: 'log/:service',
+            name: getRouteName('mqttServiceLog'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service} messages` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('mqttLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - MQTT – Messages' }
+          },
+          {
             path: 'service/:service/servers/:server',
             name: getRouteName('mqttServer'),
             component: dashboardView,

@@ -1,12 +1,11 @@
 import { computed, shallowRef, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+import { messageValue } from '@/composables/message-value'
 
 // A recorded Kafka message by id, with the value shown the way its message configuration (content
 // type, Avro) says. Used by the full view of a message and by the detail panel of the message log.
 export function useKafkaMessageEvent(id: MaybeRefOrGetter<string>) {
     const { dashboard } = useDashboard()
-    const { formatLanguage } = usePrettyLanguage()
 
     const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
     const event = computed(() => res.value?.event.value)
@@ -56,40 +55,13 @@ export function useKafkaMessageEvent(id: MaybeRefOrGetter<string>) {
             console.error('resolve message failed')
             return undefined
         }
-
-        const source: Source = {}
-        const [contentType, isAvro] = getContentType(messageConfig.value)
-        const keyType = messageConfig.value.key?.schema.type
-
-        if (data.value.message.value) {
-            source.preview = {
-                content: formatLanguage(data.value.message.value, isAvro ? 'application/json' : messageConfig.value.contentType),
-                contentType: contentType,
-                contentTypeTitle: messageConfig.value.contentType,
-                description: isAvro ? 'Avro content in JSON format' : undefined
-            }
+        return {
+            ...messageValue(messageConfig.value, data.value.message),
+            keyType: messageConfig.value.key?.schema.type,
         }
-
-        if (data.value.message.binary && isBinaryContentType(messageConfig.value.contentType)) {
-            source.preview!.description = 'Avro content in JSON format'
-            source.binary = { content: atob(data.value.message.binary), contentType: messageConfig.value.contentType }
-        }
-        return { source, contentType, contentTypeTitle: messageConfig.value.contentType, keyType }
     })
 
     const hasActions = computed(() => (data.value?.actions?.length ?? 0) > 0)
 
     return { event, data, isLoading, message, hasActions }
-}
-
-function isBinaryContentType(contentType: string): boolean {
-    return ['avro/binary', 'application/avro', 'application/octet-stream'].includes(contentType)
-}
-
-// An Avro message is shown as JSON, its binary form is a second view of the same value.
-function getContentType(msg: KafkaMessage): [string, boolean] {
-    if (msg.payload.format?.includes('application/vnd.apache.avro') && isBinaryContentType(msg.contentType)) {
-        return ['application/json', true]
-    }
-    return [msg.contentType, false]
 }
