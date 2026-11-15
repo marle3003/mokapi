@@ -76,6 +76,10 @@ configuration files and events. Open it with the Search icon or the `/` key. Mok
 search one second after your last key press if the text has at least 3 characters and doesn't
 end with `:`. Press `Enter` to search immediately.
 
+Search is enabled by default. If you turn it off with `api.search.enabled: false` (CLI flag
+`--no-api-search-enabled`, see the [configuration reference](/docs/configuration/reference.md)),
+the Search icon and the panel are hidden. They're also hidden in the demo dashboard.
+
 <!-- screenshot: search panel with results, facet selects and the Search tips section -->
 
 If the API returns facets, the panel shows one select for each of them, for example Type, to
