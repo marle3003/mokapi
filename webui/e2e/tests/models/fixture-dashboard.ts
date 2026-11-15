@@ -26,6 +26,8 @@ export const test = base.extend<DashboardFixture & DashboardOptions>({
             })
         }
         await use(page)
+        // polling route handlers may still be awaiting route.fetch when the test ends
+        await page.unrouteAll({ behavior: 'ignoreErrors' })
     },
     dashboard: async ({page}, use) => {
         const dashboard = new DashboardModel(page)
