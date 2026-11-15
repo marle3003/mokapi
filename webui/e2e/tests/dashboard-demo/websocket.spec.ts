@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-dashboard'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test('Visit Websocket overview', async ({ page, baseURL }) => {
@@ -7,7 +8,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
     } else {
         await page.goto('/dashboard-demo')
     }
-    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+    const { sidebar } = new DashboardModel(page)
 
     await test.step('Verify Dashboard', async () => {
 
@@ -18,14 +19,14 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('WebSocket Chat API');
 
-        await page.getByLabel('Services').getByRole('link', { name: 'Websocket', exact: true }).click()
+        await sidebar.getByRole('link', { name: 'Websocket', exact: true }).click()
         await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })
 
     await test.step('Visit WebSocket Chat API', async () => {
 
-        await page.getByText('WebSocket Chat API').click();
+        await sidebar.getByRole('link', { name: 'WebSocket Chat API' }).click();
 
         const region = page.getByRole('region', { name: 'Info' });
         await expect(region.getByLabel('Name')).toHaveText('WebSocket Chat API')
@@ -66,7 +67,8 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
                 await expect(messages.locator('tbody tr')).toHaveCount(3);
 
-                await breadcrumb.getByRole('link', { name: '/chats/{roomId}' }).click();
+                // the new layout has no breadcrumb: back to the channel page
+                await page.goBack();
 
             });
 
@@ -111,7 +113,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 })
 
                 await meta.getByLabel('Path').click();
-                await breadcrumb.getByRole('link', { name: 'WebSocket Chat API' }).click();
+                await sidebar.getByRole('link', { name: 'WebSocket Chat API' }).click();
             })
 
         })

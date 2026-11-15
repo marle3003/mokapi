@@ -73,6 +73,7 @@ func getWebsocketServices(store *runtime.WebsocketStore, m *monitor.Monitor) []s
 			Description: mi.Info.Description,
 			Version:     mi.Info.Version,
 			Type:        ServiceWebsocket,
+			Items:       getChannelItems(mi.Config, "ws"),
 		}
 
 		if mi.Info.Contact != nil {

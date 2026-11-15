@@ -204,6 +204,7 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []service {
 			Description: ki.Info.Description,
 			Version:     ki.Info.Version,
 			Type:        ServiceKafka,
+			Items:       getChannelItems(ki.Config, "kafka"),
 		}
 
 		s.Metrics = kafkaTopicMetric{

@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -12,7 +13,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByRole('cell').getByText('HR Employee Directory').click();
+    await new DashboardModel(page).sidebar.getByRole('link', { name: 'HR Employee Directory' }).click();
 
     await test.step('Verify service info', async () => {
 

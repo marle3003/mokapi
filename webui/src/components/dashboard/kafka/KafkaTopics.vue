@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import PinButton from '@/components/dashboard/layout/PinButton.vue'
 import { useRouter } from 'vue-router'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
 import { splitTemplate, instanceCount } from '@/composables/channel'
+import { groupRows, selectedTags, tagNames, type TagGrouping } from '@/composables/tag-group'
+import TagGroupSwitch from '@/components/dashboard/TagGroupSwitch.vue'
+import TagGroupHeading from '@/components/dashboard/TagGroupHeading.vue'
 
 const props = defineProps<{
     service: KafkaService,
@@ -13,6 +17,7 @@ const props = defineProps<{
 const { format } = usePrettyDates()
 const router = useRouter()
 const tags = useLocalStorage<string[]>(`kafka-${props.service.name}-tags`, ['__all'])
+const grouping = useLocalStorage<TagGrouping>(`kafka-${props.service.name}-group`, 'az')
 
 const allTags = computed(() => {
     if (!props.service || !props.service.topics) {
@@ -34,11 +39,11 @@ const allTags = computed(() => {
     }
     return result;
 })
-const topics = computed(() => {
+const filteredTopics = computed(() => {
     if (!props.service.topics) {
         return []
     }
-    let result = [...props.service.topics].sort(compareTopics)
+    let result = [...props.service.topics]
     if (!tags.value.includes('__all')) {
         result = result.filter((t) => {
             if (t.tags && t.tags.some(tag => tags.value.some(x => x == tag.name))) {
@@ -50,11 +55,12 @@ const topics = computed(() => {
     return result;
 })
 
-function compareTopics(t1: KafkaTopicInfo, t2: KafkaTopicInfo) {
-    const name1 = t1.name.toLowerCase()
-    const name2 = t2.name.toLowerCase()
-    return name1.localeCompare(name2)
-}
+const groups = computed(() => groupRows(filteredTopics.value, grouping.value, {
+    nameOf: topic => topic.name,
+    tagsOf: tagNames,
+    tags: allTags.value,
+    onlyTags: selectedTags(tags.value),
+}))
 
 function lastMessage(topic: KafkaTopicInfo) {
     if (!topic.metrics.message_timestamp || topic.metrics.message_timestamp == 0) {
@@ -145,6 +151,7 @@ function instanceLabel(channel: KafkaTopicInfo) {
                 </div>
 
             </fieldset>
+            <tag-group-switch v-if="allTags.length > 0" v-model="grouping" />
             <div class="table-responsive-sm">
                 <table class="table dataTable selectable" aria-labelledby="topics">
                     <thead>
@@ -155,10 +162,12 @@ function instanceLabel(channel: KafkaTopicInfo) {
                             <th scope="col" class="text-center col-1">Messages</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="topic in topics" :key="topic.name" @mouseup.left="goToTopic(topic)"
+                    <tbody v-for="group in groups" :key="group.heading ?? ''">
+                        <tag-group-heading v-if="group.heading" :heading="group.heading" :description="group.description" :columns="4" />
+                        <tr v-for="topic in group.rows" :key="topic.name" @mouseup.left="goToTopic(topic)"
                             @mousedown.middle="goToTopic(topic, true)">
                             <td>
+                                <pin-button class="float-end" :to="{ name: getRouteName('kafkaTopic').value, params: { service: props.service.name, topic: topic.name } }" :label="topic.name" />
                                 <router-link @click.stop class="row-link"
                                     :to="{ name: getRouteName('kafkaTopic').value, params: { service: props.service.name, topic: topic.name } }">
                                     <template v-if="topic.parameters?.length">

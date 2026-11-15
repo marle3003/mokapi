@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -13,10 +14,10 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         dashboard = '/dashboard-demo'
         await page.goto('/dashboard-demo')
     }
-    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+    const { sidebar } = new DashboardModel(page)
 
 
-    await page.getByText('Kafka Order Service API').click();
+    await sidebar.getByRole('link', { name: 'Kafka Order Service API' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -274,7 +275,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         });
 
         await test.step('Visit shipments.{region}.updates', async () => {
-            await breadcrumb.getByRole('link', { name: 'Kafka Order Service API' }).click();
+            await sidebar.getByRole('link', { name: 'Kafka Order Service API' }).click();
             await page.getByRole('link', { name: 'shipments.{region}.updates' }).click();
 
             const region = page.getByRole('region', { name: 'Info' })

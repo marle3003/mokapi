@@ -339,6 +339,6 @@ function visibleThemeIcon(page: Page, title: 'Switch to light mode' | 'Switch to
 test('the demo dashboard still renders in the browser', async ({ page }) => {
     await page.goto('/dashboard-demo')
 
-    await expect(page.locator('main a[aria-current="page"]')).toHaveText('Overview')
+    await expect(page.getByRole('navigation', { name: 'Tabs' }).locator('a[aria-current="page"]')).toHaveText('Overview')
     await expect(page.getByRole('table', { name: 'HTTP APIs' })).toBeVisible()
 })

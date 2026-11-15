@@ -130,6 +130,7 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []service {
 			Description: mi.Info.Description,
 			Type:        ServiceMail,
 			Version:     mi.Info.Version,
+			Items:       getMailboxItems(mi.Store),
 		}
 		if mi.Info.Contact != nil {
 			s.Contact = &contact{

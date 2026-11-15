@@ -290,6 +290,9 @@ export const configs = {
     }
 }
 
+const shopTag = { name: 'shop', description: 'Events of the web shop' }
+const usersTag = { name: 'users', description: 'Everything about user accounts' }
+
 export const clusters = [
     {
         name: 'Kafka World',
@@ -316,6 +319,7 @@ export const clusters = [
             {
                 name: 'mokapi.shop.products',
                 summary: 'Though literature second anywhere fortnightly am this either so me.',
+                tags: [shopTag],
                 partitions: [
                     {
                         id: 0,
@@ -363,6 +367,7 @@ export const clusters = [
             {
                 name: 'mokapi.shop.userSignedUp',
                 summary: 'This channel contains a message per each user who signs up in our application.',
+                tags: [shopTag, usersTag],
                 partitions: [
                     {
                         id: 0,
@@ -755,6 +760,7 @@ function getChannelInfo(c: (typeof clusters)[number]["topics"][number]) {
     return {
         name: c.name,
         ...c.summary === undefined ? {} : { summary: c.summary },
+        ...('tags' in c ? { tags: c.tags } : {}),
         ...('parameters' in c ? { parameters: c.parameters } : {}),
         ...('instances' in c ? { instances: c.instances?.map((i) => (
             {

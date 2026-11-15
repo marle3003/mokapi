@@ -33,6 +33,21 @@ components:
           type: object
         status:
           type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceItem'
+    ServiceItem:
+      type: object
+      properties:
+        name:
+          type: string
+        method:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
     Contact:
       type: object
       properties:

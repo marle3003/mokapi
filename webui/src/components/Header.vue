@@ -10,6 +10,7 @@ import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
 import NavDocItem from './NavDocItem.vue';
 import { isExternalWebsiteLink, toWebsiteUrl } from '@/composables/website-url';
+import LayoutSwitch from '@/components/dashboard/layout/LayoutSwitch.vue';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
@@ -209,6 +210,9 @@ async function navigateAndClose(path: string) {
 function isDashboardDisplayed() {
   return route.matched.some(r => r.name?.toString().startsWith('dashboard'));
 }
+// Classic view is a fallback of the live dashboard. The switch reads localStorage, so it only exists
+// on a dashboard route, which is never rendered on the server: the website HTML stays the same.
+const isLiveDashboard = computed(() => route.meta.mode === 'live')
 </script>
 
 <template>
@@ -226,6 +230,7 @@ function isDashboardDisplayed() {
       <div class="container-fluid">
         <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi - Open-Source Multi-Protocol Mock API Tool"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
+            <layout-switch v-if="isLiveDashboard" />
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button id="search-button" class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
@@ -294,6 +299,7 @@ function isDashboardDisplayed() {
           </div>
 
           <div class="d-flex ms-auto align-items-center tools">
+            <layout-switch v-if="isLiveDashboard" />
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
@@ -436,6 +442,12 @@ header .container-fluid {
   margin-left: 6px;
   cursor: pointer;
   font-size: 1.3rem;
+}
+.tools .layout-switch {
+  font-size: 0.8rem;
+  padding: 0 0.5rem;
+  margin-right: 0.25rem;
+  color: var(--color-text);
 }
 .tools .btn.icon {
   transition: background 0.2s, transform 0.1s;

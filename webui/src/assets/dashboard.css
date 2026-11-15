@@ -12,9 +12,6 @@
 .dashboard-content {
   margin-top: 4rem;
 }
-.dashboard-content.demo {
-  margin-top: 10rem;
-}
 .dashboard .card-group .card {
   border-color: var(--color-border);
   background-color: var(--color-background-soft);
@@ -96,15 +93,21 @@
     margin: 0 auto;
 }
 .header-demo {
-    position: fixed;
-    top: 4rem;
-    left: 2rem;
-    right: 2rem;
-    z-index: 10;
-    padding-right: 2rem;
-    padding-top: 15px;
-    padding-bottom: 30px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: 0.5rem 2rem;
+    border-bottom: 1px solid var(--dashboard-nav-border);
     background-color: var(--color-background);
+}
+.header-demo h1 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+.header-demo p {
+    margin: 0;
 }
 .dashboard-tabs {
   background-color: var(--color-background);
@@ -113,9 +116,6 @@
   z-index: 10;
   width: 100%;
   /*padding-right: 39px; /* 2rem + 7px margin of card */
-}
-.dashboard-tabs.demo {
-    top: 10rem;
 }
 .dashboard-tabs nav > div {
   border-bottom: 2px solid;
@@ -182,15 +182,6 @@
     border-right-color: #f8f9fa;
 }
 
-@media only screen and (max-width: 450px)  {
-  .dashboard-content.demo {
-    margin-top: 10.8rem;
-  }
-  .dashboard-tabs.demo {
-    margin-top: 0.8rem;
-  }
-}
-
 .table-markdown {
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -238,3 +229,378 @@
 }
 
 .dashboard .channel-name .param { color: var(--bs-primary); font-weight: 500; }
+/* New layout: activity bar, sidebar and view */
+/* buttons that only show an icon or a text */
+.activity-bar-item,
+.sidebar-chevron,
+.sidebar-remove,
+.sidebar-filter-clear,
+.pin-button,
+.tab-close,
+.tab-more-button {
+  border: 0;
+  background: transparent;
+}
+.activity-bar-item:focus-visible,
+.sidebar-entry:focus-visible,
+.sidebar-group-title:focus-visible,
+.sidebar-chevron:focus-visible,
+.sidebar-filter-clear:focus-visible,
+.tab-link:focus-visible,
+.tab-close:focus-visible,
+.pin-button:focus-visible,
+.tab-more-button:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+/* main is a grid item that would grow to the widest view, so the tab bar could never overflow */
+main:has(.dashboard-layout-tabbed) {
+  min-width: 0;
+}
+/* the demo banner sits above the layout, so the layout takes what is left of the window */
+.dashboard:has(.dashboard-layout-tabbed) {
+  padding: 0;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+}
+.dashboard-layout-tabbed {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  /* separates the layout from the header, as in design A3 */
+  border-top: 1px solid var(--layout-border);
+}
+.dashboard-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+/* the tab shows the location, so the views do not need their breadcrumb */
+.dashboard-layout-tabbed .dashboard-breadcrumb {
+  display: none;
+}
+
+.activity-bar {
+  flex: 0 0 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  background-color: var(--layout-chrome-background);
+  border-right: 1px solid var(--layout-border);
+}
+.activity-bar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--layout-icon-color);
+  font-size: 1.2rem;
+}
+.activity-bar-item:hover {
+  color: var(--layout-text);
+  background-color: var(--layout-icon-hover-background);
+}
+.activity-bar-item.active,
+.activity-bar-item.router-link-active {
+  color: var(--layout-accent);
+  background-color: var(--layout-icon-active-background);
+}
+
+.dashboard-sidebar {
+  flex: 0 0 280px;
+  overflow-y: auto;
+  padding: 10px 8px;
+  background-color: var(--layout-sidebar-background);
+  border-right: 1px solid var(--layout-border);
+  font-size: 13px;
+}
+.dashboard-sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboard-sidebar li + li {
+  margin-top: 1px;
+}
+.sidebar-group-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 10px 6px;
+}
+.sidebar-chevron {
+  color: var(--layout-text-subtle);
+  padding: 0 6px 0 0;
+  font-size: 10px;
+}
+.sidebar-chevron:hover {
+  color: var(--layout-text);
+}
+.sidebar-group-title,
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--layout-text-subtle);
+}
+.sidebar-group-title:hover,
+.sidebar-group-title.router-link-exact-active {
+  color: var(--layout-text);
+}
+.sidebar-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--layout-text-muted);
+}
+.sidebar-entry:hover {
+  background-color: var(--layout-hover-background);
+  color: var(--layout-text);
+}
+.sidebar-entry.router-link-exact-active,
+.sidebar-entry.router-link-active {
+  color: var(--layout-text);
+  background-color: var(--layout-selected-background);
+}
+/* every dashboard route lies below the overview, only the overview itself is marked */
+.sidebar-overview .sidebar-entry.router-link-active:not(.router-link-exact-active) {
+  color: var(--layout-text-muted);
+  background-color: transparent;
+}
+.sidebar-overview .sidebar-entry.router-link-active:not(.router-link-exact-active):hover {
+  color: var(--layout-text);
+  background-color: var(--layout-hover-background);
+}
+.sidebar-entry-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-count {
+  font-size: 11px;
+  color: var(--layout-text-subtle);
+}
+.sidebar-error-dot {
+  font-size: 7px;
+  line-height: 1;
+  color: var(--layout-error-dot);
+}
+
+.tab-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--layout-tab-bar-background);
+  border-bottom: 1px solid var(--layout-border);
+}
+.tab-list {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tab-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 40px;
+  border-right: 1px solid var(--layout-border);
+  background-color: var(--layout-tab-bar-background);
+  color: var(--layout-text-muted);
+  font-size: 13px;
+}
+.tab-item:hover {
+  background-color: var(--layout-hover-background);
+  color: var(--layout-text);
+}
+.tab-item.active {
+  background-color: var(--color-background);
+  box-shadow: inset 0 2px 0 var(--layout-accent);
+  color: var(--layout-text);
+}
+.tab-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  padding: 0 4px 0 14px;
+  color: inherit;
+  font-size: inherit;
+}
+.tab-link .badge {
+  flex: 0 0 auto;
+}
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-right: 6px;
+  color: var(--layout-icon-color);
+  border-radius: 5px;
+}
+.tab-close:hover,
+.sidebar-remove:hover {
+  background-color: var(--layout-selected-background);
+  color: var(--layout-text);
+}
+.tab-more {
+  flex: 0 0 auto;
+}
+.tab-more-button {
+  width: 100%;
+  height: 40px;
+  color: var(--layout-text-muted);
+  font-size: 13px;
+}
+.tab-more-button:hover {
+  color: var(--layout-text);
+}
+
+@media only screen and (max-width: 767.98px) {
+  .dashboard-view {
+    padding: 1rem;
+  }
+  /* overlay above the view, next to the activity bar */
+  .dashboard-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 56px;
+    z-index: 20;
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Pinned */
+.sidebar-section-title {
+  margin: 0;
+  padding: 14px 10px 6px;
+}
+.sidebar-hint {
+  margin: 0;
+  padding: 2px 10px 4px;
+  font-size: 12px;
+  color: var(--layout-text-subtle);
+}
+.sidebar-entry-missing {
+  color: var(--layout-text-subtle);
+  opacity: 0.6;
+  cursor: default;
+}
+.sidebar-entry-missing:hover {
+  background-color: transparent;
+}
+.sidebar-remove {
+  color: inherit;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.pin-button {
+  flex: 0 0 auto;
+  color: var(--layout-icon-color);
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.pin-button:hover,
+.pin-button.pinned {
+  color: var(--layout-accent);
+}
+
+/* Sidebar filter */
+.sidebar-filter {
+  padding-bottom: 6px;
+}
+.sidebar-filter-field {
+  position: relative;
+}
+/* the clear button replaces the browser's own one of a search input */
+.sidebar-filter-field input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+.sidebar-filter-field input {
+  height: 34px;
+  padding-right: 28px;
+  border: 1px solid var(--layout-input-border);
+  border-radius: 8px;
+  background-color: var(--layout-input-background);
+  color: var(--layout-text);
+  font-size: 13px;
+}
+.sidebar-filter-field input::placeholder {
+  color: var(--layout-text-subtle);
+}
+.sidebar-filter-field input:focus {
+  border-color: var(--layout-accent);
+  background-color: var(--layout-input-background);
+  color: var(--layout-text);
+}
+.sidebar-filter-clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  color: var(--layout-text-subtle);
+  padding: 0 8px;
+  font-size: 0.75rem;
+}
+.sidebar-filter-clear:hover {
+  color: var(--layout-text);
+}
+.sidebar-filter-group {
+  padding-top: 6px;
+}
+.sidebar-filter-group > .sidebar-group-title {
+  display: block;
+  padding: 10px 10px 4px;
+}
+.sidebar-more {
+  color: var(--layout-text-subtle);
+  font-size: 12px;
+}
+
+/* Tag headings of a list grouped by tag */
+.dashboard table.dataTable .tag-group-heading th {
+  padding-top: 8px;
+  padding-bottom: 4px;
+  text-align: left;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+.tag-group-heading .tag-group-name {
+  font-weight: 600;
+}
+.tag-group-heading .tag-group-description {
+  margin-left: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-light);
+}

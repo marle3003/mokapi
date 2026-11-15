@@ -1315,3 +1315,74 @@ func newClientContext(addr, clientId, softwareName, softwareVersion string, hear
 	c.SetHeartbeat(heartbeat)
 	return c
 }
+
+func TestHandler_Kafka_ServiceItems(t *testing.T) {
+	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
+		require.NoError(t, cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, &dynamictest.Reader{}))
+		return cfg
+	}
+
+	testcases := []struct {
+		name   string
+		config *asyncapi3.Config
+		items  string
+	}{
+		{
+			name: "topics with tags sorted by name",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("shipments"),
+				asyncapi3test.WithChannel("orders",
+					asyncapi3test.WithChannelTag("orders", "Order events"),
+					asyncapi3test.WithChannelTag("billing", ""),
+				),
+			),
+			items: `[{"name":"orders","tags":["orders","billing"]},{"name":"shipments"}]`,
+		},
+		{
+			name: "address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1", asyncapi3test.WithChannelAddress("order-created")),
+			),
+			items: `[{"name":"order-created"}]`,
+		},
+		{
+			name: "parameterized address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1",
+					asyncapi3test.WithChannelAddress("orders.{region}"),
+					asyncapi3test.WithParameter("region", &asyncapi3.Parameter{}),
+				),
+			),
+			items: `[{"name":"orders.{region}"}]`,
+		},
+		{
+			name: "channel of another protocol is excluded",
+			config: parsed(asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithServer("broker", "kafka", "foo.bar"),
+				asyncapi3test.WithServer("mosquitto", "mqtt", "foo.bar"),
+				asyncapi3test.WithChannel("orders", asyncapi3test.AssignToServer("#/servers/broker")),
+				asyncapi3test.WithChannel("sensors", asyncapi3test.AssignToServer("#/servers/mosquitto")),
+			)),
+			items: `[{"name":"orders"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := api.New(runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", getKafkaInfo(tc.config))), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}

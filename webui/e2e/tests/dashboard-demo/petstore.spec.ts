@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -12,7 +13,7 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByText('Swagger Petstore').click();
+    await new DashboardModel(page).sidebar.getByRole('link', { name: 'Swagger Petstore' }).click();
 
     await test.step('Verify service info', async () => {
 

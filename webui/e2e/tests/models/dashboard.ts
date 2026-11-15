@@ -6,6 +6,12 @@ import { KafkaModel } from './kafka'
 import { MailModel } from './mail'
 
 export class DashboardModel extends MokapiModel {
+    // new layout
+    readonly activityBar: Locator
+    readonly sidebar: Locator
+    readonly tabBar: Locator
+
+    // classic layout
     readonly tabs: Locator
     readonly activeTab: Locator
     readonly connectionLostToast: Locator
@@ -19,6 +25,9 @@ export class DashboardModel extends MokapiModel {
     
     constructor(private page: Page) {
         super(page)
+        this.activityBar = page.getByRole('navigation', { name: 'Activity bar' })
+        this.sidebar = page.getByRole('complementary', { name: 'Sidebar' })
+        this.tabBar = page.getByRole('navigation', { name: 'Tabs' })
         this.tabs = page.locator('.dashboard-tabs')
         this.activeTab = page.locator('.dashboard .router-link-active')
         this.connectionLostToast = page.getByRole('status').filter({ hasText: 'Connection lost' })

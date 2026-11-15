@@ -703,3 +703,68 @@ func TestHandler_Http_Metrics(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_Http_ServiceItems(t *testing.T) {
+	testcases := []struct {
+		name   string
+		config *openapi.Config
+		items  string
+	}{
+		{
+			name: "operation with tags",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet/{petId}",
+					openapitest.WithOperation("GET", openapitest.WithOperationTags("pet", "store")),
+				),
+			),
+			items: `[{"name":"/pet/{petId}","method":"get","tags":["pet","store"]}]`,
+		},
+		{
+			name: "operation without tags",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet", openapitest.WithOperation("POST")),
+			),
+			items: `[{"name":"/pet","method":"post"}]`,
+		},
+		{
+			name: "path without operations has no item",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/empty"),
+				openapitest.WithPath("/pet", openapitest.WithOperation("GET")),
+			),
+			items: `[{"name":"/pet","method":"get"}]`,
+		},
+		{
+			name: "one item per operation sorted by path and method order",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet",
+					openapitest.WithOperation("LINK"),
+					openapitest.WithOperation("DELETE"),
+					openapitest.WithOperation("POST"),
+					openapitest.WithOperation("GET"),
+				),
+				openapitest.WithPath("/owner", openapitest.WithOperation("PUT")),
+			),
+			items: `[{"name":"/owner","method":"put"},{"name":"/pet","method":"get"},{"name":"/pet","method":"post"},{"name":"/pet","method":"delete"},{"name":"/pet","method":"link"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := New(runtimetest.NewHttpApp(tc.config), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}

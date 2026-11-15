@@ -275,3 +275,66 @@ func getMqttInfo(config *asyncapi3.Config) *runtime.MqttInfo {
 		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()),
 	}
 }
+
+func TestHandler_Mqtt_ServiceItems(t *testing.T) {
+	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
+		require.NoError(t, cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, &dynamictest.Reader{}))
+		return cfg
+	}
+
+	testcases := []struct {
+		name   string
+		config *asyncapi3.Config
+		items  string
+	}{
+		{
+			name: "topics with tags sorted by name",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("sensors/humidity"),
+				asyncapi3test.WithChannel("sensors/temperature",
+					asyncapi3test.WithChannelTag("sensors", "Sensor data"),
+					asyncapi3test.WithChannelTag("indoor", ""),
+				),
+			),
+			items: `[{"name":"sensors/humidity"},{"name":"sensors/temperature","tags":["sensors","indoor"]}]`,
+		},
+		{
+			name: "parameterized address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1",
+					asyncapi3test.WithChannelAddress("sensors/{sensorId}/data"),
+					asyncapi3test.WithParameter("sensorId", &asyncapi3.Parameter{}),
+				),
+			),
+			items: `[{"name":"sensors/{sensorId}/data"}]`,
+		},
+		{
+			name: "channel of another protocol is excluded",
+			config: parsed(asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithServer("mosquitto", "mqtt", "foo.bar"),
+				asyncapi3test.WithServer("broker", "kafka", "foo.bar"),
+				asyncapi3test.WithChannel("sensors", asyncapi3test.AssignToServer("#/servers/mosquitto")),
+				asyncapi3test.WithChannel("orders", asyncapi3test.AssignToServer("#/servers/broker")),
+			)),
+			items: `[{"name":"sensors"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := api.New(runtimetest.NewApp(runtimetest.WithMqttInfo("foo", getMqttInfo(tc.config))), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}

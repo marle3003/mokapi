@@ -15,6 +15,7 @@ export default function () {
                     version: service.version,
                     ...service.contact ? { contact: service.contact } : {},
                     servers: service.servers,
+                    ...('tags' in service ? { tags: service.tags } : {}),
                     paths: service.paths.map(p => {
                         return {
                             path: p.path,
@@ -649,6 +650,7 @@ export const apps = [
                         method: "get",
                         summary: "Get books from the store",
                         operationId: "listBooks",
+                        tags: ["books"],
                         status: 'valid',
                         responses: [
                             {
@@ -670,6 +672,7 @@ export const apps = [
                         method: "post",
                         summary: "Add a new book",
                         operationId: "addBook",
+                        tags: ["books"],
                         status: 'valid',
                         requestBody: {
                             required: true,
@@ -707,6 +710,12 @@ export const apps = [
                         errors: [{ message: "An example error message for this operation" }],
                     }
                 ]
+            }
+        ],
+        tags: [
+            {
+                name: "books",
+                description: "Manage the books of the library"
             }
         ]
     }

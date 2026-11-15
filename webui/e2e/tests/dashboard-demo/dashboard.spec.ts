@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -16,7 +17,7 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
     await test.step('Verify app metrics', async () => {
         const main = page.locator('main')
 
-        await expect(main.locator('a[aria-current="page"]')).toHaveText('Overview');
+        await expect(new DashboardModel(page).tabBar.locator('a[aria-current="page"]')).toHaveText('Overview');
 
         await expect(main.getByLabel('Uptime Since')).not.toHaveText('-')
         await expect(main.getByLabel('Started at')).not.toHaveText('-')
@@ -92,5 +93,33 @@ test.describe('Connection to Mokapi', () => {
         // the page shows its empty request table instead
         await expect(page.getByRole('heading', { name: 'Recent Requests' })).toBeVisible()
         await expect(page.getByRole('table', { name: 'Recent Requests' }).locator('tbody tr')).toHaveCount(0)
+    })
+})
+
+test.describe('Demo dashboard layout', () => {
+    // the live dashboard (baseURL :8080) can switch to Classic view, only the demo dashboard can't
+    test.skip(({ baseURL }) => baseURL === 'http://localhost:8080')
+
+    test('shows the new layout without a Classic view switch', async ({ page }) => {
+        const { activityBar, sidebar, tabBar } = new DashboardModel(page)
+        await page.goto('/dashboard-demo')
+
+        await expect(activityBar).toBeVisible()
+        await expect(sidebar).toBeVisible()
+        await expect(tabBar).toBeVisible()
+        await expect(page.getByRole('banner').getByRole('button', { name: /Classic view|New view/ })).toHaveCount(0)
+    })
+
+    test('does not hide the layout behind the demo banner', async ({ page }) => {
+        const { activityBar, tabBar } = new DashboardModel(page)
+        await page.goto('/dashboard-demo')
+
+        const banner = await page.getByRole('heading', { name: 'Demo Dashboard' }).boundingBox()
+        const activity = await activityBar.boundingBox()
+        const tabs = await tabBar.boundingBox()
+        expect(banner!.y + banner!.height).toBeLessThanOrEqual(activity!.y)
+        expect(banner!.y + banner!.height).toBeLessThanOrEqual(tabs!.y)
+        const viewport = page.viewportSize()!
+        expect(activity!.y + activity!.height).toBeLessThanOrEqual(viewport.height)
     })
 })

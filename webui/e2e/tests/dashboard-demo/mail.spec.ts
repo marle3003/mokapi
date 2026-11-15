@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -14,7 +15,8 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByRole('cell').getByText(/^Mail Server$/).click();
+    const { sidebar } = new DashboardModel(page)
+    await sidebar.getByRole('link', { name: 'Mail Server' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -110,7 +112,7 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
         await test.step('Verify Mailbox alice.johnson@example.com', async () => {
 
-            await page.getByText('Mail Server').click();
+            await sidebar.getByRole('link', { name: 'Mail Server' }).click();
             await page.getByRole('tab', { name: 'Mailboxes' }).click();
             await page.getByRole('table', { name: 'Mailboxes' }).getByText('alice.johnson@example.com').click();
 
@@ -161,7 +163,7 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
     await test.step('Verify Settings', async () => {
 
-        await page.getByText('Mail Server').click();
+        await sidebar.getByRole('link', { name: 'Mail Server' }).click();
         await page.getByRole('tab', { name: 'Settings' }).click();
 
         const region = page.getByRole('tabpanel', { name: 'Settings' });

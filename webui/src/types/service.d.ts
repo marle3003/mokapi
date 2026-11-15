@@ -8,6 +8,13 @@ declare interface Service {
     metrics: Record<string, any>
     configs: Config[]
     status?: string
+    items?: ServiceItem[]
+}
+
+declare interface ServiceItem {
+    name: string
+    method?: string
+    tags?: string[]
 }
 
 declare type ServiceType = 'http' | 'kafka' | 'mqtt' | 'websocket' | 'mail' | 'ldap'

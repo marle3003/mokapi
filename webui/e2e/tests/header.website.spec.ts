@@ -17,3 +17,10 @@ test('header in dashboard', async ({ page }) => {
         await expect(links.nth(9)).toHaveText('Resources');
     })
 })
+
+test('header has no Classic view switch', async ({ page }) => {
+    await page.goto('/home');
+
+    await expect(page.getByRole('banner').getByRole('link', { name: 'HTTP' })).toBeVisible()
+    await expect(page.getByRole('banner').getByRole('button', { name: /Classic view|New view/ })).toHaveCount(0)
+})

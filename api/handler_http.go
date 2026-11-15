@@ -148,6 +148,7 @@ func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 			Version:     hs.Info.Version,
 			Type:        ServiceHttp,
 			Status:      hs.GetStatus().String(),
+			Items:       getHttpItems(hs),
 		}
 
 		if hs.Info.Summary != "" {

@@ -393,3 +393,24 @@ func TestHandler_Smtp(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_Mail_ServiceItems(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	app.Mail.Set("foo", &runtime.MailInfo{
+		Config: &mail.Config{Info: mail.Info{Name: "foo", Version: "1.0"}},
+		Store: &mail.Store{Mailboxes: map[string]*mail.Mailbox{
+			"carol@foo.bar": {},
+			"alice@foo.bar": {},
+			"bob@foo.bar":   {},
+		}},
+	})
+
+	try.Handler(t,
+		http.MethodGet,
+		"http://foo.api/api/services",
+		nil,
+		"",
+		New(app, static.Api{}),
+		try.HasStatusCode(200),
+		try.HasBody(`[{"name":"foo","version":"1.0","type":"mail","metrics":{"mails_total":0,"mail_timestamp":0},"items":[{"name":"alice@foo.bar"},{"name":"bob@foo.bar"},{"name":"carol@foo.bar"}]}]`))
+}

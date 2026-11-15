@@ -17,6 +17,9 @@ const clients = [
   { id: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e', address: '127.0.0.1:53200', serverAddress: 'localhost:8080' },
 ]
 
+const chatTag = { name: 'chat', description: 'Chat messages between users' }
+const broadcastTag = { name: 'broadcast', description: 'Messages for every connected client' }
+
 export const services = [
   {
     name: 'WebSocket Chat API',
@@ -45,6 +48,7 @@ export const services = [
     channels: [
       {
         name: '/chats/{chatId}',
+        tags: [chatTag],
         messages: {
           ChatMessage: {
             name: 'ChatMessage',
@@ -71,6 +75,7 @@ export const services = [
       },
       {
         name: '/chat',
+        tags: [chatTag, broadcastTag],
         summary: 'Single WS endpoint carrying all chat messages',
         messages: {
           ChatMessage: {
@@ -103,6 +108,7 @@ export default async function () {
               ...('title' in x ? { title: x.title } : {}),
               ...('summary' in x ? { summary: x.summary } : {}),
               ...('description' in x ? { description: x.description } : {}),
+              ...('tags' in x ? { tags: x.tags } : {}),
               messages: x.messages,
               ...('parameters' in x ? { parameters: x.parameters} : {}), 
               ...('instances' in x ? { instances: x.instances.map((i) => (

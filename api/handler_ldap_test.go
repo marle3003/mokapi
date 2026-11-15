@@ -83,3 +83,19 @@ func TestHandler_Ldap(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_Ldap_ServiceHasNoItems(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	app.Ldap.Set("foo", &runtime.LdapInfo{
+		Config: &directory.Config{Info: directory.Info{Name: "foo", Version: "1.0"}},
+	})
+
+	try.Handler(t,
+		http.MethodGet,
+		"http://foo.api/api/services",
+		nil,
+		"",
+		New(app, static.Api{}),
+		try.HasStatusCode(200),
+		try.HasBody(`[{"name":"foo","version":"1.0","type":"ldap","metrics":{"requests_total":0,"request_timestamp":0}}]`))
+}

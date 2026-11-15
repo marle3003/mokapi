@@ -11,6 +11,9 @@ const Measurement = {
   },
 };
 
+const sensorsTag = { name: 'sensors', description: 'Measurements of the temperature sensors' }
+const homeTag = { name: 'home', description: 'Rooms of the house' }
+
 export const clusters = [
   {
     name: 'MQTT Temperature Sensor API',
@@ -38,6 +41,7 @@ export const clusters = [
     topics: [
       {
         name: 'sensors/{sensorId}/data',
+        tags: [sensorsTag],
         messages: {
           TemperaturePayload: {
             name: 'TemperaturePayload',
@@ -71,6 +75,7 @@ export const clusters = [
       },
       {
         name: 'home/livingroom/temperature',
+        tags: [sensorsTag, homeTag],
         summary: 'Channel for messages FROM the sensor (Publish)',
         messages: {
           TemperatureMeasurement: {
@@ -110,6 +115,7 @@ export default async function () {
                   ...('title' in x  ? { title: x.title } : {}),
                   ...('summary' in x ? { summary: x.summary } : {}),
                   ...('description' in x ? { description: x.description } : {}),
+                  ...('tags' in x ? { tags: x.tags } : {}),
                   messages: x.messages,
                   ...('parameters' in x ? { parameters: x.parameters} : {}),
                   ...('instances' in x ? { instances: x.instances?.map((i) => (

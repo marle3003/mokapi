@@ -75,6 +75,7 @@ func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 			Description: mi.Info.Description,
 			Version:     mi.Info.Version,
 			Type:        ServiceMqtt,
+			Items:       getChannelItems(mi.Config, "mqtt"),
 		}
 
 		if mi.Info.Contact != nil {

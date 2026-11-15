@@ -277,3 +277,66 @@ func getWebsocketInfo(config *asyncapi3.Config) *runtime.WebsocketInfo {
 		Store:  websocket.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket()),
 	}
 }
+
+func TestHandler_Websocket_ServiceItems(t *testing.T) {
+	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
+		require.NoError(t, cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, &dynamictest.Reader{}))
+		return cfg
+	}
+
+	testcases := []struct {
+		name   string
+		config *asyncapi3.Config
+		items  string
+	}{
+		{
+			name: "channels with tags sorted by name",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("/ticker"),
+				asyncapi3test.WithChannel("/chat",
+					asyncapi3test.WithChannelTag("chat", "Chat messages"),
+					asyncapi3test.WithChannelTag("public", ""),
+				),
+			),
+			items: `[{"name":"/chat","tags":["chat","public"]},{"name":"/ticker"}]`,
+		},
+		{
+			name: "parameterized address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1",
+					asyncapi3test.WithChannelAddress("/rooms/{roomId}"),
+					asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+				),
+			),
+			items: `[{"name":"/rooms/{roomId}"}]`,
+		},
+		{
+			name: "channel of another protocol is excluded",
+			config: parsed(asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithServer("socket", "ws", "foo.bar"),
+				asyncapi3test.WithServer("broker", "kafka", "foo.bar"),
+				asyncapi3test.WithChannel("/chat", asyncapi3test.AssignToServer("#/servers/socket")),
+				asyncapi3test.WithChannel("orders", asyncapi3test.AssignToServer("#/servers/broker")),
+			)),
+			items: `[{"name":"/chat"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := api.New(runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(tc.config))), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}

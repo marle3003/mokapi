@@ -121,6 +121,7 @@ function getServices(type: string) {
         services.push(...httpServices.map(x => {
             return {
                 ...getInfo(x, 'http'),
+                items: getHttpItems(x),
                 metrics: {
                     requests_total: sum('http_requests_total', { name: 'service', value: x.name }),
                     requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: x.name }),
@@ -133,6 +134,7 @@ function getServices(type: string) {
         services.push(...kafkaClusters.map(x => {
             return {
                 ...getInfo(x, 'kafka'),
+                items: getChannelItems(x.topics),
                 metrics: {
                     messages_total: sum('kafka_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('kafka_message_timestamp', { name: 'service', value: x.name })
@@ -144,6 +146,7 @@ function getServices(type: string) {
         services.push(...mailServices.map(x => {
             return {
                 ...getInfo(x, 'mail'),
+                items: x.mailboxes.map(m => ({ name: m.name })),
                 metrics: {
                     mails_total: sum('mail_mails_total', { name: 'service', value: x.name }),
                     mail_timestamp: max('mail_mail_timestamp', { name: 'service', value: x.name })
@@ -166,6 +169,7 @@ function getServices(type: string) {
         services.push(...mqttClusters.map(x => {
             return {
                 ...getInfo(x, 'mqtt'),
+                items: getChannelItems(x.topics),
                 metrics: {
                     messages_total: sum('mqtt_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: x.name })
@@ -177,6 +181,7 @@ function getServices(type: string) {
         services.push(...websocketServices.map(x => {
             return {
                 ...getInfo(x, 'websocket'),
+                items: getChannelItems(x.channels),
                 metrics: {
                     messages_total: sum('websocket_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('websocket_message_timestamp', { name: 'service', value: x.name })
@@ -186,6 +191,23 @@ function getServices(type: string) {
     }
 
     return services
+}
+
+// The real API sorts items by name; the mock keeps the order of the mock data
+// so that tests can prove sorting in the dashboard.
+function getHttpItems(service: (typeof httpServices)[number]) {
+    return service.paths.flatMap(p => p.operations.map(o => ({
+        name: p.path,
+        method: o.method,
+        ...('tags' in o && o.tags ? { tags: o.tags } : {})
+    })))
+}
+
+function getChannelItems(channels: { name: string, tags?: { name: string }[] }[]) {
+    return channels.map(c => ({
+        name: c.name,
+        ...(c.tags ? { tags: c.tags.map(t => t.name) } : {})
+    }))
 }
 
 const events = [

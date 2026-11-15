@@ -1,4 +1,5 @@
 import { test, expect } from '../models/fixture-dashboard'
+import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
 
 test('Visit MQTT overview', async ({ page, baseURL }) => {
@@ -7,7 +8,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
     } else {
         await page.goto('/dashboard-demo')
     }
-    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+    const { sidebar } = new DashboardModel(page)
 
     await test.step('Verify Dashboard', async () => {
 
@@ -18,14 +19,14 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('Smart Home MQTT API');
 
-        await page.getByLabel('Services').getByRole('link', { name: 'MQTT', exact: true }).click()
+        await sidebar.getByRole('link', { name: 'MQTT', exact: true }).click()
         await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })
 
     await test.step('Visit Smart Home MQTT API', async () => {
 
-        await page.getByText('Smart Home MQTT API').click();
+        await sidebar.getByRole('link', { name: 'Smart Home MQTT API' }).click();
 
         const region = page.getByRole('region', { name: 'Info' });
         await expect(region.getByLabel('Name')).toHaveText('Smart Home MQTT API')
@@ -64,7 +65,8 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                 await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
                 await expect(messages.locator('tbody tr')).toHaveCount(1);
 
-                await breadcrumb.getByRole('link', { name: 'sensors/{sensorId}/data' }).click();
+                // the new layout has no breadcrumb: back to the topic page
+                await page.goBack();
 
             });
 
@@ -112,7 +114,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                 })
 
                 await meta.getByLabel('Topic').click();
-                await breadcrumb.getByRole('link', { name: 'Smart Home MQTT API' }).click();
+                await sidebar.getByRole('link', { name: 'Smart Home MQTT API' }).click();
             })
 
         })

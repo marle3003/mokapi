@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import PinButton from '@/components/dashboard/layout/PinButton.vue'
 import { useRouter } from 'vue-router'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
 import { splitTemplate, instanceCount } from '@/composables/channel'
+import { groupRows, selectedTags, tagNames, type TagGrouping } from '@/composables/tag-group'
+import TagGroupSwitch from '@/components/dashboard/TagGroupSwitch.vue'
+import TagGroupHeading from '@/components/dashboard/TagGroupHeading.vue'
 
 const props = defineProps<{
     service: WebsocketService,
@@ -13,6 +17,7 @@ const props = defineProps<{
 const { format } = usePrettyDates()
 const router = useRouter()
 const tags = useLocalStorage<string[]>(`websocket-${props.service.name}-tags`, ['__all'])
+const grouping = useLocalStorage<TagGrouping>(`websocket-${props.service.name}-group`, 'az')
 
 const allTags = computed(() => {
     if (!props.service || !props.service.channels) {
@@ -34,11 +39,11 @@ const allTags = computed(() => {
     }
     return result;
 })
-const channels = computed(() => {
+const filteredChannels = computed(() => {
     if (!props.service.channels) {
         return []
     }
-    let result = [...props.service.channels].sort(compareChannels)
+    let result = [...props.service.channels]
     if (!tags.value.includes('__all')) {
         result = result.filter((t) => {
             if (t.tags && t.tags.some(tag => tags.value.some(x => x == tag.name))) {
@@ -50,11 +55,12 @@ const channels = computed(() => {
     return result;
 })
 
-function compareChannels(c1: WebsocketChannel, c2: WebsocketChannel) {
-    const name1 = c1.name.toLowerCase()
-    const name2 = c2.name.toLowerCase()
-    return name1.localeCompare(name2)
-}
+const groups = computed(() => groupRows(filteredChannels.value, grouping.value, {
+    nameOf: channel => channel.name,
+    tagsOf: tagNames,
+    tags: allTags.value,
+    onlyTags: selectedTags(tags.value),
+}))
 
 function lastMessage(channel: WebsocketChannel) {
     if (!channel.metrics.message_timestamp || channel.metrics.message_timestamp == 0) {
@@ -146,6 +152,7 @@ function instanceLabel(channel: WebsocketChannel) {
                 </div>
 
             </fieldset>
+            <tag-group-switch v-if="allTags.length > 0" v-model="grouping" />
             <div class="table-responsive-sm">
                 <table class="table dataTable selectable" aria-labelledby="channels">
                     <thead>
@@ -156,10 +163,12 @@ function instanceLabel(channel: WebsocketChannel) {
                             <th scope="col" class="text-center col-1">Messages</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="channel in channels" :key="channel.name" @mouseup.left="goToChannel(channel)"
+                    <tbody v-for="group in groups" :key="group.heading ?? ''">
+                        <tag-group-heading v-if="group.heading" :heading="group.heading" :description="group.description" :columns="4" />
+                        <tr v-for="channel in group.rows" :key="channel.name" @mouseup.left="goToChannel(channel)"
                             @mousedown.middle="goToChannel(channel, true)">
                             <td>
+                                <pin-button class="float-end" :to="{ name: getRouteName('websocketChannel').value, params: { service: props.service.name, channel: channel.name } }" :label="channel.name" />
                                 <router-link @click.stop class="row-link"
                                     :to="{ name: getRouteName('websocketChannel').value, params: { service: props.service.name, channel: channel.name } }">
                                     <template v-if="channel.parameters?.length">
