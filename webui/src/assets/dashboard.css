@@ -9,8 +9,27 @@
 .dashboard h1{
   margin-top: 0;
 }
+main {
+  --connection-banner-height: 1.75rem;
+}
 .dashboard-content {
   margin-top: 4rem;
+}
+/* The Classic tabs are fixed below the site header, so the banner is pinned there too and pushes
+   the tabs and the content down by its height. All three use 4rem, the grid row of the site header:
+   the promo banner never shows on dashboard routes, so --header-height has no promo part there. */
+main:has(.dashboard-tabs) .connection-lost-region {
+  position: fixed;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  z-index: 11;
+}
+main.connection-lost .dashboard-tabs {
+  top: calc(4rem + var(--connection-banner-height));
+}
+main.connection-lost .dashboard-content {
+  margin-top: calc(4rem + var(--connection-banner-height));
 }
 .dashboard .card-group .card {
   border-color: var(--color-border);
@@ -253,17 +272,27 @@
   outline: 2px solid var(--layout-accent);
   outline-offset: -2px;
 }
-/* main is a grid item that would grow to the widest view, so the tab bar could never overflow */
+/* main is a grid item that would grow to the widest view, so the tab bar could never overflow.
+   The connection banner sits above the layout, so the layout takes what is left of the window. */
 main:has(.dashboard-layout-tabbed) {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+}
+main:has(.dashboard-layout-tabbed) .connection-lost-region {
+  flex: 0 0 auto;
 }
 /* the demo banner sits above the layout, so the layout takes what is left of the window */
 .dashboard:has(.dashboard-layout-tabbed) {
   padding: 0;
   max-width: none;
+  /* auto margins would shrink the layout to its content in the flex column of main */
+  margin: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height));
+  flex: 1;
+  min-height: 0;
 }
 .dashboard-layout-tabbed {
   position: relative;
@@ -928,4 +957,12 @@ a.search-result:focus-visible {
     max-height: none;
     margin: 0 0 7px;
   }
+}
+
+/* Connection lost: dim the data that may be stale. Controls, headings and labels keep their look and
+   everything stays clickable (no pointer-events). Navigation such as search results is not dimmed.
+   Opacity compounds, so only leaf values are dimmed: the value after a label is skipped when it
+   holds a table, source view, code or buttons, those are dimmed (or left alone) by their own selector. */
+main.connection-lost :is(table, .metric-value, .source-view .source, pre, .card .label ~ :not(table, .source-view, :has(table, .source-view, pre, button)), dd, .mail-body .col) {
+  opacity: 0.5;
 }

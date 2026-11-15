@@ -63,7 +63,7 @@ const errors = computed(() => {
             <div class="card-title" v-if="includeError">HTTP Requests / Errors</div>
             <div class="card-title" v-else-if="onlyError">HTTP Errors</div>
             <div class="card-title" v-else>HTTP Requests</div>
-            <div class="card-text">
+            <div class="card-text metric-value">
                 <span v-if="!onlyError">{{ requests }}</span>
                 <span v-if="includeError"> / </span>
                 <span v-bind:class="{'text-danger': errors > 0}" v-if="onlyError || includeError">{{  errors }}</span>

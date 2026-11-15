@@ -8,7 +8,7 @@ import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import { useRouter } from '@/router'
-import ConnectionLostToast from '@/components/dashboard/ConnectionLostToast.vue'
+import ConnectionLostBanner from '@/components/dashboard/ConnectionLostBanner.vue'
 import { useConnection } from '@/composables/connection'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
@@ -92,7 +92,8 @@ watch(() => route.fullPath, () => {
         }">
         </div>
     </div>
-    <main>
+    <main :class="{ 'connection-lost': !connection.isConnected.value }">
+        <connection-lost-banner />
         <section class="dashboard" aria-labelledby="dashboard-title">
             <h1 id="dashboard-title" v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
             <div v-if="getMode() === 'demo'" class="header-demo">
@@ -109,7 +110,6 @@ watch(() => route.fullPath, () => {
             <loading v-if="isInitLoading()"></loading>
         </section>
     </main>
-    <connection-lost-toast />
 </template>
 
 <style scoped>

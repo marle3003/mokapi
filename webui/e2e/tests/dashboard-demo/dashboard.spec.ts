@@ -64,7 +64,10 @@ test.describe('Connection to Mokapi', () => {
     // the live dashboard (baseURL :8080) monitors the connection, only the demo dashboard doesn't
     test.skip(({ baseURL }) => baseURL === 'http://localhost:8080')
 
-    const toast = (page: Page) => page.getByRole('status').filter({ hasText: 'Connection lost' })
+    const expectNoConnectionLost = async (page: Page) => {
+        await expect(new DashboardModel(page).connectionLostBanner).toHaveCount(0)
+        await expect(page.locator('main')).not.toHaveClass(/connection-lost/)
+    }
 
     test('Demo dashboard sends no heartbeat', async ({ page }) => {
         await page.clock.install()
@@ -78,17 +81,17 @@ test.describe('Connection to Mokapi', () => {
         await page.clock.runFor(10000)
 
         expect(infoRequests).toHaveLength(0)
-        await expect(toast(page)).toHaveCount(0)
+        await expectNoConnectionLost(page)
     })
 
-    test('Demo dashboard shows no toast and no endless spinner when the recording cannot be loaded', async ({ page }) => {
+    test('Demo dashboard shows no banner and no endless spinner when the recording cannot be loaded', async ({ page }) => {
         await page.route('**/demo/dashboard.json', r => r.abort('connectionrefused'))
         const failed = page.waitForEvent('requestfailed')
 
         await page.goto('/dashboard-demo/http')
         await failed
 
-        await expect(toast(page)).toHaveCount(0)
+        await expectNoConnectionLost(page)
         await expect(page.locator('main .spinner-border')).toHaveCount(0)
         // the page shows its empty request table instead
         await expect(page.getByRole('heading', { name: 'Recent Requests' })).toBeVisible()

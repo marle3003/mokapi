@@ -14,7 +14,9 @@ export class DashboardModel extends MokapiModel {
     // classic layout
     readonly tabs: Locator
     readonly activeTab: Locator
-    readonly connectionLostToast: Locator
+
+    // both layouts: a live region that holds the banner only while the connection is lost
+    readonly connectionLostBanner: Locator
 
     readonly http: HttpModel
     readonly kafka: KafkaModel
@@ -30,7 +32,7 @@ export class DashboardModel extends MokapiModel {
         this.tabBar = page.getByRole('navigation', { name: 'Tabs' })
         this.tabs = page.locator('.dashboard-tabs')
         this.activeTab = page.locator('.dashboard .router-link-active')
-        this.connectionLostToast = page.getByRole('status').filter({ hasText: 'Connection lost' })
+        this.connectionLostBanner = page.getByRole('status').filter({ hasText: 'Connection lost' })
 
         this.http = new HttpModel(page.locator('main'))
         this.kafka = new KafkaModel(page.locator('main'))
