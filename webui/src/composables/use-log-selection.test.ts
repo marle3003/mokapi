@@ -155,6 +155,18 @@ describe('log selection', () => {
     expect(onMoved).toHaveBeenCalledOnce()
   })
 
+  it('keeps the panel open on an arrow key while the rows are not loaded yet', async () => {
+    await mountLog('/log?request=a', 'request', { ids: () => [] })
+
+    const replace = vi.spyOn(router, 'replace')
+    const event = press('ArrowDown')
+    await new Promise(resolve => setTimeout(resolve))
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(router.currentRoute.value.query).toEqual({ request: 'a' })
+    expect(replace).not.toHaveBeenCalledWith(expect.objectContaining({ query: {} }))
+  })
+
   it('ignores other keys while the panel is open', async () => {
     await mountLog('/log?request=a')
 

@@ -334,8 +334,6 @@ test.describe('Kafka request log', () => {
             const { log } = useRequestLog(page)
             await page.goto(`${clientWithMessages}?request=${consumer1Request}`)
             await expect(log.panel.element).toBeVisible()
-            // the panel loads its request on its own; wait for the rows before using the arrow keys
-            await expect(log.selectedRow).toHaveCount(1)
 
             await page.keyboard.press('ArrowDown')
             await expect(page).toHaveURL(new RegExp(`\\?request=${consumer1Request}$`))

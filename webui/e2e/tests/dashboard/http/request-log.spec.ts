@@ -395,6 +395,28 @@ test.describe('HTTP request log: detail panel', () => {
         await expect(log.panel.content).toContainText('Pragmatic')
     })
 
+    test('an arrow key keeps the open panel while the rows are not loaded yet', async ({ page }) => {
+        const { log } = useRequestLog(page)
+        // the list answers only after the key press; the panel loads its request on its own
+        let releaseRows!: () => void
+        const rowsHeld = new Promise<void>(resolve => { releaseRows = resolve })
+        await page.route('**/api/events?*', async route => {
+            await rowsHeld
+            await route.fallback()
+        })
+        await page.goto(`${serviceLog}?request=${id(11)}`)
+        await expect(log.panel.element).toBeVisible()
+        await expect(log.rows).toHaveCount(0)
+
+        await page.keyboard.press('ArrowDown')
+        await page.waitForTimeout(200)
+        await expect(page).toHaveURL(new RegExp(`\\?request=${id(11)}$`))
+        await expect(log.panel.element).toBeVisible()
+
+        releaseRows()
+        await expect(log.rows).toHaveCount(12)
+    })
+
     test('a request on another page opens in the panel without a highlighted row', async ({ page }) => {
         const { log } = useRequestLog(page)
         await usePageSize10(page)

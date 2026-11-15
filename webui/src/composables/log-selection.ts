@@ -41,11 +41,12 @@ export function withSelection(query: LocationQuery, key: string, id: string | un
 }
 
 // The row above or below the current one. It stops at the first and last row, and selects the first
-// row when the current row is not on the page.
+// row when the current row is not on the page. While the page has no rows yet (the panel opened from
+// a link before the table loaded) the current row stays selected.
 export function neighbourId(ids: string[], currentId: string | undefined, direction: 'up' | 'down'): string | undefined {
     const index = currentId === undefined ? -1 : ids.indexOf(currentId)
     if (index < 0) {
-        return ids[0]
+        return ids[0] ?? currentId
     }
     return ids[Math.min(ids.length - 1, Math.max(0, index + (direction === 'down' ? 1 : -1)))]
 }

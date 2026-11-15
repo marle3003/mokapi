@@ -125,10 +125,12 @@ describe('log selection', () => {
       expect(neighbourId(ids, 'other', 'down')).toBe('a')
       expect(neighbourId(ids, 'other', 'up')).toBe('a')
       expect(neighbourId(ids, undefined, 'down')).toBe('a')
+      expect(neighbourId(ids, undefined, 'up')).toBe('a')
     })
 
-    it('has no neighbour on an empty page', () => {
-      expect(neighbourId([], 'a', 'down')).toBeUndefined()
+    it('keeps the current row while the page has no rows yet', () => {
+      expect(neighbourId([], 'a', 'down')).toBe('a')
+      expect(neighbourId([], 'a', 'up')).toBe('a')
     })
   })
 
