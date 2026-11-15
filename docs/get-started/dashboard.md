@@ -12,7 +12,131 @@ and ensuring the mock APIs works seamlessly under various scenarios.
 
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
 
-<img src="/docs/get-started/dashboard-overview-mock-api.png" class="image-border" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
+<!-- screenshot: new layout with sidebar and tabs (replaces dashboard-overview-mock-api.png, which shows the classic layout) -->
+
+## Layout
+
+The dashboard has four areas: the header, the activity bar on the left, the sidebar next to it
+and the tab bar with the open view.
+
+The header contains the Mokapi logo, the links to the dashboard and the documentation, the
+version, the documentation search and the theme switch.
+
+### Activity bar
+
+The icons of the activity bar open the main areas:
+
+| Icon     | Description                                                                         |
+|----------|-------------------------------------------------------------------------------------|
+| Services | Shows the sidebar. Click it again to collapse or expand the sidebar.                |
+| Search   | Opens the search as a tab. Shown only if search is enabled.                         |
+| Jobs     | Opens the scheduled jobs as a tab. Shown only if at least one job exists.           |
+| Configs  | Opens all configuration files as a tab.                                             |
+| Faker    | Opens the Faker tree as a tab. Shown only in the live dashboard, not in the demo.   |
+
+Press `/` anywhere in the dashboard to open Search.
+
+### Sidebar
+
+The sidebar lists everything Mokapi serves. From top to bottom it contains:
+
+- a filter field (see [Filter the sidebar](#filter-the-sidebar))
+- **Overview**, the start page with runtime metrics and all services
+- **Pinned**, your pinned views (see [Pinned](#pinned))
+- one group per protocol that has at least one service, in the order HTTP, Kafka, MQTT,
+  Websocket, Mail and LDAP
+
+Each group lists its services alphabetically with the number of requests or messages. For HTTP
+services, a red dot shows that the service handled requests with errors. Click a service to open
+its view.
+
+Click the group heading to open the page of the protocol with its metrics, services and log.
+The chevron next to the heading collapses or expands the group.
+
+### Filter the sidebar
+
+Type in the filter field to find a service, an endpoint, a topic, a channel or a mailbox. The
+filter ignores case and matches:
+
+- the service name
+- the path, topic, channel or mailbox name
+- the HTTP method, for example `post`
+- the tag
+
+The sidebar then shows the matches grouped by service, with a summary such as "5 matches in 2
+services". For each service it lists at most 6 items. If there are more, the entry "N more in
+`<service>`" opens the service view. Use the clear button or press `Escape` to empty the filter.
+
+### Tabs
+
+Every tab is a page of the dashboard, so the URL in the address bar always shows the active tab.
+You can copy it, bookmark it or share it. The title of an HTTP endpoint tab starts with the
+method.
+
+How a click opens a view depends on how you click:
+
+| Action                                    | Result                                                                  |
+|-------------------------------------------|-------------------------------------------------------------------------|
+| Click                                     | Activates the tab if the target is already open, otherwise replaces the active tab |
+| Ctrl+click, Cmd+click or middle click     | Always opens a new tab, even if the target is already open              |
+| Middle click on a tab or click on x       | Closes the tab                                                          |
+
+This applies to the sidebar, the activity bar, pinned entries and to links and table rows
+inside a view.
+
+The dashboard keeps at most 10 tabs. If you open another tab, or the tab doesn't fit into the
+row, Mokapi closes the tab you used least recently. Resizing the window never closes a tab. If
+the window is too narrow, the tabs that don't fit move into a **+N** menu at the end of the bar,
+and the active tab stays visible.
+
+Mokapi saves your open tabs in the browser and restores them after a reload. Each browser window
+keeps its own tabs. If you open the dashboard with a URL, for example from a link or a bookmark,
+the saved tabs are restored and the URL opens as an additional tab. The browser's back and
+forward buttons work as usual. Because a click replaces the active tab, back shows the previous
+view in the active tab.
+
+Switching to a tab loads its view again, so data is fetched again and the scroll position starts
+at the top.
+
+### Pinned
+
+Pin the views you need often. Click the star in a tab to pin or unpin it. In the service views,
+the rows of endpoints, topics and channels have a star as a shortcut.
+
+Pinned views appear in the **Pinned** section of the sidebar and behave like any other sidebar
+entry, including Ctrl/Cmd+click and middle click. If the target no longer exists, for example
+because the API was removed from your configuration, the entry stays in the list but is greyed
+out. Use its remove button to delete it.
+
+Pinned views are saved in the browser and restored after a reload.
+
+### Group by tag
+
+The lists of HTTP endpoints, Kafka topics, MQTT topics and Websocket channels have a switch with
+two options:
+
+- **A-Z** shows one list sorted alphabetically. This is the default.
+- **By tag** groups the rows under a heading per tag, with the tag's description from your
+  OpenAPI or AsyncAPI specification. Rows without a tag are listed last under "Untagged".
+
+Mokapi remembers your choice for each service.
+
+<!-- screenshot: HTTP endpoint list grouped by tag -->
+
+### Narrow windows
+
+In windows narrower than 768 px, the sidebar starts collapsed. Click the Services icon to open
+it as an overlay on top of the view. Clicking an entry opens it and closes the overlay. Mokapi
+remembers whether the sidebar and each protocol group is collapsed or expanded.
+
+### Classic view
+
+The previous layout with protocol tabs and a breadcrumb is still available as a temporary
+fallback. Click **Classic view** in the header to switch to it, and **New view** to switch back.
+Mokapi remembers your choice. URLs are the same in both layouts.
+
+Classic view exists only in the live dashboard and will be removed in a later release. The
+[demo dashboard](/dashboard-demo) always uses the new layout.
 
 ## Working with Dashboard
 
