@@ -85,6 +85,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP – ${params.service}` }
           },
           {
+            path: 'log/:service',
+            name: getRouteName('httpServiceLog'),
+            component: dashboardView,
+            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP – ${params.service} requests` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('httpLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - HTTP – Requests' }
+          },
+          {
             path: 'requests/:id',
             name: getRouteName('httpRequest'),
             component: dashboardView,

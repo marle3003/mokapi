@@ -3,6 +3,7 @@ import ActivityBar from '@/components/dashboard/layout/ActivityBar.vue'
 import Sidebar from '@/components/dashboard/layout/Sidebar.vue'
 import TabBar from '@/components/dashboard/layout/TabBar.vue'
 import DashboardViews from '@/components/dashboard/DashboardViews.vue'
+import { viewKey } from '@/composables/dashboard-tabs'
 import { useDashboardLayout } from '@/composables/dashboard-layout'
 import { useNarrowWindow } from '@/composables/narrow-window'
 import { useTabs } from '@/composables/use-tabs'
@@ -21,8 +22,9 @@ const { openInNewTab, dashboardPathOf } = useTabs()
 // middle click would open a browser window or replace the active tab, so they open a tab instead.
 // This applies to every link in the layout, also to those inside the views.
 //
-// List rows navigate with their own mouse handlers (`mouseup.left`, `mousedown.middle`) and not
-// with the link in them. The listener therefore also stops mousedown and mouseup of a new-tab
+// Some list rows navigate with their own mouse handlers (`mouseup.left`, `mousedown.middle`) and
+// not with the link in them. The rows of the request log don't: a plain click selects the row.
+// The listener therefore also stops mousedown and mouseup of a new-tab
 // click before they reach the row, and resolves the target from the link or, for the other cells,
 // from the first dashboard link of the row.
 const interactive = 'button, input, select, textarea, label'
@@ -72,7 +74,7 @@ function openInNewTabInstead(e: MouseEvent) {
         <div class="dashboard-main">
             <tab-bar />
             <div class="dashboard-view">
-                <dashboard-views :key="$route.fullPath" :app-info="appInfo" />
+                <dashboard-views :key="viewKey($route.fullPath)" :app-info="appInfo" />
             </div>
         </div>
     </div>

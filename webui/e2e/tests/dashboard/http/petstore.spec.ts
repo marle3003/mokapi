@@ -1,5 +1,6 @@
 import { useTable } from '../../components/table'
 import { test, expect } from '../../models/fixture-dashboard'
+import { HttpRequestLogModel } from '../../models/http'
 
 test.describe('Visit Swagger Petstore', () => {
     test.use({ colorScheme: 'dark' })
@@ -56,7 +57,9 @@ test.describe('Visit Swagger Petstore', () => {
         await dashboard.open()
         await page.getByRole('link', { name: 'HTTP', exact: true }).click()
 
-        await page.getByRole('table', { name: 'Recent Requests' }).getByRole('row', { name: /requestWithParams/ }).first().click()
+        const log = new HttpRequestLogModel(page)
+        await log.rows.filter({ hasText: 'requestWithParams' }).first().click()
+        await log.panel.openAsTab.click()
 
         const table = page.getByRole('table').filter({ hasText: 'OpenAPI Defined' })
         const parameters = useTable(table, ['Switcher', 'Type', 'Name', 'Value', 'OpenAPI Defined'])

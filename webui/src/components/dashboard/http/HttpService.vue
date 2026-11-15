@@ -20,6 +20,7 @@ import ExportBruno from './export/Bruno.vue'
 import Breadcrumb from '../Breadcrumb.vue'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import { useService } from '@/composables/service.ts'
+import { withSelection } from '@/composables/request-selection'
 
 const route = useRoute()
 const router = useRouter();
@@ -60,6 +61,7 @@ const activeTab = ref('tab-paths');
 
 function setTab(tab: string) {
     router.replace({
+        query: withSelection(route.query, undefined),
         hash: `#${tab}`
     });
 }
@@ -168,6 +170,10 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                             aria-controls="paths-pane" @click="setTab('tab-paths')">
                             Paths
                         </button>
+                        <button :class="{ active: activeTab === 'tab-requests' }" id="tab-requests" type="button" role="tab"
+                            aria-controls="requests-pane" @click="setTab('tab-requests')">
+                            Requests
+                        </button>
                         <button :class="{ active: activeTab === 'tab-servers' }" id="tab-servers" type="button" role="tab"
                             aria-controls="servers-pane" @click="setTab('tab-servers')">
                             Servers
@@ -182,6 +188,15 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                             role="tabpanel" aria-labelledby="paths-tab">
                             <div class="card-group">
                                 <endpoints-card :service="service" />
+                            </div>
+                        </div>
+                        <!-- v-if: the log reloads while it is mounted, so a hidden one would poll -->
+                        <div v-if="activeTab === 'tab-requests'" class="tab-pane fade show active" id="requests-pane"
+                            role="tabpanel" aria-labelledby="tab-requests">
+                            <div class="d-flex justify-content-end mb-2">
+                                <router-link :to="{ name: getRouteName('httpServiceLog').value, params: { service: service.name }, query: { refresh: route.query.refresh } }">
+                                    Open as tab
+                                </router-link>
                             </div>
                             <div class="card-group">
                                 <requests :service-name="service.name" />
@@ -200,6 +215,9 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
             </section>
         </div>        
         
+    </div>
+    <div class="card-group" v-if="$route.name == getRouteName('httpServiceLog').value && service != null">
+        <requests :service-name="service.name" />
     </div>
     <request v-if="$route.name == getRouteName('httpRequest').value"></request>
     <http-path v-if="service && endpoint && endpoint.path && !endpoint.operation && !endpoint.error" :service="service" :path="endpoint.path" />

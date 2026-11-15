@@ -49,7 +49,7 @@ Activate dashboard (default true). The dashboard is available at the same port a
 ```bash tab=CLI
 --api-dashboard true
 --api-dashboard
---api-no-dashboard
+--no-api-dashboard
 ```
 ```bash tab=Env
 MOKAPI_API_DASHBOARD=true
@@ -57,6 +57,47 @@ MOKAPI_API_DASHBOARD=true
 ```yaml tab=File (YAML)
 api:
   dashboard: true
+```
+
+Activate search in the dashboard (default true). If you disable it, the Search icon and the search panel are hidden. See [Search panel](/docs/get-started/dashboard.md#search-panel) in the dashboard docs.
+```bash tab=CLI
+--api-search-enabled true
+--api-search-enabled
+--no-api-search-enabled
+```
+```bash tab=Env
+MOKAPI_API_SEARCH_ENABLED=false
+```
+```yaml tab=File (YAML)
+api:
+  search:
+    enabled: false
+```
+
+Directory where Mokapi stores the search index (default is the temporary directory of the operating system). Mokapi creates the subfolder `mokapi-bleve-index` in it and deletes an existing one at startup, so the index is rebuilt on every start.
+```bash tab=CLI
+--api-search-index-path /var/lib/mokapi/search
+```
+```bash tab=Env
+MOKAPI_API_SEARCH_INDEX_PATH=/var/lib/mokapi/search
+```
+```yaml tab=File (YAML)
+api:
+  search:
+    indexPath: /var/lib/mokapi/search
+```
+
+Keep the search index in memory instead of on disk (default false). Indexing and searching are faster, but the index uses Go heap memory. Mokapi ignores `indexPath` when this is set.
+```bash tab=CLI
+--api-search-in-memory
+```
+```bash tab=Env
+MOKAPI_API_SEARCH_IN_MEMORY=true
+```
+```yaml tab=File (YAML)
+api:
+  search:
+    inMemory: true
 ```
 
 The path prefix where dashboard is served (default empty)

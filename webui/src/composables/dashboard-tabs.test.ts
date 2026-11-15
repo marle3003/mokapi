@@ -9,6 +9,7 @@ import {
   restoreTabs,
   showPath,
   tabIdentity,
+  viewKey,
   tabTitle,
   type TabsState,
 } from './dashboard-tabs'
@@ -85,6 +86,12 @@ describe('dashboard tabs', () => {
       const state = openTab(withTabs('/a', '/b'), '/c', 0)
 
       expect(tabPaths(state)).toEqual(['/c'])
+    })
+
+    it('stores the path without the selected request', () => {
+      const state = openTab(emptyTabs(), '/dashboard/http/log?request=abc')
+
+      expect(tabPaths(state)).toEqual(['/dashboard/http/log'])
     })
 
     it('stores the path without the refresh query', () => {
@@ -351,15 +358,42 @@ describe('dashboard tabs', () => {
   })
 
   describe('tabIdentity', () => {
-    it('removes only the refresh query', () => {
+    it('removes the refresh query and keeps other parameters', () => {
       expect(tabIdentity('/dashboard/configs?refresh=20')).toBe('/dashboard/configs')
       expect(tabIdentity('/dashboard/configs?a=1&refresh=20&b=2')).toBe('/dashboard/configs?a=1&b=2')
       expect(tabIdentity('/dashboard/configs')).toBe('/dashboard/configs')
     })
 
+    it('removes the selected request like the refresh query', () => {
+      expect(tabIdentity('/dashboard/http/log?request=abc')).toBe('/dashboard/http/log')
+      expect(tabIdentity('/dashboard/http/log?a=1&request=abc&refresh=5&b=2')).toBe('/dashboard/http/log?a=1&b=2')
+      expect(tabIdentity('/dashboard/http/log?request=abc#tab-requests')).toBe('/dashboard/http/log')
+    })
+
+    it('keeps a parameter that only starts with a view-state name', () => {
+      expect(tabIdentity('/dashboard/search?requests=1&refreshing=2')).toBe('/dashboard/search?requests=1&refreshing=2')
+    })
+
     it('ignores the hash of a sub tab', () => {
       expect(tabIdentity('/dashboard/configs?refresh=20#tab-servers')).toBe('/dashboard/configs')
       expect(tabIdentity('/dashboard/configs?a=1#tab-servers')).toBe('/dashboard/configs?a=1')
+    })
+  })
+
+  describe('viewKey', () => {
+    it('stays the same when a request is selected, so the view stays mounted', () => {
+      expect(viewKey('/dashboard/http/log?request=abc')).toBe('/dashboard/http/log')
+      expect(viewKey('/dashboard/http/log?request=abc&refresh=5')).toBe('/dashboard/http/log?refresh=5')
+      expect(viewKey('/dashboard/http/log?a=1&request=abc&b=2')).toBe('/dashboard/http/log?a=1&b=2')
+    })
+
+    it('still changes with the refresh interval and the hash', () => {
+      expect(viewKey('/dashboard/configs?refresh=20')).toBe('/dashboard/configs?refresh=20')
+      expect(viewKey('/dashboard/configs?request=abc#tab-servers')).toBe('/dashboard/configs#tab-servers')
+    })
+
+    it('keeps a parameter that only starts with request', () => {
+      expect(viewKey('/dashboard/search?requests=1')).toBe('/dashboard/search?requests=1')
     })
   })
 

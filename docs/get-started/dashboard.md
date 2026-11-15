@@ -120,7 +120,8 @@ How a click opens a view depends on how you click:
 | Middle click on a tab or click on x       | Closes the tab                                                          |
 
 This applies to the sidebar, the activity bar, pinned entries and to links and table rows
-inside a view.
+inside a view. The rows of the HTTP request log are an exception: a click selects the row and
+shows its details next to the table, see [Request log](/docs/http/dashboard.md#request-log).
 
 The dashboard keeps at most 10 tabs. If you open another tab, or the tab doesn't fit into the
 row, Mokapi closes the tab you used least recently. Resizing the window never closes a tab. If

@@ -721,7 +721,7 @@ export const apps = [
     }
 ]
 
-export const events = [
+const petstoreEvents = [
     {
         id: "9e058601-562a-4063-a3b2-066ba624893a",
         traits: {
@@ -1054,4 +1054,57 @@ export const events = [
             clientIP: '192.0.1.127'
         }
     }
+]
+
+// Twelve requests of the Books API, newest first like the real API. More than one page at page
+// size 10, with GET and POST, status 200, 201, 400, 404 and 500 and two client IPs. The request
+// dd000011-0000-4000-8000-000000000011 has parameters, a body and response headers.
+function booksEvent(n: number, method: 'GET' | 'POST', path: string, statusCode: number, duration: number, clientIP = '10.0.0.5', details: { request?: object, response?: object } = {}) {
+    const nn = String(n).padStart(2, '0')
+    return {
+        id: `dd0000${nn}-0000-4000-8000-0000000000${nn}`,
+        traits: { namespace: 'http', name: 'Books API', path, method },
+        time: `2023-02-14T10:${nn}:00.000000+01:00`,
+        data: {
+            request: { method, url: `http://127.0.0.1:18080${path}`, ...details.request },
+            response: { statusCode, headers: { 'Content-Type': 'application/json' }, size: 64, ...details.response },
+            duration,
+            clientIP
+        }
+    }
+}
+
+const booksEvents = [
+    booksEvent(12, 'GET', '/books', 200, 25),
+    booksEvent(11, 'POST', '/books', 201, 48, '10.0.0.5', {
+        request: {
+            contentType: 'application/json',
+            parameters: [
+                { name: 'dryRun', type: 'query', value: 'false', raw: 'false' },
+                { name: 'Accept', type: 'header', raw: 'application/json' },
+                { name: 'X-Trace', type: 'header', raw: 'trace-11' }
+            ],
+            body: '{"title":"The Pragmatic Programmer","author":"Andrew Hunt"}'
+        },
+        response: {
+            headers: { 'Content-Type': 'application/json', 'Location': '/books/42', 'X-Request-Id': 'req-11' },
+            body: '{"id":42,"title":"The Pragmatic Programmer"}',
+            size: 44
+        }
+    }),
+    booksEvent(10, 'GET', '/books', 200, 21),
+    booksEvent(9, 'GET', '/users', 200, 12),
+    booksEvent(8, 'GET', '/books', 404, 8, '10.0.0.9'),
+    booksEvent(7, 'POST', '/books', 400, 15),
+    booksEvent(6, 'GET', '/books', 200, 19),
+    booksEvent(5, 'GET', '/users', 500, 230, '10.0.0.9'),
+    booksEvent(4, 'POST', '/books', 201, 52),
+    booksEvent(3, 'GET', '/books', 200, 17),
+    booksEvent(2, 'GET', '/books', 404, 9),
+    booksEvent(1, 'GET', '/users', 200, 11)
+]
+
+export const events = [
+    ...petstoreEvents,
+    ...booksEvents
 ]

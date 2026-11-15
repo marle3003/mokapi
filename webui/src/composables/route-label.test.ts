@@ -14,6 +14,19 @@ describe('routeLabel', () => {
     expect(routeLabel('httpEndpoint', { service: 'Api', endpoint: ['get'] })).toBe('/get')
   })
 
+  it('names the request log of one service after the service', () => {
+    expect(routeLabel('httpServiceLog', { service: 'Books API' })).toBe('Books API requests')
+  })
+
+  it('names the request log of all services "Requests"', () => {
+    expect(routeLabel('httpLog', {})).toBe('Requests')
+  })
+
+  it('treats a demo request log like the live one', () => {
+    expect(routeLabel('httpServiceLog-demo', { service: 'Books API' })).toBe('Books API requests')
+    expect(routeLabel('httpLog-demo', {})).toBe('Requests')
+  })
+
   it.each([
     ['httpService', { service: 'Books API' }, 'Books API'],
     ['kafkaService', { service: 'Orders' }, 'Orders'],

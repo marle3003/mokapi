@@ -1,6 +1,8 @@
 import type { Page, Route } from '@playwright/test'
 import { useDashboard } from '../components/dashboard'
 import { test, expect } from '../models/fixture-dashboard'
+import { HttpRequestLogModel } from '../models/http'
+import { pauseClock } from '../helpers/clock'
 
 const heartbeatInterval = 5000
 
@@ -8,11 +10,6 @@ const heartbeatInterval = 5000
 test.beforeEach(async ({ page }) => {
     await page.clock.install()
 })
-
-async function pauseClock(page: Page) {
-    const now = await page.evaluate(() => Date.now())
-    await page.clock.pauseAt(now + 100)
-}
 
 async function openAndPauseClock(page: Page, path = '/dashboard') {
     await page.goto(path)
@@ -23,9 +20,14 @@ async function openAndPauseClock(page: Page, path = '/dashboard') {
 async function openHttpRequests(page: Page) {
     await openAndPauseClock(page)
     await useDashboard(page).tabs.http.click()
-    await expect(requestRows(page)).toHaveCount(6)
+    await expect(requestRows(page)).toHaveCount(18)
 }
 
+// Click the time cell: a frozen clock makes Vue skip the row handler when the click starts on the link
+const selectFirstRequest = (page: Page) => {
+    const log = new HttpRequestLogModel(page)
+    return log.cell(log.rows.first(), 'Time').click()
+}
 const requestRows = (page: Page) => page.getByRole('table', { name: 'Recent Requests' }).locator('tbody tr')
 const loadingSpinner = (page: Page) => page.locator('main').getByRole('status').filter({ hasText: 'Loading...' })
 const recentRequestsSpinner = (page: Page) => page.getByRole('region', { name: 'Recent Requests' }).getByRole('status').filter({ hasText: 'Loading...' })
@@ -36,20 +38,21 @@ test.describe('Connection lost', () => {
 
     test('data stays visible while disconnected', async ({ page, dashboard }) => {
         await openAndPauseClock(page, '/dashboard/http?refresh=1')
-        await expect(requestRows(page)).toHaveCount(6)
+        await expect(requestRows(page)).toHaveCount(18)
 
         await page.route('**/api/events?*', connectionRefused)
         await page.clock.runFor(1000)
 
         await expect(dashboard.connectionLostToast).toBeVisible()
-        await expect(requestRows(page)).toHaveCount(6)
+        await expect(requestRows(page)).toHaveCount(18)
     })
 
     test('page shows the loading spinner on navigation while disconnected', async ({ page, dashboard }) => {
         await openHttpRequests(page)
 
         await page.route('**/api/events/*', connectionRefused)
-        await requestRows(page).first().click()
+        await selectFirstRequest(page)
+        await new HttpRequestLogModel(page).panel.openAsTab.click()
 
         await expect(dashboard.connectionLostToast).toBeVisible()
         await expect(loadingSpinner(page)).toBeVisible()
@@ -74,12 +77,13 @@ test.describe('Connection lost', () => {
         await page.clock.runFor(heartbeatInterval)
 
         await expect(dashboard.connectionLostToast).toHaveCount(0)
-        await expect(requestRows(page)).toHaveCount(6)
+        await expect(requestRows(page)).toHaveCount(18)
     })
 
     test('event that no longer exists after reconnect shows not found', async ({ page, dashboard }) => {
         await openHttpRequests(page)
-        await requestRows(page).first().click()
+        await selectFirstRequest(page)
+        await new HttpRequestLogModel(page).panel.openAsTab.click()
         await expect(page.getByRole('heading', { name: 'Request', exact: true })).toBeVisible()
 
         await page.route('**/api/info', connectionRefused)

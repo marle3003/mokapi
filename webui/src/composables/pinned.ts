@@ -2,7 +2,7 @@ import { tabIdentity } from '@/composables/dashboard-tabs'
 import { useLocalStorage } from '@/composables/local-storage'
 import { useDashboard } from '@/composables/dashboard'
 
-// A pinned entry is the path of a dashboard route, like a tab, without the refresh interval and hash.
+// A pinned entry is the path of a dashboard route, like a tab, without the refresh interval, the selected request and the hash.
 export function isPinned(pinned: string[], fullPath: string): boolean {
     return pinned.includes(tabIdentity(fullPath))
 }
@@ -28,10 +28,10 @@ export function restorePinned(saved: unknown): string[] {
 type PinService = Pick<Service, 'name' | 'type' | 'items'>
 
 // Where the service and its items are in the path of a protocol: `service` is the segment before the
-// service name, `item` the one before an item name (HTTP endpoints are the rest of the path).
-// Other pages of a service (servers, groups, clients) have no item and only need the service.
-const protocolRoutes: Record<string, { service: string, item?: string }> = {
-    http: { service: 'services' },
+// service name, `item` the one before an item name (HTTP endpoints are the rest of the path), `log`
+// the one before the service name of its request log. Other pages of a service (servers, groups, clients) have no item and only need the service.
+const protocolRoutes: Record<string, { service: string, item?: string, log?: string }> = {
+    http: { service: 'services', log: 'log' },
     kafka: { service: 'service', item: 'topics' },
     mqtt: { service: 'service', item: 'topics' },
     websocket: { service: 'service', item: 'channels' },
@@ -64,6 +64,10 @@ export function isPinTargetAvailable(fullPath: string, services: PinService[]): 
     }
     if (kind === undefined) {
         return true
+    }
+    if (kind === route.log) {
+        // the log of all services has no name
+        return name === undefined || services.some(s => s.type === type && s.name === name)
     }
     if (kind !== route.service) {
         return recordedData.includes(kind)

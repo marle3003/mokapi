@@ -76,7 +76,7 @@ test.describe('Visit Books API', () => {
 
             await test.step('Verify path', async () => {
 
-                await page.getByRole('link', { name: '/books' }).click();
+                await page.getByRole('link', { name: '/books', exact: true }).click();
                 await expect(page).toHaveURL(/Books%20API\/books/)
 
                 await expect(page.getByLabel('Path', { exact: true })).toHaveText('/books');

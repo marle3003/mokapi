@@ -112,6 +112,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('httpLog').value">
+        <div class="card-group">
+            <http-requests />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('kafka').value">
         <div class="card-group">
             <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />

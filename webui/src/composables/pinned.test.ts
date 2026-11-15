@@ -36,6 +36,13 @@ describe('pinned entries', () => {
       expect(togglePin(pinned, '/dashboard/jobs?refresh=5')).toEqual([])
     })
 
+    it('ignores the selected request of a log', () => {
+      const pinned = togglePin([], '/dashboard/http/log?request=abc')
+
+      expect(pinned).toEqual(['/dashboard/http/log'])
+      expect(isPinned(pinned, '/dashboard/http/log?request=def')).toBe(true)
+    })
+
     it('keeps other query parameters', () => {
       expect(togglePin([], '/dashboard/search?q=pet&refresh=20')).toEqual(['/dashboard/search?q=pet'])
     })
@@ -115,6 +122,15 @@ describe('pinned entries', () => {
         ['/dashboard/ldap/service/Directory', true],
         ['/dashboard/ldap/service/Gone', false],
       ])('%s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
+        ['/dashboard/http/log', true],
+        ['/dashboard/http/log/Swagger%20Petstore', true],
+        ['/dashboard/http/log/Gone', false],
+        ['/dashboard-demo/http/log/Swagger%20Petstore', true],
+      ])('request log %s', (path, expected) => {
         expect(available(path)).toBe(expected)
       })
 

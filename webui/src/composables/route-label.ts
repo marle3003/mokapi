@@ -17,6 +17,7 @@ const pageLabels: Record<string, string> = {
     configs: 'Configs',
     config: 'Config',
     tree: 'Faker',
+    httpLog: 'Requests',
     httpRequest: 'HTTP Request',
     kafkaRequest: 'Kafka Request',
     kafkaMessage: 'Kafka Message',
@@ -59,6 +60,9 @@ export function routeLabel(routeName: string | symbol | undefined | null, params
     const name = routeName.replace(/-demo$/, '')
     if (name === 'httpEndpoint') {
         return endpointPath(params.endpoint as string[] | undefined)
+    }
+    if (name === 'httpServiceLog') {
+        return `${params.service} requests`
     }
     const nameParam = nameParams[name]
     return nameParam ? (params[nameParam] as string | undefined) : pageLabels[name]

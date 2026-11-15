@@ -6,57 +6,13 @@ import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { computed, shallowRef, watch } from 'vue'
+import { computed } from 'vue'
 import Actions from '../Actions.vue'
-import { useDashboard } from '@/composables/dashboard'
+import { useHttpEvent } from '@/composables/http-event'
 
-const route = useRoute();
-const { dashboard } = useDashboard()
+const route = useRoute()
+const { event, eventData, isLoading, operation, responseContentType } = useHttpEvent(() => route.params.id as string)
 
-const res = shallowRef<ReturnType<typeof dashboard.value.getEvent>>()
-const event = computed(() => res.value?.event.value)
-const isLoading = computed(() => res.value?.isLoading.value ?? true)
-
-watch(dashboard, (db, _, onCleanup) => {
-  const r = db.getEvent(route.params.id as string)
-  res.value = r
-  onCleanup(() => r.close())
-}, { immediate: true })
-
-const eventData = computed(() => {
-    if (!event.value) {
-        return undefined;
-    }
-    return <HttpEventData>event.value.data
-})
-
-const opsRes = shallowRef<ReturnType<typeof dashboard.value.getHttpOperations>>()
-
-watch(
-  () => {
-    const t = event.value?.traits
-    return [t?.name, t?.path, t?.method?.toLowerCase()] as const
-  },
-  ([name, path, method], _, onCleanup) => {
-    if (!name) {
-      opsRes.value = undefined
-      return
-    }
-    const r = dashboard.value.getHttpOperations(name, path, method)
-    opsRes.value = r
-    onCleanup(() => r.close?.())
-  },
-  { immediate: true }
-)
-
-const operation = computed(() => opsRes.value?.operations.value?.[0])
-
-function getResponseContentType(): string {
-    if (!eventData.value?.response?.headers) {
-        return ''
-    }
-    return eventData.value.response.headers['Content-Type'] ?? ''
-}
 const hasActions = computed(() => {
     if (!eventData.value) {
         return false
@@ -96,7 +52,7 @@ const hasActions = computed(() => {
                     <h2 id="response" class="card-title text-center">Response</h2>
                     <http-header :headers="eventData.response.headers"></http-header>
                     <p class="label">Body</p>
-                    <http-body :content-type="getResponseContentType()" :body="eventData.response.body" :size="eventData.response.size"></http-body>
+                    <http-body :content-type="responseContentType" :body="eventData.response.body" :size="eventData.response.size"></http-body>
                 </div>
             </section>
         </div>

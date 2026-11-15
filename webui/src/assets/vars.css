@@ -134,6 +134,13 @@
     --layout-row-separator:          #1e1d25;
     --layout-status-error:           #ff7a8c;
     --layout-status-other:           #f5a524;
+
+    /* HTTP request log: detail panel, filter chips and popover */
+    --layout-panel-width:            440px;
+    --layout-panel-background:       #1b1a20;
+    --layout-chip-background:        #24232c;
+    --layout-popover-background:     #1b1a20;
+    --layout-popover-shadow:         0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] {
@@ -244,4 +251,9 @@
     --layout-row-separator:          rgba(0, 0, 0, 0.08);
     --layout-status-error:           #b3122e;
     --layout-status-other:           #7a4a00;
+
+    --layout-panel-background:       #fff;
+    --layout-chip-background:        rgb(234, 236, 240);
+    --layout-popover-background:     #fff;
+    --layout-popover-shadow:         0 6px 16px rgba(0, 0, 0, 0.18);
 }
