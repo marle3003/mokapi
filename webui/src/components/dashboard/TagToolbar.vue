@@ -16,7 +16,7 @@ function toggle(name: string) {
 </script>
 
 <template>
-    <div v-if="tags.length > 0" class="d-flex flex-wrap align-items-start justify-content-between gap-2 mt-3 mb-2">
+    <div v-if="tags.length > 0" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2 mb-2">
         <fieldset v-if="tags.length > 1" aria-describedby="tag-help">
 
             <legend class="visually-hidden">
@@ -27,14 +27,14 @@ function toggle(name: string) {
                 Select one or more tags to filter the {{ noun }}. Selecting "All" enables all tags.
             </p>
 
-            <div class="form-check form-check-inline">
+            <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input tag-checkbox" type="checkbox" id="all" value="all"
                     @change="toggle('__all')" :checked="selected.includes('__all')" aria-controls="tag-list">
                 <label class="form-check-label" for="all">All</label>
             </div>
 
             <div id="tag-list" style="display: inline-block">
-                <div class="form-check form-check-inline" v-for="tag in tags" :key="tag.name" :title="tag.description">
+                <div class="form-check form-check-inline mb-0" v-for="tag in tags" :key="tag.name" :title="tag.description">
                     <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" :value="tag.name"
                         @change="toggle(tag.name)" :checked="selected.includes(tag.name) || selected.includes('__all')"
                         :aria-describedby="tag.description ? `desc-${tag.name}` : undefined">

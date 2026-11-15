@@ -320,6 +320,47 @@ test.describe('Dashboard A-Z / By tag: toolbar', () => {
         expect(Math.abs(s.x + s.width - (t.x + t.width)), 'switch ends at the right edge of the table').toBeLessThanOrEqual(2)
     })
 
+    // the toolbar looks like the other small controls of the dashboard: a compact switch, one centered
+    // line and the same space above (title) and below (table)
+    const proportions = [
+        { name: 'several tags', path: petstore, title: 'paths', table: 'Paths', allCheckbox: true },
+        { name: 'one tag', path: lists[0].path, title: 'paths', table: 'Paths', allCheckbox: false },
+    ]
+    for (const layout of ['new', 'classic'] as const) {
+        test.describe(`proportions, ${layout} view`, () => {
+            test.use({ layout })
+
+            for (const { name, path, title, table, allCheckbox } of proportions) {
+                test(`${name}: compact switch, centered, balanced spacing`, async ({ page }) => {
+                    await page.goto(path)
+                    const { switchGroup } = useToolbar(page, title)
+                    await expect(switchGroup).toBeVisible()
+
+                    const s = await box(switchGroup)
+                    const toolbar = await box(switchGroup.locator('xpath=..'))
+                    const heading = await box(page.getByRole('heading', { name: table, level: 2 }))
+                    const t = await box(page.getByRole('table', { name: table }))
+                    const buttonFontSize = await switchGroup.getByRole('button', { name: 'A-Z' })
+                        .evaluate(el => parseFloat(getComputedStyle(el).fontSize))
+
+                    expect.soft(s.height, 'switch is as small as the other small controls').toBeLessThanOrEqual(26)
+                    expect.soft(buttonFontSize, 'switch uses the small dashboard font').toBeLessThanOrEqual(12)
+
+                    if (allCheckbox) {
+                        const c = await box(page.getByRole('checkbox', { name: 'All' }))
+                        expect.soft(Math.abs((c.y + c.height / 2) - (s.y + s.height / 2)),
+                            'checkboxes and switch are centered on one line').toBeLessThanOrEqual(2)
+                    }
+
+                    const above = toolbar.y - (heading.y + heading.height)
+                    const below = t.y - (toolbar.y + toolbar.height)
+                    expect.soft(Math.abs(above - below),
+                        `space title to toolbar (${above}) is about the space toolbar to table (${below})`).toBeLessThanOrEqual(4)
+                })
+            }
+        })
+    }
+
     test('without tags neither filter nor switch is shown', async ({ page }) => {
         // the mock has no service without tags: remove them from the topics of Kafka World
         await page.route(/\/api\/services\/kafka\/Kafka%20World$/, async route => {
