@@ -2,20 +2,39 @@ import type { LocationQuery, LocationQueryRaw } from 'vue-router'
 
 export type LogKeyAction = 'up' | 'down' | 'close-popover' | 'close-panel'
 
+// The logs of a view that keep their selected row in the URL, by priority: a view holds one selection
+// at a time, and with several keys in the address the first one wins.
+export const selectionKeys = ['message', 'request']
+
 // The selected row of a log is in the URL (`?request=<id>`, `?message=<id>`: the query key says
-// which log), so a link opens the panel.
+// which log), so a link opens the panel. A key below a selected key of higher priority has none.
 export function selectedLogId(query: LocationQuery, key: string): string | undefined {
+    const index = selectionKeys.indexOf(key)
+    if (index > 0 && selectionKeys.slice(0, index).some(higher => rawId(query, higher))) {
+        return undefined
+    }
+    return rawId(query, key)
+}
+
+// A key in the address that selects nothing because a key of higher priority is selected.
+export function isShadowedSelection(query: LocationQuery, key: string): boolean {
+    return rawId(query, key) !== undefined && selectedLogId(query, key) === undefined
+}
+
+function rawId(query: LocationQuery, key: string): string | undefined {
     const value = query[key]
     const id = Array.isArray(value) ? value[0] : value
     return id || undefined
 }
 
-// The query with the selected row, other parameters (refresh) stay. Without id the key is removed.
+// The query with the selected row, other parameters (refresh) stay. A selected row removes the
+// selection of the other logs. Without id only the key itself is removed.
 export function withSelection(query: LocationQuery, key: string, id: string | undefined): LocationQueryRaw {
     const result: LocationQueryRaw = { ...query }
     if (id === undefined) {
         delete result[key]
     } else {
+        selectionKeys.forEach(other => delete result[other])
         result[key] = id
     }
     return result

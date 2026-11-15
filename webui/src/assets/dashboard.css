@@ -772,6 +772,7 @@ a.search-result:focus-visible {
   align-items: center;
   gap: 0.5rem;
   flex: none;
+  margin-left: auto;
 }
 .log-filters {
   position: relative;

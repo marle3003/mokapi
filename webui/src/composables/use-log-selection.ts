@@ -1,6 +1,6 @@
 import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { logKeyAction, neighbourId, selectedLogId, withSelection } from '@/composables/log-selection'
+import { isShadowedSelection, logKeyAction, neighbourId, selectedLogId, withSelection } from '@/composables/log-selection'
 
 // Connects the selection of a log (query key `request` or `message`) with the router and the
 // keyboard. The selected row is in the address, so a link opens the panel. A selection replaces the
@@ -8,8 +8,9 @@ import { logKeyAction, neighbourId, selectedLogId, withSelection } from '@/compo
 export function useLogSelection(key: string, log: {
     // the rows of the current page, top to bottom
     ids: () => string[]
-    popoverOpen: () => boolean
-    closePopover: () => void
+    // a log with a filter popover closes it with Escape before the panel
+    popoverOpen?: () => boolean
+    closePopover?: () => void
     // called after an arrow key moved the selection
     onMoved: () => void
 }) {
@@ -41,19 +42,26 @@ export function useLogSelection(key: string, log: {
     }
 
     function onKeydown(e: KeyboardEvent) {
-        const action = logKeyAction(e, { panelOpen: selectedId.value !== undefined, popoverOpen: log.popoverOpen() })
+        const action = logKeyAction(e, { panelOpen: selectedId.value !== undefined, popoverOpen: log.popoverOpen?.() ?? false })
         if (!action) {
             return
         }
         e.preventDefault()
         switch (action) {
-            case 'close-popover': log.closePopover(); break
+            case 'close-popover': log.closePopover?.(); break
             case 'close-panel': select(undefined); break
             default:
                 select(neighbourId(log.ids(), selectedId.value, action))
                 log.onMoved()
         }
     }
+
+    // A link with the selection of two logs opens the one of higher priority, the other is dropped.
+    watch(() => isShadowedSelection(route.query, key), (shadowed) => {
+        if (shadowed) {
+            select(undefined)
+        }
+    }, { immediate: true })
 
     // The keys belong to the log only while its panel is open.
     watch(() => selectedId.value !== undefined, (open) => {

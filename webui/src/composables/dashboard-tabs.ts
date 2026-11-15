@@ -1,3 +1,5 @@
+import { selectionKeys } from '@/composables/log-selection'
+
 export const maxTabs = 10
 
 const titlePrefix = 'Dashboard - '
@@ -24,8 +26,7 @@ export function emptyTabs(): TabsState {
 // Parameters that change how a view looks, not what it shows: the refresh interval is a setting of
 // the dashboard, `request` and `message` select a row of a request or message log.
 const refreshParameter = 'refresh'
-const selectionParameters = ['request', 'message']
-const viewStateParameters = [refreshParameter, ...selectionParameters]
+const viewStateParameters = [refreshParameter, ...selectionKeys]
 
 // The hash selects a sub tab of the view. Neither it nor a view-state parameter is part of what a
 // tab shows.
@@ -37,7 +38,7 @@ export function tabIdentity(fullPath: string): string {
 // the view, so selecting it must keep the view (and the log with its pause and filters) mounted.
 export function viewKey(fullPath: string): string {
     const [pathAndQuery, hash] = splitAt(fullPath, '#')
-    return withoutParameters(pathAndQuery, selectionParameters) + (hash === undefined ? '' : `#${hash}`)
+    return withoutParameters(pathAndQuery, selectionKeys) + (hash === undefined ? '' : `#${hash}`)
 }
 
 function withoutParameters(pathAndQuery: string, names: string[]): string {

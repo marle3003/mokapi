@@ -28,3 +28,21 @@ export class KafkaMessageLogModel extends LogModel<'Cluster' | 'Topic' | 'Partit
         return row.getByRole('cell').last()
     }
 }
+
+// The request log of the Kafka client view: region "Recent Requests", panel "Request details". It
+// has no filter chips.
+export class KafkaRequestLogModel extends LogModel<never> {
+    constructor(page: Page) {
+        super(page, { log: 'Recent Requests', panel: 'Request details' })
+    }
+
+    // The row of a request, found by the link to its full view.
+    row(id: string): Locator {
+        return this.rows.filter({ has: this.page.locator(`a[href$="/requests/${id}"]`) })
+    }
+
+    // The time is the last column.
+    time(row: Locator): Locator {
+        return row.getByRole('cell').last()
+    }
+}

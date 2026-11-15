@@ -107,5 +107,21 @@ doesn't save the pause. A reload of the page or a switch to another tab runs the
 change a filter or the page while paused, the log loads the new result and runs again. The demo
 dashboard has no Pause button, because it has no live messages.
 
+## Client request log
+
+The view of an MQTT client also lists the requests of this client in the "Connection & Subscription Requests" table. Each row opens in a detail panel, in the same way as a message.
+
+### Request details
+
+Click a row to open the details of the request next to the table. The top of the panel shows the type, for example `Connect`, and the time. Below it, the panel has the sub tabs **Request** and **Response**. A `Disconnect` request has no response, so the panel shows only the Request sub tab. The sub tab stays the same when you select the next request.
+
+Click **Open as tab** to show the request in the full view. A click replaces the active tab, Ctrl+click, Cmd+click or middle click opens a new one. In the new layout, Ctrl+click, Cmd+click or middle click on a row does the same without selecting the row. In the Classic view, only the link in a row opens a browser tab this way. Arrow keys up and down and `Escape` work as in the [message details](#message-details).
+
+The selected request is part of the address (`?request=<id>`). After a reload, the panel opens again, and you can copy the address to share the request. If Mokapi has dropped the request, the panel shows "MQTT Request not found".
+
+A client view has one selection. Selecting a request closes the message panel and selecting a message closes the request panel. **Pause** and **Resume** work as described in [Pause the log](#pause-the-log) and also apply to the request log.
+
+<!-- screenshot: client view with the Connection & Subscription Requests table and the detail panel on the Request sub tab -->
+
 See [Using Mokapi Dashboard](/docs/get-started/dashboard.md) for tabs, Pinned and the other
 parts of the layout.

@@ -206,7 +206,7 @@ test.describe('MQTT message log: embedded logs keep the panel', () => {
         await page.route('**/api/events?*', route => route.fulfill({ json: { items: [], page: 1, size: 25, total: 0 } }))
         await page.goto(`/dashboard/mqtt/service/${clusterPath}/clients/mqtt-client-1`)
         await expect(page.getByRole('region', { name: 'Info' })).toBeVisible()
-        await expect(page.getByRole('table', { name: 'requests' })).toBeVisible()
+        await expect(page.getByRole('table', { name: 'Connection & Subscription Requests' })).toBeVisible()
 
         await expect(log.log).toHaveCount(0)
     })

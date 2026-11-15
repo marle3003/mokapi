@@ -1,72 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import Loading from '@/components/Loading.vue';
 import Message from '@/components/Message.vue';
-import { useDashboard } from '@/composables/dashboard';
-import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
-import { computed, ref, watch, type Component } from 'vue';
-import Connect from './requests/Connect.vue';
-import Subscribe from './requests/Subscribe.vue';
-import Disconnect from './requests/Disconnect.vue';
-import { useMqtt } from '@/composables/mqtt';
-
-const detail: { [apiKey: number]: Component } = {
-    1: Connect,
-    8: Subscribe,
-    14: Disconnect
-};
+import { useRequestEvent } from '@/composables/request-event';
+import RequestCards from '../log/RequestCards.vue';
+import RequestHead from './requests/RequestHead.vue';
+import { mqttRequestTypes } from './requests/request-types';
 
 const route = useRoute();
-const { format: formatTime } = usePrettyDates();
-const { dashboard } = useDashboard()
-const { formatType } = useMqtt()
-const event = ref<ServiceEvent | null>(null);
-const isLoading = ref<boolean>(true)
-
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res = db.getEvent(route.params.id as string);
-    
-    const stop = watch([res.event, res.isLoading], ([evt, loading]) => { event.value = evt; isLoading.value = loading }, { immediate: true })
-
-    onCleanup(() => {
-        stop()
-        res.close()
-    });
-  },
-  { immediate: true }
-);
-
-const eventData = computed(() => {
-    if (!event.value) {
-        return undefined
-    }
-    return event.value.data as MqttRequestLog
-})
+const { event, data, isLoading } = useRequestEvent<MqttRequestLog>(() => route.params.id as string)
+const type = computed(() => data.value ? mqttRequestTypes[data.value.type] : undefined)
 </script>
 
 <template>
-    <div v-if="event && eventData">
-        <div class="card-group">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-3 header">
-                            <p id="api-key" class="label">Type</p>
-                            <p aria-labelledby="api-key">
-                                {{ formatType(eventData.type) }}
-                            </p>
-                        </div>
-                        <div class="col ms-auto">
-                            <p id="time" class="label">Time</p>
-                            <p aria-labelledby="time">{{ formatTime(event.time) }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <component :is="detail[eventData.type]"
-            :request="eventData.request" :response="eventData.response" />
+    <div v-if="event && data">
+        <request-cards>
+            <template #head>
+                <request-head :type="data.type" :time="event.time" />
+            </template>
+            <template v-if="type" #request>
+                <component :is="type.request" :request="data.request" />
+            </template>
+            <template v-if="type?.response" #response>
+                <component :is="type.response" :response="data.response" />
+            </template>
+        </request-cards>
     </div>
     <loading v-if="!event && isLoading"></loading>
     <div v-if="!event && !isLoading">

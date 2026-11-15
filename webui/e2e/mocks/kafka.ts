@@ -780,7 +780,72 @@ export const events = [
     productMessage('a0000000-0000-4000-8000-000000000006', { partition: 2, offset: 2, clientId: 'consumer-2', key: 'GGOEWXXX0834', time: '2025-03-01T10:05:00+01:00' }),
     orderMessage('a0000000-0000-4000-8000-000000000007', { offset: 1, clientId: 'consumer-1', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c01', time: '2025-03-01T10:06:00+01:00' }),
     orderMessage('a0000000-0000-4000-8000-000000000008', { offset: 2, clientId: 'consumer-2', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c02', time: '2025-03-01T10:07:00+01:00' }),
+    // requests of client 'consumer', one per request type (FindCoordinator is above)
+    kafkaRequest('b0000000-0000-4000-8000-000000000011', {
+        time: '2025-02-13T09:50:00+01:00',
+        header: { requestKey: 11, requestName: 'JoinGroup', version: 7 },
+        request: { groupName: 'foo', memberId: 'julie', protocolType: 'consumer', protocols: ['range', 'roundrobin'] },
+        response: { errorCode: '', errorMessage: '', generationId: 3, protocolName: 'range', memberId: 'julie', leaderId: 'julie', members: ['julie', 'hermann'] }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000014', {
+        time: '2025-02-13T09:51:00+01:00',
+        header: { requestKey: 14, requestName: 'SyncGroup', version: 5 },
+        request: {
+            groupName: 'foo', generationId: 3, memberId: 'julie', protocolType: 'consumer', protocolName: 'range',
+            groupAssignments: {
+                julie: { version: 1, topics: { 'mokapi.shop.products': [0, 1] } },
+                hermann: { version: 1, topics: { 'mokapi.shop.products': [2] } }
+            }
+        },
+        response: { errorCode: '', errorMessage: '', protocolType: 'consumer', protocolName: 'range', assignment: { version: 1, topics: { 'mokapi.shop.products': [0, 1] } } }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000002', {
+        time: '2025-02-13T09:52:00+01:00',
+        header: { requestKey: 2, requestName: 'ListOffsets', version: 7 },
+        request: { topics: { 'mokapi.shop.products': [{ partition: 0, timestamp: -2 }, { partition: 1, timestamp: -1 }] } },
+        response: {
+            topics: {
+                'mokapi.shop.products': [
+                    { partition: 0, timestamp: -1, offset: 0, snapshot: { startOffset: 0, endOffset: 4 } },
+                    { partition: 1, timestamp: -1, offset: 3, snapshot: { startOffset: 0, endOffset: 3 } }
+                ]
+            }
+        }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000022', {
+        time: '2025-02-13T09:53:00+01:00',
+        header: { requestKey: 22, requestName: 'InitProducerId', version: 4 },
+        request: { transactionalId: 'tx-orders', transactionTimeoutMs: 30000, producerId: -1, producerEpoch: -1, enable2PC: false },
+        response: { errorCode: 'COORDINATOR_NOT_AVAILABLE', errorMessage: 'The coordinator is not available.', producerId: -1, producerEpoch: -1, ongoingTxnProducerId: -1, ongoingTxnProducerEpoch: -1 }
+    }),
+    // a client that has messages too, for the client view with both logs
+    kafkaRequest('b0000000-0000-4000-8000-000000000100', {
+        clientId: 'consumer-1',
+        time: '2025-03-01T10:10:00+01:00',
+        header: { requestKey: 10, requestName: 'FindCoordinator', version: 2 },
+        request: { key: 'foo', keyType: 0 },
+        response: { errorCode: '', errorMessage: '', host: 'localhost', port: 9092 }
+    }),
 ]
+
+function kafkaRequest(id: string, r: { clientId?: string, time: string, header: object, request: object, response: object }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'request',
+            clientId: r.clientId ?? 'consumer'
+        },
+        time: r.time,
+        data: {
+            api: 'Kafka World',
+            header: r.header,
+            request: r.request,
+            response: r.response
+        }
+    }
+}
 
 function productMessage(id: string, m: { partition: number, offset: number, clientId: string, key: string, time: string, headers?: object, actions?: object[] }) {
     return {

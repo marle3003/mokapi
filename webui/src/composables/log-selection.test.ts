@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { logKeyAction, neighbourId, selectedLogId, withSelection } from './log-selection'
+import { isShadowedSelection, logKeyAction, neighbourId, selectedLogId, selectionKeys, withSelection } from './log-selection'
 
 function keyEvent(key: string, init: KeyboardEventInit = {}, target?: Element): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, ...init })
@@ -68,6 +68,43 @@ describe('log selection', () => {
 
       expect(result).toEqual({ refresh: '5' })
       expect('message' in result).toBe(false)
+    })
+  })
+
+  describe('one selection per view', () => {
+    it('lists the selection keys by priority, the message log is above the request log', () => {
+      expect(selectionKeys).toEqual(['message', 'request'])
+    })
+
+    it('removes the other selection keys when a row is selected, and keeps refresh', () => {
+      expect(withSelection({ message: 'abc', refresh: '5' }, 'request', 'def')).toEqual({ refresh: '5', request: 'def' })
+      expect(withSelection({ request: 'def', refresh: '5' }, 'message', 'abc')).toEqual({ refresh: '5', message: 'abc' })
+    })
+
+    it('removes only its own key on close', () => {
+      expect(withSelection({ message: 'abc', request: 'def' }, 'request', undefined)).toEqual({ message: 'abc' })
+      expect(withSelection({ message: 'abc', request: 'def' }, 'message', undefined)).toEqual({ request: 'def' })
+    })
+
+    it('has no request while a message is selected, the message wins', () => {
+      expect(selectedLogId({ message: 'abc', request: 'def' }, 'message')).toBe('abc')
+      expect(selectedLogId({ message: 'abc', request: 'def' }, 'request')).toBeUndefined()
+    })
+
+    it('selects the request when the message has no usable value', () => {
+      expect(selectedLogId({ message: '', request: 'def' }, 'request')).toBe('def')
+      expect(selectedLogId({ request: 'def' }, 'request')).toBe('def')
+    })
+
+    it('knows a request that a message shadows', () => {
+      expect(isShadowedSelection({ message: 'abc', request: 'def' }, 'request')).toBe(true)
+      expect(isShadowedSelection({ message: 'abc', request: 'def' }, 'message')).toBe(false)
+      expect(isShadowedSelection({ message: 'abc' }, 'request')).toBe(false)
+      expect(isShadowedSelection({ request: 'def' }, 'request')).toBe(false)
+    })
+
+    it('does not know other keys, they are never shadowed', () => {
+      expect(selectedLogId({ message: 'abc', other: 'def' }, 'other')).toBe('def')
     })
   })
 

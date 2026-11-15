@@ -17,3 +17,21 @@ export class MqttMessageLogModel extends LogModel<'Cluster' | 'Topic' | 'Client'
         return row.getByRole('cell').last()
     }
 }
+
+// The request log of the MQTT client view: region "Connection & Subscription Requests", panel
+// "Request details". It has no filter chips.
+export class MqttRequestLogModel extends LogModel<never> {
+    constructor(page: Page) {
+        super(page, { log: 'Connection & Subscription Requests', panel: 'Request details' })
+    }
+
+    // The row of a request, found by the link to its full view.
+    row(id: string): Locator {
+        return this.rows.filter({ has: this.page.locator(`a[href$="/requests/${id}"]`) })
+    }
+
+    // The time is the last column.
+    time(row: Locator): Locator {
+        return row.getByRole('cell').last()
+    }
+}

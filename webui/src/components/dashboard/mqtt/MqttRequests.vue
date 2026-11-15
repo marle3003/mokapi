@@ -1,125 +1,80 @@
 <script setup lang="ts">
-import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, reactive, ref, watch, type Component } from 'vue';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { useRouter } from '@/router';
-import ConnectSummary from './requests/ConnectSummary.vue';
-import SubscribeSummary from './requests/SubscribeSummary.vue';
-import DisconnectSummary from './requests/DisconnectSummary.vue';
-import { useMqtt } from '@/composables/mqtt';
-import { usePageSize } from '@/composables/paging.ts';
+import { useTemplateRef } from 'vue'
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { getRouteName } from '@/composables/dashboard'
+import { useMqtt } from '@/composables/mqtt'
+import { useRequestLog } from '@/composables/use-request-log'
 import Loading from '@/components/Loading.vue'
+import Paging from '../Paging.vue'
+import LogPauseButton from '../log/LogPauseButton.vue'
+import MqttRequestDetailPanel from './log/MqttRequestDetailPanel.vue'
+import { mqttRequestTypes } from './requests/request-types'
 
 const props = defineProps<{
   service: MqttService,
   clientId: string
-}>();
+}>()
 
-const summary: { [apiKey: number]: Component } = {
-  1: ConnectSummary,
-  8: SubscribeSummary,
-  14: DisconnectSummary
-};
-
-const router = useRouter();
-const { format: formatTime } = usePrettyDates();
+const { format: formatTime } = usePrettyDates()
 const { formatType } = useMqtt()
 
-const labels = computed(() => {
-  const result = [{ name: 'namespace', value: 'mqtt' }, { name: 'type', value: 'request' }];
-  result.push({ name: 'name', value: props.service.name })
-  result.push({ name: 'clientId', value: props.clientId })
-  return result;
-})
-
-const paging = reactive({
-    current: 1,
-    size: usePageSize(25),
-})
-
-const { dashboard } = useDashboard()
-const result = ref<ServiceEventPage | null>(null);
-const isLoading = ref(true)
-const requests = computed(() => result.value?.items ?? [])
-watch(
-  [() => dashboard.value, () => paging.current, () => paging.size, labels],
-  ([db], _, onCleanup) => {
-    const res = db.getEvents({
-      page: paging.current,
-      size: paging.size,
-      labels: labels.value,
-    })
-
-    const stop = watch([res.data, res.isLoading], ([v, loading]) => { result.value = v; isLoading.value = loading }, { immediate: true })
-
-    onCleanup(() => {
-      stop()
-      res.close()
-    })
-  },
-  { immediate: true }
-);
-
-function eventData(event: ServiceEvent): MqttRequestLog {
-  return event.data as MqttRequestLog
-}
-function goToRequest(eventId: string, openInNewTab = false) {
-  if (getSelection()?.toString()) {
-    return
-  }
-
-  const to = {
-    name: getRouteName('mqttRequest').value,
-    params: { service: props.service.name, id: eventId }
-  }
-  if (openInNewTab) {
-    const routeData = router.resolve(to);
-    window.open(routeData.href, '_blank')
-  } else {
-    router.push(to)
-  }
-}
+const table = useTemplateRef<HTMLElement>('table')
+const {
+  paging, result, isLoading, events, rows, paused, canPause, togglePause,
+  selectedId, select, onRowClick, onLinkClick,
+} = useRequestLog<MqttRequestLog>('mqtt', {
+  get serviceName() { return props.service.name },
+  get clientId() { return props.clientId },
+}, table)
 </script>
 
 <template>
-  <section class="card" aria-labelledby="requests">
-    <div class="card-body">
-      <h2 id="requests" class="card-title text-center">Connection & Subscription Requests</h2>
+  <div class="log-layout" :class="{ 'has-panel': selectedId }">
+    <section class="card" aria-labelledby="request-log-title">
+      <div class="card-body">
+        <h2 id="request-log-title" class="card-title text-center">Connection & Subscription Requests</h2>
 
-      <div class="table-responsive-sm">
-        <table class="table dataTable selectable" aria-label="requests">
-          <thead>
-            <tr>
-              <th scope="col" class="text-left col-2">Type</th>
-              <th scope="col" class="text-left col">Summary</th>
-              <th scope="col" class="text-center col-2">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in requests" :key="row.id" @click.left="goToRequest(row.id)"
-              @mousedown.middle="goToRequest(row.id, true)">
-              <td>
-                <router-link @click.stop class="badge operation" :class="formatType(eventData(row).type).toLowerCase()"
-                  :to="{ name: getRouteName('mqttRequest').value, params: { service: props.service.name, id: row.id } }">
-                  {{ formatType(eventData(row).type) }}
-                </router-link>
-              </td>
-              <td>
-                <component :is="summary[eventData(row).type]" :request="eventData(row).request"
-                  :response="eventData(row).response" />
-              </td>
-              <td class="text-center">{{ formatTime(row.time) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <loading v-if="isLoading && requests.length === 0" />
-      <Paging v-if="result"
-          :count="requests.length"
+        <div class="log-toolbar">
+          <log-pause-button v-if="canPause" :paused="paused" @toggle="togglePause" />
+        </div>
+
+        <div class="table-responsive">
+          <table ref="table" class="table dataTable selectable" aria-label="Connection & Subscription Requests">
+            <thead>
+              <tr>
+                <th scope="col" class="text-left col-2">Type</th>
+                <th scope="col" class="text-left col">Summary</th>
+                <th scope="col" class="text-center col-2">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ event, data } in rows" :key="event.id"
+                :aria-selected="event.id === selectedId ? 'true' : undefined" @click="onRowClick($event, event.id)">
+                <td>
+                  <router-link custom :to="{ name: getRouteName('mqttRequest').value, params: { service: service.name, id: event.id } }" v-slot="{ href }">
+                    <a class="badge operation" :class="formatType(data.type).toLowerCase()" :href="href" @click="onLinkClick">{{ formatType(data.type) }}</a>
+                  </router-link>
+                </td>
+                <td>
+                  <component :is="mqttRequestTypes[data.type]?.summary" :request="data.request"
+                    :response="data.response" />
+                </td>
+                <td class="text-center">{{ formatTime(event.time) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <loading v-if="isLoading && events.length === 0" />
+        <Paging v-if="result"
+          :count="events.length"
           :total="result.total"
           v-model:current="paging.current"
           v-model:size="paging.size"
-      />
-    </div>
-  </section>
+        />
+      </div>
+    </section>
+
+    <mqtt-request-detail-panel v-if="selectedId" :service="service.name" :request-id="selectedId" @close="select(undefined)" />
+  </div>
 </template>
