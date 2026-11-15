@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { test, expect } from '../models/fixture-dashboard'
 
 test.use({ layout: 'new' })
@@ -233,4 +233,123 @@ test.describe('Dashboard A-Z / By tag: Classic view', () => {
         await expect(headings).toHaveCount(3)
         await expect(table.getByRole('button', { name: /^Pin / })).toHaveCount(0)
     })
+})
+
+// The tag filter and the A-Z / By tag switch share one row above the table: filter left, switch right.
+test.describe('Dashboard A-Z / By tag: toolbar', () => {
+    const kafka = lists[1]
+    const petstore = '/dashboard/http/services/Swagger%20Petstore'
+
+    async function box(locator: Locator) {
+        const b = await locator.boundingBox()
+        expect(b, 'element is rendered').not.toBeNull()
+        return b!
+    }
+
+    // the table scrolls inside its wrapper when it is wider than the viewport: the wrapper is the right edge
+    function tableArea(table: Locator) {
+        return table.locator('xpath=..')
+    }
+
+    function useToolbar(page: Page, noun: string) {
+        return {
+            filter: page.getByRole('group', { name: `Filter ${noun} by tags` }),
+            switchGroup: page.getByRole('group', { name: 'Group rows' }),
+            help: page.locator('#tag-help'),
+        }
+    }
+
+    async function expectFilterLeftOfSwitchInOneRow(page: Page, table: Locator) {
+        const { filter, switchGroup } = useToolbar(page, 'topics')
+        await expect(filter).toBeVisible()
+        await expect(switchGroup).toBeVisible()
+
+        const f = await box(filter)
+        const s = await box(switchGroup)
+        const t = await box(tableArea(table))
+
+        expect(s.y, 'switch starts above the end of the filter').toBeLessThan(f.y + f.height)
+        expect(f.y, 'filter starts above the end of the switch').toBeLessThan(s.y + s.height)
+        expect(f.x + f.width, 'filter is left of the switch').toBeLessThanOrEqual(s.x)
+        expect(Math.abs(s.x + s.width - (t.x + t.width)), 'switch ends at the right edge of the table').toBeLessThanOrEqual(2)
+    }
+
+    test('filter and switch are in one row, the switch on the right', async ({ page }) => {
+        const { table } = useList(page, kafka)
+        await page.goto(kafka.path)
+
+        await expectFilterLeftOfSwitchInOneRow(page, table)
+    })
+
+    test.describe('Classic view', () => {
+        test.use({ layout: 'classic' })
+
+        test('filter and switch are in one row, the switch on the right', async ({ page }) => {
+            const { table } = useList(page, kafka)
+            await page.goto(kafka.path)
+
+            await expectFilterLeftOfSwitchInOneRow(page, table)
+        })
+    })
+
+    test('the switch wraps below the filter on a narrow width, still on the right', async ({ page }) => {
+        await page.setViewportSize({ width: 360, height: 800 })
+        await page.goto(petstore)
+        const table = page.getByRole('table', { name: 'Paths' })
+        const { filter, switchGroup } = useToolbar(page, 'paths')
+        await expect(filter).toBeVisible()
+
+        const f = await box(filter)
+        const s = await box(switchGroup)
+        const t = await box(tableArea(table))
+
+        expect(s.y, 'switch is below the filter').toBeGreaterThanOrEqual(f.y + f.height)
+        expect(Math.abs(s.x + s.width - (t.x + t.width)), 'switch ends at the right edge of the table').toBeLessThanOrEqual(2)
+    })
+
+    test('with one tag only the switch is shown, on the right', async ({ page }) => {
+        const list = lists[0]
+        const { table } = useList(page, list)
+        await page.goto(list.path)
+        const { filter, switchGroup } = useToolbar(page, 'paths')
+
+        await expect(switchGroup).toBeVisible()
+        await expect(filter).toHaveCount(0)
+        const s = await box(switchGroup)
+        const t = await box(tableArea(table))
+        expect(Math.abs(s.x + s.width - (t.x + t.width)), 'switch ends at the right edge of the table').toBeLessThanOrEqual(2)
+    })
+
+    test('without tags neither filter nor switch is shown', async ({ page }) => {
+        // the mock has no service without tags: remove them from the topics of Kafka World
+        await page.route(/\/api\/services\/kafka\/Kafka%20World$/, async route => {
+            const response = await route.fetch()
+            const service = await response.json()
+            for (const topic of service.topics) {
+                delete topic.tags
+            }
+            await route.fulfill({ response, json: service })
+        })
+        await page.goto(kafka.path)
+
+        await expect(page.getByRole('table', { name: 'Topics' })).toBeVisible()
+        await expect(page.getByRole('group', { name: 'Group rows' })).toHaveCount(0)
+        await expect(page.getByRole('group', { name: /^Filter .* by tags$/ })).toHaveCount(0)
+    })
+
+    const texts = [
+        { name: 'HTTP', path: petstore, noun: 'paths' },
+        { name: 'Kafka', path: kafka.path, noun: 'topics' },
+        { name: 'MQTT', path: lists[2].path, noun: 'topics' },
+        { name: 'Websocket', path: lists[3].path, noun: 'channels' },
+    ]
+    for (const { name, path, noun } of texts) {
+        test(`${name}: legend and help text name the ${noun}, "All" has straight quotes`, async ({ page }) => {
+            await page.goto(path)
+            const { filter, help } = useToolbar(page, noun)
+
+            await expect(filter).toHaveCount(1)
+            await expect(help).toHaveText(`Select one or more tags to filter the ${noun}. Selecting "All" enables all tags.`)
+        })
+    }
 })

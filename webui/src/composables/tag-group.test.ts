@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupRows, selectedTags, tagNames } from './tag-group'
+import { groupRows, selectedTags, tagNames, toggleTag } from './tag-group'
 
 interface Row {
     name: string
@@ -153,5 +153,39 @@ describe('tagNames', () => {
 
     it('returns none for a row without tags', () => {
         expect(tagNames({})).toEqual([])
+    })
+})
+
+describe('toggleTag', () => {
+    const all = ['pet', 'store', 'user']
+
+    it('"All" turns every tag off while all are selected', () => {
+        expect(toggleTag(['__all'], '__all', all)).toEqual([])
+    })
+
+    it('"All" selects every tag again', () => {
+        expect(toggleTag(['pet'], '__all', all)).toEqual(['__all'])
+        expect(toggleTag([], '__all', all)).toEqual(['__all'])
+    })
+
+    it('unchecking a tag while all are selected keeps the other tags', () => {
+        expect(toggleTag(['__all'], 'store', all)).toEqual(['pet', 'user'])
+    })
+
+    it('checking a tag adds it to the explicit names', () => {
+        expect(toggleTag(['pet'], 'user', all)).toEqual(['pet', 'user'])
+        expect(toggleTag([], 'pet', all)).toEqual(['pet'])
+    })
+
+    it('unchecking a selected tag removes it', () => {
+        expect(toggleTag(['pet', 'user'], 'pet', all)).toEqual(['user'])
+    })
+
+    it('does not change the given selection', () => {
+        const selected = ['pet']
+
+        toggleTag(selected, 'user', all)
+
+        expect(selected).toEqual(['pet'])
     })
 })

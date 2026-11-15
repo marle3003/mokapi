@@ -7,7 +7,7 @@ import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
 import { splitTemplate, instanceCount } from '@/composables/channel'
 import { groupRows, selectedTags, tagNames, type TagGrouping } from '@/composables/tag-group'
-import TagGroupSwitch from '@/components/dashboard/TagGroupSwitch.vue'
+import TagToolbar from '@/components/dashboard/TagToolbar.vue'
 import TagGroupHeading from '@/components/dashboard/TagGroupHeading.vue'
 
 const props = defineProps<{
@@ -88,28 +88,6 @@ function goToChannel(channel: WebsocketChannel, openInNewTab = false) {
         router.push(to)
     }
 }
-function toggleTag(name: string) {
-    if (name === '__all') {
-        if (tags.value.includes('__all')) {
-            tags.value = []
-        } else {
-            tags.value = ['__all']
-        }
-    } else {
-        if (tags.value.includes('__all')) {
-            tags.value = allTags.value.map(x => x.name)
-        }
-
-        const i = tags.value.indexOf(name)
-        if (i === -1) {
-            tags.value.push(name)
-        } else {
-            tags.value.splice(i, 1)
-        }
-
-        tags.value = tags.value.filter((t) => t !== '__all')
-    }
-}
 function instanceLabel(channel: WebsocketChannel) {
   const n = instanceCount(channel)
   if (n === 0) return 'no paths yet'
@@ -122,37 +100,7 @@ function instanceLabel(channel: WebsocketChannel) {
         <div class="card-body">
             <h2 id="channels" class="card-title text-center">Paths</h2>
 
-            <fieldset class="text-center mt-3 mb-2" v-if="allTags.length > 1" aria-describedby="tag-help">
-
-                <legend class="visually-hidden">
-                    Filter channels by tags
-                </legend>
-
-                <p id="tag-help" class="visually-hidden">
-                    Select one or more tags to filter the channels. Selecting “All” enables all tags.
-                </p>
-
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input tag-checkbox" type="checkbox" id="all" value="all"
-                        @change="toggleTag('__all')" :checked="tags.includes('__all')" aria-controls="tag-list">
-                    <label class="form-check-label" for="all">All</label>
-                </div>
-
-                <div id="tag-list" style="display: inline-block">
-                    <div class="form-check form-check-inline" v-for="tag in allTags" :key="tag.name" :title="tag.description">
-                        <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" :value="tag.name"
-                            @change="toggleTag(tag.name)" :checked="tags.includes(tag.name) || tags.includes('__all')"
-                            :aria-describedby="tag.description ? `desc-${tag.name}` : undefined">
-                        <label class="form-check-label" :for="tag.name">{{ tag.name }}</label>
-
-                        <span v-if="tag.description" :id="`desc-${tag.name}`" class="visually-hidden">
-                            {{ tag.description }}
-                        </span>
-                    </div>
-                </div>
-
-            </fieldset>
-            <tag-group-switch v-if="allTags.length > 0" v-model="grouping" />
+            <tag-toolbar v-model:selected="tags" v-model:grouping="grouping" :tags="allTags" noun="channels" />
             <div class="table-responsive-sm">
                 <table class="table dataTable selectable" aria-labelledby="channels">
                     <thead>

@@ -28,6 +28,16 @@ export function selectedTags(chips: string[]): string[] | undefined {
     return chips.includes('__all') ? undefined : chips
 }
 
+// Returns the new selection of the tag chips after the chip `name` (or '__all') was toggled.
+export function toggleTag(selected: string[], name: string, allNames: string[]): string[] {
+    if (name === '__all') {
+        return selected.includes('__all') ? [] : ['__all']
+    }
+    const explicit = selected.includes('__all') ? allNames : selected
+    const toggled = explicit.includes(name) ? explicit.filter(t => t !== name) : [...explicit, name]
+    return toggled.filter(t => t !== '__all')
+}
+
 export function tagNames(row: { tags?: { name: string }[] }): string[] {
     return row.tags?.map(t => t.name) ?? []
 }
