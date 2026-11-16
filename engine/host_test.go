@@ -3,6 +3,9 @@ package engine
 import (
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	mokapiruntime "mokapi/runtime"
+	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"net/url"
 	"runtime"
 	"testing"
@@ -366,4 +369,23 @@ func TestScriptHost_ListJobs(t *testing.T) {
 
 		r.Empty(t, sh.listJobs())
 	})
+}
+
+func TestScriptHost_JobRunWithoutStoredEvent(t *testing.T) {
+	// A store manager without stores makes PushEvent fail ("no store found").
+	sh := newTestHost(map[int]*jobEntry{})
+	sh.sm = events.NewStoreManager(nil)
+	sh.engine = &Engine{app: &mokapiruntime.App{Monitor: monitor.New()}}
+	entry := newTestEntry(-1, stubJob{})
+	sh.jobs[0] = entry
+	run := sh.newJobFunc(func() {}, entry, 0)
+
+	before := time.Now()
+	run()
+
+	info := sh.listJobs()
+	r.Equal(t, 1, info[0].Runs)
+	r.NotNil(t, info[0].LastRun)
+	r.Empty(t, info[0].LastRun.EventId)
+	r.False(t, info[0].LastRun.Time.Before(before), "lastRun.Time must be the time of the run, got %v", info[0].LastRun.Time)
 }

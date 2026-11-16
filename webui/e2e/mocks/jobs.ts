@@ -165,6 +165,7 @@ function lastRun(eventId: string, status: 'success' | 'warning' | 'error') {
 //             3 cleanup  every 30m, not run yet, next run in 30 minutes (same name as the job of every.js)
 //   every.js  0 every    every 1m, 3 / 10 runs, next run in 2 hours, success
 //             1 cleanup  every 24h, 1 run, custom tag team, success
+//             2 sync     every 10m, 1 run, the event of the run could not be stored (lastRun without eventId)
 export const jobList = [
     {
         id: `${cronTags.fileKey}-3`,
@@ -228,6 +229,17 @@ export const jobList = [
         nextRun: inFuture(2 * 60 * 60 * 1000),
         tags: everyTags,
         lastRun: lastRun('7001', 'success'),
+    },
+    {
+        id: `${everyTags.fileKey}-2`,
+        name: 'sync',
+        schedule: '10m',
+        maxRuns: -1,
+        runs: 1,
+        state: 'scheduled',
+        nextRun: inFuture(10 * 60 * 1000),
+        tags: { ...everyTags, name: 'sync' },
+        lastRun: { eventId: '', time: '2025-05-01T09:10:00Z', duration: 40, status: 'success' },
     },
 ]
 

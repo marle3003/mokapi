@@ -55,9 +55,10 @@ function onRowClick(job: JobInfo) {
                     <td>
                         <template v-if="job.lastRun">
                             <job-status-badge :status="jobStatusLabel(job.lastRun.status)" class="me-2" />
-                            <router-link class="cell-link" :to="{ name: getRouteName('job').value, params: { id: job.lastRun.eventId } }" @click.stop>
+                            <router-link v-if="job.lastRun.eventId" class="cell-link" :to="{ name: getRouteName('job').value, params: { id: job.lastRun.eventId } }" @click.stop>
                                 {{ format(job.lastRun.time) }}
                             </router-link>
+                            <template v-else>{{ format(job.lastRun.time) }}</template>
                         </template>
                         <template v-else>-</template>
                     </td>

@@ -16,19 +16,21 @@ import { formatDateTime } from '../helpers/format'
 //   3 cron     cron.js   3s          2 / 2, finished, last run 8134 error
 //   4 cron     cron.js   1h          1, cancelled, last run 81344 warning
 //   5 every    every.js  1m          3 / 10, scheduled, next run in 2 hours, last run 7001 success
+//   6 sync     every.js  10m         1, scheduled, last run without event id (the event could not be stored)
 const cronKey = '6f5cab53-9f51-4bbe-bb32-fe41ee71d542'
 const everyKey = '0c3a5d52-7d6e-4b0f-8a3e-4c7a6d9b1e21'
-const names = ['cleanup', 'cleanup', 'cron', 'cron', 'cron', 'every']
-const files = ['cron.js', 'every.js', 'cron.js', 'cron.js', 'cron.js', 'every.js']
-const schedules = ['30m', '24h', '0 * * * *', '3s', '1h', '1m']
-const states = ['Scheduled', 'Scheduled', 'Scheduled', 'Finished', 'Cancelled', 'Scheduled']
-const runs = ['0', '1', '4', '2 / 2', '1', '3 / 10']
+const names = ['cleanup', 'cleanup', 'cron', 'cron', 'cron', 'every', 'sync']
+const files = ['cron.js', 'every.js', 'cron.js', 'cron.js', 'cron.js', 'every.js', 'every.js']
+const schedules = ['30m', '24h', '0 * * * *', '3s', '1h', '1m', '10m']
+const states = ['Scheduled', 'Scheduled', 'Scheduled', 'Finished', 'Cancelled', 'Scheduled', 'Scheduled']
+const runs = ['0', '1', '4', '2 / 2', '1', '3 / 10', '1']
 const cleanupOfCron = 0
 const cleanupOfEvery = 1
 const scheduledCron = 2
 const finishedCron = 3
 const cancelledCron = 4
 const everyJob = 5
+const syncWithoutEvent = 6
 // `2026-11-16 12:00:00 (in 1h 2min 3s)`
 const dateWithCountdown = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \(in /
 
@@ -78,7 +80,7 @@ test.describe('Job overview: tabs', () => {
 
         await overview.jobsTab.click()
         await expect(page).toHaveURL(/#tab-jobs$/)
-        await expect(overview.rows).toHaveCount(6)
+        await expect(overview.rows).toHaveCount(7)
         await expect(log.log).toHaveCount(0)
     })
 
@@ -122,7 +124,7 @@ test.describe('Job overview: table', () => {
         const { overview } = useJobsPage(page)
         await page.goto(jobsPath)
 
-        await expect(overview.rows).toHaveCount(6)
+        await expect(overview.rows).toHaveCount(7)
         await expect(overview.column('Name')).toHaveText(names)
         await expect(overview.column('File')).toHaveText(files)
         await expect(overview.column('Schedule')).toHaveText(schedules)
@@ -223,6 +225,16 @@ test.describe('Job overview: Last Run', () => {
         await expect(lastRun.getByRole('link')).toHaveAttribute('href', '/dashboard/jobs/7001')
     })
 
+    test('a run without event id shows the status and the time without a link', async ({ page }) => {
+        const { overview } = useJobsPage(page)
+        await page.goto(jobsPath)
+
+        const lastRun = overview.cell(overview.rows.nth(syncWithoutEvent), 'Last Run')
+        await expect(lastRun).toContainText('Success')
+        await expect(lastRun).toContainText(formatDateTime('2025-05-01T09:10:00Z'))
+        await expect(lastRun.getByRole('link')).toHaveCount(0)
+    })
+
     test('shows the status Success, Warning and Error', async ({ page }) => {
         const { overview } = useJobsPage(page)
         await page.goto(jobsPath)
@@ -310,7 +322,7 @@ test.describe('Job overview: refresh', () => {
             : jobs)
         await page.clock.install()
         await page.goto(`${jobsPath}?refresh=1`)
-        await expect(overview.rows).toHaveCount(6)
+        await expect(overview.rows).toHaveCount(7)
         await pauseClock(page)
         const nextRun = overview.cell(overview.rows.nth(scheduledCron), 'Next Run')
         const before = countdownSeconds(await nextRun.textContent())
@@ -318,7 +330,7 @@ test.describe('Job overview: refresh', () => {
         added = true
         await page.clock.runFor(1000)
 
-        await expect(overview.rows).toHaveCount(7)
+        await expect(overview.rows).toHaveCount(8)
         await expect(overview.column('Name').last()).toHaveText('zeta')
         await expect.poll(async () => countdownSeconds(await nextRun.textContent())).toBe(before - 1)
     })
@@ -332,7 +344,7 @@ test.describe('Job overview: Classic layout', () => {
         await page.goto('/dashboard')
         await useDashboardTabs(page).jobs.click()
 
-        await expect(overview.rows).toHaveCount(6)
+        await expect(overview.rows).toHaveCount(7)
 
         await overview.runsTab.click()
 

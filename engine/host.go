@@ -168,6 +168,8 @@ func (sh *scriptHost) newJobFunc(handler func(), entry *jobEntry, id int) func()
 			Tags:     entry.tags,
 		}
 
+		start := time.Now()
+
 		defer func() {
 			r := recover()
 			if r != nil {
@@ -184,14 +186,13 @@ func (sh *scriptHost) newJobFunc(handler func(), entry *jobEntry, id int) func()
 			}
 			entry.state.finishRun(common.JobRun{
 				EventId:  evt.Id,
-				Time:     evt.Time,
+				Time:     start,
 				Duration: exec.Duration,
 				Status:   exec.Status(),
 			})
 		}()
 
 		sh.startEventHandler(exec.AppendLog)
-		start := time.Now()
 
 		handler()
 
