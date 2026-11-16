@@ -228,7 +228,7 @@ test.describe('Mail log: Mails sub tab', () => {
 test.describe('Mail log: protocol page', () => {
     test('keeps the log with panel, chips and Pause', async ({ page }) => {
         const { log } = useMailLog(page)
-        await page.goto('/dashboard/mail')
+        await page.goto('/dashboard/mail?refresh=1')
         await expect(log.rows).toHaveCount(12)
 
         await log.time(log.rows.first()).click()
@@ -1125,9 +1125,17 @@ test.describe('Mail log: Pause', () => {
         await expect(log.selectedRow.locator(`a[href$="/mail/mails/${plainMail.messageId}"]`)).toHaveCount(1)
     })
 
-    test('the pause is not kept after a reload', async ({ page }) => {
+    test('no Pause without ?refresh', async ({ page }) => {
         const { log } = useMailLog(page)
         await page.goto(serviceLog)
+        await expect(log.rows).toHaveCount(8)
+        await expect(log.pause).toHaveCount(0)
+        await expect(log.paused).toHaveCount(0)
+    })
+
+    test('the pause is not kept after a reload', async ({ page }) => {
+        const { log } = useMailLog(page)
+        await page.goto(`${serviceLog}?refresh=1`)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 
@@ -1157,7 +1165,7 @@ test.describe('Mail log: Classic layout', () => {
 
     test('the log can be paused and resumed', async ({ page }) => {
         const { log } = useMailLog(page)
-        await page.goto(serviceLog)
+        await page.goto(`${serviceLog}?refresh=1`)
         await expect(log.rows).toHaveCount(8)
 
         await log.pause.click()

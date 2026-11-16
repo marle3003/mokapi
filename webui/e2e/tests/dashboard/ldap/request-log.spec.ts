@@ -210,7 +210,7 @@ test.describe('LDAP request log: Requests sub tab', () => {
 test.describe('LDAP request log: protocol page', () => {
     test('keeps the log with panel, chips and Pause', async ({ page }) => {
         const { log } = useRequestLog(page)
-        await page.goto('/dashboard/ldap')
+        await page.goto('/dashboard/ldap?refresh=1')
         await expect(log.rows).toHaveCount(15)
 
         await log.time(log.rows.first()).click()
@@ -1109,9 +1109,17 @@ test.describe('LDAP request log: Pause', () => {
         await expect(log.selectedRow.locator(`a[href$="/ldap/requests/${bind}"]`)).toHaveCount(1)
     })
 
-    test('the pause is not kept after a reload', async ({ page }) => {
+    test('no Pause without ?refresh', async ({ page }) => {
         const { log } = useRequestLog(page)
         await page.goto(serviceLog)
+        await expect(log.rows).toHaveCount(12)
+        await expect(log.pause).toHaveCount(0)
+        await expect(log.paused).toHaveCount(0)
+    })
+
+    test('the pause is not kept after a reload', async ({ page }) => {
+        const { log } = useRequestLog(page)
+        await page.goto(`${serviceLog}?refresh=1`)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 
@@ -1156,7 +1164,7 @@ test.describe('LDAP request log: Classic layout', () => {
 
     test('the log can be paused and resumed', async ({ page }) => {
         const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
+        await page.goto(`${serviceLog}?refresh=1`)
         await expect(log.rows).toHaveCount(12)
 
         await log.pause.click()

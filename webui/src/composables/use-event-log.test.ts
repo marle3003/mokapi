@@ -7,6 +7,9 @@ const isLoading = ref(true)
 const close = vi.fn()
 const getEvents = vi.fn()
 let mode = 'live'
+const route = reactive<{ query: Record<string, unknown> }>({ query: {} })
+
+vi.mock('vue-router', () => ({ useRoute: () => route }))
 
 vi.mock('@/composables/dashboard', () => ({
     useDashboard: () => ({ dashboard: ref({ getEvents }), getMode: () => mode }),
@@ -40,6 +43,7 @@ describe('useEventLog', () => {
         data.value = null
         isLoading.value = true
         mode = 'live'
+        route.query = { refresh: '20' }
         vi.clearAllMocks()
         getEvents.mockImplementation(() => ({ data, isLoading, close }))
     })
@@ -134,11 +138,42 @@ describe('useEventLog', () => {
         expect(getEvents).toHaveBeenCalledTimes(2)
     })
 
-    it('can be paused only in the live dashboard', () => {
-        expect(mountUseEventLog().result.canPause).toBe(true)
+    describe('canPause', () => {
+        it.each([
+            ['20', true],
+            ['0.5', true],
+            [undefined, false],
+            ['', false],
+            ['0', false],
+            ['abc', false],
+            ['-5', false],
+            ['Infinity', false],
+            [['5', '10'], false],
+        ])('in the live dashboard with refresh=%j is %s', (refresh, expected) => {
+            route.query = refresh === undefined ? {} : { refresh }
 
-        mode = 'demo'
-        expect(mountUseEventLog().result.canPause).toBe(false)
+            expect(mountUseEventLog().result.canPause.value).toBe(expected)
+        })
+
+        it('is false in the demo dashboard, even with refresh', () => {
+            mode = 'demo'
+
+            expect(mountUseEventLog().result.canPause.value).toBe(false)
+        })
+
+        it('follows the refresh of the current route', async () => {
+            route.query = {}
+            const { result } = mountUseEventLog()
+            expect(result.canPause.value).toBe(false)
+
+            route.query = { refresh: '20' }
+            await nextTick()
+            expect(result.canPause.value).toBe(true)
+
+            route.query = {}
+            await nextTick()
+            expect(result.canPause.value).toBe(false)
+        })
     })
 
     it('closes the request when the log is removed', () => {

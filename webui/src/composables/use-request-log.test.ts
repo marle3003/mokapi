@@ -127,10 +127,10 @@ describe('useRequestLog', () => {
   })
 
   describe('Pause', () => {
-    it('can pause a live log', async () => {
-      await mountLog()
+    it('can pause a live log while auto refresh is on', async () => {
+      await mountLog('/log?refresh=20')
 
-      expect(log.canPause).toBe(true)
+      expect(log.canPause.value).toBe(true)
       expect(log.paused.value).toBe(false)
     })
 

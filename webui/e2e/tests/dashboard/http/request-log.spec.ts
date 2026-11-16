@@ -671,9 +671,17 @@ test.describe('HTTP request log: Pause', () => {
         await expect(log.selectedRow.locator(`a[href$="/requests/${id(11)}"]`)).toHaveCount(1)
     })
 
-    test('the pause is not kept after a reload', async ({ page }) => {
+    test('no Pause without ?refresh', async ({ page }) => {
         const { log } = useRequestLog(page)
         await page.goto(serviceLog)
+        await expect(log.rows).toHaveCount(12)
+        await expect(log.pause).toHaveCount(0)
+        await expect(log.paused).toHaveCount(0)
+    })
+
+    test('the pause is not kept after a reload', async ({ page }) => {
+        const { log } = useRequestLog(page)
+        await page.goto(`${serviceLog}?refresh=1`)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 

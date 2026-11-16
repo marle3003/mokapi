@@ -104,8 +104,7 @@ service. It restores them after a reload.
 
 While auto refresh is on, the log reloads by itself. Open the dashboard with `?refresh=<seconds>`,
 for example `/dashboard?refresh=20`, to turn it on. Click **Pause** to stop reloading the log, for
-example to read a request without new ones pushing it down the table. Without auto refresh, the log
-doesn't reload by itself and **Pause** has no effect. The log shows "Paused" until you click
+example to read a request without new ones pushing it down the table. **Pause** is only shown while auto refresh is on, that is when the URL has `?refresh=<seconds>` with a number above 0. Without it, the log doesn't reload by itself and the button is hidden. The log shows "Paused" until you click
 **Resume**, which reloads it at once. Pause only affects this log, other views keep updating.
 
 New requests appear on top while the log runs, and the selected request stays selected. Mokapi

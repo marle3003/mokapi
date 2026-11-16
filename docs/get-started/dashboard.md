@@ -302,8 +302,8 @@ another page isn't suggested, but you can still type its name. Two scripts with 
 share one name unless they set the `name` tag. Mokapi saves the filter in the browser and restores
 it after a reload.
 
-Auto refresh and **Pause** work as in the [mail log](/docs/mail/dashboard.md#pause-the-log). The
-demo dashboard has no Pause button. In the Classic view, the log has the same panel, filter and
+Auto refresh and **Pause** work as in the [mail log](/docs/mail/dashboard.md#pause-the-log).
+**Pause** is only shown while auto refresh is on. The demo dashboard has no Pause button. In the Classic view, the log has the same panel, filter and
 **Pause** button.
 
 ### Generate sample data from the specification

@@ -68,7 +68,7 @@ test.describe('Job log: page', () => {
     test('shows the log with paging, chip, Pause and no collapse rows', async ({ page }) => {
         const { log } = useJobLog(page)
         await usePageSize10(page)
-        await page.goto(runsPath)
+        await page.goto(`${jobsPath}?refresh=1#tab-runs`)
 
         await expect(log.rows).toHaveCount(10)
         await expect(log.log.getByText('Showing 10 of 14 requests')).toBeVisible()
@@ -796,9 +796,17 @@ test.describe('Job log: Pause', () => {
         await expect.poll(async () => countdownSeconds(await nextRun.textContent())).toBe(before - 3)
     })
 
-    test('the pause is not kept after a reload', async ({ page }) => {
+    test('no Pause without ?refresh', async ({ page }) => {
         const { log } = useJobLog(page)
         await page.goto(runsPath)
+        await expect(log.rows).toHaveCount(14)
+        await expect(log.pause).toHaveCount(0)
+        await expect(log.paused).toHaveCount(0)
+    })
+
+    test('the pause is not kept after a reload', async ({ page }) => {
+        const { log } = useJobLog(page)
+        await page.goto(`${jobsPath}?refresh=1#tab-runs`)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 
@@ -828,7 +836,7 @@ test.describe('Job log: Classic layout', () => {
 
     test('the log can be paused and resumed', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(runsPath)
+        await page.goto(`${jobsPath}?refresh=1#tab-runs`)
         await expect(log.rows).toHaveCount(14)
 
         await log.pause.click()

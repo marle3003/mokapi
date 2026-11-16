@@ -781,9 +781,17 @@ test.describe('Kafka message log: Pause', () => {
         await expect(log.selectedRow.locator(`a[href$="/messages/${newId(1)}"]`)).toHaveCount(1)
     })
 
-    test('the pause is not kept after a reload', async ({ page }) => {
+    test('no Pause without ?refresh', async ({ page }) => {
         const { log } = useMessageLog(page)
         await page.goto(serviceLog)
+        await expect(log.rows).toHaveCount(12)
+        await expect(log.pause).toHaveCount(0)
+        await expect(log.paused).toHaveCount(0)
+    })
+
+    test('the pause is not kept after a reload', async ({ page }) => {
+        const { log } = useMessageLog(page)
+        await page.goto(`${serviceLog}?refresh=1`)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 
