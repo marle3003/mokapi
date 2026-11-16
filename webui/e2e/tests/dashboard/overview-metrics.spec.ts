@@ -248,12 +248,11 @@ test.describe('Overview: grid', () => {
 })
 
 test.describe('Protocol page', () => {
-    test('keeps plain metric cards and the services table', async ({ page, dashboard }) => {
+    test('keeps the services table and shows tiles that are not links', async ({ page, dashboard }) => {
         await page.goto('/dashboard/http')
 
-        await expect(dashboard.http.metricHttpRequests.title).toHaveText(['HTTP Requests', 'HTTP Errors'])
+        await expect(page.locator('.metric-grid .card-title')).toHaveText(['Requests', 'Errors', 'Last Request'])
         await expect(dashboard.http.serviceList).toBeVisible()
-        await expect(page.locator('.metric-grid')).toHaveCount(0)
         await expect(page.locator('a.metric-tile')).toHaveCount(0)
     })
 })

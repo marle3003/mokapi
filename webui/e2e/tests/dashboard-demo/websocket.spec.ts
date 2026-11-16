@@ -1,5 +1,6 @@
 import { test, expect } from '../models/fixture-dashboard'
 import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 import { useWebsocketMessages } from '../components/websocket'
 
@@ -136,4 +137,15 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
     })
     
+})
+
+test('Metric tiles of the websocket page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/websocket`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'websocket')
+
+    await expect(count.value).toHaveText('3')
+    await expect(second.value).toHaveText('0')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
 })

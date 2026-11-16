@@ -65,6 +65,11 @@ export const metrics = [
         name: 'kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="0"}',
         value: 10
     },
+    // a second group, so that the lag tile has to sum over groups (the Kafka mocks only read group "foo")
+    {
+        name: 'kafka_consumer_group_lag{service="Kafka World",group="bar",topic="mokapi.shop.products",partition="0"}',
+        value: 5
+    },
     {
         name: 'kafka_consumer_group_commit{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="0"}',
         value: 1
@@ -179,6 +184,23 @@ export const metrics = [
     {
         name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/5678"}',
         value: 1770972710
+    },
+    {
+        name: 'websocket_messages_error_total{service="WebSocket Chat API",channel="/chat"}',
+        value: 2
+    },
+    {
+        name: 'websocket_messages_error_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
+        value: 1
+    },
+    // ldap
+    {
+        name: 'ldap_search_errors_total{service="LDAP Testserver"}',
+        value: 2
+    },
+    {
+        name: 'ldap_search_errors_total{service="LDAP Second Server"}',
+        value: 4
     },
 ]
 

@@ -1,5 +1,6 @@
 import { test, expect } from '../models/fixture-website'
 import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -307,3 +308,14 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
 
     });
 });
+
+test('Metric tiles of the kafka page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/kafka`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'kafka')
+
+    await expect(count.value).toHaveText('4')
+    await expect(second.value).toHaveText('0')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

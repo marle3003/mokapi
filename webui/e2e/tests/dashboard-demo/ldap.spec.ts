@@ -1,5 +1,6 @@
 import { test, expect } from '../models/fixture-website'
 import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -133,3 +134,14 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     });
 });
+
+test('Metric tiles of the ldap page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/ldap`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'ldap')
+
+    await expect(count.value).toHaveText('10')
+    await expect(second.value).toHaveText('0')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

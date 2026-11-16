@@ -1,5 +1,6 @@
 import { test, expect } from '../models/fixture-website'
 import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { HttpRequestLogModel } from '../models/http'
 import { getCellByColumnName } from '../helpers/table'
 
@@ -231,3 +232,15 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         });
     });
 });
+
+test('Metric tiles of the http page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/http`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'http')
+
+    await expect(count.value).toHaveText('12')
+    await expect(second.value).toHaveText('1')
+    await expect(second.additional).toHaveText('8.3 %')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

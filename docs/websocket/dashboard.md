@@ -9,6 +9,10 @@ channels, with value, direction and the client involved. It also lists the conne
 (connect and close) of each client. Use it to check that a message arrived, to read its value, to
 see why a message was rejected and to find the messages of one path or client.
 
+## Metrics
+
+In the new layout, the WebSocket page starts with three tiles: **Messages**, **Errors** and **Last Message**. **Errors** counts the messages that ended with an error. **Last Message** shows the time of the latest message as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+
 ## Message log
 
 The message log lists the messages of your channels, newest first, with path, value and time.

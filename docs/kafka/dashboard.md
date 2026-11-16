@@ -8,6 +8,10 @@ The dashboard shows the messages that were produced to your mocked Kafka topics,
 headers and the client that sent them. Use it to check that a message arrived, to read its value
 and to find messages of one topic, partition or client.
 
+## Metrics
+
+In the new layout, the Kafka page starts with three tiles: **Messages**, **Consumer Lag** and **Last Message**. **Consumer Lag** is the sum of the lag of all consumer groups, topics and partitions. **Last Message** shows the time of the latest message as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+
 ## Message log
 
 The message log lists the messages of your topics, newest first, with topic, key, value and time.

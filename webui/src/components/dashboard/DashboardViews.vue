@@ -3,6 +3,7 @@ import AppStartCard from './AppStartCard.vue'
 import MemoryUsageCard from './MemoryCard.vue'
 import JobCountCard from '@/components/dashboard/JobCountCard.vue'
 import Search from './Search.vue'
+import ProtocolMetricTiles from './ProtocolMetricTiles.vue'
 
 import HttpRequestCard from './http/HttpRequestMetricCard.vue'
 import HttpServicesCard from './http/HttpServicesCard.vue'
@@ -113,7 +114,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('http').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('http')" type="http" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <http-request-card v-if="isServiceAvailable('http')" />
             <http-request-card v-if="isServiceAvailable('http')" onlyError />
         </div>
@@ -138,7 +140,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('kafka').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('kafka')" type="kafka" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
         </div>
         <div class="card-group" v-if="isServiceAvailable('kafka')">
@@ -156,7 +159,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('mqtt').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('mqtt')" type="mqtt" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
         </div>
         <div class="card-group" v-if="isServiceAvailable('mqtt')">
@@ -174,7 +178,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('websocket').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('websocket')" type="websocket" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <websocket-message-metric-card v-if="isServiceAvailable('websocket')" />
         </div>
         <div class="card-group" v-if="isServiceAvailable('websocket')">
@@ -186,7 +191,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('mail').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('mail')" type="mail" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
         </div>
         <div class="card-group" v-if="isServiceAvailable('mail')">
@@ -210,7 +216,8 @@ function isAnyServiceAvailable() {
     </div>
 
     <div v-if="$route.name === getRouteName('ldap').value">
-        <div class="card-group">
+        <protocol-metric-tiles v-if="isNewLayout && isServiceAvailable('ldap')" type="ldap" />
+        <div class="card-group" v-else-if="!isNewLayout">
             <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
         </div>
         <div class="card-group" v-if="isServiceAvailable('ldap')">

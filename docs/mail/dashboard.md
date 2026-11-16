@@ -8,6 +8,10 @@ The dashboard shows the mails that clients sent to your mocked SMTP server, with
 recipients, status and duration. Use it to check that a mail arrived, to read its body and
 attachments, and to find out why a mail was rejected.
 
+## Metrics
+
+In the new layout, the Mail page starts with three tiles: **Mails**, **Mailboxes** and **Last Mail**. **Mailboxes** is the number of mailboxes. **Last Mail** shows the time of the latest mail as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+
 ## Mail log
 
 The mail log lists the mails of your mail services, newest first, with subject, From, To, status,

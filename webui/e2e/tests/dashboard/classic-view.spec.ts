@@ -142,3 +142,25 @@ test.describe('Classic view: overview', () => {
         await expect(page.getByRole('link').filter({ hasText: 'Kafka Messages' })).toHaveCount(0)
     })
 })
+
+test.describe('Classic view: protocol pages', () => {
+    test.use({ layout: 'classic' })
+
+    const pages = [
+        { type: 'http', titles: ['HTTP Requests', 'HTTP Errors'] },
+        { type: 'kafka', titles: ['Kafka Messages'] },
+        { type: 'mqtt', titles: ['MQTT Messages'] },
+        { type: 'websocket', titles: ['Websocket Messages'] },
+        { type: 'mail', titles: ['SMTP Mails'] },
+        { type: 'ldap', titles: ['LDAP Searches'] },
+    ]
+
+    for (const { type, titles } of pages) {
+        test(`${type} keeps the metric cards of the classic layout`, async ({ page }) => {
+            await page.goto(`/dashboard/${type}`)
+
+            await expect(page.locator('.dashboard .card-group').first().locator('.card-title')).toHaveText(titles)
+            await expect(page.locator('.metric-grid')).toHaveCount(0)
+        })
+    }
+})

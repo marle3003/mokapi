@@ -1,5 +1,6 @@
 import { test, expect } from '../models/fixture-dashboard'
 import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 import { useMqttMessages } from '../components/mqtt'
 
@@ -149,4 +150,15 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
 
     })
     
+})
+
+test('Metric tiles of the mqtt page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/mqtt`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'mqtt')
+
+    await expect(count.value).toHaveText('1')
+    await expect(second.value).toHaveText('1')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
 })

@@ -17,13 +17,17 @@ view in a tab. In this detailed view you can see:
 - all configurations that affect this API
 - the Requests tab with the log of recent HTTP requests (see [Request log](#request-log))
 
-Click the **HTTP** heading to see the metrics and the log of all HTTP APIs.
+Click the **HTTP** heading to see the metrics and the log of all HTTP APIs (see [Metrics](#metrics)).
 
 In the next image you can see an example of a REST API showing four Paths one is deprecated
 and therefore marked with a warning icon. In the Recent Requests log, you can see
 four HTTP requests, one of which has a validation error that is counted in the Errors metric.
 
 <img src="/docs/http/dashboard-mock-rest-api.jpg" width="700" alt="Dashboard shows a REST API including metric, recent requests and config file." title="" />
+
+## Metrics
+
+In the new layout, the HTTP page starts with three tiles: **Requests**, **Errors** and **Last Request**. **Errors** is red when it's greater than 0 and shows the error rate in percent below the value, or `-` if there were no requests. **Last Request** shows the time of the latest request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric cards.
 
 ## Request log
 

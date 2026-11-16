@@ -8,6 +8,10 @@ The dashboard shows the requests that clients sent to your mocked LDAP directory
 DN, status and duration. Use it to check that a bind or search arrived, to read its parameters and
 the result, and to find the requests of one service or one operation.
 
+## Metrics
+
+In the new layout, the LDAP page starts with three tiles: **Requests**, **Search Errors** and **Last Request**. **Search Errors** shows the `ldap_search_errors_total` counter. **Last Request** shows the time of the latest request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+
 ## Request log
 
 The request log lists the requests of your LDAP services, newest first, with operation, DN,
