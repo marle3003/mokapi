@@ -10,7 +10,7 @@ the result, and to find the requests of one service or one operation.
 
 ## Metrics
 
-In the new layout, the LDAP page starts with three tiles: **Requests**, **Search Errors** and **Last Request**. **Search Errors** shows the `ldap_search_errors_total` counter. **Last Request** shows the time of the latest request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+In the new layout, the LDAP page starts with three tiles: **Requests**, **Search Errors** and **Last Request**. **Search Errors** counts the searches that ended with a result code other than `success`, for example an invalid filter, the server size limit or a code set by a script. **Last Request** shows the time of the latest request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
 
 ## Request log
 

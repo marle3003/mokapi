@@ -82,6 +82,11 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		m.RequestCounter.WithLabel(d.config.Info.Name, "search").Add(1)
 		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
+	countError := func() {
+		if doMonitor {
+			m.Errors.WithLabel(d.config.Info.Name).Add(1)
+		}
+	}
 
 	n := int64(0)
 	sizeLimit := msg.SizeLimit
@@ -97,6 +102,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		} else {
 			log.Errorf("ldap: unsupported filter: %v", msg.Filter)
 		}
+		countError()
 		_ = rw.Write(&ldap.SearchResponse{Status: ldap.OperationsError})
 		return
 	}
@@ -173,6 +179,10 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 	event.SetStatus(ldap.StatusText[status])
 	event.SetActions(d.emitter.EmitLdap(msg, res))
+	// a JavaScript handler may have changed the status, so check after emitting
+	if res.Status != ldap.Success {
+		countError()
+	}
 
 	if err := rw.Write(res); err != nil {
 		log.Errorf("ldap: send search done: %v", err)
