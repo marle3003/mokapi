@@ -144,6 +144,11 @@
                 "label": "Quick Start",
                 "source": "ldap/quick-start.md",
                 "path": "/docs/ldap/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "ldap/dashboard.md",
+                "path": "/docs/ldap/dashboard"
               }
             ]
           },

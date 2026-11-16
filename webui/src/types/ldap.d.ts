@@ -56,7 +56,7 @@ declare interface LdapModifyItem {
 
 declare interface LdapResponse {
     status: string
-    matchedDn: string
+    matchedDn?: string
     message: string
 }
 

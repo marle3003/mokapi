@@ -17,7 +17,7 @@ import KafkaMessages from '@/components/dashboard/kafka/KafkaMessages.vue'
 import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
 import LdapService from './ldap/Service.vue'
 import LdapSearchMetricCard from './ldap/LdapRequestMetricCard.vue'
-import Searches from '@/components/dashboard/ldap/Requests.vue'
+import LdapRequests from '@/components/dashboard/ldap/Requests.vue'
 
 import SmtpMessageMetricCard from './mail/SmtpMessageMetricCard.vue'
 import MailServicesCard from './mail/MailServicesCard.vue'
@@ -184,6 +184,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('ldapLog').value">
+        <div class="card-group">
+            <ldap-requests />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('ldap').value">
         <div class="card-group">
             <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
@@ -192,7 +198,7 @@ function isAnyServiceAvailable() {
             <ldap-services-card />
         </div>
         <div class="card-group">
-            <searches />
+            <ldap-requests />
         </div>
     </div>
 

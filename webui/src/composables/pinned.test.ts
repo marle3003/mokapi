@@ -165,6 +165,15 @@ describe('pinned entries', () => {
       })
 
       it.each([
+        ['/dashboard/ldap/log', true],
+        ['/dashboard/ldap/log/Directory', true],
+        ['/dashboard/ldap/log/Gone', false],
+        ['/dashboard-demo/ldap/log/Directory', true],
+      ])('LDAP request log %s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
         ['/dashboard/websocket/log', true],
         ['/dashboard/websocket/log/Chat', true],
         ['/dashboard/websocket/log/Gone', false],

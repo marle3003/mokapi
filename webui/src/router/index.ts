@@ -206,6 +206,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP Service – ${params.service}` },
           },
           {
+            path: 'log/:service',
+            name: getRouteName('ldapServiceLog'),
+            component: dashboardView,
+            meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP – ${params.service} requests` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('ldapLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - LDAP – Requests' }
+          },
+          {
             path: 'ldap/requests/:id',
             name: getRouteName('ldapRequest'),
             component: dashboardView,

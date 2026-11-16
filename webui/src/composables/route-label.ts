@@ -18,6 +18,7 @@ const pageLabels: Record<string, string> = {
     config: 'Config',
     tree: 'Faker',
     httpLog: 'Requests',
+    ldapLog: 'Requests',
     kafkaLog: 'Messages',
     httpRequest: 'HTTP Request',
     kafkaRequest: 'Kafka Request',
@@ -64,7 +65,7 @@ export function routeLabel(routeName: string | symbol | undefined | null, params
     if (name === 'httpEndpoint') {
         return endpointPath(params.endpoint as string[] | undefined)
     }
-    if (name === 'httpServiceLog') {
+    if (name === 'httpServiceLog' || name === 'ldapServiceLog') {
         return `${params.service} requests`
     }
     if (name === 'kafkaServiceLog' || name === 'mqttServiceLog' || name === 'websocketServiceLog') {

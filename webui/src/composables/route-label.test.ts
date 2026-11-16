@@ -53,6 +53,19 @@ describe('routeLabel', () => {
     expect(routeLabel('mqttLog-demo', {})).toBe('Messages')
   })
 
+  it('names the request log of one LDAP service after the service', () => {
+    expect(routeLabel('ldapServiceLog', { service: 'Directory' })).toBe('Directory requests')
+  })
+
+  it('names the request log of all LDAP services "Requests"', () => {
+    expect(routeLabel('ldapLog', {})).toBe('Requests')
+  })
+
+  it('treats a demo LDAP request log like the live one', () => {
+    expect(routeLabel('ldapServiceLog-demo', { service: 'Directory' })).toBe('Directory requests')
+    expect(routeLabel('ldapLog-demo', {})).toBe('Requests')
+  })
+
   it('names the message log of one WebSocket service after the service', () => {
     expect(routeLabel('websocketServiceLog', { service: 'Chat' })).toBe('Chat messages')
   })

@@ -18,14 +18,16 @@ export interface MessageLogField<F extends string> {
     label: string
     trait: string
     fixedBy?: keyof MessageLogFilterContext
+    // how the chip shows the value when it reads better than the stored one (the trait value is lowercase)
+    format?: (value: string) => string
 }
 
 // The filter of a message log as the user edits it. A field without value doesn't filter.
-// Kafka, MQTT and WebSocket logs differ only in the storage prefix, the kind of their address and the fields.
+// Kafka, MQTT, WebSocket and LDAP logs differ only in the storage prefix, the kind of their address (LDAP has none) and the fields.
 export function createMessageLogFilter<F extends string>({ storagePrefix, addressKind, fields }: {
     storagePrefix: string
     // what the address of the protocol is called, so the storage key names the kind
-    addressKind: 'topic' | 'channel'
+    addressKind?: 'topic' | 'channel'
     fields: MessageLogField<F>[]
 }) {
     type Filter = Record<F, string>
@@ -40,7 +42,7 @@ export function createMessageLogFilter<F extends string>({ storagePrefix, addres
         if (!serviceName) {
             return storagePrefix
         }
-        if (address) {
+        if (address && addressKind) {
             return `${storagePrefix}-${serviceName}-${addressKind}-${address}${instance ? `-${instance}` : ''}`
         }
         if (clientId) {
@@ -86,8 +88,8 @@ export function createMessageLogFilter<F extends string>({ storagePrefix, addres
 
     // A chip exists for every field that has a value, except the fields the context fixes.
     function filterChips(filter: Filter, context: MessageLogFilterContext): FilterChip<F>[] {
-        return activeFields(filter, context).map(({ field, label }) => {
-            const text = `${label}: ${filter[field]}`
+        return activeFields(filter, context).map(({ field, label, format }) => {
+            const text = `${label}: ${format ? format(filter[field]) : filter[field]}`
             return { field, label: shorten(text), title: text }
         })
     }

@@ -72,7 +72,8 @@ test.describe('Dashboard sidebar filter: matching', () => {
 
         await input.fill('ldap')
 
-        await expect(count).toHaveText('1 match in 1 service')
+        await expect(count).toHaveText('2 matches in 2 services')
+        await expect(group('LDAP Second Server').getByRole('link', { name: 'LDAP Second Server' })).toBeVisible()
         await expect(group('LDAP Testserver').getByRole('link', { name: 'LDAP Testserver' })).toHaveAttribute('href', /\/dashboard\/ldap\/service\/LDAP%20Testserver/)
     })
 

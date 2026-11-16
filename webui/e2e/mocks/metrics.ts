@@ -116,10 +116,18 @@ export const metrics = [
     },
     {
         name: 'ldap_requests_total{service="LDAP Testserver"}',
-        value: 6
+        value: 12
     },
     {
         name: 'ldap_request_timestamp{service="LDAP Testserver"}',
+        value: 1652635690
+    },
+    {
+        name: 'ldap_requests_total{service="LDAP Second Server"}',
+        value: 3
+    },
+    {
+        name: 'ldap_request_timestamp{service="LDAP Second Server"}',
         value: 1652635690
     },
     // mqtt

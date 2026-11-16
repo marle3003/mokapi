@@ -28,8 +28,8 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     await test.step('Verify Servers', async () => {
 
-        const region = page.getByRole('region', { name: 'Servers' });
-        const table = region.getByRole('table', { name: 'Servers' });
+        await page.getByRole('tab', { name: 'Servers' }).click();
+        const table = page.getByRole('table', { name: 'Servers' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
 
@@ -39,6 +39,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     await test.step('Verify Configs', async () => {
 
+        await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
         await expect(await getCellByColumnName(table, 'URL')).toContainText('/ldap.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
@@ -46,6 +47,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
     });
 
     await test.step('Verify Recent Requests', async () => {
+        await page.getByRole('tab', { name: 'Requests' }).click();
         const table = page.getByRole('table', { name: 'Recent Requests' });
         const rows = table.locator('tbody tr');
 

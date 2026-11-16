@@ -37,7 +37,7 @@ const protocolRoutes: Record<string, { service: string, item?: string, log?: str
     websocket: { service: 'service', item: 'channels', log: 'log' },
     // 'maiboxes' (sic) is the existing route path in router/index.ts, don't fix it here alone
     mail: { service: 'service', item: 'maiboxes' },
-    ldap: { service: 'service' },
+    ldap: { service: 'service', log: 'log' },
 }
 
 // Pages without a service in the path: the dashboard's own pages and a config.

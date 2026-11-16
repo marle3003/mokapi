@@ -1,4 +1,5 @@
 import { useDashboard } from '../../components/dashboard'
+import { useLdapRequests } from '../../components/ldap'
 import { useTable } from '../../components/table'
 import { test, expect } from '../../models/fixture-dashboard'
 
@@ -10,8 +11,11 @@ test('Visit LDAP Add request', async ({ page }) => {
 
         await page.getByRole('table', { name: 'LDAP Servers' }).getByRole('link', { name: 'LDAP Testserver' }).click()
 
+        await page.getByRole('tab', { name: 'Requests' }).click()
+
         const requests = page.getByRole('table', { name: 'Recent Requests' })
-        await requests.getByRole('row').filter({ hasText: 'cn=alice,cn=users,dc=mokapi,dc=io' }).getByRole('link', { name: 'Add' }).click()
+        const add = requests.getByRole('row').filter({ hasText: 'cn=alice,cn=users,dc=mokapi,dc=io' }).filter({ has: page.getByRole('link', { name: 'Add' }) })
+        await useLdapRequests(page).openFullView(add)
     })
 
     await test.step('Verify attributes are sorted by type', async () => {

@@ -120,10 +120,11 @@ How a click opens a view depends on how you click:
 | Middle click on a tab or click on x       | Closes the tab                                                          |
 
 This applies to the sidebar, the activity bar, pinned entries and to links and table rows
-inside a view. The rows of the HTTP request log and of the Kafka, MQTT and WebSocket message logs are an exception: a
+inside a view. The rows of the HTTP request log, the LDAP request log and the Kafka, MQTT and WebSocket message logs are an exception: a
 click selects the row and shows its details next to the table, see
 [Request log](/docs/http/dashboard.md#request-log),
 [Kafka message log](/docs/kafka/dashboard.md#message-log),
+[LDAP request log](/docs/ldap/dashboard.md#request-log),
 [MQTT message log](/docs/mqtt/dashboard.md#message-log) and
 [WebSocket message log](/docs/websocket/dashboard.md#message-log).
 

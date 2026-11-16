@@ -184,4 +184,34 @@ describe('message log filter', () => {
       expect(fixedLabel('address', { address: '' })).toEqual([])
     })
   })
+
+  describe('a log without addresses', () => {
+    const { filterStorageKey: key, filterChips: chips, toEventQuery: query } = createMessageLogFilter<'service' | 'operation'>({
+      storagePrefix: 'test-requests',
+      fields: [
+        { field: 'service', label: 'Service', trait: 'name', fixedBy: 'serviceName' },
+        { field: 'operation', label: 'Operation', trait: 'operation', format: value => value.toUpperCase() },
+      ],
+    })
+
+    it('needs no kind of address for the storage key', () => {
+      expect(key(all)).toBe('test-requests')
+      expect(key(cluster)).toBe('test-requests-Svc')
+    })
+
+    it('ignores an address, as it has no kind to name in the key', () => {
+      expect(key(topic)).toBe('test-requests-Svc')
+    })
+
+    it('shows the formatted value in the chip and queries the stored value', () => {
+      const filter = { service: '', operation: 'search' }
+
+      expect(chips(filter, all)).toEqual([{ field: 'operation', label: 'Operation: SEARCH', title: 'Operation: SEARCH' }])
+      expect(query(filter, all)).toEqual({ labels: [{ name: 'operation', value: 'search' }] })
+    })
+
+    it('shows the value as it is without a format', () => {
+      expect(chips({ service: 'Svc', operation: '' }, all)[0].label).toBe('Service: Svc')
+    })
+  })
 })
