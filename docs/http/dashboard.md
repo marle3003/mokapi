@@ -63,7 +63,7 @@ on a row does the same without selecting the row. In the Classic view, only the 
 opens a browser tab this way.
 
 Use the arrow keys up and down to select the previous or next request of the current page. Press
-`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input.
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or a dialog is open.
 
 The selected request is part of the address (`?request=<id>`). After a reload, the panel opens
 again, and you can copy the address to share the request with a colleague. Mokapi only keeps

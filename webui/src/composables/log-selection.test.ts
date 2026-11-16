@@ -184,6 +184,38 @@ describe('log selection', () => {
       expect(logKeyAction(keyEvent('ArrowDown', {}, document.createElement('button')), open)).toBe('down')
     })
 
+    it.each(['Escape', 'ArrowDown', 'ArrowUp'])('ignores %s inside an open dialog, the keys belong to the dialog', (key) => {
+      const modal = document.createElement('div')
+      modal.className = 'modal'
+      const button = document.createElement('button')
+      modal.appendChild(button)
+
+      expect(logKeyAction(keyEvent(key, {}, button), open)).toBeUndefined()
+      expect(logKeyAction(keyEvent(key, {}, button), { panelOpen: true, popoverOpen: true })).toBeUndefined()
+    })
+
+    it('ignores keys of the dialog element itself', () => {
+      const modal = document.createElement('div')
+      modal.className = 'modal'
+
+      expect(logKeyAction(keyEvent('Escape', {}, modal), open)).toBeUndefined()
+    })
+
+    it('handles keys of an element next to a dialog', () => {
+      const modal = document.createElement('div')
+      modal.className = 'modal'
+      const sibling = document.createElement('button')
+      const parent = document.createElement('div')
+      parent.append(modal, sibling)
+
+      expect(logKeyAction(keyEvent('ArrowDown', {}, sibling), open)).toBe('down')
+    })
+
+    it('handles keys without an element as target', () => {
+      expect(logKeyAction(keyEvent('ArrowDown', {}), open)).toBe('down')
+      expect(logKeyAction(keyEvent('Escape', {}, window as unknown as Element), open)).toBe('close-panel')
+    })
+
     it.each(['ctrlKey', 'metaKey', 'altKey', 'shiftKey'])('ignores keys with %s', (modifier) => {
       expect(logKeyAction(keyEvent('ArrowDown', { [modifier]: true }), open)).toBeUndefined()
       expect(logKeyAction(keyEvent('Escape', { [modifier]: true }), open)).toBeUndefined()

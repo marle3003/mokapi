@@ -697,6 +697,43 @@ test.describe('WebSocket message log: validation errors in the panel', () => {
         await dialog.getByRole('button', { name: 'Close' }).click()
     })
 
+    // Opens the Validate dialog of the invalid message's first error with the focus on its Close button.
+    async function openValidateDialog(page: Page) {
+        const { log } = useMessageLog(page)
+        await page.goto(serviceLog)
+        await log.time(log.row(invalid)).click()
+        await log.panel.tab('Validation').click()
+        await log.panel.content.getByRole('table', { name: 'Validation Errors' }).getByRole('rowgroup').nth(0).getByRole('cell').first().click()
+        await page.getByRole('button', { name: 'Validate' }).click()
+        const dialog = page.getByRole('dialog')
+        // Bootstrap ignores Escape while the dialog fades in and focuses it when the transition ends
+        await expect(dialog).toBeFocused()
+        await dialog.getByRole('button', { name: 'Close' }).focus()
+        return { log, dialog }
+    }
+
+    test('Escape in the Validate dialog closes only the dialog', async ({ page }) => {
+        const { log, dialog } = await openValidateDialog(page)
+
+        await page.keyboard.press('Escape')
+
+        await expect(dialog).toBeHidden()
+        await expect(log.panel.element).toBeVisible()
+        await expect(page).toHaveURL(new RegExp(`message=${invalid}`))
+        await expect(page.locator('.modal-backdrop')).toHaveCount(0)
+        await expect(page.locator('body')).not.toHaveClass(/modal-open/)
+    })
+
+    test('arrow keys in the Validate dialog do not select another message', async ({ page }) => {
+        const { dialog } = await openValidateDialog(page)
+
+        await page.keyboard.press('ArrowDown')
+        await page.keyboard.press('ArrowUp')
+
+        await expect(page).toHaveURL(new RegExp(`message=${invalid}`))
+        await expect(dialog).toBeVisible()
+    })
+
     test('the errors work again after the next row was selected', async ({ page }) => {
         const { log } = useMessageLog(page)
         await page.goto(serviceLog)

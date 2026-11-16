@@ -51,11 +51,11 @@ export function neighbourId(ids: string[], currentId: string | undefined, direct
     return ids[Math.min(ids.length - 1, Math.max(0, index + (direction === 'down' ? 1 : -1)))]
 }
 
-// What a key press means for an open log. Keys typed into a field, with a modifier or while
-// composing text are not ours (like the shortcuts of the dashboard). Escape closes an open popover
-// before the panel.
+// What a key press means for an open log. Keys typed into a field or inside an open dialog, with a
+// modifier or while composing text are not ours (like the shortcuts of the dashboard). Escape closes
+// an open popover before the panel.
 export function logKeyAction(event: KeyboardEvent, state: { panelOpen: boolean, popoverOpen: boolean }): LogKeyAction | undefined {
-    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || isTypingTarget(event.target)) {
+    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || isOwnedByTarget(event.target)) {
         return undefined
     }
     switch (event.key) {
@@ -70,7 +70,10 @@ export function logKeyAction(event: KeyboardEvent, state: { panelOpen: boolean, 
     return undefined
 }
 
-function isTypingTarget(target: EventTarget | null): boolean {
+// The keys belong to the element: a field uses them for typing, a dialog for its own handling.
+function isOwnedByTarget(target: EventTarget | null): boolean {
     const element = target as HTMLElement | null
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(element?.tagName ?? '') || element?.isContentEditable === true
+    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(element?.tagName ?? '')
+        || element?.isContentEditable === true
+        || element?.closest?.('.modal') != null
 }
