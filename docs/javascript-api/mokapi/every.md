@@ -11,7 +11,8 @@ optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 ### Behavior
 
 - By default, **`every` jobs run immediately**, then repeat according to the interval.
-- To skip the immediate run, set `SkipImmediateFirstRun: true` in `args`.
+- To skip the immediate run, set `skipImmediateFirstRun: true` in `args`.
+- `times` limits the number of runs, see [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md). The immediate first run counts as one of them.
 - Each run appears in the jobs log of the dashboard, see [Jobs](/docs/get-started/dashboard.md#jobs).
 
 | Parameter       | Type     | Description                                                                                                                      |
