@@ -437,6 +437,46 @@ test.describe('Dashboard search panel: results', () => {
     })
 })
 
+test.describe('Dashboard search panel: status color', () => {
+    const themes = [
+        { name: 'dark', theme: undefined, amber: 'rgb(245, 165, 36)', red: 'rgb(255, 122, 140)' },
+        { name: 'light', theme: 'light', amber: 'rgb(122, 74, 0)', red: 'rgb(179, 18, 46)' },
+    ]
+
+    for (const { name, theme, amber, red } of themes) {
+        test.describe(`${name} theme`, () => {
+            test.beforeEach(async ({ page }) => {
+                if (theme) {
+                    await page.addInitScript((value) => localStorage.setItem('theme', value), theme)
+                }
+            })
+
+            test('a status below 400 has the muted text color, 4xx is amber', async ({ page }) => {
+                const { results } = useSearchPanel(page)
+                await openPanel(page)
+                await searchFor(page, 'many')
+
+                const mutedColor = await results.nth(0).locator('.search-result').evaluate(e => getComputedStyle(e).color)
+                await expect(results.nth(0).locator('.search-result-status')).toHaveText('200')
+                await expect(results.nth(0).locator('.search-result-status')).toHaveCSS('color', mutedColor)
+                await expect(results.nth(6).locator('.search-result-status')).toHaveText('404')
+                await expect(results.nth(6).locator('.search-result-status')).toHaveCSS('color', amber)
+            })
+
+            test('5xx is red', async ({ page }) => {
+                const { results, loadMore } = useSearchPanel(page)
+                await openPanel(page)
+                await searchFor(page, 'many')
+                await loadMore.click()
+                await expect(results).toHaveCount(40)
+
+                await expect(results.nth(29).locator('.search-result-status')).toHaveText('500')
+                await expect(results.nth(29).locator('.search-result-status')).toHaveCSS('color', red)
+            })
+        })
+    }
+})
+
 test.describe('Dashboard search panel: opening results', () => {
     test('a click replaces the active tab', async ({ page }) => {
         const { results, tabs } = useSearchPanel(page)

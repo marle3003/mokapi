@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { isOpenResult } from '@/composables/search'
+import { isOpenResult, searchStatusClass } from '@/composables/search'
 import { resultRoute } from '@/composables/search-result'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 
@@ -19,7 +19,6 @@ const { format } = usePrettyDates()
 
 const to = computed(() => resultRoute(props.item))
 const isOpen = computed(() => to.value !== undefined && isOpenResult(router.resolve(to.value).fullPath, route.fullPath))
-const isError = computed(() => Number(props.status) >= 500)
 const context = computed(() => [props.item.domain, props.item.time && format(props.item.time)].filter(Boolean).join(', '))
 const matches = computed(() => props.item.fragments?.join(' ... '))
 </script>
@@ -31,7 +30,7 @@ const matches = computed(() => props.item.fragments?.join(' ... '))
             <span class="search-result-head">
                 <span class="badge" :class="isMethod ? `operation ${badge.toLowerCase()}` : 'search-type'">{{ badge }}</span>
                 <span class="search-result-title" :title="item.title">{{ item.title }}</span>
-                <span v-if="status" class="search-result-status" :class="isError ? 'error' : 'other'">{{ status }}</span>
+                <span v-if="status" class="search-result-status" :class="searchStatusClass(status)">{{ status }}</span>
             </span>
             <span class="search-result-detail">
                 {{ context }}<template v-if="context && matches">, </template><span v-html="matches"></span>

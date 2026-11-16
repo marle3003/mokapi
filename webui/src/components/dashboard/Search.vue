@@ -209,29 +209,28 @@ function pageIndex_click(index: number) {
             </div>
           </div>
 
-
-          <!-- Empty State -->
-          <div v-if="searchResult && searchResult.total === 0" class="text-center text-body-secondary py-5">
-            <div class="fs-5 mb-2">
-              No results found
-            </div>
-
-            <div class="small">
-              Try different keywords or remove filters.
-            </div>
-          </div>
-
-          <!-- Error -->
-          <div v-if="errorMessage" class="alert alert-danger mt-3">
-            {{ errorMessage }}
-          </div>
-
           <div class="row justify-content-md-center">
             <div class="col-6 col-auto">
               <Pager :current="pageIndex" :size="10" :total="searchResult.total" :sizeOptions="[10]" @page:changed="pageIndex_click" />
             </div>
           </div>
 
+        </div>
+
+        <!-- Error -->
+        <div v-if="errorMessage" class="alert alert-danger mt-3" role="alert">
+          {{ errorMessage }}
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="searchResult && searchResult.total === 0 && !errorMessage" class="text-center text-body-secondary py-5">
+          <div class="fs-5 mb-2">
+            No results found
+          </div>
+
+          <div class="small">
+            Try different keywords or remove filters.
+          </div>
         </div>
 
       </div>

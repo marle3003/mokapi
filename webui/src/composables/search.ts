@@ -63,6 +63,15 @@ export function isOpenResult(resultPath: string, currentPath: string): boolean {
     return tabIdentity(resultPath) === tabIdentity(currentPath)
 }
 
+// Color only marks problems: a status below 400 stays neutral.
+export function searchStatusClass(status: string): 'error' | 'client-error' | '' {
+    const code = Number(status)
+    if (code >= 500) {
+        return 'error'
+    }
+    return code >= 400 ? 'client-error' : ''
+}
+
 interface SearchOptions {
     limit: number
     // the state can live outside, e.g. saved in the local storage

@@ -743,12 +743,13 @@ a.search-result:focus-visible {
 }
 .search-result-status {
   font-size: 12px;
+  color: var(--layout-text-muted);
   font-variant-numeric: tabular-nums;
 }
 .search-result-status.error {
   color: var(--layout-status-error);
 }
-.search-result-status.other {
+.search-result-status.client-error {
   color: var(--layout-status-other);
 }
 .search-result-detail {

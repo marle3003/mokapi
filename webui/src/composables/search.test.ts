@@ -6,6 +6,7 @@ import {
   fullSearchLocation,
   isOpenResult,
   isSearchable,
+  searchStatusClass,
   searchTotalLabel,
   useSearch,
 } from './search'
@@ -69,6 +70,29 @@ describe('fullSearchLocation', () => {
 
   it('has no location without text', () => {
     expect(fullSearchLocation('', { type: 'Kafka' })).toBeUndefined()
+  })
+})
+
+describe('searchStatusClass', () => {
+  it('has no class below 400', () => {
+    expect(searchStatusClass('200')).toBe('')
+    expect(searchStatusClass('304')).toBe('')
+    expect(searchStatusClass('399')).toBe('')
+  })
+
+  it('is client-error from 400 to 499', () => {
+    expect(searchStatusClass('400')).toBe('client-error')
+    expect(searchStatusClass('499')).toBe('client-error')
+  })
+
+  it('is error from 500', () => {
+    expect(searchStatusClass('500')).toBe('error')
+    expect(searchStatusClass('503')).toBe('error')
+  })
+
+  it('has no class without a number', () => {
+    expect(searchStatusClass('')).toBe('')
+    expect(searchStatusClass('n/a')).toBe('')
   })
 })
 
