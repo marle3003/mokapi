@@ -57,10 +57,11 @@ The chevron next to the heading collapses or expands the group.
 
 ### Overview
 
-The overview shows the runtime info (App Start and Memory) and one metric tile for each active
-protocol. It shows a Jobs tile as well if you have registered jobs. It doesn't list services.
-Click a tile to open the page of the protocol with its metrics, services and log. Ctrl+click,
-Cmd+click or middle click opens it in a new tab, as described in [Tabs](#tabs).
+The overview shows the runtime info (Uptime Since and Memory Usage) and one metric tile for each
+active protocol. A Jobs tile appears as well once a job has run. It doesn't list services.
+Click a protocol tile to open the page of that protocol with its metrics, services and log. The
+Jobs tile opens the Jobs page. Ctrl+click, Cmd+click or middle click opens a page in a new tab,
+as described in [Tabs](#tabs).
 
 ### Filter the sidebar
 

@@ -108,9 +108,9 @@ test.describe('Overview: metric tiles', () => {
         const { tile } = useOverview(page)
         await page.goto('/dashboard')
 
-        await expect(tile('HTTP Requests / Errors')).toContainText('4 / 1')
-        await expect(tile('Kafka Messages')).toContainText('12')
-        await expect(tile('SMTP Mails')).toContainText('12')
+        await expect(tile('HTTP Requests / Errors').locator('.card-text')).toHaveText('4 / 1')
+        await expect(tile('Kafka Messages').locator('.card-text')).toHaveText('12')
+        await expect(tile('SMTP Mails').locator('.card-text')).toHaveText('12')
     })
 
     test('a click opens the page in the active tab', async ({ page }) => {

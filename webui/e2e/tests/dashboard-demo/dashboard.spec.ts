@@ -39,7 +39,7 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
     ]) {
         await test.step(`Verify the ${title} tile shows ${value} and links to ${route}`, async () => {
             const tile = dashboard.metricTile(title)
-            await expect(tile).toContainText(value)
+            await expect(tile.locator('.card-text')).toHaveText(value)
             await expect(tile).toHaveAttribute('href', `${base}/${route}`)
         })
     }
