@@ -186,7 +186,7 @@ func (h *handler) setupHttp() {
 }
 
 func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
-	services := getKafkaServices(h.app.Kafka, h.app.Monitor)
+	services := getHttpServices(h.app.Http, h.app.Monitor)
 	write(w, services)
 }
 

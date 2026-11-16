@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
@@ -765,6 +766,44 @@ func TestHandler_Http_ServiceItems(t *testing.T) {
 				h,
 				try.HasStatusCode(200),
 				try.HasBody(`[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}
+
+func TestHandler_Http_List_ExcludesOtherServiceTypes(t *testing.T) {
+	kafkaConfig := asyncapi3test.NewConfig(asyncapi3test.WithInfo("kafka-api", "bar", "1.0"))
+
+	testcases := []struct {
+		name         string
+		app          *runtime.App
+		responseBody string
+	}{
+		{
+			name: "http and kafka returns only http",
+			app: runtimetest.NewApp(
+				runtimetest.WithHttp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "1.0", "bar"))),
+				runtimetest.WithKafka(kafkaConfig),
+			),
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
+		},
+		{
+			name:         "only kafka returns empty list",
+			app:          runtimetest.NewApp(runtimetest.WithKafka(kafkaConfig)),
+			responseBody: `[]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services/http",
+				nil,
+				"",
+				New(tc.app, static.Api{}),
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(tc.responseBody))
 		})
 	}
 }
