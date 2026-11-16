@@ -10,6 +10,7 @@ Schedules a new periodic job using cron expression.
 
 - By default, **cron jobs wait for the first scheduled tick** before executing.
 - To run the job immediately on creation, set `SkipImmediateFirstRun: false` in `args`.
+- Each run appears in the jobs log of the dashboard, see [Jobs](/docs/get-started/dashboard.md#jobs).
 
 ## Parameters
 

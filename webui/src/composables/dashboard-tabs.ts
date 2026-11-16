@@ -24,7 +24,7 @@ export function emptyTabs(): TabsState {
 }
 
 // Parameters that change how a view looks, not what it shows: the refresh interval is a setting of
-// the dashboard, `request` and `message` select a row of a request or message log.
+// the dashboard, `request`, `message` and `job` select a row of a request, message or job log.
 const refreshParameter = 'refresh'
 const viewStateParameters = [refreshParameter, ...selectionKeys]
 

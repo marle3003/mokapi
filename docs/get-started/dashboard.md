@@ -120,11 +120,12 @@ How a click opens a view depends on how you click:
 | Middle click on a tab or click on x       | Closes the tab                                                          |
 
 This applies to the sidebar, the activity bar, pinned entries and to links and table rows
-inside a view. The rows of the HTTP request log, the LDAP request log, the mail log and the Kafka, MQTT and WebSocket message logs are an exception: a
+inside a view. The rows of the HTTP request log, the LDAP request log, the mail log, the jobs log and the Kafka, MQTT and WebSocket message logs are an exception: a
 click selects the row and shows its details next to the table, see
 [Request log](/docs/http/dashboard.md#request-log),
 [Kafka message log](/docs/kafka/dashboard.md#message-log),
 [LDAP request log](/docs/ldap/dashboard.md#request-log),
+[Jobs](#jobs),
 [Mail log](/docs/mail/dashboard.md#mail-log),
 [MQTT message log](/docs/mqtt/dashboard.md#message-log) and
 [WebSocket message log](/docs/websocket/dashboard.md#message-log).
@@ -188,6 +189,72 @@ Classic view exists only in the live dashboard and will be removed in a later re
 The dashboard displays key metrics like request logs, 
 response times, and error rates, offering a comprehensive 
 overview of how the mock API behaves under different conditions.
+
+### Jobs
+
+The Jobs page lists the runs of your scheduled jobs, newest first. A job is a function you
+register with [cron](/docs/javascript-api/mokapi/cron.md) or
+[every](/docs/javascript-api/mokapi/every.md) in a script. Open the page with the Jobs icon of the
+activity bar, which is shown only if at least one job exists. The log is titled "Recent Jobs" and is
+always shown, also when it's empty.
+
+<!-- screenshot: jobs log with the detail panel open on the Logs sub tab -->
+
+The log has these columns:
+
+| Column   | Description                                                                          |
+|----------|--------------------------------------------------------------------------------------|
+| Status   | **Success**, **Warning** or **Error**, as a badge                                    |
+| Name     | The name of the job. Ctrl+click, Cmd+click or middle click opens the run in a new tab. |
+| Schedule | The cron expression or the interval of the job                                       |
+| Time     | When the run happened                                                                |
+| Duration | How long the handler ran                                                             |
+
+Mokapi derives the status from the run. The status is **Error** if the run failed or the script
+logged a message with level `error`, and **Warning** if the script logged a message with level
+`warn`. Otherwise it's **Success**, also if the run has no logs.
+
+The name is the name of the script file, for example `jobs.ts`, unless the job sets the `name` tag
+in its [arguments](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md).
+
+Click a row to open the run next to the table. The selected row is highlighted. The top of the
+panel shows the status, the name and the time of the run. Below the head, the panel has two sub
+tabs:
+
+| Sub tab | Content                                                                                           |
+|---------|---------------------------------------------------------------------------------------------------|
+| Logs    | The error of the run, if there was one, and the messages the script logged. This is the default.  |
+| Details | Schedule, Runs, Duration, Next Run and the tags of the job                                        |
+
+The Runs field shows `3 / 10` if the job has a limit of runs, otherwise only the number of runs.
+Next Run shows the date and, while it's in the future, a countdown, for example
+`2026-11-16 12:00:00 (in 1h 2min 3s)`. The countdown keeps running while the log is paused. Next Run
+is `-` if the job has no further run. The tag `file` links to the configuration of the script.
+
+<!-- screenshot: panel with the Details sub tab and the countdown in Next Run -->
+
+Click **Open as tab** to show the run in the full view, `/dashboard/jobs/<id>`. A click replaces the
+active tab, Ctrl+click or Cmd+click opens a new one. In the new layout, Ctrl+click, Cmd+click or
+middle click on the name does the same without selecting the row. The full view shows the same
+information one below the other.
+
+Use the arrow keys up and down to select the previous or next run of the current page. Press
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input.
+
+The selected run is part of the address (`?job=<id>`). After a reload, the panel opens again, and
+you can copy the address to share the run. Mokapi only keeps a limited number of events in memory.
+If Mokapi has dropped the event, the panel and the full view show "Job not found".
+
+Filter the log with the **Name** chip. Click **+ Add filter**, then **Name**, and type the name of
+a job. The filter matches the name exactly and is case-sensitive, so `Jobs.ts` doesn't find
+`jobs.ts`. The input suggests the names of the runs on the current page. A job that only ran on
+another page isn't suggested, but you can still type its name. Two scripts with the same file name
+share one name unless they set the `name` tag. Mokapi saves the filter in the browser and restores
+it after a reload.
+
+Auto refresh and **Pause** work as in the [mail log](/docs/mail/dashboard.md#pause-the-log). The
+demo dashboard has no Pause button. In the Classic view, the log has the same panel, filter and
+**Pause** button.
 
 ### Generate sample data from the specification
 

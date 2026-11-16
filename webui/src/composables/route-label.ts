@@ -14,6 +14,7 @@ const pageLabels: Record<string, string> = {
     mqtt: 'MQTT',
     websocket: 'Websocket',
     jobs: 'Jobs',
+    job: 'Job',
     configs: 'Configs',
     config: 'Config',
     tree: 'Faker',

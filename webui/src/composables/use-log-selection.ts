@@ -2,7 +2,7 @@ import { computed, nextTick, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { isShadowedSelection, logKeyAction, neighbourId, selectedLogId, withSelection } from '@/composables/log-selection'
 
-// Connects the selection of a log (query key `request` or `message`) with the router and the
+// Connects the selection of a log (query key `request`, `message` or `job`) with the router and the
 // keyboard. The selected row is in the address, so a link opens the panel. A selection replaces the
 // history entry: stepping through rows is not navigation.
 export function useLogSelection(key: string, log: {

@@ -409,7 +409,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'jobs',
         name: getRouteName('jobs'),
         component: dashboardView,
-        meta: { title: 'Dashboard - Jobs' }
+        meta: { title: 'Dashboard - Jobs' },
+        children: [
+          {
+            path: ':id',
+            name: getRouteName('job'),
+            component: dashboardView,
+            meta: {
+              title: ({ params }: MatcherLocation) => `Dashboard - Job – ${params.id}`,
+              noindex: true
+            }
+          }
+        ]
       },
       {
         path: 'configs',

@@ -35,7 +35,8 @@ import WebsocketMessages from '@/components/dashboard/websocket/WebsocketMessage
 
 import Message from '@/components/Message.vue'
 
-import JobCard from '@/components/dashboard/JobCard.vue'
+import Jobs from '@/components/dashboard/job/Jobs.vue'
+import Job from '@/components/dashboard/job/Job.vue'
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
@@ -210,8 +211,12 @@ function isAnyServiceAvailable() {
 
     <div v-if="$route.name === getRouteName('jobs').value">
         <div class="card-group">
-            <job-card />
+            <jobs />
         </div>
+    </div>
+
+    <div v-if="$route.name === getRouteName('job').value">
+        <job />
     </div>
 
     <div v-if="$route.name === getRouteName('configs').value">

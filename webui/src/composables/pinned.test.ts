@@ -121,6 +121,11 @@ describe('pinned entries', () => {
       expect(available(path, [])).toBe(true)
     })
 
+    it('the full view of a job run is available', () => {
+      expect(available('/dashboard/jobs/8134', [])).toBe(true)
+      expect(available('/dashboard-demo/jobs/8134', [])).toBe(true)
+    })
+
     it('works the same in the demo dashboard', () => {
       expect(available('/dashboard-demo/http/services/Swagger%20Petstore')).toBe(true)
       expect(available('/dashboard-demo/http/services/Gone')).toBe(false)

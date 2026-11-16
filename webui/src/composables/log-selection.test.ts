@@ -71,9 +71,33 @@ describe('log selection', () => {
     })
   })
 
+  describe('with the job key', () => {
+    it('reads and sets the selected job, and ignores a selected request', () => {
+      expect(selectedLogId({ job: 'abc' }, 'job')).toBe('abc')
+      expect(selectedLogId({ request: 'def' }, 'job')).toBeUndefined()
+      expect(withSelection({ refresh: '5' }, 'job', 'abc')).toEqual({ refresh: '5', job: 'abc' })
+    })
+
+    it('removes the selection of the other logs when a job is selected', () => {
+      expect(withSelection({ request: 'def', refresh: '5' }, 'job', 'abc')).toEqual({ refresh: '5', job: 'abc' })
+    })
+
+    it('removes only the job key on close, and keeps refresh', () => {
+      const result = withSelection({ job: 'abc', refresh: '5' }, 'job', undefined)
+
+      expect(result).toEqual({ refresh: '5' })
+      expect('job' in result).toBe(false)
+    })
+
+    it('has no job while a message or request is selected', () => {
+      expect(isShadowedSelection({ request: 'def', job: 'abc' }, 'job')).toBe(true)
+      expect(isShadowedSelection({ job: 'abc' }, 'job')).toBe(false)
+    })
+  })
+
   describe('one selection per view', () => {
-    it('lists the selection keys by priority, the message log is above the request log', () => {
-      expect(selectionKeys).toEqual(['message', 'request'])
+    it('lists the selection keys by priority, the message log is above the request log and the job log', () => {
+      expect(selectionKeys).toEqual(['message', 'request', 'job'])
     })
 
     it('removes the other selection keys when a row is selected, and keeps refresh', () => {

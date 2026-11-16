@@ -4,9 +4,9 @@ export type LogKeyAction = 'up' | 'down' | 'close-popover' | 'close-panel'
 
 // The logs of a view that keep their selected row in the URL, by priority: a view holds one selection
 // at a time, and with several keys in the address the first one wins.
-export const selectionKeys = ['message', 'request']
+export const selectionKeys = ['message', 'request', 'job']
 
-// The selected row of a log is in the URL (`?request=<id>`, `?message=<id>`: the query key says
+// The selected row of a log is in the URL (`?request=<id>`, `?message=<id>`, `?job=<id>`: the query key says
 // which log), so a link opens the panel. A key below a selected key of higher priority has none.
 export function selectedLogId(query: LocationQuery, key: string): string | undefined {
     const index = selectionKeys.indexOf(key)

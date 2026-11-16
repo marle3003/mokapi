@@ -375,6 +375,11 @@ describe('dashboard tabs', () => {
       expect(tabIdentity('/dashboard/kafka/log?a=1&message=abc&refresh=5&b=2')).toBe('/dashboard/kafka/log?a=1&b=2')
     })
 
+    it('removes the selected job like the selected request', () => {
+      expect(tabIdentity('/dashboard/jobs?job=abc')).toBe('/dashboard/jobs')
+      expect(tabIdentity('/dashboard/jobs?a=1&job=abc&refresh=5&b=2')).toBe('/dashboard/jobs?a=1&b=2')
+    })
+
     it('keeps a parameter that only starts with a view-state name', () => {
       expect(tabIdentity('/dashboard/search?requests=1&refreshing=2')).toBe('/dashboard/search?requests=1&refreshing=2')
     })
@@ -396,6 +401,12 @@ describe('dashboard tabs', () => {
       expect(viewKey('/dashboard/kafka/log?message=abc')).toBe('/dashboard/kafka/log')
       expect(viewKey('/dashboard/kafka/log?message=abc&refresh=5')).toBe('/dashboard/kafka/log?refresh=5')
       expect(viewKey('/dashboard/kafka/log?a=1&message=abc&b=2')).toBe('/dashboard/kafka/log?a=1&b=2')
+    })
+
+    it('stays the same when a job is selected', () => {
+      expect(viewKey('/dashboard/jobs?job=abc')).toBe('/dashboard/jobs')
+      expect(viewKey('/dashboard/jobs?job=abc&refresh=5')).toBe('/dashboard/jobs?refresh=5')
+      expect(viewKey('/dashboard/jobs?a=1&job=abc&b=2')).toBe('/dashboard/jobs?a=1&b=2')
     })
 
     it('still changes with the refresh interval and the hash', () => {
