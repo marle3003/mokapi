@@ -19,8 +19,8 @@ function filterWith(changes: Partial<KafkaMessageFilter>): KafkaMessageFilter {
 
 const all = {}
 const cluster = { serviceName: 'Kafka World' }
-const topic = { serviceName: 'Kafka World', topic: 'orders' }
-const instance = { serviceName: 'Kafka World', topic: 'shipments.{region}.updates', instance: 'eu' }
+const topic = { serviceName: 'Kafka World', address: 'orders' }
+const instance = { serviceName: 'Kafka World', address: 'shipments.{region}.updates', instance: 'eu' }
 const client = { serviceName: 'Kafka World', clientId: 'consumer-1' }
 
 describe('kafka message filter', () => {
@@ -46,7 +46,7 @@ describe('kafka message filter', () => {
     })
 
     it('does not mix up a topic and a client with the same name', () => {
-      expect(filterStorageKey({ serviceName: 'Kafka World', topic: 'x' }))
+      expect(filterStorageKey({ serviceName: 'Kafka World', address: 'x' }))
         .not.toBe(filterStorageKey({ serviceName: 'Kafka World', clientId: 'x' }))
     })
   })

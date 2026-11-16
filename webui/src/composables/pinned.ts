@@ -34,7 +34,7 @@ const protocolRoutes: Record<string, { service: string, item?: string, log?: str
     http: { service: 'services', log: 'log' },
     kafka: { service: 'service', item: 'topics', log: 'log' },
     mqtt: { service: 'service', item: 'topics', log: 'log' },
-    websocket: { service: 'service', item: 'channels' },
+    websocket: { service: 'service', item: 'channels', log: 'log' },
     // 'maiboxes' (sic) is the existing route path in router/index.ts, don't fix it here alone
     mail: { service: 'service', item: 'maiboxes' },
     ldap: { service: 'service' },

@@ -23,13 +23,13 @@ type Client struct {
 }
 
 func (c *Client) Send(message any) {
-	err := c.sendMessage(message)
+	err := c.sendMessage(message, "")
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (c *Client) sendMessage(message any) error {
+func (c *Client) sendMessage(message any, scriptFile string) error {
 	var err error
 	var data []byte
 	var messageId string
@@ -48,6 +48,7 @@ func (c *Client) sendMessage(message any) error {
 	}
 
 	l := messageLog(c.channel, data, messageId, c, Receive)
+	l.Script = scriptFile
 	if err != nil {
 		b, _ := json.Marshal(message)
 		l.Message = &LogValue{

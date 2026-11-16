@@ -54,6 +54,13 @@ func TestMessageLog_MarshalJSON(t *testing.T) {
 			},
 			json: `{"channel":"chat","message":{"value":"hi","binary":null},"messageId":"","direction":"","client":{"id":"","query":null,"header":null,"address":"","server":""},"api":"","actions":[{"duration":2,"tags":null,"parameters":null,"logs":null,"error":null}],"validationErrors":{"m":"err"}}`,
 		},
+		{
+			name: "with script",
+			log: func() *websocket.MessageLog {
+				return &websocket.MessageLog{Channel: "chat", Script: "file:///sender.ts"}
+			},
+			json: `{"channel":"chat","message":null,"messageId":"","direction":"","client":{"id":"","query":null,"header":null,"address":"","server":""},"api":"","actions":null,"script":"file:///sender.ts"}`,
+		},
 	}
 
 	for _, tc := range testcases {

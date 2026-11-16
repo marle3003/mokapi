@@ -20,7 +20,7 @@ const table = useTemplateRef<HTMLElement>('table')
 const {
   paging, result, isLoading, events, rows, paused, canPause, togglePause,
   selectedId, select, onRowClick, onLinkClick,
-} = useRequestLog<KafkaRequestLog>('kafka', {
+} = useRequestLog<KafkaRequestLog>('kafka', 'request', {
   get serviceName() { return props.service.name },
   get clientId() { return props.clientId },
 }, table)

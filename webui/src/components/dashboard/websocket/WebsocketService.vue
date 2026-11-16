@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import WebsocketChannels from './WebsocketChannels.vue'
-import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
+import WebsocketMessages from './WebsocketMessages.vue'
 import WebsocketChannel from './WebsocketChannel.vue'
 import Servers from './Servers.vue'
 import Server from './Server.vue'
@@ -20,6 +20,7 @@ import { useToolbarItem } from '@/composables/toolbar-items.ts'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import Breadcrumb from '../Breadcrumb.vue'
 import { useService } from '@/composables/service.ts'
+import { withSelection } from '@/composables/log-selection'
 
 const route = useRoute();
 const router = useRouter();
@@ -29,6 +30,7 @@ const activeTab = ref('tab-channels');
 
 function setTab(tab: string) {
     router.replace({
+        query: withSelection(route.query, 'message', undefined),
         hash: `#${tab}`
     });
 }
@@ -78,6 +80,10 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                             aria-controls="channels-pane" @click="setTab('tab-channels')">
                             Channels
                         </button>
+                        <button :class="{ active: activeTab === 'tab-messages' }" id="messages-tab" type="button" role="tab"
+                            aria-controls="messages-pane" @click="setTab('tab-messages')">
+                            Messages
+                        </button>
                         <button :class="{ active: activeTab === 'tab-servers' }" id="servers-tab" type="button"
                             role="tab" aria-controls="servers" @click="setTab('tab-servers')">
                             Servers
@@ -95,8 +101,17 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-channels' }" id="channels-pane"
                             role="tabpanel" aria-labelledby="channels-tab">
                             <websocket-channels :service="service" />
+                        </div>
+                        <!-- v-if: the log reloads while it is mounted, so a hidden one would poll -->
+                        <div v-if="activeTab === 'tab-messages'" class="tab-pane fade show active" id="messages-pane"
+                            role="tabpanel" aria-labelledby="messages-tab">
+                            <div class="d-flex justify-content-end mb-2">
+                                <router-link :to="{ name: getRouteName('websocketServiceLog').value, params: { service: service.name }, query: { refresh: route.query.refresh } }">
+                                    Open as tab
+                                </router-link>
+                            </div>
                             <div class="card-group">
-                                <websocket-messages-card :service="service" />
+                                <websocket-messages :service="service" />
                             </div>
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
@@ -115,6 +130,9 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                 </div>
             </section>
         </div>
+    </div>
+    <div class="card-group" v-if="$route.name == getRouteName('websocketServiceLog').value && service != null">
+        <websocket-messages :service="service" />
     </div>
     <div v-if="$route.matched.some(route => route.name === getRouteName('websocketChannel').value)">
         <websocket-channel v-if="service" :service="service"></websocket-channel>

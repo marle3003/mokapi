@@ -50,6 +50,13 @@ describe('pinned entries', () => {
       expect(isPinned(pinned, '/dashboard/kafka/log?message=def')).toBe(true)
     })
 
+    it('ignores the selected message of a WebSocket log', () => {
+      const pinned = togglePin([], '/dashboard/websocket/log?message=abc')
+
+      expect(pinned).toEqual(['/dashboard/websocket/log'])
+      expect(isPinned(pinned, '/dashboard/websocket/log?message=def')).toBe(true)
+    })
+
     it('ignores the selected message of an MQTT log', () => {
       const pinned = togglePin([], '/dashboard/mqtt/log?message=abc')
 
@@ -154,6 +161,15 @@ describe('pinned entries', () => {
         ['/dashboard/mqtt/log/Gone', false],
         ['/dashboard-demo/mqtt/log/MQTT%20Sensors', true],
       ])('MQTT message log %s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
+        ['/dashboard/websocket/log', true],
+        ['/dashboard/websocket/log/Chat', true],
+        ['/dashboard/websocket/log/Gone', false],
+        ['/dashboard-demo/websocket/log/Chat', true],
+      ])('WebSocket message log %s', (path, expected) => {
         expect(available(path)).toBe(expected)
       })
 

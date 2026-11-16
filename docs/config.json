@@ -124,6 +124,11 @@
                 "label": "Quick Start",
                 "source": "websocket/quick-start.md",
                 "path": "/docs/websocket/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "websocket/dashboard.md",
+                "path": "/docs/websocket/dashboard"
               }
             ]
           },

@@ -2,15 +2,21 @@ import { computed, reactive, ref, watch, type Ref } from 'vue'
 import { scrollSelectedRowIntoView, useLogSelection } from '@/composables/use-log-selection'
 import { useEventLog } from '@/composables/use-event-log'
 import { useServiceList } from '@/composables/use-service-list'
-import type { createMessageLogFilter } from '@/composables/message-log-filter'
+import type { createMessageLogFilter, MessageLogFilterContext } from '@/composables/message-log-filter'
 
-type LogService = { name: string, topics: { name: string, instances?: unknown[] }[] }
+type LogAddress = { name: string, instances?: unknown[] }
+// Kafka and MQTT services have topics, WebSocket services have channels: both are the addresses of messages.
+type LogService = { name: string, topics?: LogAddress[], channels?: LogAddress[] }
 
-// What a message log is told by the place it is shown in: all clusters, one cluster, a topic (and the
-// instance of a template topic) or a client.
+function addressesOf(service: LogService): LogAddress[] {
+    return service.topics ?? service.channels ?? []
+}
+
+// What a message log is told by the place it is shown in: all services, one service, an address (and
+// the instance of a template address) or a client.
 export interface MessageLogProps {
     service?: LogService
-    topicName?: string
+    addressName?: string
     instanceName?: string
     clientId?: string
     // a log without messages, filters and selection is not worth the space (the client view)
@@ -19,50 +25,50 @@ export interface MessageLogProps {
 
 export type MessageLogFilter<F extends string> = ReturnType<typeof createMessageLogFilter<F>>
 
-// The labels every message of the log has: what the place of the log fixes.
-export function messageLogLabels(namespace: ServiceType, props: MessageLogProps): Label[] {
-    const result: Label[] = [{ name: 'namespace', value: namespace }]
-    if (props.service) {
-        result.push({ name: 'name', value: props.service.name })
+// What the place of the log fixes. The filter doesn't offer these fields.
+function messageLogContext(props: MessageLogProps): MessageLogFilterContext {
+    return {
+        serviceName: props.service?.name,
+        address: props.addressName,
+        instance: props.instanceName || undefined,
+        clientId: props.clientId,
     }
-    if (props.topicName) {
-        result.push({ name: 'topic', value: props.topicName })
-    }
-    if (props.instanceName) {
-        result.push({ name: 'instance', value: props.instanceName })
-    }
-    result.push({ name: 'type', value: 'message' })
-    if (props.clientId) {
-        result.push({ name: 'clientId', value: props.clientId })
-    }
-    return result
 }
 
-// The topic is known in a topic view, except for a template topic with its instances.
-export function showsTopicColumn(props: MessageLogProps): boolean {
-    if (!props.topicName) {
+// The labels every message of the log has: what the place of the log fixes. The trait of the address
+// depends on the protocol, so the filter names it.
+export function messageLogLabels(namespace: ServiceType, props: MessageLogProps, { fixedLabel }: Pick<MessageLogFilter<string>, 'fixedLabel'>): Label[] {
+    const context = messageLogContext(props)
+    return [
+        { name: 'namespace', value: namespace },
+        ...fixedLabel('serviceName', context),
+        ...fixedLabel('address', context),
+        ...(context.instance ? [{ name: 'instance', value: context.instance }] : []),
+        { name: 'type', value: 'message' },
+        ...fixedLabel('clientId', context),
+    ]
+}
+
+// The address is known in an address view, except for a template address with its instances.
+export function showsAddressColumn(props: MessageLogProps): boolean {
+    if (!props.addressName) {
         return true
     }
-    const topic = props.service?.topics.find(x => x.name === props.topicName)
-    return topic?.instances !== undefined && !props.instanceName
+    const address = props.service && addressesOf(props.service).find(x => x.name === props.addressName)
+    return address?.instances !== undefined && !props.instanceName
 }
 
-// The state of a message log that Kafka and MQTT share: the filter of its place (kept in localStorage),
-// the page of events, Pause, the selected row and the clusters and topics the filter suggests.
+// The state of a message log that Kafka, MQTT and WebSocket share: the filter of its place (kept in
+// localStorage), the page of events, Pause, the selected row and the services and addresses the filter suggests.
 // `table` is the table of the log, which the arrow keys scroll.
 export function useMessageLog<F extends string>(
     namespace: ServiceType,
     props: MessageLogProps,
-    { filterStorageKey, loadFilter, saveFilter, toEventQuery, filterChips }: MessageLogFilter<F>,
+    messageFilter: MessageLogFilter<F>,
     table: Ref<HTMLElement | null>,
 ) {
-    // What the place of the log fixes. The filter doesn't offer these fields.
-    const context = computed(() => ({
-        serviceName: props.service?.name,
-        topic: props.topicName,
-        instance: props.instanceName || undefined,
-        clientId: props.clientId,
-    }))
+    const { filterStorageKey, loadFilter, saveFilter, toEventQuery, filterChips } = messageFilter
+    const context = computed(() => messageLogContext(props))
 
     const storageKey = filterStorageKey(context.value)
     const filter = reactive(loadFilter(storageKey)) as Record<F, string>
@@ -72,15 +78,15 @@ export function useMessageLog<F extends string>(
     watch(filter, () => saveFilter(storageKey, filter))
 
     const { paging, result, isLoading, events, paused, canPause, togglePause } = useEventLog(() => ({
-        labels: [...messageLogLabels(namespace, props), ...(filters.value.labels ?? [])],
+        labels: [...messageLogLabels(namespace, props, messageFilter), ...(filters.value.labels ?? [])],
     }))
 
-    // The clusters and topics the filter suggests: the one of the log, or all of them. A template
-    // topic is suggested by its name, the filter matches all its instances.
+    // The services and addresses the filter suggests: the one of the log, or all of them. A template
+    // address is suggested by its name, the filter matches all its instances.
     const services = useServiceList(namespace, !props.service)
-    const clusterNames = computed(() => props.service ? [props.service.name] : services.value.map(s => s.name))
-    const topicNames = computed(() => props.service
-        ? props.service.topics.map(t => t.name)
+    const serviceNames = computed(() => props.service ? [props.service.name] : services.value.map(s => s.name))
+    const addressNames = computed(() => props.service
+        ? addressesOf(props.service).map(a => a.name)
         : [...new Set(services.value.flatMap(s => (s.items ?? []).map(i => i.name)))])
 
     const selection = useLogSelection('message', {
@@ -95,8 +101,8 @@ export function useMessageLog<F extends string>(
     return {
         context, filter, editingFilter, hide,
         paging, result, isLoading, events, paused, canPause, togglePause,
-        clusterNames, topicNames,
-        showTopicColumn: computed(() => showsTopicColumn(props)),
+        serviceNames, addressNames,
+        showAddressColumn: computed(() => showsAddressColumn(props)),
         ...selection,
     }
 }

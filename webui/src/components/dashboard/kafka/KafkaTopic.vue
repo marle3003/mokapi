@@ -145,11 +145,11 @@ useBreadcrumb(() => {
                     instances-label="Topics" instance-label="Topic" channel-route="kafkaTopic">
                   </channel-instance-view>
                   <div class="card-group">
-                    <kafka-messages :service="service" :topic-name="channel.name" />
+                    <kafka-messages :service="service" :address-name="channel.name" />
                   </div>
                 </template>
                 <div v-else class="card-group">
-                  <kafka-messages :service="service" :topic-name="channel.name" :instance-name="instance?.name ?? ''" />
+                  <kafka-messages :service="service" :address-name="channel.name" :instance-name="instance?.name ?? ''" />
                 </div>
               </div>
               <div v-if="topic" class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-partitions' }" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">

@@ -31,7 +31,7 @@ import MqttMessages from '@/components/dashboard/mqtt/MqttMessages.vue'
 
 import WebsocketMessageMetricCard from './websocket/WebsocketMessageMetricCard.vue'
 import WebsocketServicesCard from './websocket/WebsocketServicesCard.vue'
-import WebsocketMessagesCard from '@/components/dashboard/websocket/WebsocketMessagesCard.vue'
+import WebsocketMessages from '@/components/dashboard/websocket/WebsocketMessages.vue'
 
 import Message from '@/components/Message.vue'
 
@@ -154,6 +154,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('websocketLog').value">
+        <div class="card-group">
+            <websocket-messages />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('websocket').value">
         <div class="card-group">
             <websocket-message-metric-card v-if="isServiceAvailable('websocket')" />
@@ -162,7 +168,7 @@ function isAnyServiceAvailable() {
             <websocket-services-card />
         </div>
         <div class="card-group" v-if="isServiceAvailable('websocket')">
-            <websocket-messages-card />
+            <websocket-messages />
         </div>
     </div>
 

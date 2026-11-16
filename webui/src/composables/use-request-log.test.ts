@@ -16,7 +16,7 @@ import { requestLogLabels, useRequestLog } from './use-request-log'
 
 describe('requestLogLabels', () => {
   it('asks for the requests of a client of a service, in this order', () => {
-    expect(requestLogLabels('kafka', { serviceName: 'World', clientId: 'c1' })).toEqual([
+    expect(requestLogLabels('kafka', 'request', { serviceName: 'World', clientId: 'c1' })).toEqual([
       { name: 'namespace', value: 'kafka' },
       { name: 'type', value: 'request' },
       { name: 'name', value: 'World' },
@@ -25,7 +25,18 @@ describe('requestLogLabels', () => {
   })
 
   it('uses the protocol of the log', () => {
-    expect(requestLogLabels('mqtt', { serviceName: 'Sensors', clientId: 'c2' })[0]).toEqual({ name: 'namespace', value: 'mqtt' })
+    expect(requestLogLabels('mqtt', 'request', { serviceName: 'Sensors', clientId: 'c2' })[0]).toEqual({ name: 'namespace', value: 'mqtt' })
+  })
+})
+
+describe('requestLogLabels of a WebSocket log', () => {
+  it('asks for the connection events of a client', () => {
+    expect(requestLogLabels('websocket', 'connection', { serviceName: 'Chat', clientId: 'c1' })).toEqual([
+      { name: 'namespace', value: 'websocket' },
+      { name: 'type', value: 'connection' },
+      { name: 'name', value: 'Chat' },
+      { name: 'clientId', value: 'c1' },
+    ])
   })
 })
 
@@ -40,7 +51,7 @@ describe('useRequestLog', () => {
     table = document.createElement('table')
     wrapper = mount(defineComponent({
       setup() {
-        log = useRequestLog<{ header: string }>('kafka', place, ref(table))
+        log = useRequestLog<{ header: string }>('kafka', 'request', place, ref(table))
         return () => null
       },
     }), { global: { plugins: [router] } })
@@ -63,7 +74,7 @@ describe('useRequestLog', () => {
   it('asks for the requests of its client', async () => {
     await mountLog()
 
-    expect(lastLabels()).toEqual(requestLogLabels('kafka', { serviceName: 'World', clientId: 'c1' }))
+    expect(lastLabels()).toEqual(requestLogLabels('kafka', 'request', { serviceName: 'World', clientId: 'c1' }))
     expect(log.events.value.map(x => x.id)).toEqual(['a', 'b'])
   })
 

@@ -15,7 +15,8 @@ vi.mock('@/composables/dashboard', () => ({
 }))
 
 import * as mqttMessageFilter from './mqtt-message-filter'
-import { messageLogLabels, showsTopicColumn, useMessageLog, type MessageLogProps } from './use-message-log'
+import * as websocketMessageFilter from './websocket-message-filter'
+import { messageLogLabels, showsAddressColumn, useMessageLog, type MessageLogProps } from './use-message-log'
 
 const service = {
   name: 'World',
@@ -28,14 +29,14 @@ const service = {
 
 describe('messageLogLabels', () => {
   it('asks for the messages of a protocol', () => {
-    expect(messageLogLabels('mqtt', {})).toEqual([
+    expect(messageLogLabels('mqtt', {}, mqttMessageFilter)).toEqual([
       { name: 'namespace', value: 'mqtt' },
       { name: 'type', value: 'message' },
     ])
   })
 
   it('narrows the log to what its place fixes, in this order', () => {
-    expect(messageLogLabels('kafka', { service, topicName: 'template/{id}', instanceName: 'template/1', clientId: 'c1' })).toEqual([
+    expect(messageLogLabels('kafka', { service, addressName: 'template/{id}', instanceName: 'template/1', clientId: 'c1' }, mqttMessageFilter)).toEqual([
       { name: 'namespace', value: 'kafka' },
       { name: 'name', value: 'World' },
       { name: 'topic', value: 'template/{id}' },
@@ -46,27 +47,50 @@ describe('messageLogLabels', () => {
   })
 })
 
-describe('showsTopicColumn', () => {
+describe('messageLogLabels of a WebSocket log', () => {
+  it('names the channel of the place with the channel trait', () => {
+    const channels = { name: 'Chat', channels: [{ name: '/chats/{chatId}', instances: [{ name: '/chats/1' }] }] }
+
+    expect(messageLogLabels('websocket', { service: channels, addressName: '/chats/{chatId}', instanceName: '/chats/1', clientId: 'c1' }, websocketMessageFilter)).toEqual([
+      { name: 'namespace', value: 'websocket' },
+      { name: 'name', value: 'Chat' },
+      { name: 'channel', value: '/chats/{chatId}' },
+      { name: 'instance', value: '/chats/1' },
+      { name: 'type', value: 'message' },
+      { name: 'clientId', value: 'c1' },
+    ])
+  })
+
+  it('shows the path column in the log of a template channel only', () => {
+    const channels = { name: 'Chat', channels: [{ name: '/chat' }, { name: '/chats/{chatId}', instances: [{ name: '/chats/1' }] }] }
+
+    expect(showsAddressColumn({ service: channels, addressName: '/chat' })).toBe(false)
+    expect(showsAddressColumn({ service: channels, addressName: '/chats/{chatId}' })).toBe(true)
+    expect(showsAddressColumn({ service: channels, addressName: '/chats/{chatId}', instanceName: '/chats/1' })).toBe(false)
+  })
+})
+
+describe('showsAddressColumn', () => {
   it('shows the topic in a log of several topics', () => {
-    expect(showsTopicColumn({})).toBe(true)
-    expect(showsTopicColumn({ service })).toBe(true)
+    expect(showsAddressColumn({})).toBe(true)
+    expect(showsAddressColumn({ service })).toBe(true)
   })
 
   it('hides the topic in the log of one topic', () => {
-    expect(showsTopicColumn({ service, topicName: 'plain' })).toBe(false)
+    expect(showsAddressColumn({ service, addressName: 'plain' })).toBe(false)
   })
 
   it('shows the topic in the log of a template topic, which has several instances', () => {
-    expect(showsTopicColumn({ service, topicName: 'template/{id}' })).toBe(true)
-    expect(showsTopicColumn({ service, topicName: 'empty/{id}' })).toBe(true)
+    expect(showsAddressColumn({ service, addressName: 'template/{id}' })).toBe(true)
+    expect(showsAddressColumn({ service, addressName: 'empty/{id}' })).toBe(true)
   })
 
   it('hides the topic in the log of one instance of a template topic', () => {
-    expect(showsTopicColumn({ service, topicName: 'template/{id}', instanceName: 'template/1' })).toBe(false)
+    expect(showsAddressColumn({ service, addressName: 'template/{id}', instanceName: 'template/1' })).toBe(false)
   })
 
   it('hides the topic when the topic is not known', () => {
-    expect(showsTopicColumn({ service, topicName: 'gone' })).toBe(false)
+    expect(showsAddressColumn({ service, addressName: 'gone' })).toBe(false)
   })
 })
 
@@ -155,8 +179,8 @@ describe('useMessageLog', () => {
   it('suggests the topics of its cluster', async () => {
     await mountLog({ service: { name: 'World', topics: [{ name: 'home' }, { name: 'sensors/{id}/data', instances: [{ name: 'sensors/1/data' }] }] } })
 
-    expect(log.clusterNames.value).toEqual(['World'])
-    expect(log.topicNames.value).toEqual(['home', 'sensors/{id}/data'])
+    expect(log.serviceNames.value).toEqual(['World'])
+    expect(log.addressNames.value).toEqual(['home', 'sensors/{id}/data'])
     expect(getServices).not.toHaveBeenCalled()
   })
 
@@ -170,14 +194,14 @@ describe('useMessageLog', () => {
     await mountLog()
 
     expect(getServices).toHaveBeenCalledWith('mqtt', false)
-    expect(log.clusterNames.value).toEqual(['One', 'Two', 'Three'])
-    expect(log.topicNames.value).toEqual(['home', 'shared'])
+    expect(log.serviceNames.value).toEqual(['One', 'Two', 'Three'])
+    expect(log.addressNames.value).toEqual(['home', 'shared'])
   })
 
   it('shows the topic column unless the topic is fixed', async () => {
-    await mountLog({ service: { name: 'World', topics: [{ name: 'home' }] }, topicName: 'home' })
+    await mountLog({ service: { name: 'World', topics: [{ name: 'home' }] }, addressName: 'home' })
 
-    expect(log.showTopicColumn.value).toBe(false)
+    expect(log.showAddressColumn.value).toBe(false)
   })
 
   describe('hide when empty', () => {

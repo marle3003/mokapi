@@ -97,7 +97,7 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 		return nil, err
 	}
 
-	err = ch.Broadcast(msg)
+	err = ch.BroadcastFromScript(msg, args.ScriptFile)
 	if err != nil {
 		return nil, err
 	}

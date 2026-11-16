@@ -27,6 +27,7 @@ const pageLabels: Record<string, string> = {
     mqttLog: 'Messages',
     mqttRequest: 'MQTT Request',
     mqttMessage: 'MQTT Message',
+    websocketLog: 'Messages',
     websocketMessage: 'Websocket Message',
     websocketEvent: 'Websocket Event',
 }
@@ -66,7 +67,7 @@ export function routeLabel(routeName: string | symbol | undefined | null, params
     if (name === 'httpServiceLog') {
         return `${params.service} requests`
     }
-    if (name === 'kafkaServiceLog' || name === 'mqttServiceLog') {
+    if (name === 'kafkaServiceLog' || name === 'mqttServiceLog' || name === 'websocketServiceLog') {
         return `${params.service} messages`
     }
     const nameParam = nameParams[name]

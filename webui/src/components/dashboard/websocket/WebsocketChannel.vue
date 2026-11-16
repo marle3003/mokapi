@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import ChannelView from '@/components/dashboard/asyncapi/ChannelView.vue'
 import ChannelInstanceView from '@/components/dashboard/asyncapi/ChannelInstanceView.vue'
 import WebsocketMessages from './WebsocketMessages.vue'
-import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
 import WebsocketChannelConfig from './WebsocketChannelConfig.vue'
 import { getRouteName } from '@/composables/dashboard'
 import { useChannel } from '@/composables/channel.ts'
@@ -47,10 +46,12 @@ useBreadcrumb(() => {
           instances-label="Paths" instance-label="Path" channel-route="websocketChannel">
         </channel-instance-view>
         <div class="card-group">
-        <websocket-messages-card :service="service" :channelName="channelName" />
+          <websocket-messages :service="service" :address-name="channelName" />
         </div>
       </template>
-      <websocket-messages v-else :service="service" :channelName="data.channel.name" :instance-name="data.instance?.name" />
+      <div v-else class="card-group">
+        <websocket-messages :service="service" :address-name="data.channel.name" :instance-name="data.instance?.name" />
+      </div>
     </template>
     <template #config>
       <websocket-channel-config :channel="data.channel" />

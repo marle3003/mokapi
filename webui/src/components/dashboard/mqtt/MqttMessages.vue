@@ -14,7 +14,7 @@ const { format } = usePrettyDates()
 
 const props = defineProps<{
     service?: MqttService,
-    topicName?: string
+    addressName?: string
     instanceName?: string
     clientId?: string
     hideWhenEmpty?: boolean
@@ -23,7 +23,7 @@ const props = defineProps<{
 const table = useTemplateRef<HTMLElement>('table')
 const {
     context, filter, editingFilter, hide, paging, result, isLoading, events, paused, canPause, togglePause,
-    clusterNames, topicNames, showTopicColumn, selectedId, select, onRowClick, onLinkClick,
+    serviceNames, addressNames, showAddressColumn, selectedId, select, onRowClick, onLinkClick,
 } = useMessageLog('mqtt', props, mqttMessageFilter, table)
 
 const messages = computed(() => events.value.map(event => {
@@ -39,7 +39,7 @@ const messages = computed(() => events.value.map(event => {
                 <h2 id="message-log-title" class="card-title text-center">Recent Messages</h2>
                 <div class="log-toolbar">
                     <mqtt-message-filters v-model="filter" v-model:editing="editingFilter" :context="context"
-                        :cluster-names="clusterNames" :topic-names="topicNames" />
+                        :cluster-names="serviceNames" :topic-names="addressNames" />
                     <log-pause-button v-if="canPause" :paused="paused" @toggle="togglePause" />
                 </div>
 
@@ -47,7 +47,7 @@ const messages = computed(() => events.value.map(event => {
                     <table ref="table" class="table dataTable selectable" aria-label="Recent Messages">
                         <thead>
                             <tr>
-                                <th scope="col" class="text-left col-2" v-if="showTopicColumn">Topic</th>
+                                <th scope="col" class="text-left col-2" v-if="showAddressColumn">Topic</th>
                                 <th scope="col" class="text-left col-4">Value</th>
                                 <th scope="col" class="text-center col-2">Time</th>
                             </tr>
@@ -55,13 +55,13 @@ const messages = computed(() => events.value.map(event => {
                         <tbody>
                             <tr v-for="msg in messages" :key="msg.id"
                                 :aria-selected="msg.id === selectedId ? 'true' : undefined" @click="onRowClick($event, msg.id)">
-                                <td v-if="showTopicColumn">
+                                <td v-if="showAddressColumn">
                                     <router-link custom :to="{ name: getRouteName('mqttMessage').value, params: { id: msg.id } }" v-slot="{ href }">
                                         <a class="row-link" :href="href" @click="onLinkClick">{{ msg.topic }}</a>
                                     </router-link>
                                 </td>
                                 <td class="message">
-                                    <span v-if="showTopicColumn">{{ msg.value }}</span>
+                                    <span v-if="showAddressColumn">{{ msg.value }}</span>
                                     <router-link v-else custom :to="{ name: getRouteName('mqttMessage').value, params: { id: msg.id } }" v-slot="{ href }">
                                         <a class="row-link" :href="href" @click="onLinkClick">{{ msg.value }}</a>
                                     </router-link>

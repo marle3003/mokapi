@@ -3,6 +3,8 @@ package acceptance
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"mokapi/api"
 	"mokapi/config/static"
 	"mokapi/try"
 	"net/http"
@@ -345,4 +347,96 @@ func (suite *WebsocketSuite) TestSendUnknownMessageIdFails() {
 	suite.postSimulation("/sim/websocket", `{"messageId":"ackk"}`,
 		try.HasStatusCode(http.StatusUnprocessableEntity),
 		try.BodyContains("message 'ackk' not found in channel '/dm'"))
+}
+
+// messageEvents returns the data of all message events of the websocket namespace.
+func (suite *WebsocketSuite) messageEvents() []map[string]any {
+	var page api.EventPage
+	suite.getJSON("/api/events?traits[namespace]=websocket&traits[type]=message&size=1000", &page)
+
+	var all []map[string]any
+	for _, e := range page.Items {
+		all = append(all, e.Data.(map[string]any))
+	}
+	return all
+}
+
+// configId returns the id the dashboard uses to link a config file, by the end of its url.
+func (suite *WebsocketSuite) configId(urlSuffix string) string {
+	var configs []struct {
+		Id  string `json:"id"`
+		Url string `json:"url"`
+	}
+	suite.getJSON("/api/configs", &configs)
+	for _, c := range configs {
+		if strings.HasSuffix(c.Url, urlSuffix) {
+			return c.Id
+		}
+	}
+	suite.T().Fatalf("config %v not found", urlSuffix)
+	return ""
+}
+
+func (suite *WebsocketSuite) getJSON(path string, v any) {
+	res, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d%s", suite.cfg.Api.Port, path))
+	require.NoError(suite.T(), err)
+	defer res.Body.Close()
+	require.NoError(suite.T(), json.NewDecoder(res.Body).Decode(v))
+}
+
+func messageContaining(events []map[string]any, text string) []map[string]any {
+	var found []map[string]any
+	for _, e := range events {
+		if strings.Contains(e["message"].(map[string]any)["value"].(string), text) {
+			found = append(found, e)
+		}
+	}
+	return found
+}
+
+// TestMessageSentByScriptLogsScriptFile verifies that the message event of a message sent with
+// mokapi.websocket().send() names the script that sent it.
+func (suite *WebsocketSuite) TestMessageSentByScriptLogsScriptFile() {
+	time.Sleep(2 * time.Second)
+
+	suite.simulateSend("/sim/websocket", `{"messageId":"ack","message":{"status":"error","error":"logged-by-script"}}`,
+		try.HasStatusCode(http.StatusNoContent))
+
+	events := messageContaining(suite.messageEvents(), "logged-by-script")
+
+	require.Len(suite.T(), events, 1)
+	require.Equal(suite.T(), "receive", events[0]["direction"])
+	require.Equal(suite.T(), suite.configId("/sim.ts"), events[0]["script"])
+}
+
+// TestMessageSentByHandlerHasNoScriptFile verifies that a reply sent by an event handler
+// is logged without a script.
+func (suite *WebsocketSuite) TestMessageSentByHandlerHasNoScriptFile() {
+	time.Sleep(2 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "http://localhost:22801/dm", nil)
+	require.NoError(suite.T(), err)
+	defer c.CloseNow()
+
+	require.NoError(suite.T(), wsjson.Write(ctx, c, map[string]string{"to": "bob", "text": "reply-by-handler"}))
+	var reply map[string]any
+	require.NoError(suite.T(), wsjson.Read(ctx, c, &reply))
+
+	events := suite.messageEvents()
+	sent := messageContaining(events, "reply-by-handler")
+	require.Len(suite.T(), sent, 1)
+	clientId := sent[0]["client"].(map[string]any)["id"]
+
+	var received []map[string]any
+	for _, e := range events {
+		if e["direction"] == "receive" && e["client"].(map[string]any)["id"] == clientId {
+			received = append(received, e)
+		}
+	}
+
+	require.Len(suite.T(), received, 1)
+	require.NotContains(suite.T(), received[0], "script")
 }

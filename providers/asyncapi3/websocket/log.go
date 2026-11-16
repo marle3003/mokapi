@@ -44,6 +44,8 @@ type MessageLog struct {
 	Api       string
 	// [messageId]error
 	ValidationErrors map[string]string
+	// Script is the file of the script that sent the message, empty for handler messages
+	Script string
 }
 
 func (l *MessageLog) MarshalJSON() ([]byte, error) {
@@ -56,7 +58,8 @@ func (l *MessageLog) MarshalJSON() ([]byte, error) {
 		Api              string            `json:"api"`
 		Actions          []*common.Action  `json:"actions"`
 		ValidationErrors map[string]string `json:"validationErrors,omitempty"`
-	}{l.Channel, l.Message, l.MessageId, l.Direction, l.Client, l.Api, l.GetActions(), l.ValidationErrors})
+		Script           string            `json:"script,omitempty"`
+	}{l.Channel, l.Message, l.MessageId, l.Direction, l.Client, l.Api, l.GetActions(), l.ValidationErrors, l.Script})
 }
 
 type MessageLogInfo struct {

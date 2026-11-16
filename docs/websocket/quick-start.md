@@ -177,17 +177,23 @@ Instead of writing a subscriber just to check that messages are flowing, you can
 dashboard to inspect WebSocket traffic directly.
 
 1. Open the dashboard, by default at http://localhost:8080.
-2. Go to the WebSocket tab.
-3. Select the `Chat Service` to see all active connections and messages, including their direction,
-   payload, and timestamp.
+2. Click **WebSocket** in the sidebar and select `Chat Service`.
+3. Open the **Messages** sub tab. The log lists the messages with path, source, destination,
+   value and time, newest first.
+4. Click a message to see its details next to the table: the value, the client, the content type
+   and, for an invalid message, the validation errors.
 
-The dashboard shows the full conversation per connection:
+The log shows the full conversation:
 
 | Source       | Destination        | Value                                         | Time     |
 |--------------|--------------------|-----------------------------------------------|----------|
 | 127.0.0.1    | server             | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
 | server       | 127.0.0.1          | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
 | server       | 127.0.0.3          | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
+
+The first row has the direction `send` (client to server), the other two `receive` (server to
+client). See [Analyze your mocked WebSocket API in Dashboard](/docs/websocket/dashboard.md) for
+filters, the connection request log and the other features of the dashboard.
 
 ## Schema Validation
 
@@ -196,7 +202,7 @@ Every message sent by a client is validated against the `ChatMessage` schema def
 
 - Mokapi closes the connection with a WebSocket status code and a reason describing the violation.
 - Mokapi logs a validation error.
-- The invalid message does not appear in the dashboard.
+- The dashboard shows the invalid message, marked red, with its validation errors.
 
 ## Test an Invalid Message
 

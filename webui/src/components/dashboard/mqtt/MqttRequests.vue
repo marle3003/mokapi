@@ -22,7 +22,7 @@ const table = useTemplateRef<HTMLElement>('table')
 const {
   paging, result, isLoading, events, rows, paused, canPause, togglePause,
   selectedId, select, onRowClick, onLinkClick,
-} = useRequestLog<MqttRequestLog>('mqtt', {
+} = useRequestLog<MqttRequestLog>('mqtt', 'request', {
   get serviceName() { return props.service.name },
   get clientId() { return props.clientId },
 }, table)

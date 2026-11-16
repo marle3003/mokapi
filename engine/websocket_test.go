@@ -10,7 +10,9 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/http/httptest"
@@ -533,4 +535,38 @@ func TestWebsocketClient_Send_MessageId(t *testing.T) {
 			tc.test(t, received, err)
 		})
 	}
+}
+
+func TestWebsocketClient_Send_ScriptFile(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	e := enginetest.NewEngine(engine.WithWebsocketClient(engine.NewWebsocketClient(app)))
+	cfg := asyncapi3test.NewConfig(
+		asyncapi3test.WithInfo("foo", "", ""),
+		asyncapi3test.AddChannel("/chat", asyncapi3test.NewChannel(
+			asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+		)),
+	)
+	s, err := app.Websocket.Add(getConfig(cfg), e)
+	require.NoError(t, err)
+	serv := httptest.NewServer(s)
+	defer serv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, _, err := ws.Dial(ctx, serv.URL+"/chat", &ws.DialOptions{})
+	require.NoError(t, err)
+	defer func() { _ = c.CloseNow() }()
+
+	_, err = engine.NewWebsocketClient(app).Send(common.WebsocketSendArgs{
+		ChannelName: "/chat",
+		Message:     map[string]any{"text": "hi"},
+		ScriptFile:  "file:///scripts/sender.ts",
+	})
+	require.NoError(t, err)
+
+	evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket").With("type", "message"))
+	require.Len(t, evts, 1)
+	require.Equal(t, "file:///scripts/sender.ts", evts[0].Data.(*websocket.MessageLog).Script)
 }

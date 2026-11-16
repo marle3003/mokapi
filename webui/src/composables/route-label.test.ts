@@ -53,6 +53,19 @@ describe('routeLabel', () => {
     expect(routeLabel('mqttLog-demo', {})).toBe('Messages')
   })
 
+  it('names the message log of one WebSocket service after the service', () => {
+    expect(routeLabel('websocketServiceLog', { service: 'Chat' })).toBe('Chat messages')
+  })
+
+  it('names the message log of all WebSocket services "Messages"', () => {
+    expect(routeLabel('websocketLog', {})).toBe('Messages')
+  })
+
+  it('treats a demo WebSocket message log like the live one', () => {
+    expect(routeLabel('websocketServiceLog-demo', { service: 'Chat' })).toBe('Chat messages')
+    expect(routeLabel('websocketLog-demo', {})).toBe('Messages')
+  })
+
   it.each([
     ['httpService', { service: 'Books API' }, 'Books API'],
     ['kafkaService', { service: 'Orders' }, 'Orders'],

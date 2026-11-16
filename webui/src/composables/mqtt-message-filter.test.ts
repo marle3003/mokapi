@@ -16,8 +16,8 @@ function filterWith(changes: Partial<MqttMessageFilter>): MqttMessageFilter {
 
 const all = {}
 const cluster = { serviceName: 'MQTT World' }
-const topic = { serviceName: 'MQTT World', topic: 'sensors/{sensorId}/data' }
-const instance = { serviceName: 'MQTT World', topic: 'sensors/{sensorId}/data', instance: 'sensors/12345/data' }
+const topic = { serviceName: 'MQTT World', address: 'sensors/{sensorId}/data' }
+const instance = { serviceName: 'MQTT World', address: 'sensors/{sensorId}/data', instance: 'sensors/12345/data' }
 const client = { serviceName: 'MQTT World', clientId: 'mqtt-client-1' }
 
 describe('mqtt message filter', () => {

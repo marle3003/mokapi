@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import { test, expect } from '../models/fixture-website'
 import { KafkaRequestLogModel } from '../models/kafka'
 import { MqttRequestLogModel } from '../models/mqtt'
+import { WebsocketRequestLogModel } from '../models/websocket'
 
 test.use({ colorScheme: 'light' })
 // reset storage state
@@ -16,7 +17,7 @@ test.describe('Client request log in the demo dashboard', () => {
         dashboardPath = isDemo ? '/dashboard-demo' : '/dashboard'
     })
 
-    // The client view of the first client of a cluster.
+    // The client view of the first client of a cluster or service.
     async function openFirstClient(page: Page, servicePath: string) {
         await page.goto(`${dashboardPath}${servicePath}`)
         await page.getByRole('tab', { name: 'Clients' }).click()
@@ -46,6 +47,20 @@ test.describe('Client request log in the demo dashboard', () => {
         await expect(log.panel.element).toBeVisible()
         await expect(page).toHaveURL(/request=/)
         await expect(log.panel.tabs.first()).toHaveText('Request')
+        await expect(log.panel.openAsTab).toBeVisible()
+    })
+
+    test('a WebSocket connection request opens in the panel without sub tabs', async ({ page }) => {
+        await openFirstClient(page, '/websocket/service/WebSocket%20Chat%20API')
+
+        const log = new WebsocketRequestLogModel(page)
+        await expect(log.rows).toHaveCount(1)
+        await expect(log.rows.first()).toContainText('Connect')
+        await log.time(log.rows.first()).click()
+
+        await expect(log.panel.element).toBeVisible()
+        await expect(page).toHaveURL(/request=/)
+        await expect(log.panel.tabs).toHaveCount(0)
         await expect(log.panel.openAsTab).toBeVisible()
     })
 

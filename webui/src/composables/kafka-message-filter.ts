@@ -15,11 +15,13 @@ export const {
     removeFilter,
     fieldLabel,
     addableFields,
+    fixedLabel,
 } = createMessageLogFilter<KafkaMessageFilterField>({
     storagePrefix: 'kafka-messages-filter',
+    addressKind: 'topic',
     fields: [
         { field: 'cluster', label: 'Cluster', trait: 'name', fixedBy: 'serviceName' },
-        { field: 'topic', label: 'Topic', trait: 'topic', fixedBy: 'topic' },
+        { field: 'topic', label: 'Topic', trait: 'topic', fixedBy: 'address' },
         { field: 'partition', label: 'Partition', trait: 'partition' },
         { field: 'clientId', label: 'Client', trait: 'clientId', fixedBy: 'clientId' },
     ],

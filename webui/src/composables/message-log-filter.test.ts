@@ -9,6 +9,7 @@ const {
   fieldLabel,
   filterChips,
   filterStorageKey,
+  fixedLabel,
   loadFilter,
   removeFilter,
   restoreFilter,
@@ -16,9 +17,10 @@ const {
   toEventQuery,
 } = createMessageLogFilter<Field>({
   storagePrefix: 'test-filter',
+  addressKind: 'topic',
   fields: [
     { field: 'cluster', label: 'Cluster', trait: 'name', fixedBy: 'serviceName' },
-    { field: 'topic', label: 'Topic', trait: 'topic', fixedBy: 'topic' },
+    { field: 'topic', label: 'Topic', trait: 'topic', fixedBy: 'address' },
     { field: 'clientId', label: 'Client', trait: 'clientId', fixedBy: 'clientId' },
   ],
 })
@@ -29,8 +31,8 @@ function filterWith(changes: Partial<Record<Field, string>>) {
 
 const all = {}
 const cluster = { serviceName: 'Svc' }
-const topic = { serviceName: 'Svc', topic: 'orders' }
-const instance = { serviceName: 'Svc', topic: 'a.{id}', instance: 'x' }
+const topic = { serviceName: 'Svc', address: 'orders' }
+const instance = { serviceName: 'Svc', address: 'a.{id}', instance: 'x' }
 const client = { serviceName: 'Svc', clientId: 'c1' }
 
 describe('message log filter', () => {
@@ -47,8 +49,22 @@ describe('message log filter', () => {
       expect(filterStorageKey(client)).toBe('test-filter-Svc-client-c1')
     })
 
+    it('names the kind of the address of the log in the key', () => {
+      const { filterStorageKey: channelKey } = createMessageLogFilter<Field>({
+        storagePrefix: 'test-filter',
+        addressKind: 'channel',
+        fields: [{ field: 'topic', label: 'Path', trait: 'channel', fixedBy: 'address' }],
+      })
+
+      expect(channelKey(all)).toBe('test-filter')
+      expect(channelKey(cluster)).toBe('test-filter-Svc')
+      expect(channelKey(topic)).toBe('test-filter-Svc-channel-orders')
+      expect(channelKey(instance)).toBe('test-filter-Svc-channel-a.{id}-x')
+      expect(channelKey(client)).toBe('test-filter-Svc-client-c1')
+    })
+
     it('does not mix up a topic and a client with the same name', () => {
-      expect(filterStorageKey({ serviceName: 'Svc', topic: 'x' }))
+      expect(filterStorageKey({ serviceName: 'Svc', address: 'x' }))
         .not.toBe(filterStorageKey({ serviceName: 'Svc', clientId: 'x' }))
     })
   })
@@ -152,6 +168,20 @@ describe('message log filter', () => {
     it('labels the fields', () => {
       expect(addableFields(defaultFilter(), all).map(f => f.label)).toEqual(['Cluster', 'Topic', 'Client'])
       expect(fieldLabel('clientId')).toBe('Client')
+    })
+  })
+
+  describe('fixedLabel', () => {
+    it('is the label of the trait that fixes a part of the context', () => {
+      expect(fixedLabel('serviceName', cluster)).toEqual([{ name: 'name', value: 'Svc' }])
+      expect(fixedLabel('address', topic)).toEqual([{ name: 'topic', value: 'orders' }])
+      expect(fixedLabel('clientId', client)).toEqual([{ name: 'clientId', value: 'c1' }])
+    })
+
+    it('is empty for a part the context does not fix', () => {
+      expect(fixedLabel('address', all)).toEqual([])
+      expect(fixedLabel('clientId', topic)).toEqual([])
+      expect(fixedLabel('address', { address: '' })).toEqual([])
     })
   })
 })

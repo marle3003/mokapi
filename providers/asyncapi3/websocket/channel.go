@@ -159,8 +159,13 @@ func (c *Channel) connectedClients() []*Client {
 }
 
 func (c *Channel) Broadcast(message any) error {
+	return c.BroadcastFromScript(message, "")
+}
+
+// BroadcastFromScript sends the message to all clients and records the script file in the message log.
+func (c *Channel) BroadcastFromScript(message any, scriptFile string) error {
 	for _, c := range c.connectedClients() {
-		err := c.sendMessage(message)
+		err := c.sendMessage(message, scriptFile)
 		if err != nil {
 			return err
 		}

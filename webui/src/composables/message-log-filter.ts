@@ -1,9 +1,10 @@
 import { shorten, type FilterChip } from '@/composables/filter-chip'
 
 export interface MessageLogFilterContext {
-    // set when the log belongs to one cluster, a topic (and an instance of a template topic) or a client
+    // set when the log belongs to one service, an address (topic or channel, and an instance of a
+    // template address) or a client
     serviceName?: string
-    topic?: string
+    address?: string
     instance?: string
     clientId?: string
 }
@@ -20,22 +21,27 @@ export interface MessageLogField<F extends string> {
 }
 
 // The filter of a message log as the user edits it. A field without value doesn't filter.
-// Kafka and MQTT logs differ only in the storage prefix and the fields.
-export function createMessageLogFilter<F extends string>({ storagePrefix, fields }: { storagePrefix: string, fields: MessageLogField<F>[] }) {
+// Kafka, MQTT and WebSocket logs differ only in the storage prefix, the kind of their address and the fields.
+export function createMessageLogFilter<F extends string>({ storagePrefix, addressKind, fields }: {
+    storagePrefix: string
+    // what the address of the protocol is called, so the storage key names the kind
+    addressKind: 'topic' | 'channel'
+    fields: MessageLogField<F>[]
+}) {
     type Filter = Record<F, string>
 
     function defaultFilter(): Filter {
         return Object.fromEntries(fields.map(({ field }) => [field, ''])) as Filter
     }
 
-    // Each cluster, each topic (or instance of a template topic) and each client has its own filter.
-    // The key names the kind, so a topic and a client with the same name don't share a filter.
-    function filterStorageKey({ serviceName, topic, instance, clientId }: MessageLogFilterContext): string {
+    // Each service, each address (or instance of a template address) and each client has its own filter.
+    // The key names the kind, so an address and a client with the same name don't share a filter.
+    function filterStorageKey({ serviceName, address, instance, clientId }: MessageLogFilterContext): string {
         if (!serviceName) {
             return storagePrefix
         }
-        if (topic) {
-            return `${storagePrefix}-${serviceName}-topic-${topic}${instance ? `-${instance}` : ''}`
+        if (address) {
+            return `${storagePrefix}-${serviceName}-${addressKind}-${address}${instance ? `-${instance}` : ''}`
         }
         if (clientId) {
             return `${storagePrefix}-${serviceName}-client-${clientId}`
@@ -103,6 +109,13 @@ export function createMessageLogFilter<F extends string>({ storagePrefix, fields
             .map(({ field, label }) => ({ field, label }))
     }
 
+    // The label every message of a log has when the context fixes the given part: the trait of the field.
+    function fixedLabel(key: keyof MessageLogFilterContext, context: MessageLogFilterContext): Label[] {
+        const field = fields.find(f => f.fixedBy === key)
+        const value = context[key]
+        return field && value ? [{ name: field.trait, value }] : []
+    }
+
     function activeFields(filter: Filter, context: MessageLogFilterContext) {
         return fields.filter(f => filter[f.field] !== '' && !isFixed(f, context))
     }
@@ -111,5 +124,5 @@ export function createMessageLogFilter<F extends string>({ storagePrefix, fields
         return fixedBy !== undefined && context[fixedBy] !== undefined
     }
 
-    return { defaultFilter, filterStorageKey, restoreFilter, loadFilter, saveFilter, toEventQuery, filterChips, removeFilter, fieldLabel, addableFields }
+    return { defaultFilter, filterStorageKey, restoreFilter, loadFilter, saveFilter, toEventQuery, filterChips, removeFilter, fieldLabel, addableFields, fixedLabel }
 }

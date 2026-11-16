@@ -142,19 +142,27 @@ export const metrics = [
     // websocket
     {
         name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chat"}',
-        value: 2
+        value: 5
     },
     {
         name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chat"}',
-        value: 1672182690
+        value: 1770972720
     },
     {
         name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
-        value: 2
+        value: 4
     },
     {
         name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
-        value: 1771058323
+        value: 1770972730
+    },
+    {
+        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/5678"}',
+        value: 3
+    },
+    {
+        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/5678"}',
+        value: 1770972710
     },
 ]
 

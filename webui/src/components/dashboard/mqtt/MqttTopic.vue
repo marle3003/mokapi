@@ -48,11 +48,11 @@ useBreadcrumb(() => {
           instances-label="Topics" instance-label="Topic" channel-route="mqttTopic">
         </channel-instance-view>
         <div class="card-group">
-          <messages :service="service" :topic-name="channelName" />
+          <messages :service="service" :address-name="channelName" />
         </div>
       </template>
       <div v-else class="card-group">
-        <messages :service="service" :topic-name="data.channel.name" :instance-name="data.instance?.name" />
+        <messages :service="service" :address-name="data.channel.name" :instance-name="data.instance?.name" />
       </div>
     </template>
     <template #config>

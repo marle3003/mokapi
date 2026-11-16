@@ -47,6 +47,7 @@ declare interface WebsocketMessageData {
   direction: 'receive' | 'send'
   client: WebsocketClientLog
   actions: Action[]
+  script?: string
   validationErrors?: Record<string, string>
 }
 

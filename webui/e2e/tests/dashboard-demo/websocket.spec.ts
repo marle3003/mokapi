@@ -1,6 +1,7 @@
 import { test, expect } from '../models/fixture-dashboard'
 import { DashboardModel } from '../models/dashboard'
 import { getCellByColumnName } from '../helpers/table'
+import { useWebsocketMessages } from '../components/websocket'
 
 test('Visit Websocket overview', async ({ page, baseURL }) => {
     if (baseURL === 'http://localhost:8080') {
@@ -9,6 +10,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
     const { sidebar } = new DashboardModel(page)
+    const { openFullView } = useWebsocketMessages(page)
 
     await test.step('Verify Dashboard', async () => {
 
@@ -80,8 +82,8 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(2).click();
-                
+                await openFullView(rows.nth(2));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Path')).toHaveText('/chats/general');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -108,7 +110,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                     const rows = messages.locator('tbody tr');
                     await expect(rows).toHaveCount(2);
 
-                    await rows.nth(0).click()
+                    await openFullView(rows.nth(0))
 
                 })
 

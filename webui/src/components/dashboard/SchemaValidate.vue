@@ -238,36 +238,39 @@ function formatResultItem(result: unknown): [string, number] {
 <template>
     <div>
         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" :data-bs-target="'#'+id">{{ exampleEnabled ? 'Example & Validate' : 'Validate' }}</button>
-        <div ref="modal" class="modal fade" :id="id" tabindex="-1" aria-hidden="true" :aria-labelledby="id+'title'">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h6 :id="id+'title'" class="modal-title">{{ title }}</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-danger errors" role="alert" v-if="state.errors.length > 0">{{ state.errors }}</div>
-                        <div class="alert alert-danger" role="alert" v-if="state.result">
-                            <span v-html="formatResult(state.result)"></span>
+        <!-- in the body: inside a detail panel (own stacking context) the modal would be below its backdrop -->
+        <teleport to="body">
+            <div ref="modal" class="modal fade" :id="id" tabindex="-1" aria-hidden="true" :aria-labelledby="id+'title'">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h6 :id="id+'title'" class="modal-title">{{ title }}</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <source-view :filename="source?.filename" v-model:source="state.source" :readonly="false" @update="update" @switch="switchSource" />
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                        <span class="float-start">
-                            <span class="status" role="status">
-                                <span v-if="state.validating" class="loading"><span class="bi bi-arrow-repeat spin"></span> Validating...</span>
-                                <span v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</span>
-                                <span v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</span>
+                        <div class="modal-body">
+                            <div class="alert alert-danger errors" role="alert" v-if="state.errors.length > 0">{{ state.errors }}</div>
+                            <div class="alert alert-danger" role="alert" v-if="state.result">
+                                <span v-html="formatResult(state.result)"></span>
+                            </div>
+                            <source-view :filename="source?.filename" v-model:source="state.source" :readonly="false" @update="update" @switch="switchSource" />
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <span class="float-start">
+                                <span class="status" role="status">
+                                    <span v-if="state.validating" class="loading"><span class="bi bi-arrow-repeat spin"></span> Validating...</span>
+                                    <span v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</span>
+                                    <span v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</span>
+                                </span>
                             </span>
-                        </span>
-                        <div class="float-end">
-                            <button v-if="exampleEnabled" type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
-                            <button type="button" class="btn btn-primary btn-sm" :disabled="state.validating" @click="validate()">Validate</button>
+                            <div class="float-end">
+                                <button v-if="exampleEnabled" type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
+                                <button type="button" class="btn btn-primary btn-sm" :disabled="state.validating" @click="validate()">Validate</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </teleport>
     </div>
 </template>
 
