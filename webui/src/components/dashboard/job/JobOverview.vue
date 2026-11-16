@@ -7,7 +7,8 @@ import { useNow } from '@/composables/use-now'
 import Loading from '@/components/Loading.vue'
 import JobStatusBadge from './blocks/JobStatusBadge.vue'
 
-// One row per registered job. A click on a row (outside the links) selects the job.
+// One row per registered job. A click on the row (outside the links) or on the
+// name button (keyboard) selects the job.
 const emit = defineEmits<{ select: [name: string] }>()
 
 const { format } = usePrettyDates()
@@ -47,7 +48,7 @@ function onRowClick(job: JobInfo) {
             </thead>
             <tbody>
                 <tr v-for="job in jobs" :key="job.id" @click="onRowClick(job)">
-                    <td>{{ job.name }}</td>
+                    <td><button type="button" class="row-link" @click.stop="emit('select', job.name)">{{ job.name }}</button></td>
                     <td class="text-center">{{ job.schedule }}</td>
                     <td class="text-center">{{ jobStateLabel(job.state) }}</td>
                     <td class="text-center">{{ runsLabel(job.runs, job.maxRuns) }}</td>

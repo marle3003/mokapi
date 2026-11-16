@@ -267,6 +267,29 @@ test.describe('Job overview: row click', () => {
         await expect(log.rows).toHaveCount(8)
     })
 
+    test('the name opens Runs with the keyboard', async ({ page }) => {
+        const { overview, log } = useJobsPage(page)
+        await page.goto(jobsPath)
+
+        await overview.cell(overview.rows.nth(scheduledCron), 'Name').getByRole('button', { name: 'cron' }).focus()
+        await page.keyboard.press('Enter')
+
+        await expect(overview.runsTab).toHaveAttribute('aria-selected', 'true')
+        await expect(page).toHaveURL(/#tab-runs$/)
+        await expect(log.chips).toHaveText(['Name: cron'])
+    })
+
+    test('the name opens Runs with the space key', async ({ page }) => {
+        const { overview, log } = useJobsPage(page)
+        await page.goto(jobsPath)
+
+        await overview.cell(overview.rows.nth(scheduledCron), 'Name').getByRole('button', { name: 'cron' }).focus()
+        await page.keyboard.press('Space')
+
+        await expect(overview.runsTab).toHaveAttribute('aria-selected', 'true')
+        await expect(log.chips).toHaveText(['Name: cron'])
+    })
+
     test('a click anywhere in the row works', async ({ page }) => {
         const { overview, log } = useJobsPage(page)
         await page.goto(jobsPath)
