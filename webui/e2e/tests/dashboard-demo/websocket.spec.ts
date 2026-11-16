@@ -16,13 +16,16 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
         await expect(page.getByLabel('Websocket Messages')).toHaveText('3')
 
+        // the overview shows only the metrics, the services are on the protocol page
+        await expect(page.getByRole('table', { name: 'Websocket Services' })).toHaveCount(0)
+
+        await sidebar.getByRole('link', { name: 'Websocket', exact: true }).click()
+        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
+
         const table = page.getByRole('table', { name: 'Websocket Services' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('WebSocket Chat API');
-
-        await sidebar.getByRole('link', { name: 'Websocket', exact: true }).click()
-        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })
 

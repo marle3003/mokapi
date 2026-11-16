@@ -43,7 +43,7 @@ is collapsed, Mokapi expands it, or opens the overlay in a narrow window. In the
 The sidebar lists everything Mokapi serves. From top to bottom it contains:
 
 - a filter field (see [Filter the sidebar](#filter-the-sidebar))
-- **Overview**, the start page with runtime metrics and all services
+- **Overview**, the start page with runtime info and a metric tile per protocol (see [Overview](#overview))
 - **Pinned**, your pinned views (see [Pinned](#pinned))
 - one group per protocol that has at least one service, in the order HTTP, Kafka, MQTT,
   Websocket, Mail and LDAP
@@ -54,6 +54,13 @@ its view.
 
 Click the group heading to open the page of the protocol with its metrics, services and log.
 The chevron next to the heading collapses or expands the group.
+
+### Overview
+
+The overview shows the runtime info (App Start and Memory) and one metric tile for each active
+protocol. It shows a Jobs tile as well if you have registered jobs. It doesn't list services.
+Click a tile to open the page of the protocol with its metrics, services and log. Ctrl+click,
+Cmd+click or middle click opens it in a new tab, as described in [Tabs](#tabs).
 
 ### Filter the sidebar
 
@@ -179,7 +186,8 @@ remembers whether the sidebar and each protocol group is collapsed or expanded.
 
 The previous layout with protocol tabs and a breadcrumb is still available as a temporary
 fallback. Click **Classic view** in the header to switch to it, and **New view** to switch back.
-Mokapi remembers your choice. URLs are the same in both layouts.
+Mokapi remembers your choice. URLs are the same in both layouts. The overview of the Classic view
+still shows the runtime metrics and the tables with all services.
 
 Classic view exists only in the live dashboard and will be removed in a later release. The
 [demo dashboard](/dashboard-demo) always uses the new layout.

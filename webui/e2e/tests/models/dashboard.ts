@@ -22,6 +22,10 @@ export class DashboardModel extends MokapiModel {
     readonly kafka: KafkaModel
     readonly mail: MailModel
 
+    // new layout: the overview shows the protocol metrics as links in a grid
+    readonly metricGrid: Locator
+    readonly metricTiles: Locator
+
     readonly metricAppStart: Metric
     readonly metricMemoryUsage: Metric
     
@@ -38,9 +42,16 @@ export class DashboardModel extends MokapiModel {
         this.kafka = new KafkaModel(page.locator('main'))
         this.mail = new MailModel(page.locator('main'))
 
+        this.metricGrid = page.locator('.metric-grid')
+        this.metricTiles = this.metricGrid.getByRole('link')
+
         this.metricAppStart = new Metric(page.getByTestId('metric-app-start'))
         this.metricMemoryUsage = new Metric(page.getByTestId('metric-memory-usage'))
      }
+
+    metricTile(title: string): Locator {
+        return this.metricTiles.filter({ has: this.page.getByText(title, { exact: true }) })
+    }
 
     async open() {
         const { page } = this

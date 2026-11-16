@@ -31,23 +31,46 @@ main.connection-lost .dashboard-tabs {
 main.connection-lost .dashboard-content {
   margin-top: calc(4rem + var(--connection-banner-height));
 }
-.dashboard .card-group .card {
+.dashboard :is(.card-group, .metric-grid) {
+  /* the space between two cards, also between the tiles of the metrics grid */
+  --card-gap: 7px;
+}
+.dashboard :is(.card-group, .metric-grid) .card {
   border-color: var(--color-border);
   background-color: var(--color-background-soft);
-  margin: 7px;
+  margin: var(--card-gap);
   margin-left: 0;
   font-weight: 400;
   font-size: 0.9rem;
   box-shadow: 0 4px 8px rgba(255, 255, 255, 0.05);
 }
-[data-theme="light"] .dashboard .card-group .card {
+[data-theme="light"] .dashboard :is(.card-group, .metric-grid) .card {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 .dashboard .card-group .card:first-child{
   margin-left: 0;
 }  
-.dashboard .card-group:last-child{
+.dashboard :is(.card-group, .metric-grid):last-child{
   margin-bottom: 50px;
+}
+/* at most 3 tiles per row, fewer when the content area is narrow, all tiles the same size */
+.dashboard .metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(14rem, calc((100% - 2 * var(--card-gap)) / 3)), 1fr));
+  gap: var(--card-gap);
+  /* the cards of a card-group bring this space themselves */
+  padding: var(--card-gap) var(--card-gap) var(--card-gap) 0;
+}
+.dashboard .metric-grid .card {
+  margin: 0;
+}
+.dashboard .metric-tile {
+  text-decoration: none;
+  color: inherit;
+}
+.dashboard .metric-tile:hover,
+.dashboard .metric-tile:focus-visible {
+  border-color: var(--layout-accent);
 }
 .dashboard .modal .card-group:last-child{
   margin-bottom: 0;

@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
+import type { RouteLocationRaw } from 'vue-router'
+import MetricCard from '../MetricCard.vue'
 import { useDashboard } from '@/composables/dashboard';
 
-defineProps({
+const props = defineProps({
     includeError: Boolean,
-    onlyError: Boolean
+    onlyError: Boolean,
+    to: { type: [String, Object] as PropType<RouteLocationRaw> }
 })
 
 const { dashboard } = useDashboard()
@@ -55,19 +58,21 @@ const errors = computed(() => {
     }
     return result;
 })
+
+const title = computed(() => {
+    if (props.includeError) {
+        return 'HTTP Requests / Errors'
+    }
+    return props.onlyError ? 'HTTP Errors' : 'HTTP Requests'
+})
 </script>
 
 <template>
-    <div class="card metric text-center" data-testid="metric-http-requests">
-        <div class="card-body">
-            <div class="card-title" v-if="includeError">HTTP Requests / Errors</div>
-            <div class="card-title" v-else-if="onlyError">HTTP Errors</div>
-            <div class="card-title" v-else>HTTP Requests</div>
-            <div class="card-text metric-value">
-                <span v-if="!onlyError">{{ requests }}</span>
-                <span v-if="includeError"> / </span>
-                <span v-bind:class="{'text-danger': errors > 0}" v-if="onlyError || includeError">{{  errors }}</span>
-            </div>
-        </div>
-    </div>
+    <metric-card :title="title" :to="to" data-testid="metric-http-requests">
+        <template #value>
+            <span v-if="!onlyError">{{ requests }}</span>
+            <span v-if="includeError"> / </span>
+            <span v-bind:class="{'text-danger': errors > 0}" v-if="onlyError || includeError">{{  errors }}</span>
+        </template>
+    </metric-card>
 </template>

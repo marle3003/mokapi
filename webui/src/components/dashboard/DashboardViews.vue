@@ -44,12 +44,22 @@ import Config from '@/components/dashboard/Config.vue'
 import WebsocketService from '@/components/dashboard/websocket/WebsocketService.vue'
 
 import { getRouteName } from '@/composables/dashboard'
+import { useDashboardLayout } from '@/composables/dashboard-layout'
 import type { AppInfo } from '@/types/dashboard'
-import type { PropType } from 'vue'
+import { computed, type PropType } from 'vue'
 
 const props = defineProps({
     appInfo: { type: Object as PropType<AppInfo>, required: true },
 })
+
+// The new layout lists the services in the sidebar, so its overview shows only the
+// metrics, each one as a link to the page of its protocol.
+const { layout } = useDashboardLayout()
+const isNewLayout = computed(() => layout.value === 'new')
+
+function metricLink(route: string) {
+    return isNewLayout.value ? { name: getRouteName(route).value } : undefined
+}
 
 function isServiceAvailable(service: string): boolean {
     if (!props.appInfo.activeServices) {
@@ -69,33 +79,35 @@ function isAnyServiceAvailable() {
             <app-start-card />
             <memory-usage-card />
         </div>
-        <div class="card-group">
-            <http-request-card v-if="isServiceAvailable('http')" includeError />
-            <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
-            <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
-            <websocket-message-metric-card v-if="isServiceAvailable('websocket')" />
-            <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
-            <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
-            <job-count-card />
+        <div :class="isNewLayout ? 'metric-grid' : 'card-group'">
+            <http-request-card v-if="isServiceAvailable('http')" includeError :to="metricLink('http')" />
+            <kafka-message-metric-card v-if="isServiceAvailable('kafka')" :to="metricLink('kafka')" />
+            <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" :to="metricLink('mqtt')" />
+            <websocket-message-metric-card v-if="isServiceAvailable('websocket')" :to="metricLink('websocket')" />
+            <smtp-message-metric-card v-if="isServiceAvailable('mail')" :to="metricLink('mail')" />
+            <ldap-search-metric-card v-if="isServiceAvailable('ldap')" :to="metricLink('ldap')" />
+            <job-count-card :to="metricLink('jobs')" />
         </div>
-        <div class="card-group" v-if="isServiceAvailable('http')">
-            <http-services-card />
-        </div>
-        <div class="card-group" v-if="isServiceAvailable('kafka')">
-            <kafka-clusters-card />
-        </div>
-        <div class="card-group" v-if="isServiceAvailable('mqtt')">
-            <mqtt-clusters-card />
-        </div>
-        <div class="card-group" v-if="isServiceAvailable('websocket')">
-            <websocket-services-card />
-        </div>
-        <div class="card-group" v-if="isServiceAvailable('mail')">
-            <mail-services-card />
-        </div>
-        <div class="card-group" v-if="isServiceAvailable('ldap')">
-            <ldap-services-card />
-        </div>
+        <template v-if="!isNewLayout">
+            <div class="card-group" v-if="isServiceAvailable('http')">
+                <http-services-card />
+            </div>
+            <div class="card-group" v-if="isServiceAvailable('kafka')">
+                <kafka-clusters-card />
+            </div>
+            <div class="card-group" v-if="isServiceAvailable('mqtt')">
+                <mqtt-clusters-card />
+            </div>
+            <div class="card-group" v-if="isServiceAvailable('websocket')">
+                <websocket-services-card />
+            </div>
+            <div class="card-group" v-if="isServiceAvailable('mail')">
+                <mail-services-card />
+            </div>
+            <div class="card-group" v-if="isServiceAvailable('ldap')">
+                <ldap-services-card />
+            </div>
+        </template>
 
         <message message="No service available" v-if="!isAnyServiceAvailable()"></message>
     </div>

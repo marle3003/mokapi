@@ -16,13 +16,16 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
 
         await expect(page.getByLabel('MQTT Messages')).toHaveText('1')
 
+        // the overview shows only the metrics, the services are on the protocol page
+        await expect(page.getByRole('table', { name: 'MQTT Clusters' })).toHaveCount(0)
+
+        await sidebar.getByRole('link', { name: 'MQTT', exact: true }).click()
+        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
+
         const table = page.getByRole('table', { name: 'MQTT Clusters' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('Smart Home MQTT API');
-
-        await sidebar.getByRole('link', { name: 'MQTT', exact: true }).click()
-        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })
 

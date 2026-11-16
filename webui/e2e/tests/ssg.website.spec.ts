@@ -340,5 +340,5 @@ test('the demo dashboard still renders in the browser', async ({ page }) => {
     await page.goto('/dashboard-demo')
 
     await expect(page.getByRole('navigation', { name: 'Tabs' }).locator('a[aria-current="page"]')).toHaveText('Overview')
-    await expect(page.getByRole('table', { name: 'HTTP APIs' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /HTTP Requests/ })).toBeVisible()
 })

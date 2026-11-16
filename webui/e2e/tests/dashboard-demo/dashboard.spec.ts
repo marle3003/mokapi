@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '../models/fixture-website'
 import { DashboardModel } from '../models/dashboard'
-import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
 // reset storage state
@@ -23,41 +22,27 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
         await expect(main.getByLabel('Started at')).not.toHaveText('-')
     })
 
-    await test.step('Verify Swagger Petstore is in the HTTP table', async() => {
-        const table = page.getByRole('table', { name: 'HTTP APIs' })
-        await expect(table).toBeVisible()
+    // the live dashboard (baseURL :8080) is served below /dashboard, the demo below /dashboard-demo
+    const base = baseURL === 'http://localhost:8080' ? '/dashboard' : '/dashboard-demo'
+    const dashboard = new DashboardModel(page)
 
-        const row = table.getByRole('row').filter({ hasText: 'Swagger Petstore' })
-        await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toHaveText('12 / 1')
+    await test.step('Verify the overview shows metrics and no services tables', async () => {
+        await expect(dashboard.metricTile('HTTP Requests / Errors')).toBeVisible()
+        await expect(page.getByRole('table')).toHaveCount(0)
     })
 
-    await test.step('Verify Kafka Order Service is in the Kafka Clusters table', async() => {
-        const table = page.getByRole('table', { name: 'Kafka Clusters' })
-        await expect(table).toBeVisible()
-
-        const row = table.getByRole('row').filter({ hasText: 'Kafka Order Service API' })
-        await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('4')
-    })
-
-    await test.step('Verify Mail Server is in the Mail table', async() => {
-        const table = page.getByRole('table', { name: 'Mail Servers' })
-        await expect(table).toBeVisible()
-
-        const row = table.getByRole('row').filter({ hasText: 'Mail Server' })
-        await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('2')
-    })
-
-    await test.step('Verify LDAP Testserver is in the LDAP table', async() => {
-        const table = page.getByRole('table', { name: 'LDAP Servers' })
-        await expect(table).toBeVisible()
-
-        const row = table.getByRole('row').filter({ hasText: 'HR Employee Directory' })
-        await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Requests', row)).toHaveText('10')
-    })
+    for (const { title, value, route } of [
+        { title: 'HTTP Requests / Errors', value: '12 / 1', route: 'http' },
+        { title: 'Kafka Messages', value: '4', route: 'kafka' },
+        { title: 'SMTP Mails', value: '2', route: 'mail' },
+        { title: 'LDAP Searches', value: '10', route: 'ldap' },
+    ]) {
+        await test.step(`Verify the ${title} tile shows ${value} and links to ${route}`, async () => {
+            const tile = dashboard.metricTile(title)
+            await expect(tile).toContainText(value)
+            await expect(tile).toHaveAttribute('href', `${base}/${route}`)
+        })
+    }
 })
 
 test.describe('Connection to Mokapi', () => {

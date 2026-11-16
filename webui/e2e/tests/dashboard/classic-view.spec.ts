@@ -122,3 +122,23 @@ test.describe('Classic view: rows', () => {
         expect((await popup).url()).toMatch(/\/dashboard\/http\/services\/Books%20API\/books$/)
     })
 })
+
+test.describe('Classic view: overview', () => {
+    test.use({ layout: 'classic' })
+
+    test('keeps the services tables and metric cards that are not links', async ({ page, dashboard }) => {
+        await page.goto('/dashboard')
+
+        await expect(dashboard.metricAppStart.title).toHaveText('Uptime Since')
+        await expect(dashboard.metricMemoryUsage.title).toHaveText('Memory Usage')
+        await expect(dashboard.http.metricHttpRequests.value).toHaveText('4 / 1')
+        await expect(dashboard.kafka.metricKafkaMessages.value).toHaveText('12')
+        await expect(dashboard.mail.metricSmtpMessages.value).toHaveText('12')
+        await expect(dashboard.http.serviceList).toBeVisible()
+        await expect(dashboard.kafka.serviceList).toBeVisible()
+        await expect(dashboard.mail.serviceList).toBeVisible()
+        await expect(page.locator('.metric-grid')).toHaveCount(0)
+        await expect(page.locator('a.metric-tile')).toHaveCount(0)
+        await expect(page.getByRole('link').filter({ hasText: 'Kafka Messages' })).toHaveCount(0)
+    })
+})
