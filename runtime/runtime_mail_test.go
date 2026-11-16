@@ -121,12 +121,12 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				newSmtpConfig("https://a.io/b", &mail.Config{Info: mail.Info{Name: "foo", Description: "foo"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("mail").WithName("foo"))
 				require.NoError(t, err)
 
 				app.Mail.Add(newSmtpConfig("https://mokapi.io/a", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}))
 
-				e := app.Events.GetEvents(events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("mail").WithName("foo"))
 				require.Len(t, e, 1)
 			},
 		},
@@ -156,4 +156,35 @@ func newSmtpConfig(name string, config *mail.Config) *dynamic.Config {
 	u, _ := url.Parse(name)
 	c.Info.Url = u
 	return c
+}
+
+func TestApp_AddMail_EventStore(t *testing.T) {
+	mailTraits := func(name string) events.Traits {
+		return events.NewTraits().WithNamespace("mail").WithName(name)
+	}
+
+	t.Run("event store size of the mail service is applied", func(t *testing.T) {
+		cfg := &static.Config{}
+		cfg.Event.Store = map[string]static.Store{"default": {Size: 100}, "foo": {Size: 2}}
+		app := runtime.New(cfg, &dynamictest.Reader{})
+		app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
+
+		for i := 0; i < 5; i++ {
+			require.NoError(t, app.Events.Push(&eventstest.Event{Name: "bar"}, mailTraits("foo")))
+		}
+
+		require.Len(t, app.Events.GetEvents(mailTraits("foo")), 2)
+	})
+
+	t.Run("removing the mail service resets its events", func(t *testing.T) {
+		cfg := &static.Config{}
+		app := runtime.New(cfg, &dynamictest.Reader{})
+		c := newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}})
+		app.Mail.Add(c)
+		require.NoError(t, app.Events.Push(&eventstest.Event{Name: "bar"}, mailTraits("foo")))
+
+		app.Mail.Remove(c)
+
+		require.Empty(t, app.Events.GetEvents(mailTraits("foo")))
+	})
 }

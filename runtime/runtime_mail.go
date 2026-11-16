@@ -80,8 +80,8 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 		mi = NewMailInfo(c)
 		s.infos[cfg.Info.Name] = mi
 
-		s.sm.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
-		s.sm.SetStore(int(store.Size), events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("mail").WithName(cfg.Info.Name))
+		s.sm.SetStore(int(store.Size), events.NewTraits().WithNamespace("mail").WithName(cfg.Info.Name))
 	} else {
 		mi.AddConfig(c)
 	}
@@ -121,7 +121,7 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		s.sm.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("mail").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
