@@ -84,7 +84,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 	defer sh.jobsMu.Unlock()
 
 	id := len(sh.jobs)
-	entry := sh.newJobEntry(jobKindEvery, every, opt)
+	entry := sh.newJobEntry(every, opt)
 	do := sh.newJobFunc(handler, entry, id)
 	job, err := sh.engine.scheduler.Every(every, do, opt)
 	if err != nil {
@@ -99,7 +99,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
 	id := sh.nextJobId()
 
-	entry := sh.newJobEntry(jobKindCron, expr, opt)
+	entry := sh.newJobEntry(expr, opt)
 	do := sh.newJobFunc(handler, entry, id)
 	job, err := sh.engine.scheduler.Cron(expr, do, opt)
 	if err != nil {
@@ -127,7 +127,7 @@ func (sh *scriptHost) entry(id int) *jobEntry {
 	return sh.jobs[id]
 }
 
-func (sh *scriptHost) newJobEntry(kind, schedule string, opt common.JobOptions) *jobEntry {
+func (sh *scriptHost) newJobEntry(schedule string, opt common.JobOptions) *jobEntry {
 	tags := map[string]string{
 		"name":    filepath.Base(sh.name),
 		"file":    sh.name,
@@ -139,7 +139,7 @@ func (sh *scriptHost) newJobEntry(kind, schedule string, opt common.JobOptions) 
 		schedule: schedule,
 		maxRuns:  opt.Times,
 		tags:     tags,
-		state:    newJobState(kind, opt.Times),
+		state:    newJobState(opt.Times),
 	}
 }
 

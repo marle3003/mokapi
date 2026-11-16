@@ -8,11 +8,6 @@ import (
 	"sync"
 )
 
-const (
-	jobKindEvery = "every"
-	jobKindCron  = "cron"
-)
-
 // jobEntry is a job registered by a script: the scheduler's job, what the script defined and the
 // state that changes with every run.
 type jobEntry struct {
@@ -26,7 +21,6 @@ type jobEntry struct {
 // jobState is shared between the job's runs (scheduler goroutines) and the readers of the job
 // list. Its mutex is a leaf lock: nothing else is acquired while holding it.
 type jobState struct {
-	kind    string
 	maxRuns int
 
 	mu        sync.Mutex
@@ -41,8 +35,8 @@ type jobSnapshot struct {
 	state   string
 }
 
-func newJobState(kind string, maxRuns int) *jobState {
-	return &jobState{kind: kind, maxRuns: maxRuns}
+func newJobState(maxRuns int) *jobState {
+	return &jobState{maxRuns: maxRuns}
 }
 
 // nextRunNumber is the number of the run that is about to finish.
@@ -74,8 +68,7 @@ func (s *jobState) snapshot() jobSnapshot {
 	switch {
 	case s.cancelled:
 		state = common.JobStateCancelled
-	// the scheduler ignores the limit of cron jobs, so they never finish
-	case s.kind == jobKindEvery && s.maxRuns > 0 && s.runs >= s.maxRuns:
+	case s.maxRuns > 0 && s.runs >= s.maxRuns:
 		state = common.JobStateFinished
 	}
 	return jobSnapshot{runs: s.runs, lastRun: s.lastRun, state: state}

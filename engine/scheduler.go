@@ -42,44 +42,54 @@ func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOpt
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	jobDef := gocron.DurationJob(parseDuration(every))
-
-	var jobOpts []gocron.JobOption
-	if opt.Times > 0 {
-		jobOpts = append(jobOpts, gocron.WithLimitedRuns(uint(opt.Times)))
-		// Ensure WithLimitedRuns works correctly if job execution outlasts the schedule interval.
-		// Without SingletonMode, gocron might trigger concurrent runs before the previous run
-		// finishes and decrements the remaining execution counter, leading to too many runs.
-		jobOpts = append(jobOpts, gocron.WithSingletonMode(gocron.LimitModeReschedule))
-	}
+	jobOpts := limitRuns(opt.Times)
 	if !opt.SkipImmediateFirstRun {
 		jobOpts = append(jobOpts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
-	j, err := s.scheduler.NewJob(jobDef, gocron.NewTask(handler), jobOpts...)
-	if err != nil {
-		return nil, err
-	}
-
-	return &jobWrapper{job: j}, nil
+	return s.newJob(gocron.DurationJob(parseDuration(every)), handler, jobOpts)
 }
 
+// Cron runs the first run inline, so it counts toward opt.Times. If no run is left, there is
+// nothing to schedule and the returned Job is nil.
 func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptions) (Job, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
+	times := opt.Times
 	if !opt.SkipImmediateFirstRun {
 		handler()
+		if times > 0 {
+			times--
+			if times == 0 {
+				return nil, nil
+			}
+		}
 	}
 
-	jobDef := gocron.CronJob(expr, false)
+	return s.newJob(gocron.CronJob(expr, false), handler, limitRuns(times))
+}
 
-	j, err := s.scheduler.NewJob(jobDef, gocron.NewTask(handler))
+func (s *DefaultScheduler) newJob(def gocron.JobDefinition, handler func(), opts []gocron.JobOption) (Job, error) {
+	j, err := s.scheduler.NewJob(def, gocron.NewTask(handler), opts...)
 	if err != nil {
 		return nil, err
 	}
-
 	return &jobWrapper{job: j}, nil
+}
+
+// limitRuns returns no options for an unlimited job (times <= 0).
+func limitRuns(times int) []gocron.JobOption {
+	if times <= 0 {
+		return nil
+	}
+	return []gocron.JobOption{
+		gocron.WithLimitedRuns(uint(times)),
+		// Ensure WithLimitedRuns works correctly if job execution outlasts the schedule interval.
+		// Without SingletonMode, gocron might trigger concurrent runs before the previous run
+		// finishes and decrements the remaining execution counter, leading to too many runs.
+		gocron.WithSingletonMode(gocron.LimitModeReschedule),
+	}
 }
 
 func (s *DefaultScheduler) Remove(job Job) {

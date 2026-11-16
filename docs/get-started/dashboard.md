@@ -213,8 +213,8 @@ The Jobs tab has one row per registered job, sorted by name:
 | Last Run | The status of the last run and its time. The time links to the run.                               |
 | File     | The script file of the job. It links to the configuration of the script.                          |
 
-A job is **Scheduled** while it has a next run. **Finished** means an `every` job that used all
-its runs. Mokapi keeps a finished job in the list instead of removing it.
+A job is **Scheduled** while it has a next run. **Finished** means an `every` or `cron` job that
+used all its runs. Mokapi keeps a finished job in the list instead of removing it.
 
 Click a row to open the Runs tab, filtered by the name of the job. If no job is registered, the tab shows "No jobs defined" with
 links to the documentation of `every` and `cron`.

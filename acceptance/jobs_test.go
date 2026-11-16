@@ -119,13 +119,14 @@ func (suite *JobsSuite) TestLimitedEveryJobFinishesWithoutNextRun() {
 	suite.NotNil(j.LastRun)
 }
 
-// TestCronJobWithTimesStaysScheduled documents that cron ignores the times option.
-func (suite *JobsSuite) TestCronJobWithTimesStaysScheduled() {
+// The immediate first run counts as one of the times runs, so the job is finished right away.
+func (suite *JobsSuite) TestCronJobWithTimesFinishesWithImmediateFirstRun() {
 	j := suite.waitForJob("cron.js", func(j jobsApiJob) bool { return j.MaxRuns == 1 && j.Runs >= 1 })
 
 	suite.Equal("* * * * *", j.Schedule)
-	suite.Equal("scheduled", j.State)
-	suite.NotNil(j.NextRun)
+	suite.Equal(1, j.Runs)
+	suite.Equal("finished", j.State)
+	suite.Nil(j.NextRun)
 }
 
 func (suite *JobsSuite) TestLastRunLinksToTheEventOfTheRun() {
