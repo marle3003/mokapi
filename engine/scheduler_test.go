@@ -50,8 +50,8 @@ func TestScheduler(t *testing.T) {
 					count.Add(1)
 				}, common.JobOptions{Times: 1})
 				require.NoError(t, err)
-				time.Sleep(500 * time.Millisecond)
-				require.Equal(t, int32(1), count.Load())
+				require.Eventually(t, func() bool { return count.Load() == 1 }, 2*time.Second, 10*time.Millisecond)
+				require.Never(t, func() bool { return count.Load() > 1 }, 500*time.Millisecond, 10*time.Millisecond)
 			},
 		},
 	}
@@ -64,6 +64,25 @@ func TestScheduler(t *testing.T) {
 			tc.test(t, s)
 		})
 	}
+}
+
+func TestLimited(t *testing.T) {
+	t.Run("skips runs after times", func(t *testing.T) {
+		var count int
+		h := limited(func() { count++ }, 2)
+		for i := 0; i < 3; i++ {
+			h()
+		}
+		require.Equal(t, 2, count)
+	})
+	t.Run("unlimited job runs every time", func(t *testing.T) {
+		var count int
+		h := limited(func() { count++ }, 0)
+		for i := 0; i < 5; i++ {
+			h()
+		}
+		require.Equal(t, 5, count)
+	})
 }
 
 // cronScheduler uses a fake clock because a cron expression has minute granularity.

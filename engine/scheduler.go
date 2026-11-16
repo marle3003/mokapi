@@ -3,6 +3,7 @@ package engine
 import (
 	"mokapi/engine/common"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -42,12 +43,12 @@ func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOpt
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	jobOpts := limitRuns(opt.Times)
+	var jobOpts []gocron.JobOption
 	if !opt.SkipImmediateFirstRun {
 		jobOpts = append(jobOpts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
-	return s.newJob(gocron.DurationJob(parseDuration(every)), handler, jobOpts)
+	return s.newJob(gocron.DurationJob(parseDuration(every)), handler, opt.Times, jobOpts)
 }
 
 // Cron runs the first run inline, so it counts toward opt.Times. If no run is left, there is
@@ -67,15 +68,35 @@ func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptio
 		}
 	}
 
-	return s.newJob(gocron.CronJob(expr, false), handler, limitRuns(times))
+	return s.newJob(gocron.CronJob(expr, false), handler, times, nil)
 }
 
-func (s *DefaultScheduler) newJob(def gocron.JobDefinition, handler func(), opts []gocron.JobOption) (Job, error) {
-	j, err := s.scheduler.NewJob(def, gocron.NewTask(handler), opts...)
+// newJob registers the job. times <= 0 means unlimited.
+func (s *DefaultScheduler) newJob(def gocron.JobDefinition, handler func(), times int, opts []gocron.JobOption) (Job, error) {
+	opts = append(opts, limitRuns(times)...)
+	j, err := s.scheduler.NewJob(def, gocron.NewTask(limited(handler, times)), opts...)
 	if err != nil {
 		return nil, err
 	}
 	return &jobWrapper{job: j}, nil
+}
+
+// limited makes the handler skip every run after the first `times` runs. gocron applies
+// WithLimitedRuns asynchronously: it removes the job only after the last run has completed, and a
+// rescheduled tick can start one more run before that. The job is not removed from inside the
+// handler, because gocron would cancel the context of the still running task; WithLimitedRuns
+// removes it afterwards. An unlimited job (times <= 0) gets the handler unchanged.
+func limited(handler func(), times int) func() {
+	if times <= 0 {
+		return handler
+	}
+	var runs atomic.Int64
+	return func() {
+		if runs.Add(1) > int64(times) {
+			return
+		}
+		handler()
+	}
 }
 
 // limitRuns returns no options for an unlimited job (times <= 0).
