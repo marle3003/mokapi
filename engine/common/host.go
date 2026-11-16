@@ -218,6 +218,43 @@ type JobExecution struct {
 	Error    *Error            `json:"error"`
 }
 
+const (
+	JobStatusSuccess = "success"
+	JobStatusWarning = "warning"
+	JobStatusError   = "error"
+
+	JobStateScheduled = "scheduled"
+	JobStateFinished  = "finished"
+	JobStateCancelled = "cancelled"
+)
+
+// JobInfo describes a registered job and its current state.
+type JobInfo struct {
+	Id       string
+	Name     string
+	Schedule string
+	MaxRuns  int
+	Runs     int
+	State    string
+	// NextRun is the zero time if the job is not scheduled
+	NextRun time.Time
+	Tags    map[string]string
+	// LastRun is nil before the first run
+	LastRun *JobRun
+}
+
+// JobRun is the result of the latest run of a job. EventId refers to the stored job event.
+type JobRun struct {
+	EventId  string    `json:"eventId"`
+	Time     time.Time `json:"time"`
+	Duration int64     `json:"duration"`
+	Status   string    `json:"status"`
+}
+
+type JobLister interface {
+	Jobs() []JobInfo
+}
+
 type Error struct {
 	Message string `json:"message"`
 }
@@ -247,6 +284,24 @@ func (a *Action) AppendLog(level, message string) {
 
 func (e *JobExecution) AppendLog(level, message string) {
 	e.Logs = append(e.Logs, Log{Level: level, Message: message})
+}
+
+// Status summarizes a run like the dashboard does: an error field or an error log is an
+// error, a warn log a warning, everything else a success.
+func (e *JobExecution) Status() string {
+	if e.Error != nil {
+		return JobStatusError
+	}
+	status := JobStatusSuccess
+	for _, l := range e.Logs {
+		switch l.Level {
+		case "error":
+			return JobStatusError
+		case "warn":
+			status = JobStatusWarning
+		}
+	}
+	return status
 }
 
 func (e *JobExecution) Title() string {

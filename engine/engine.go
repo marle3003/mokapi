@@ -159,6 +159,29 @@ func (e *Engine) Scripts() int {
 	return len(e.scripts)
 }
 
+// Jobs lists the jobs of all scripts ordered by name, then file, then job index.
+func (e *Engine) Jobs() []common.JobInfo {
+	e.m.Lock()
+	hosts := make([]*scriptHost, 0, len(e.scripts))
+	for _, h := range e.scripts {
+		hosts = append(hosts, h)
+	}
+	e.m.Unlock()
+
+	var jobs []common.JobInfo
+	for _, h := range hosts {
+		jobs = append(jobs, h.listJobs()...)
+	}
+	// stable: the jobs of one script are already ordered by index
+	sort.SliceStable(jobs, func(i, j int) bool {
+		if jobs[i].Name != jobs[j].Name {
+			return jobs[i].Name < jobs[j].Name
+		}
+		return jobs[i].Tags["file"] < jobs[j].Tags["file"]
+	})
+	return jobs
+}
+
 func (e *Engine) IsLevelEnabled(level string) bool {
 	return e.logger.IsLevelEnabled(level)
 }

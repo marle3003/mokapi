@@ -266,6 +266,18 @@ export const dashboard: Dashboard = {
         return transformPath(`/api/services/mail/messages/${messageId}/attachments/${name}`)
     },
 
+    getJobs() {
+        const response = useFetch('/api/jobs')
+        const jobs = ref<JobInfo[] | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            jobs.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return { data: jobs, isLoading, close: response.close }
+    },
+
     getConfigs() {
         const response = useFetch('/api/configs')
         const configs = ref<Config[] | null>(null)

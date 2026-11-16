@@ -30,7 +30,7 @@ The icons of the activity bar open the main areas:
 |----------|-------------------------------------------------------------------------------------|
 | Services | Shows the sidebar. Click it again to collapse or expand the sidebar.                |
 | Search   | Shows the search panel in the sidebar. Click it again to collapse or expand the sidebar. Shown only if search is enabled, not in the demo. |
-| Jobs     | Opens the scheduled jobs as a tab. Shown only if at least one job exists.           |
+| Jobs     | Opens the scheduled jobs as a tab. Always shown.                                    |
 | Configs  | Opens all configuration files as a tab.                                             |
 | Faker    | Opens the Faker tree as a tab. Shown only in the live dashboard, not in the demo.   |
 
@@ -192,11 +192,55 @@ overview of how the mock API behaves under different conditions.
 
 ### Jobs
 
-The Jobs page lists the runs of your scheduled jobs, newest first. A job is a function you
-register with [cron](/docs/javascript-api/mokapi/cron.md) or
-[every](/docs/javascript-api/mokapi/every.md) in a script. Open the page with the Jobs icon of the
-activity bar, which is shown only if at least one job exists. The log is titled "Recent Jobs" and is
-always shown, also when it's empty.
+The Jobs page shows your scheduled jobs. A job is a function you register with
+[cron](/docs/javascript-api/mokapi/cron.md) or [every](/docs/javascript-api/mokapi/every.md) in a
+script. Open the page with the Jobs icon of the activity bar, which is always shown. In the Classic
+view, the Jobs tab appears only after a job has run for the first time.
+
+The page has two tabs, **Jobs** (the default) and **Runs**.
+
+#### Jobs tab
+
+The Jobs tab has one row per registered job, sorted by name:
+
+| Column   | Description                                                                                       |
+|----------|---------------------------------------------------------------------------------------------------|
+| Name     | The name of the job                                                                               |
+| Schedule | The cron expression or the interval of the job                                                    |
+| State    | **Scheduled**, **Finished** or **Cancelled**                                                      |
+| Runs     | `3 / 10` if the job has a limit of runs, otherwise only the number of runs                        |
+| Next Run | The date and, while it's in the future, a countdown, for example `2026-11-16 12:00:00 (in 1h 2min 3s)`. `-` if the job has no further run. |
+| Last Run | The status of the last run and its time. The time links to the run.                               |
+| File     | The script file of the job. It links to the configuration of the script.                          |
+
+A job is **Scheduled** while it has a next run. **Finished** means an `every` job that used all
+its runs. Mokapi keeps a finished job in the list instead of removing it.
+
+Click a row to open the Runs tab, filtered by the name of the job. If no job is registered, the tab shows "No jobs defined" with
+links to the documentation of `every` and `cron`.
+
+The name is the name of the script file, for example `jobs.ts`, unless the job sets the `name` tag.
+Jobs of one script therefore share the same name by default. Set the `name` tag in the
+[arguments](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) to tell them apart:
+
+```typescript
+import { every } from 'mokapi'
+
+export default function() {
+    every('1m', () => {
+        // sync orders
+    }, { tags: { name: 'sync-orders' } })
+
+    every('10m', () => {
+        // clean up
+    }, { tags: { name: 'cleanup' } })
+}
+```
+
+#### Runs tab
+
+The Runs tab lists the runs of your jobs, newest first. The log is titled "Recent Jobs" and is
+always shown, also when it's empty. An address with `?job=<id>` opens this tab with the run selected.
 
 <!-- screenshot: jobs log with the detail panel open on the Logs sub tab -->
 
@@ -213,9 +257,6 @@ The log has these columns:
 Mokapi derives the status from the run. The status is **Error** if the run failed or the script
 logged a message with level `error`, and **Warning** if the script logged a message with level
 `warn`. Otherwise it's **Success**, also if the run has no logs.
-
-The name is the name of the script file, for example `jobs.ts`, unless the job sets the `name` tag
-in its [arguments](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md).
 
 Click a row to open the run next to the table. The selected row is highlighted. The top of the
 panel shows the status, the name and the time of the run. Below the head, the panel has two sub
@@ -352,6 +393,7 @@ You can find the OpenAPI specification of these endpoints
 | /api/metrics                      | get list of metrics                    |
 | /api/schema/example               | returns example for given schema       |
 | /api/services/http/validate       | validate an HTTP request and response  |
+| /api/jobs                         | list of all scheduled jobs             |
 
 ### Validate a request and response
 

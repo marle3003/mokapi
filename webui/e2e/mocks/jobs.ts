@@ -148,6 +148,89 @@ export const jobs = [
     }),
 ]
 
+const inFuture = (ms: number) => new Date(Date.now() + ms).toISOString()
+
+// The result of the run event with this id, as the backend reports it in `lastRun`.
+function lastRun(eventId: string, status: 'success' | 'warning' | 'error') {
+    const event = jobs.find(x => x.id === eventId)!
+    return { eventId, time: event.time, duration: event.data.duration, status }
+}
+
+// The registered jobs of `GET /api/jobs`. The names, files and Last Run ids match the run events above.
+// In the order of the backend: sorted by name, then file; within a script by job index.
+// The state `finished` and `cancelled` have no `nextRun`, a job that did not run yet has no `lastRun`.
+//   cron.js   0 cron     cron `0 * * * *`, 4 runs, no limit, next run in 1 hour, success
+//             1 cron     every 3s, 2 / 2 runs, finished, last run with an error
+//             2 cron     every 1h, 1 run, cancelled, last run with a warning
+//             3 cleanup  every 30m, not run yet, next run in 30 minutes (same name as the job of every.js)
+//   every.js  0 every    every 1m, 3 / 10 runs, next run in 2 hours, success
+//             1 cleanup  every 24h, 1 run, custom tag team, success
+export const jobList = [
+    {
+        id: `${cronTags.fileKey}-3`,
+        name: 'cleanup',
+        schedule: '30m',
+        maxRuns: -1,
+        runs: 0,
+        state: 'scheduled',
+        nextRun: inFuture(30 * 60 * 1000),
+        tags: { ...cronTags, name: 'cleanup' },
+    },
+    {
+        id: `${everyTags.fileKey}-1`,
+        name: 'cleanup',
+        schedule: '24h',
+        maxRuns: -1,
+        runs: 1,
+        state: 'scheduled',
+        nextRun: inFuture(24 * 60 * 60 * 1000),
+        tags: cleanupTags,
+        lastRun: lastRun('7004', 'success'),
+    },
+    {
+        id: `${cronTags.fileKey}-0`,
+        name: 'cron',
+        schedule: '0 * * * *',
+        maxRuns: -1,
+        runs: 4,
+        state: 'scheduled',
+        nextRun: inFuture(60 * 60 * 1000),
+        tags: cronTags,
+        lastRun: lastRun('7003', 'success'),
+    },
+    {
+        id: `${cronTags.fileKey}-1`,
+        name: 'cron',
+        schedule: '3s',
+        maxRuns: 2,
+        runs: 2,
+        state: 'finished',
+        tags: cronTags,
+        lastRun: lastRun('8134', 'error'),
+    },
+    {
+        id: `${cronTags.fileKey}-2`,
+        name: 'cron',
+        schedule: '1h',
+        maxRuns: -1,
+        runs: 1,
+        state: 'cancelled',
+        tags: cronTags,
+        lastRun: lastRun('81344', 'warning'),
+    },
+    {
+        id: `${everyTags.fileKey}-0`,
+        name: 'every',
+        schedule: '1m',
+        maxRuns: 10,
+        runs: 3,
+        state: 'scheduled',
+        nextRun: inFuture(2 * 60 * 60 * 1000),
+        tags: everyTags,
+        lastRun: lastRun('7001', 'success'),
+    },
+]
+
 export const config = {
     '6f5cab53-9f51-4bbe-bb32-fe41ee71d542': {
         id: '6f5cab53-9f51-4bbe-bb32-fe41ee71d542',

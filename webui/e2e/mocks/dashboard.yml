@@ -511,6 +511,55 @@ paths:
             "text/plain":
               schema:
                 type: string
+  /api/jobs:
+    get:
+      summary: returns the registered jobs
+      operationId: jobs
+      responses:
+        "200":
+          description: registered jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, schedule, maxRuns, runs, state, tags]
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    schedule:
+                      type: string
+                    maxRuns:
+                      type: integer
+                    runs:
+                      type: integer
+                    state:
+                      type: string
+                      enum: [scheduled, finished, cancelled]
+                    nextRun:
+                      type: string
+                      format: date-time
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    lastRun:
+                      type: object
+                      required: [eventId, time, duration, status]
+                      properties:
+                        eventId:
+                          type: string
+                        time:
+                          type: string
+                          format: date-time
+                        duration:
+                          type: integer
+                        status:
+                          type: string
+                          enum: [success, warning, error]
   /api/configs:
     get:
       summary: returns configs

@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { jobStatus, type JobStatus } from '@/composables/job'
+import type { JobStatus } from '@/composables/job'
 
-const props = defineProps<{ data: JobExecution }>()
+defineProps<{ status: JobStatus }>()
 
 const badgeClass: Record<JobStatus, string> = { Success: 'bg-success', Warning: 'bg-warning', Error: 'bg-danger' }
-const status = computed(() => jobStatus(props.data))
 </script>
 
 <template>

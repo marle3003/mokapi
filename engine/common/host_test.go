@@ -42,3 +42,25 @@ func TestAJobExecution_Title(t *testing.T) {
 	job.Tags = map[string]string{"name": "bar"}
 	require.Equal(t, "bar", job.Title())
 }
+
+func TestJobExecution_Status(t *testing.T) {
+	tests := []struct {
+		name     string
+		exec     JobExecution
+		expected string
+	}{
+		{name: "nil logs", exec: JobExecution{}, expected: "success"},
+		{name: "empty logs", exec: JobExecution{Logs: []Log{}}, expected: "success"},
+		{name: "info and debug logs", exec: JobExecution{Logs: []Log{{Level: "log"}, {Level: "debug"}}}, expected: "success"},
+		{name: "error field", exec: JobExecution{Error: &Error{Message: "boom"}}, expected: "error"},
+		{name: "error log", exec: JobExecution{Logs: []Log{{Level: "error"}}}, expected: "error"},
+		{name: "warn log", exec: JobExecution{Logs: []Log{{Level: "log"}, {Level: "warn"}}}, expected: "warning"},
+		{name: "error and warn log", exec: JobExecution{Logs: []Log{{Level: "warn"}, {Level: "error"}}}, expected: "error"},
+		{name: "error field and warn log", exec: JobExecution{Error: &Error{}, Logs: []Log{{Level: "warn"}}}, expected: "error"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, tc.exec.Status())
+		})
+	}
+}

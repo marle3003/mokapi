@@ -8,7 +8,7 @@ import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
 import { services as websocketServices, events as websocketEvents } from './websocket'
 import { sum, max } from './metrics'
 import { getInfo } from './helpers'
-import { jobs, config as jobConfig } from './jobs'
+import { jobs, jobList, config as jobConfig } from './jobs'
 import { match, type Query } from '../../lib/events'
 
 export default async function() {
@@ -70,6 +70,9 @@ export default async function() {
             res.headers = resp.headers
             res.body = resp.body
             res.data = null
+        })
+        .operation('jobs', (req, res) => {
+            res.data = jobList
         })
         .operation('configs', (req, res) => {
             res.data = configs

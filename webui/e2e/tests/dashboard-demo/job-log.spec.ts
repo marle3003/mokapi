@@ -17,7 +17,7 @@ test.describe('Job log in the demo dashboard', () => {
     })
 
     test('shows the recorded run', async ({ page }) => {
-        await page.goto(`${dashboardPath}/jobs`)
+        await page.goto(`${dashboardPath}/jobs#tab-runs`)
 
         const log = new JobLogModel(page)
         await expect(log.rows).toHaveCount(1)
@@ -26,7 +26,7 @@ test.describe('Job log in the demo dashboard', () => {
 
     // the ids of the events change with every recording, the row is found by its name
     test('a run opens in the panel with the hint on console.log() and its details', async ({ page }) => {
-        await page.goto(`${dashboardPath}/jobs`)
+        await page.goto(`${dashboardPath}/jobs#tab-runs`)
         const log = new JobLogModel(page)
         const view = useRequestView(page)
 
@@ -47,7 +47,7 @@ test.describe('Job log in the demo dashboard', () => {
     // the recording is a few minutes old when the test runs, so the clock moves far away to make the next run past
     test('the next run is a plain date when it is in the past', async ({ page }) => {
         await page.clock.install({ time: new Date('2100-01-01T00:00:00Z') })
-        await page.goto(`${dashboardPath}/jobs`)
+        await page.goto(`${dashboardPath}/jobs#tab-runs`)
         const log = new JobLogModel(page)
         const view = useRequestView(page)
 
@@ -65,7 +65,7 @@ test.describe('Job log in the demo dashboard', () => {
     })
 
     test('the Name chip filters the log', async ({ page }) => {
-        await page.goto(`${dashboardPath}/jobs`)
+        await page.goto(`${dashboardPath}/jobs#tab-runs`)
         const log = new JobLogModel(page)
         await expect(log.rows).toHaveCount(1)
 
@@ -79,7 +79,7 @@ test.describe('Job log in the demo dashboard', () => {
 
     test('Pause is not offered', async ({ page }) => {
         test.skip(!isDemo, 'the live dashboard offers Pause')
-        await page.goto(`${dashboardPath}/jobs`)
+        await page.goto(`${dashboardPath}/jobs#tab-runs`)
 
         const log = new JobLogModel(page)
         await expect(log.rows).toHaveCount(1)

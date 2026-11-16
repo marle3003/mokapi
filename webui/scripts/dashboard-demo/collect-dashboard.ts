@@ -39,6 +39,7 @@ export async function collectDashboard() {
     events: { path: '/api/events?size=1000', loader: fetchEvents },
     'mailbox_alice.johnson@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com', loader: loadJson },
     'mailbox_bob.miller@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/bob.miller@example.com', loader: loadJson },
+    jobs: { path: '/api/jobs', loader: loadJson },
     configs: { path: '/api/configs', loader: loadConfigs },
   }
 

@@ -31,11 +31,17 @@ func NewStoreManager(index search.Index) *StoreManager {
 }
 
 func (m *StoreManager) Push(data EventData, traits Traits) error {
+	_, err := m.PushEvent(data, traits)
+	return err
+}
+
+// PushEvent stores the event like Push and returns it, so the caller knows its id and time.
+func (m *StoreManager) PushEvent(data EventData, traits Traits) (Event, error) {
 	m.m.RLock()
 	defer m.m.RUnlock()
 
 	if len(traits) == 0 {
-		return fmt.Errorf("empty traits not allowed")
+		return Event{}, fmt.Errorf("empty traits not allowed")
 	}
 	score := 0
 	var bestStore *store
@@ -49,7 +55,7 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 	}
 
 	if bestStore == nil {
-		return fmt.Errorf("no store found for %s", traits)
+		return Event{}, fmt.Errorf("no store found for %s", traits)
 	}
 
 	evt := NewEvent(data, traits)
@@ -61,7 +67,7 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 		m.index.Delete(removed.Id)
 	}
 
-	return nil
+	return evt, nil
 }
 
 func (m *StoreManager) SetStore(size int, traits Traits) {

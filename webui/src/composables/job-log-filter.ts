@@ -21,3 +21,8 @@ export const {
         { field: 'name', label: 'Name', trait: 'name' },
     ],
 })
+
+// Sets the Name chip of the jobs log to the job, as it is stored when the log opens next.
+export function filterByJobName(name: string) {
+    saveFilter(filterStorageKey({}), { ...defaultFilter(), name })
+}

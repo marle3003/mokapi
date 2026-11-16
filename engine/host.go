@@ -30,7 +30,7 @@ type scriptHost struct {
 	engine *Engine
 
 	script common.Script
-	jobs   map[int]Job
+	jobs   map[int]*jobEntry
 	jobsMu sync.Mutex // guards jobs; separate from m, which close() holds while closing the script
 	file   *dynamic.Config
 
@@ -45,7 +45,7 @@ type scriptHost struct {
 func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
 	sh := &scriptHost{
 		name:   file.Info.Path(),
-		jobs:   make(map[int]Job),
+		jobs:   make(map[int]*jobEntry),
 		file:   file,
 		engine: engine,
 	}
@@ -84,20 +84,23 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 	defer sh.jobsMu.Unlock()
 
 	id := len(sh.jobs)
-	do := sh.newJobFunc(handler, opt, every, id)
+	entry := sh.newJobEntry(jobKindEvery, every, opt)
+	do := sh.newJobFunc(handler, entry, id)
 	job, err := sh.engine.scheduler.Every(every, do, opt)
 	if err != nil {
 		return -1, err
 	}
 
-	sh.jobs[id] = job
+	entry.job = job
+	sh.jobs[id] = entry
 	return id, nil
 }
 
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
 	id := sh.nextJobId()
 
-	do := sh.newJobFunc(handler, opt, expr, id)
+	entry := sh.newJobEntry(jobKindCron, expr, opt)
+	do := sh.newJobFunc(handler, entry, id)
 	job, err := sh.engine.scheduler.Cron(expr, do, opt)
 	if err != nil {
 		return -1, err
@@ -106,7 +109,8 @@ func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (
 	// must not hold jobsMu across scheduler.Cron: an immediate first run executes inline
 	sh.jobsMu.Lock()
 	defer sh.jobsMu.Unlock()
-	sh.jobs[id] = job
+	entry.job = job
+	sh.jobs[id] = entry
 	return id, nil
 }
 
@@ -116,34 +120,40 @@ func (sh *scriptHost) nextJobId() int {
 	return len(sh.jobs)
 }
 
-// job returns nil if the job is not registered (yet) or the host is closed.
-func (sh *scriptHost) job(id int) Job {
+// entry returns nil if the job is not registered (yet) or the host is closed.
+func (sh *scriptHost) entry(id int) *jobEntry {
 	sh.jobsMu.Lock()
 	defer sh.jobsMu.Unlock()
 	return sh.jobs[id]
 }
 
-func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string, id int) func() {
-	name := filepath.Base(sh.name)
+func (sh *scriptHost) newJobEntry(kind, schedule string, opt common.JobOptions) *jobEntry {
 	tags := map[string]string{
-		"name":    name,
+		"name":    filepath.Base(sh.name),
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
 	}
 	maps.Copy(tags, opt.Tags)
 
-	t := events.NewTraits().WithNamespace("job").WithName(tags["name"])
+	return &jobEntry{
+		schedule: schedule,
+		maxRuns:  opt.Times,
+		tags:     tags,
+		state:    newJobState(kind, opt.Times),
+	}
+}
+
+func (sh *scriptHost) newJobFunc(handler func(), entry *jobEntry, id int) func() {
+	t := events.NewTraits().WithNamespace("job").WithName(entry.tags["name"])
 	if len(sh.sm.GetStores(t)) == 1 {
 		sh.sm.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
 	}
 	t = t.With("jobId", fmt.Sprintf("%d", id))
-	counter := 1
 
 	return func() {
-		job := sh.job(id)
 		var nextRun time.Time
-		if job != nil {
-			nextRun = job.NextRun()
+		if e := sh.entry(id); e != nil && e.job != nil {
+			nextRun = e.job.NextRun()
 		} else {
 			log.Debugf("no job found with id %d", id)
 		}
@@ -151,11 +161,11 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		sh.engine.app.Monitor.JobCounter.Add(1)
 
 		exec := common.JobExecution{
-			Schedule: schedule,
-			MaxRuns:  opt.Times,
-			Runs:     counter,
+			Schedule: entry.schedule,
+			MaxRuns:  entry.maxRuns,
+			Runs:     entry.state.nextRunNumber(),
 			NextRun:  nextRun,
-			Tags:     tags,
+			Tags:     entry.tags,
 		}
 
 		defer func() {
@@ -168,10 +178,16 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 
 			sh.endEventHandler()
 
-			err := sh.sm.Push(&exec, t)
+			evt, err := sh.sm.PushEvent(&exec, t)
 			if err != nil {
 				log.Errorf("failed to push event: %v", err)
 			}
+			entry.state.finishRun(common.JobRun{
+				EventId:  evt.Id,
+				Time:     evt.Time,
+				Duration: exec.Duration,
+				Status:   exec.Status(),
+			})
 		}()
 
 		sh.startEventHandler(exec.AppendLog)
@@ -180,16 +196,16 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		handler()
 
 		exec.Duration = time.Now().Sub(start).Milliseconds()
-		counter++
 	}
 }
 
 func (sh *scriptHost) Cancel(jobId int) error {
-	j := sh.job(jobId)
-	if j == nil {
+	entry := sh.entry(jobId)
+	if entry == nil {
 		return fmt.Errorf("job not defined")
 	}
-	sh.engine.scheduler.Remove(j)
+	sh.engine.scheduler.Remove(entry.job)
+	entry.state.cancel()
 	return nil
 }
 
@@ -197,8 +213,8 @@ func (sh *scriptHost) close() {
 	sh.Lock()
 	defer sh.Unlock()
 
-	for _, j := range sh.takeJobs() {
-		sh.engine.scheduler.Remove(j)
+	for _, entry := range sh.takeJobs() {
+		sh.engine.scheduler.Remove(entry.job)
 	}
 
 	if sh.script != nil {
@@ -213,7 +229,7 @@ func (sh *scriptHost) close() {
 }
 
 // takeJobs empties the job registry and returns the jobs that were registered.
-func (sh *scriptHost) takeJobs() map[int]Job {
+func (sh *scriptHost) takeJobs() map[int]*jobEntry {
 	sh.jobsMu.Lock()
 	defer sh.jobsMu.Unlock()
 	jobs := sh.jobs

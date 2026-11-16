@@ -19,7 +19,7 @@ function isShown(mode: SidebarMode) {
 }
 
 const links = computed(() => [
-    { label: 'Jobs', icon: 'bi-clock-history', isVisible: sections.value.jobs, to: { name: getRouteName('jobs').value } },
+    { label: 'Jobs', icon: 'bi-clock-history', isVisible: true, to: { name: getRouteName('jobs').value } },
     { label: 'Configs', icon: 'bi-file-earmark-code', isVisible: true, to: { name: getRouteName('configs').value } },
     { label: 'Faker', icon: 'bi-magic', isVisible: sections.value.faker, to: { name: getRouteName('tree').value } },
 ])

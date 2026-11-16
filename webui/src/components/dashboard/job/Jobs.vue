@@ -2,6 +2,7 @@
 import { useTemplateRef } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard'
+import { jobStatus } from '@/composables/job'
 import { useJobLog } from '@/composables/use-job-log'
 import Loading from '@/components/Loading.vue'
 import Paging from '../Paging.vue'
@@ -47,7 +48,7 @@ function eventData(event: ServiceEvent): JobExecution {
                         <tbody>
                             <tr v-for="event in events" :key="event.id"
                                 :aria-selected="event.id === selectedId ? 'true' : undefined" @click="onRowClick($event, event.id)">
-                                <td><job-status-badge :data="eventData(event)" /></td>
+                                <td><job-status-badge :status="jobStatus(eventData(event))" /></td>
                                 <td>
                                     <router-link custom :to="{ name: getRouteName('job').value, params: { id: event.id } }" v-slot="{ href }">
                                         <a class="row-link" :href="href" @click="onLinkClick">{{ eventData(event).tags.name }}</a>

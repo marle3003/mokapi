@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"mokapi/config/dynamic"
+	"mokapi/engine/common"
+	"net/url"
 	"runtime"
 	"testing"
 	"time"
@@ -131,32 +134,215 @@ type hostTestLog struct {
 	message string
 }
 
-type stubJob struct{}
+type stubJob struct {
+	next time.Time
+}
 
-func (stubJob) NextRun() time.Time { return time.Time{} }
+func (j stubJob) NextRun() time.Time { return j.next }
+
+type stubScheduler struct {
+	removed []Job
+}
+
+func (*stubScheduler) Start()                                               {}
+func (*stubScheduler) Close()                                               {}
+func (*stubScheduler) Every(string, func(), common.JobOptions) (Job, error) { return nil, nil }
+func (*stubScheduler) Cron(string, func(), common.JobOptions) (Job, error)  { return nil, nil }
+func (s *stubScheduler) Remove(job Job)                                     { s.removed = append(s.removed, job) }
+
+func newTestHost(jobs map[int]*jobEntry) *scriptHost {
+	return &scriptHost{
+		name: "/scripts/test.js",
+		file: &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{Scheme: "file", Path: "/scripts/test.js"}}},
+		jobs: jobs,
+	}
+}
+
+func newTestEntry(kind string, maxRuns int, job Job) *jobEntry {
+	return &jobEntry{
+		job:      job,
+		schedule: "5m",
+		maxRuns:  maxRuns,
+		tags:     map[string]string{"name": "test.js"},
+		state:    newJobState(kind, maxRuns),
+	}
+}
 
 func TestScriptHost_Jobs(t *testing.T) {
 	t.Run("job lookup after close finds nothing", func(t *testing.T) {
-		sh := &scriptHost{jobs: map[int]Job{0: stubJob{}}}
-		r.NotNil(t, sh.job(0))
+		sh := &scriptHost{jobs: map[int]*jobEntry{0: newTestEntry(jobKindEvery, 0, stubJob{})}}
+		r.NotNil(t, sh.entry(0))
 
 		sh.takeJobs()
 
-		r.Nil(t, sh.job(0))
+		r.Nil(t, sh.entry(0))
 	})
 
 	t.Run("cancel unknown job", func(t *testing.T) {
-		sh := &scriptHost{jobs: map[int]Job{}}
+		sh := &scriptHost{jobs: map[int]*jobEntry{}}
 
 		r.EqualError(t, sh.Cancel(1), "job not defined")
 	})
 
 	t.Run("jobs registered", func(t *testing.T) {
-		sh := &scriptHost{jobs: map[int]Job{0: stubJob{}}}
+		sh := &scriptHost{jobs: map[int]*jobEntry{0: newTestEntry(jobKindEvery, 0, stubJob{})}}
 		r.True(t, sh.hasJobs())
 
 		sh.takeJobs()
 
 		r.False(t, sh.hasJobs())
+	})
+
+	t.Run("cancel removes the job from the scheduler and marks it cancelled", func(t *testing.T) {
+		scheduler := &stubScheduler{}
+		job := stubJob{next: time.Now().Add(time.Hour)}
+		sh := newTestHost(map[int]*jobEntry{0: newTestEntry(jobKindEvery, 0, job)})
+		sh.engine = &Engine{scheduler: scheduler}
+
+		r.NoError(t, sh.Cancel(0))
+
+		r.Equal(t, []Job{job}, scheduler.removed)
+		info := sh.listJobs()
+		r.Len(t, info, 1)
+		r.Equal(t, common.JobStateCancelled, info[0].State)
+		r.True(t, info[0].NextRun.IsZero())
+	})
+}
+
+func TestJobState(t *testing.T) {
+	run := common.JobRun{EventId: "evt", Status: common.JobStatusSuccess}
+
+	tests := []struct {
+		name    string
+		kind    string
+		maxRuns int
+		act     func(s *jobState)
+		runs    int
+		state   string
+		hasRun  bool
+	}{
+		{name: "not run yet", kind: jobKindEvery, maxRuns: -1, act: func(s *jobState) {},
+			runs: 0, state: common.JobStateScheduled},
+		{name: "one run", kind: jobKindEvery, maxRuns: -1, act: func(s *jobState) { s.finishRun(run) },
+			runs: 1, state: common.JobStateScheduled, hasRun: true},
+		{name: "unlimited job never finishes", kind: jobKindEvery, maxRuns: -1,
+			act:  func(s *jobState) { s.finishRun(run); s.finishRun(run); s.finishRun(run) },
+			runs: 3, state: common.JobStateScheduled, hasRun: true},
+		{name: "limited job is scheduled until its last run", kind: jobKindEvery, maxRuns: 2,
+			act:  func(s *jobState) { s.finishRun(run) },
+			runs: 1, state: common.JobStateScheduled, hasRun: true},
+		{name: "limited job finishes with its last run", kind: jobKindEvery, maxRuns: 2,
+			act:  func(s *jobState) { s.finishRun(run); s.finishRun(run) },
+			runs: 2, state: common.JobStateFinished, hasRun: true},
+		{name: "cron job ignores maxRuns", kind: jobKindCron, maxRuns: 1,
+			act:  func(s *jobState) { s.finishRun(run); s.finishRun(run) },
+			runs: 2, state: common.JobStateScheduled, hasRun: true},
+		{name: "cancelled job", kind: jobKindEvery, maxRuns: -1, act: func(s *jobState) { s.cancel() },
+			runs: 0, state: common.JobStateCancelled},
+		{name: "cancelled wins over a finishing run", kind: jobKindEvery, maxRuns: 1,
+			act:  func(s *jobState) { s.cancel(); s.finishRun(run) },
+			runs: 1, state: common.JobStateCancelled, hasRun: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newJobState(tc.kind, tc.maxRuns)
+
+			tc.act(s)
+
+			snapshot := s.snapshot()
+			r.Equal(t, tc.runs, snapshot.runs)
+			r.Equal(t, tc.state, snapshot.state)
+			if tc.hasRun {
+				r.Equal(t, &run, snapshot.lastRun)
+			} else {
+				r.Nil(t, snapshot.lastRun)
+			}
+		})
+	}
+
+	t.Run("next run number counts the run in progress", func(t *testing.T) {
+		s := newJobState(jobKindEvery, -1)
+		r.Equal(t, 1, s.nextRunNumber())
+		s.finishRun(run)
+		r.Equal(t, 2, s.nextRunNumber())
+	})
+}
+
+func TestScriptHost_ListJobs(t *testing.T) {
+	newHost := newTestHost
+
+	t.Run("registered job that has not run", func(t *testing.T) {
+		next := time.Now().Add(time.Hour)
+		sh := newHost(map[int]*jobEntry{0: newTestEntry(jobKindEvery, 3, stubJob{next: next})})
+
+		info := sh.listJobs()
+
+		r.Len(t, info, 1)
+		r.Equal(t, sh.file.Info.Key()+"-0", info[0].Id)
+		r.Equal(t, "test.js", info[0].Name)
+		r.Equal(t, "5m", info[0].Schedule)
+		r.Equal(t, 3, info[0].MaxRuns)
+		r.Equal(t, 0, info[0].Runs)
+		r.Equal(t, common.JobStateScheduled, info[0].State)
+		r.Equal(t, next, info[0].NextRun)
+		r.Equal(t, map[string]string{"name": "test.js"}, info[0].Tags)
+		r.Nil(t, info[0].LastRun)
+	})
+
+	t.Run("job after a run", func(t *testing.T) {
+		entry := newTestEntry(jobKindEvery, -1, stubJob{})
+		run := common.JobRun{EventId: "evt", Time: time.Now(), Duration: 12, Status: common.JobStatusWarning}
+		entry.state.finishRun(run)
+		sh := newHost(map[int]*jobEntry{0: entry})
+
+		info := sh.listJobs()
+
+		r.Equal(t, 1, info[0].Runs)
+		r.Equal(t, &run, info[0].LastRun)
+		r.True(t, info[0].NextRun.IsZero())
+	})
+
+	t.Run("finished job has no next run", func(t *testing.T) {
+		entry := newTestEntry(jobKindEvery, 1, stubJob{next: time.Now().Add(time.Hour)})
+		entry.state.finishRun(common.JobRun{})
+		sh := newHost(map[int]*jobEntry{0: entry})
+
+		info := sh.listJobs()
+
+		r.Equal(t, common.JobStateFinished, info[0].State)
+		r.True(t, info[0].NextRun.IsZero())
+	})
+
+	t.Run("id uses the file key even if the fileKey tag is overridden", func(t *testing.T) {
+		entry := newTestEntry(jobKindEvery, -1, stubJob{})
+		entry.tags["fileKey"] = "custom"
+		sh := newHost(map[int]*jobEntry{0: entry})
+
+		info := sh.listJobs()
+
+		r.Equal(t, sh.file.Info.Key()+"-0", info[0].Id)
+		r.Equal(t, "custom", info[0].Tags["fileKey"])
+	})
+
+	t.Run("jobs are ordered by their index", func(t *testing.T) {
+		sh := newHost(map[int]*jobEntry{
+			2: newTestEntry(jobKindEvery, -1, stubJob{}),
+			0: newTestEntry(jobKindEvery, -1, stubJob{}),
+			1: newTestEntry(jobKindEvery, -1, stubJob{}),
+		})
+
+		info := sh.listJobs()
+
+		key := sh.file.Info.Key()
+		r.Equal(t, []string{key + "-0", key + "-1", key + "-2"}, []string{info[0].Id, info[1].Id, info[2].Id})
+	})
+
+	t.Run("no jobs after close", func(t *testing.T) {
+		sh := newHost(map[int]*jobEntry{0: newTestEntry(jobKindEvery, -1, stubJob{})})
+
+		sh.takeJobs()
+
+		r.Empty(t, sh.listJobs())
 	})
 }

@@ -293,6 +293,20 @@ export function useDemoDashboard() {
             return transformPath(`/demo/${getFilename(attachment.contentType)}`)
         },
 
+        getJobs() {
+            const jobs = ref<JobInfo[]>([])
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                jobs.value = db.data.jobs ?? []
+                isLoading.value = db.isLoading
+            })
+            return { data: jobs, isLoading, close: () => {} }
+        },
+
         getConfigs() {
             const configs = ref<Config[]>([])
             const isLoading = ref<boolean>(true)

@@ -36,13 +36,13 @@ test.describe('Dashboard layout: activity bar', () => {
         await expect(activityBar.getByRole('button', { name: 'Search' })).toHaveCount(0)
     })
 
-    test('hides Jobs when no job ran', async ({ page }) => {
+    test('shows Jobs when no job ran', async ({ page }) => {
         const { activityBar } = layoutLocators(page)
         await page.route('**/api/metrics/app', route => route.fulfill({ json: [] }))
         await page.goto('/dashboard')
 
         await expect(activityBar.getByRole('link', { name: 'Configs' })).toBeVisible()
-        await expect(activityBar.getByRole('link', { name: 'Jobs' })).toHaveCount(0)
+        await expect(activityBar.getByRole('link', { name: 'Jobs' })).toBeVisible()
     })
 })
 

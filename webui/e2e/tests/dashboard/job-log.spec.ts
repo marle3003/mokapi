@@ -5,6 +5,7 @@ import { JobLogModel } from '../models/job'
 import { useJobs } from '../components/job'
 import { useRequestView } from '../components/request-view'
 import { pauseClock } from '../helpers/clock'
+import { countdownSeconds } from '../helpers/countdown'
 import { formatDateTime } from '../helpers/format'
 
 // The job runs of the mock (e2e/mocks/jobs.ts) in the order of the log. There are 14 runs of three jobs:
@@ -30,6 +31,8 @@ const customTags = '7004'
 const pastNextRun = { id: '7005', nextRun: '2025-05-01T09:00:00Z' }
 
 const jobsPath = '/dashboard/jobs'
+// The log is the Runs tab of the Jobs page; without the hash the page opens the overview.
+const runsPath = `${jobsPath}#tab-runs`
 const jobPath = (id: string) => `/dashboard/jobs/${id}`
 const newTab = { modifiers: ['ControlOrMeta' as const] }
 
@@ -59,20 +62,13 @@ async function moveClockPastNewHandlers(page: Page) {
     await page.clock.runFor(10)
 }
 
-// `2026-11-16 12:00:00 (in 1h 2min 3s)` in seconds
-function countdownSeconds(text: string | null): number {
-    const match = /\(in (?:(\d+)h )?(?:(\d+)min )?(\d+)s\)/.exec(text ?? '')
-    expect(match, `a countdown in "${text}"`).not.toBeNull()
-    return Number(match![1] ?? 0) * 3600 + Number(match![2] ?? 0) * 60 + Number(match![3])
-}
-
 test.use({ layout: 'new' })
 
 test.describe('Job log: page', () => {
     test('shows the log with paging, chip, Pause and no collapse rows', async ({ page }) => {
         const { log } = useJobLog(page)
         await usePageSize10(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.rows).toHaveCount(10)
         await expect(log.log.getByText('Showing 10 of 14 requests')).toBeVisible()
@@ -85,7 +81,7 @@ test.describe('Job log: page', () => {
     test('the second page has the remaining runs', async ({ page }) => {
         const { log } = useJobLog(page)
         await usePageSize10(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(10)
 
         await log.log.getByLabel('Next').click()
@@ -96,7 +92,7 @@ test.describe('Job log: page', () => {
     test('the log stays when a filter has no result', async ({ page }) => {
         const { log } = useJobLog(page)
         await seedStorage(page, 'job-jobs-filter', { name: 'unknown' })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.log).toBeVisible()
         await expect(log.chips).toHaveText(['Name: unknown'])
@@ -105,7 +101,7 @@ test.describe('Job log: page', () => {
 
     test('the log can be pinned', async ({ page }) => {
         const { tabs, sidebar } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await tabs.first().getByRole('button', { name: 'Pin Jobs' }).click()
 
@@ -116,14 +112,14 @@ test.describe('Job log: page', () => {
 test.describe('Job log: table', () => {
     test('has the columns Status, Name, Schedule, Time and Duration and no Next Run', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.table.getByRole('columnheader')).toHaveText(['Status', 'Name', 'Schedule', 'Time', 'Duration'])
     })
 
     test('a run shows status, name, schedule, time and duration', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.row(everyRun.id).getByRole('cell')).toHaveText(['Success', 'every', '1m', formatDateTime(everyRun.time), '1 [sec]'])
         await expect(log.row(everyError.id).getByRole('cell')).toHaveText(['Error', 'every', '1m', formatDateTime(everyError.time), '1 [sec]'])
@@ -132,7 +128,7 @@ test.describe('Job log: table', () => {
 
     test('the status is Success, Warning or Error', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.row(plain).locator('.badge')).toHaveText('Success')
         await expect(log.row(warningRun).locator('.badge')).toHaveText('Warning')
@@ -142,7 +138,7 @@ test.describe('Job log: table', () => {
 
     test('a row has exactly one link, the name, to the full view', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.row(plain).getByRole('link')).toHaveCount(1)
         await expect(log.row(plain).getByRole('link')).toHaveText('cron')
@@ -153,7 +149,7 @@ test.describe('Job log: table', () => {
 test.describe('Job log: detail panel', () => {
     test('a click on a row opens the panel and highlights the row', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.panel.element).toHaveCount(0)
 
         await log.time(log.row(errorRun)).click()
@@ -161,22 +157,22 @@ test.describe('Job log: detail panel', () => {
         await expect(log.panel.element).toBeVisible()
         await expect(log.selectedRow).toHaveCount(1)
         await expect(log.selectedRow.locator(`a[href$="/jobs/${errorRun}"]`)).toHaveCount(1)
-        await expect(page).toHaveURL(new RegExp(`${jobsPath}\\?job=${errorRun}$`))
+        await expect(page).toHaveURL(new RegExp(`${jobsPath}\\?job=${errorRun}#tab-runs$`))
     })
 
     test('a click on the name selects the row instead of leaving the log', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.row(errorRun).getByRole('link').click()
 
         await expect(log.panel.element).toBeVisible()
-        await expect(page).toHaveURL(new RegExp(`\\?job=${errorRun}$`))
+        await expect(page).toHaveURL(new RegExp(`\\?job=${errorRun}#tab-runs$`))
     })
 
     test('Ctrl/Cmd+click on a row opens the full view in a new tab', async ({ page }) => {
         const { tabs, activeTab, log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(errorRun)).click(newTab)
 
@@ -187,7 +183,7 @@ test.describe('Job log: detail panel', () => {
 
     test('a middle click on a row opens the full view in a new tab', async ({ page }) => {
         const { tabs, activeTab, log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(errorRun)).click({ button: 'middle' })
 
@@ -198,7 +194,7 @@ test.describe('Job log: detail panel', () => {
 
     test('the head shows status, name and time', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(everyError.id)).click()
 
@@ -210,7 +206,7 @@ test.describe('Job log: detail panel', () => {
 
     test('has the sub tabs Logs and Details, Logs is selected', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(plain)).click()
 
@@ -220,7 +216,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Logs shows the error on top, the levels as icons and links in messages', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(errorRun)).click()
 
@@ -236,7 +232,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Logs shows a warning with its icon and link', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(warningRun)).click()
 
@@ -248,7 +244,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Logs shows info and debug messages with their icons', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(everyRun.id)).click()
 
@@ -260,7 +256,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Logs shows the hint on console.log() for a run without logs', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(plain)).click()
         await expect(log.panel.content.getByText('This job did not produce any logs')).toBeVisible()
@@ -272,7 +268,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Logs shows the error of a run with `logs: null`', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(everyError.id)).click()
 
@@ -282,7 +278,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows schedule, runs with the limit, duration and next run', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(everyRun.id)).click()
         await log.panel.tab('Details').click()
@@ -296,7 +292,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows the runs without a limit as a number', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(plain)).click()
         await log.panel.tab('Details').click()
@@ -308,7 +304,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows the plain date for a next run in the past', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(pastNextRun.id)).click()
         await log.panel.tab('Details').click()
@@ -318,7 +314,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows - for a job that has no next run', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(zeroNextRun)).click()
         await log.panel.tab('Details').click()
@@ -329,7 +325,7 @@ test.describe('Job log: detail panel', () => {
     test('the countdown of the next run ticks every second', async ({ page }) => {
         const { log, view } = useJobLog(page)
         await page.clock.install()
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(14)
         await pauseClock(page)
         await log.time(log.row(plain)).click()
@@ -347,7 +343,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows the tags and the script file links to the config', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(plain)).click()
         await log.panel.tab('Details').click()
@@ -359,7 +355,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Details shows the custom tags of a job', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(customTags)).click()
         await log.panel.tab('Details').click()
@@ -371,7 +367,7 @@ test.describe('Job log: detail panel', () => {
 
     test('the selected sub tab stays for the next run', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
         await log.panel.tab('Details').click()
 
@@ -383,17 +379,17 @@ test.describe('Job log: detail panel', () => {
 
     test('the sub tab is not part of the address', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
 
         await log.panel.tab('Details').click()
 
-        await expect(page).toHaveURL(new RegExp(`\\?job=${plain}$`))
+        await expect(page).toHaveURL(new RegExp(`\\?job=${plain}#tab-runs$`))
     })
 
     test('Open as tab replaces the log tab with a plain click', async ({ page }) => {
         const { tabs, log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(errorRun)).click()
 
         await log.panel.openAsTab.click()
@@ -404,7 +400,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Open as tab opens a new tab with Ctrl/Cmd+click', async ({ page }) => {
         const { tabs, activeTab, log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(errorRun)).click()
 
         await log.panel.openAsTab.click(newTab)
@@ -416,7 +412,7 @@ test.describe('Job log: detail panel', () => {
 
     test('the full view opens from a row with the helper', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await useJobs(page).openFullView(log.time(log.row(everyRun.id)))
 
@@ -426,7 +422,7 @@ test.describe('Job log: detail panel', () => {
 
     test('ArrowDown and ArrowUp select the next and the previous row', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
 
         await page.keyboard.press('ArrowDown')
@@ -440,7 +436,7 @@ test.describe('Job log: detail panel', () => {
     test('ArrowDown stops at the last row of the page', async ({ page }) => {
         const { log } = useJobLog(page)
         await usePageSize10(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(10)
         await log.time(log.rows.last()).click()
         await expect(page).toHaveURL(/job=/)
@@ -453,7 +449,7 @@ test.describe('Job log: detail panel', () => {
 
     test('Escape closes the panel and removes the selection', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
         await expect(log.panel.element).toBeVisible()
 
@@ -461,23 +457,23 @@ test.describe('Job log: detail panel', () => {
 
         await expect(log.panel.element).toHaveCount(0)
         await expect(log.selectedRow).toHaveCount(0)
-        await expect(page).toHaveURL(new RegExp(`${jobsPath}$`))
+        await expect(page).toHaveURL(new RegExp(`${jobsPath}#tab-runs$`))
     })
 
     test('the close button closes the panel', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
 
         await log.panel.closeButton.click()
 
         await expect(log.panel.element).toHaveCount(0)
-        await expect(page).toHaveURL(new RegExp(`${jobsPath}$`))
+        await expect(page).toHaveURL(new RegExp(`${jobsPath}#tab-runs$`))
     })
 
     test('the selection survives a reload', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(everyRun.id)).click()
         await expect(page).toHaveURL(new RegExp(`job=${everyRun.id}`))
 
@@ -491,7 +487,7 @@ test.describe('Job log: detail panel', () => {
     test('selections do not add browser history entries', async ({ page }) => {
         const { log } = useJobLog(page)
         await page.goto('/dashboard/configs')
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
         await expect(page).toHaveURL(new RegExp(`job=${plain}`))
         await page.keyboard.press('ArrowDown')
@@ -504,7 +500,7 @@ test.describe('Job log: detail panel', () => {
 
     test('the selection is not part of the tab identity', async ({ page }) => {
         const { tabs, log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.time(log.row(plain)).click()
         await expect(page).toHaveURL(new RegExp(`job=${plain}`))
@@ -525,7 +521,7 @@ test.describe('Job log: detail panel', () => {
     test('is shown below the table in a narrow window', async ({ page }) => {
         const { log } = useJobLog(page)
         await page.setViewportSize({ width: 600, height: 900 })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
         await expect(log.panel.element).toBeVisible()
 
@@ -538,7 +534,7 @@ test.describe('Job log: detail panel', () => {
     test('is shown beside the table in a wide window', async ({ page }) => {
         const { log } = useJobLog(page)
         await page.setViewportSize({ width: 1400, height: 900 })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.time(log.row(plain)).click()
         await expect(log.panel.element).toBeVisible()
 
@@ -604,7 +600,7 @@ test.describe('Job log: full view', () => {
 test.describe('Job log: filter chips', () => {
     test('shows no chip without a filter', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await expect(log.rows).toHaveCount(14)
         await expect(log.chips).toHaveCount(0)
@@ -613,7 +609,7 @@ test.describe('Job log: filter chips', () => {
 
     test('the name is entered in the popover', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         const popover = await log.openAddFilter('Name')
         await popover.locator('input').fill('every')
@@ -626,7 +622,7 @@ test.describe('Job log: filter chips', () => {
 
     test('the popover suggests the names of the loaded rows', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(14)
 
         const popover = await log.openAddFilter('Name')
@@ -638,7 +634,7 @@ test.describe('Job log: filter chips', () => {
     test('the suggestions follow the loaded rows', async ({ page }) => {
         const { log } = useJobLog(page)
         await seedStorage(page, 'job-jobs-filter', { name: 'cron' })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(8)
 
         await log.chip('Name: cron').edit.click()
@@ -651,7 +647,7 @@ test.describe('Job log: filter chips', () => {
     test('a click on a chip edits the filter', async ({ page }) => {
         const { log } = useJobLog(page)
         await seedStorage(page, 'job-jobs-filter', { name: 'every' })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(5)
 
         await log.chip('Name: every').edit.click()
@@ -665,7 +661,7 @@ test.describe('Job log: filter chips', () => {
     test('the x on a chip removes the filter', async ({ page }) => {
         const { log } = useJobLog(page)
         await seedStorage(page, 'job-jobs-filter', { name: 'every' })
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(5)
 
         await log.chip('Name: every').remove.click()
@@ -676,7 +672,7 @@ test.describe('Job log: filter chips', () => {
 
     test('the filter is saved and survives a reload', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         const popover = await log.openAddFilter('Name')
         await popover.locator('input').fill('every')
         await page.keyboard.press('Escape')
@@ -691,7 +687,7 @@ test.describe('Job log: filter chips', () => {
 
     test('the Name chip is the only filter on offer', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
 
         await log.addFilter.click()
 
@@ -731,7 +727,7 @@ test.describe('Job log: Pause', () => {
         const { log } = useJobLog(page)
         const events = await serveArrivingJob(page)
         await page.clock.install()
-        await page.goto(`${jobsPath}?refresh=1`)
+        await page.goto(`${jobsPath}?refresh=1#tab-runs`)
         await expect(log.rows).toHaveCount(14)
         await pauseClock(page)
         return { log, events }
@@ -802,7 +798,7 @@ test.describe('Job log: Pause', () => {
 
     test('the pause is not kept after a reload', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await log.pause.click()
         await expect(log.paused).toBeVisible()
 
@@ -820,7 +816,7 @@ test.describe('Job log: Classic layout', () => {
 
     test('a run can be selected', async ({ page }) => {
         const { log, view } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(14)
 
         await log.time(log.row(errorRun)).click()
@@ -832,7 +828,7 @@ test.describe('Job log: Classic layout', () => {
 
     test('the log can be paused and resumed', async ({ page }) => {
         const { log } = useJobLog(page)
-        await page.goto(jobsPath)
+        await page.goto(runsPath)
         await expect(log.rows).toHaveCount(14)
 
         await log.pause.click()

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { jobStatus } from '@/composables/job'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import JobStatusBadge from './JobStatusBadge.vue'
 
@@ -15,7 +16,7 @@ const { format } = usePrettyDates()
     <div class="row mb-2">
         <div class="col-3">
             <p class="label">Status</p>
-            <p><job-status-badge :data="data" /></p>
+            <p><job-status-badge :status="jobStatus(data)" /></p>
         </div>
         <div class="col header">
             <p class="label">Name</p>

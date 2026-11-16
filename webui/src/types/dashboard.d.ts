@@ -25,6 +25,8 @@ export interface Dashboard {
 
     getMetrics(query: string): Response
 
+    getJobs(): JobsResult
+
     getConfigs(): ConfigsResult 
     getConfig(id: string): ConfigResult
     getConfigData(id: string): ConfigDataResult
@@ -124,6 +126,12 @@ export interface MailboxMessagesResult {
 export interface MailResult {
     mail: Ref<Message | null>
     isLoading: Ref<boolean>
+}
+
+export interface JobsResult {
+    data: Ref<JobInfo[] | null>
+    isLoading: Ref<boolean>
+    close: () => void
 }
 
 export interface ConfigsResult {

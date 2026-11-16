@@ -283,6 +283,192 @@ func TestEngine_AddScript_Delete(t *testing.T) {
 	}
 }
 
+func TestEngine_Jobs(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// jobs with a skipped first run keep the order tests free of timing
+	idleJobs := func(tags string, count int) string {
+		var calls strings.Builder
+		for i := 0; i < count; i++ {
+			calls.WriteString("mokapi.every('1h', function() {}, { skipImmediateFirstRun: true" + tags + " });\n")
+		}
+		return "import mokapi from 'mokapi'\nexport default function() {\n" + calls.String() + "}"
+	}
+	deleted := func(evt dynamic.ConfigEvent) dynamic.ConfigEvent {
+		evt.Event = dynamic.Delete
+		return evt
+	}
+	describe := func(jobs []common.JobInfo) []string {
+		var result []string
+		for _, j := range jobs {
+			result = append(result, j.Name+" "+j.Tags["file"]+" "+j.Id[strings.LastIndex(j.Id, "-")+1:])
+		}
+		return result
+	}
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T, e *engine.Engine)
+	}{
+		{
+			name: "no scripts",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.Empty(t, e.Jobs())
+			},
+		},
+		{
+			name: "sorted by name, then file, then job index",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("b.js", idleJobs("", 2))))
+				r.NoError(t, e.AddScript(newScript("dir2/same.js", idleJobs(", tags: { name: 'a.js' }", 1))))
+				r.NoError(t, e.AddScript(newScript("a.js", idleJobs("", 1))))
+				r.NoError(t, e.AddScript(newScript("dir1/same.js", idleJobs(", tags: { name: 'a.js' }", 2))))
+
+				r.Equal(t, []string{
+					"a.js a.js 0",
+					"a.js dir1/same.js 0",
+					"a.js dir1/same.js 1",
+					"a.js dir2/same.js 0",
+					"b.js b.js 0",
+					"b.js b.js 1",
+				}, describe(e.Jobs()))
+			},
+		},
+		{
+			name: "job that has not run is listed as scheduled",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", idleJobs(", times: 3", 1))))
+
+				jobs := e.Jobs()
+
+				r.Len(t, jobs, 1)
+				r.Equal(t, "1h", jobs[0].Schedule)
+				r.Equal(t, 3, jobs[0].MaxRuns)
+				r.Equal(t, 0, jobs[0].Runs)
+				r.Equal(t, common.JobStateScheduled, jobs[0].State)
+				r.False(t, jobs[0].NextRun.IsZero())
+				r.Nil(t, jobs[0].LastRun)
+			},
+		},
+		{
+			name: "limited job finishes without next run",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('100ms', function() {}, { times: 2 });
+					}
+				`)))
+
+				r.Eventually(t, func() bool { return e.Jobs()[0].State == common.JobStateFinished }, 2*time.Second, 10*time.Millisecond)
+				job := e.Jobs()[0]
+				r.Equal(t, 2, job.Runs)
+				r.True(t, job.NextRun.IsZero())
+				r.NotNil(t, job.LastRun)
+			},
+		},
+		{
+			name: "last run refers to the stored event and has the run status",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('1h', function() { console.warn('careful'); });
+					}
+				`)))
+
+				r.Eventually(t, func() bool { return e.Jobs()[0].LastRun != nil }, 2*time.Second, 10*time.Millisecond)
+				job := e.Jobs()[0]
+				r.Equal(t, 1, job.Runs)
+				r.Equal(t, common.JobStatusWarning, job.LastRun.Status)
+				r.NotEmpty(t, job.LastRun.EventId)
+				r.False(t, job.LastRun.Time.IsZero())
+			},
+		},
+		{
+			name: "failed run is counted",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('1h', function() { throw new Error('boom'); });
+					}
+				`)))
+
+				r.Eventually(t, func() bool { return e.Jobs()[0].LastRun != nil }, 2*time.Second, 10*time.Millisecond)
+				job := e.Jobs()[0]
+				r.Equal(t, 1, job.Runs)
+				r.Equal(t, common.JobStatusError, job.LastRun.Status)
+			},
+		},
+		{
+			name: "reloaded script lists only its new jobs",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", idleJobs("", 2))))
+				r.Len(t, e.Jobs(), 2)
+
+				r.NoError(t, e.AddScript(newScript("test.js", idleJobs(", tags: { name: 'reloaded' }", 1))))
+
+				jobs := e.Jobs()
+				r.Len(t, jobs, 1)
+				r.Equal(t, "reloaded", jobs[0].Name)
+			},
+		},
+		{
+			name: "jobs of a deleted script disappear",
+			test: func(t *testing.T, e *engine.Engine) {
+				script := newScript("test.js", idleJobs("", 1))
+				r.NoError(t, e.AddScript(script))
+				r.NoError(t, e.AddScript(newScript("other.js", idleJobs("", 1))))
+				r.Len(t, e.Jobs(), 2)
+
+				r.NoError(t, e.AddScript(deleted(script)))
+
+				jobs := e.Jobs()
+				r.Len(t, jobs, 1)
+				r.Equal(t, "other.js", jobs[0].Name)
+			},
+		},
+		{
+			name: "jobs can be listed while they run",
+			test: func(t *testing.T, e *engine.Engine) {
+				r.NoError(t, e.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('10ms', function() {});
+						mokapi.every('10ms', function() { throw new Error('boom'); });
+					}
+				`)))
+
+				deadline := time.Now().Add(300 * time.Millisecond)
+				for time.Now().Before(deadline) {
+					for _, j := range e.Jobs() {
+						_ = j.Runs
+					}
+				}
+
+				for _, j := range e.Jobs() {
+					r.Greater(t, j.Runs, 1)
+				}
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := runtimetest.NewApp()
+			e := enginetest.NewEngine(
+				engine.WithScheduler(engine.NewDefaultScheduler()),
+				engine.WithApp(app),
+			)
+			defer e.Close()
+			e.Start()
+
+			tc.test(t, e)
+		})
+	}
+}
+
 func hasLogEntry(entries []logrus.Entry, level logrus.Level, message string) bool {
 	for _, entry := range entries {
 		if entry.Level == level && strings.Contains(entry.Message, message) {

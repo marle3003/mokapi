@@ -179,6 +179,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.serveSystem(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
+	case p == "/api/jobs":
+		h.getJobs(w, r)
 	case strings.HasPrefix(p, "/api/search"):
 		h.getSearchResults(w, r)
 	case strings.HasPrefix(p, h.healthPath) && h.healthHandler != nil:

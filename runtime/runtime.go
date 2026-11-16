@@ -109,6 +109,14 @@ func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 }
 
+// Jobs lists the jobs of the script engine, nil if the engine can't list them.
+func (a *App) Jobs() []common.JobInfo {
+	if lister, ok := a.Engine.(common.JobLister); ok {
+		return lister.Jobs()
+	}
+	return nil
+}
+
 func (a *App) FindConfig(key string) *dynamic.Config {
 	c, ok := a.Configs[key]
 	if ok {

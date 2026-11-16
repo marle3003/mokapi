@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   addableFields,
   defaultFilter,
+  filterByJobName,
   filterChips,
   filterStorageKey,
   removeFilter,
+  loadFilter,
   restoreFilter,
   toEventQuery,
   type JobLogFilter,
@@ -51,5 +53,22 @@ describe('job log filter', () => {
   it('offers the name as long as it has no chip', () => {
     expect(addableFields(defaultFilter(), {}).map(f => f.field)).toEqual(['name'])
     expect(addableFields(filterWith({ name: 'cron' }), {})).toEqual([])
+  })
+})
+
+describe('filterByJobName', () => {
+  afterEach(() => localStorage.clear())
+
+  it('saves a filter with the name for the jobs log', () => {
+    filterByJobName('cron')
+
+    expect(loadFilter(filterStorageKey({}))).toEqual(filterWith({ name: 'cron' }))
+  })
+
+  it('replaces the filter that was saved before', () => {
+    filterByJobName('cron')
+    filterByJobName('every')
+
+    expect(loadFilter(filterStorageKey({}))).toEqual(filterWith({ name: 'every' }))
   })
 })

@@ -188,3 +188,31 @@ func TestStoreManager_ConcurrentAccess(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestPushEvent(t *testing.T) {
+	t.Run("returns the stored event", func(t *testing.T) {
+		sm := events.NewStoreManager(&index{})
+		traits := events.NewTraits().WithNamespace("foo")
+		sm.SetStore(10, traits)
+
+		evt, err := sm.PushEvent(&eventstest.Event{Name: "1"}, traits)
+
+		require.NoError(t, err)
+		require.True(t, evt.IsValid())
+		require.False(t, evt.Time.IsZero())
+		require.Equal(t, "1", evt.Data.Title())
+		stored := sm.GetEvents(traits)
+		require.Len(t, stored, 1)
+		require.Equal(t, evt.Id, stored[0].Id)
+		require.Equal(t, evt.Id, sm.GetEvent(evt.Id).Id)
+	})
+
+	t.Run("returns the error and no event", func(t *testing.T) {
+		sm := events.NewStoreManager(&index{})
+
+		evt, err := sm.PushEvent(nil, events.NewTraits().WithNamespace("foo"))
+
+		require.EqualError(t, err, "no store found for namespace=foo")
+		require.False(t, evt.IsValid())
+	})
+}

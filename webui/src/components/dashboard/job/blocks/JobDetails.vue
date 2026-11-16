@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { formatCountdown, hasNextRun, runsLabel } from '@/composables/job'
+import { nextRunLabel, runsLabel } from '@/composables/job'
 import { useNow } from '@/composables/use-now'
 
 // Schedule, runs, duration and the next run of a job as the run saw it. While the next run is in the
@@ -11,14 +11,7 @@ const props = defineProps<{ data: JobExecution }>()
 const { format, duration } = usePrettyDates()
 const now = useNow()
 
-const nextRun = computed(() => {
-    if (!hasNextRun(props.data.nextRun)) {
-        return '-'
-    }
-    const date = format(props.data.nextRun)
-    const remaining = Date.parse(props.data.nextRun) - now.value
-    return remaining > 0 ? `${date} (in ${formatCountdown(remaining)})` : date
-})
+const nextRun = computed(() => nextRunLabel(props.data.nextRun, now.value, format))
 </script>
 
 <template>
