@@ -34,6 +34,8 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
     await test.step('Verify Servers', async () => {
 
+        await page.getByRole('tab', { name: 'Servers' }).click();
+
         const region = page.getByRole('tabpanel', { name: 'Servers' });
         const table = region.getByRole('table', { name: 'Servers' });
         const rows = table.locator('tbody tr');

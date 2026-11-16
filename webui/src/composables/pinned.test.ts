@@ -174,6 +174,15 @@ describe('pinned entries', () => {
       })
 
       it.each([
+        ['/dashboard/mail/log', true],
+        ['/dashboard/mail/log/Mail%20Server', true],
+        ['/dashboard/mail/log/Gone', false],
+        ['/dashboard-demo/mail/log/Mail%20Server', true],
+      ])('mail log %s', (path, expected) => {
+        expect(available(path)).toBe(expected)
+      })
+
+      it.each([
         ['/dashboard/websocket/log', true],
         ['/dashboard/websocket/log/Chat', true],
         ['/dashboard/websocket/log/Gone', false],

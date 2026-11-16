@@ -368,9 +368,9 @@ test.describe('Connection lost: stale data is dimmed', () => {
     })
 
     test('mail body is dimmed, the theme switch is not', async ({ page }) => {
-        await openAndPauseClock(page, '/dashboard/mail/service/Mail%20Testserver')
+        await openAndPauseClock(page, '/dashboard/mail/service/Mail%20Testserver#tab-mails')
         await page.getByRole('table', { name: 'Recent Mails' }).getByRole('row').nth(1).click()
-        const body = page.getByRole('region', { name: 'Mail Body' })
+        const body = page.getByRole('region', { name: 'Mail details' }).getByRole('region', { name: 'Mail Body' })
         await expect(body.getByRole('heading', { name: 'Hello' })).toBeVisible()
 
         await disconnect(page)

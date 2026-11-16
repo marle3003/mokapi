@@ -787,7 +787,7 @@ a.search-result:focus-visible {
   width: auto;
 }
 .log-layout table.dataTable tr[aria-selected="true"] td {
-  background-color: var(--layout-selected-background);
+  background-color: var(--layout-row-selected-background);
 }
 .log-toolbar {
   display: flex;

@@ -108,10 +108,18 @@ export const metrics = [
     // Mails
     {
         name: 'mail_mails_total{service="Mail Testserver"}',
-        value: 3
+        value: 8
     },
     {
         name: 'mail_mail_timestamp{service="Mail Testserver"}',
+        value: 1652635690
+    },
+    {
+        name: 'mail_mails_total{service="Mail Second Server"}',
+        value: 4
+    },
+    {
+        name: 'mail_mail_timestamp{service="Mail Second Server"}',
         value: 1652635690
     },
     {

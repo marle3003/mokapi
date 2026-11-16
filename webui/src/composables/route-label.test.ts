@@ -66,6 +66,19 @@ describe('routeLabel', () => {
     expect(routeLabel('ldapLog-demo', {})).toBe('Requests')
   })
 
+  it('names the mail log of one mail service after the service', () => {
+    expect(routeLabel('mailServiceLog', { service: 'Mail Server' })).toBe('Mail Server mails')
+  })
+
+  it('names the mail log of all mail services "Mails"', () => {
+    expect(routeLabel('mailLog', {})).toBe('Mails')
+  })
+
+  it('treats a demo mail log like the live one', () => {
+    expect(routeLabel('mailServiceLog-demo', { service: 'Mail Server' })).toBe('Mail Server mails')
+    expect(routeLabel('mailLog-demo', {})).toBe('Mails')
+  })
+
   it('names the message log of one WebSocket service after the service', () => {
     expect(routeLabel('websocketServiceLog', { service: 'Chat' })).toBe('Chat messages')
   })

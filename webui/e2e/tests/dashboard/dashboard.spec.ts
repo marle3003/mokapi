@@ -64,16 +64,19 @@ test.describe('Dashboard', () => {
         await test.step("metric SMTP Mails",async () => {
             const metricSmtpMessages = dashboard.mail.metricSmtpMessages
             await expect(metricSmtpMessages.title).toHaveText('SMTP Mails')
-            await expect(metricSmtpMessages.value).toHaveText('3')
+            await expect(metricSmtpMessages.value).toHaveText('12')
             await expect(metricSmtpMessages.additional).not.toBeVisible() 
         })
 
         await test.step("service table SMTP",async () => {
+            // sorted by name: the second service comes first
             const smtpCells = dashboard.mail.serviceList.getByRole('cell')
-            await expect(smtpCells.nth(0)).toHaveText('Mail Testserver')
-            await expect(smtpCells.nth(1)).toHaveText('This is a sample smtp server')
-            await expect(smtpCells.nth(2)).toHaveText(formatTimestamp(1652635690))
-            await expect(smtpCells.nth(3)).toHaveText('3')
+            await expect(smtpCells.nth(0)).toHaveText('Mail Second Server')
+            await expect(smtpCells.nth(3)).toHaveText('4')
+            await expect(smtpCells.nth(4)).toHaveText('Mail Testserver')
+            await expect(smtpCells.nth(5)).toHaveText('This is a sample smtp server')
+            await expect(smtpCells.nth(6)).toHaveText(formatTimestamp(1652635690))
+            await expect(smtpCells.nth(7)).toHaveText('8')
         })
 
         await test.step('correct header nav is active', async () => {

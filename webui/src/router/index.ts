@@ -242,6 +242,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail Service – ${params.service}` },
           },
           {
+            path: 'log/:service',
+            name: getRouteName('mailServiceLog'),
+            component: dashboardView,
+            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail – ${params.service} mails` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('mailLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - Mail – Mails' }
+          },
+          {
             path: 'service/:service/maiboxes/:name',
             name: getRouteName('smtpMailbox'),
             component: dashboardView,

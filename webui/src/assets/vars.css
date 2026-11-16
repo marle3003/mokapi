@@ -123,6 +123,8 @@
     --layout-input-border:           #3a3848;
     --layout-hover-background:       #24232c;
     --layout-selected-background:    #2c2a3a;
+    /* a selected log row lies on a card, which already has --layout-selected-background */
+    --layout-row-selected-background: #413d57;
     --layout-icon-hover-background:  #1b1a20;
     --layout-icon-active-background: #21202a;
     --layout-icon-color:             #8a7f78;
@@ -240,6 +242,7 @@
     --layout-input-border:           rgba(0, 0, 0, 0.2);
     --layout-hover-background:       rgb(220, 224, 231);
     --layout-selected-background:    rgb(210, 216, 226);
+    --layout-row-selected-background: rgb(210, 216, 226);
     --layout-icon-hover-background:  rgb(218, 222, 229);
     --layout-icon-active-background: rgb(255, 255, 255);
     --layout-icon-color:             rgb(87, 96, 106);

@@ -169,6 +169,11 @@
                 "label": "Rules",
                 "source":  "mail/rules.md",
                 "path":  "/docs/mail/rules"
+              },
+              {
+                "label": "Dashboard",
+                "source": "mail/dashboard.md",
+                "path": "/docs/mail/dashboard"
               }
             ]
           }

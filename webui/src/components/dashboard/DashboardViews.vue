@@ -184,6 +184,12 @@ function isAnyServiceAvailable() {
         </div>
     </div>
 
+    <div v-if="$route.name === getRouteName('mailLog').value">
+        <div class="card-group">
+            <mails />
+        </div>
+    </div>
+
     <div v-if="$route.name === getRouteName('ldapLog').value">
         <div class="card-group">
             <ldap-requests />

@@ -19,6 +19,7 @@ const pageLabels: Record<string, string> = {
     tree: 'Faker',
     httpLog: 'Requests',
     ldapLog: 'Requests',
+    mailLog: 'Mails',
     kafkaLog: 'Messages',
     httpRequest: 'HTTP Request',
     kafkaRequest: 'Kafka Request',
@@ -70,6 +71,9 @@ export function routeLabel(routeName: string | symbol | undefined | null, params
     }
     if (name === 'kafkaServiceLog' || name === 'mqttServiceLog' || name === 'websocketServiceLog') {
         return `${params.service} messages`
+    }
+    if (name === 'mailServiceLog') {
+        return `${params.service} mails`
     }
     const nameParam = nameParams[name]
     return nameParam ? (params[nameParam] as string | undefined) : pageLabels[name]

@@ -25,6 +25,8 @@ test('Visit Mail Testserver', async ({ page }) => {
     })
 
     await test.step('Check servers', async () => {
+        await page.getByRole('tab', { name: 'Servers', exact: true }).click()
+
         const table = page.getByRole('table', { name: 'Servers' })
         await expect(table).toBeVisible()
     
@@ -114,10 +116,13 @@ test('Visit Mail Testserver', async ({ page }) => {
     })
 
     await test.step('Check mail message', async () => {
+        await page.getByRole('tab', { name: 'Mails', exact: true }).click()
         const table = page.getByRole('table', { name: 'Recent Mails' })
         await expect(table).toBeVisible()
 
+        // a click selects the mail and shows it beside the log, the full view opens with "Open as tab"
         await table.getByRole('row').nth(1).click()
+        await page.getByRole('region', { name: 'Mail details' }).getByRole('link', { name: 'Open as tab' }).click()
 
         const info = page.getByRole('region', { name: 'Info' })
         await expect(info.getByLabel('Subject')).toHaveText('A test mail')
@@ -129,6 +134,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(body.getByRole('heading')).toHaveText('Hello')
         await expect(body.getByText('Mail message from Alice')).toBeVisible()
         await expect(body.getByRole('img')).toHaveAttribute('src', /\/attachments\/icon.png$/)
+        await expect.poll(() => body.getByRole('img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
 
         const attachments = page.getByRole('region', { name: 'Attachments' })
         const foo = attachments.getByRole('link', { name: 'foo.txt' })
@@ -152,9 +158,11 @@ test('Visit plain text mail message', async ({ page }) => {
     await open()
     await tabs.mail.click()
     await page.getByRole('table', { name: 'Mail Servers' }).getByText('Mail Testserver').click()
+    await page.getByRole('tab', { name: 'Mails', exact: true }).click()
 
     const table = page.getByRole('table', { name: 'Recent Mails' })
     await table.getByRole('row').filter({ hasText: 'A plain text mail' }).click()
+    await page.getByRole('region', { name: 'Mail details' }).getByRole('link', { name: 'Open as tab' }).click()
 
     const info = page.getByRole('region', { name: 'Info' })
     await expect(info.getByLabel('Subject')).toHaveText('A plain text mail')
