@@ -456,7 +456,8 @@ const faker: Shot[] = [
     name: 'faker-home',
     file: '../webui/public/website/mock-realistic-test-data.png',
     url: `${dashboard}/faker?node=/sku`,
-    viewport: { width: 1600, height: 900 },
+    // the list scrolls to the selected node at its bottom, which has to lie inside the clip
+    viewport: { width: 1600, height: 720 },
     clip: async () => ({ x: 350, y: 115, width: 1200, height: 583 }),
     deviceScaleFactor: 1,
     website: true,

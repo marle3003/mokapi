@@ -39,6 +39,58 @@ test.describe('Faker tree', () => {
         await expect(faker.row('/city').groupMarker).toHaveCount(0)
     })
 
+    test('shows an icon per type of node', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+
+        await expect(faker.row('/city').leafMarker).toBeVisible()
+        await expect(faker.row('/person').parentMarker).toBeVisible()
+        await expect(faker.row('/billing').groupMarker).toBeVisible()
+        await expect(faker.row('/city').parentMarker).toHaveCount(0)
+        await expect(faker.row('/person').leafMarker).toHaveCount(0)
+        await expect(faker.row('/person').groupMarker).toHaveCount(0)
+    })
+
+    test('shows the custom marker next to the name', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+
+        const name = await faker.row('/frequency').element.getByText('frequency', { exact: true }).first().boundingBox()
+        const marker = await faker.row('/frequency').customMarker.boundingBox()
+        expect(marker!.x - (name!.x + name!.width)).toBeLessThan(40)
+    })
+
+    test('is a tree with levels, open state and selection', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/contact/email`)
+
+        await expect(faker.nodes).toBeVisible()
+        await expect(faker.row('/').element).toHaveAttribute('aria-level', '1')
+        await expect(faker.row('/contact').element).toHaveAttribute('aria-level', '2')
+        await expect(faker.row('/contact/email').element).toHaveAttribute('aria-level', '3')
+        await expect(faker.row('/contact').element).toHaveAttribute('aria-expanded', 'true')
+        await expect(faker.row('/person').element).toHaveAttribute('aria-expanded', 'false')
+        await expect(faker.row('/city').element).not.toHaveAttribute('aria-expanded')
+        await expect(faker.row('/contact/email').element).toHaveAttribute('aria-selected', 'true')
+        await expect(faker.row('/city').element).toHaveAttribute('aria-selected', 'false')
+    })
+
+    test('only the selected row is in the tab order', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/contact/email`)
+
+        await expect(faker.row('/contact/email').element).toHaveAttribute('tabindex', '0')
+        await expect(faker.row('/city').element).toHaveAttribute('tabindex', '-1')
+    })
+
+    test('the first row is in the tab order without a selection', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+
+        await expect(faker.row('/').element).toHaveAttribute('tabindex', '0')
+        await expect(faker.row('/city').element).toHaveAttribute('tabindex', '-1')
+    })
+
     test('opens and closes a node', async ({ page }) => {
         const faker = new FakerModel(page)
         await page.goto(fakerPath)
@@ -114,15 +166,165 @@ test.describe('Faker tree', () => {
             await route.fulfill({ response, json: tree })
         })
         await page.goto(`${fakerPath}?node=/contact/email`)
-        await expect(faker.row('/contact/email').select).toBeVisible()
+        await expect(faker.row('/contact/email').element).toBeVisible()
         await expect(faker.row('/added').element).toHaveCount(0)
 
         reloaded = true
         await faker.reload.click()
 
         await expect(faker.row('/added').element).toBeVisible()
-        await expect(faker.row('/contact/email').select).toBeVisible()
+        await expect(faker.row('/contact/email').element).toBeVisible()
         await expect(faker.detail.field('Path')).toHaveText('/contact/email')
+    })
+})
+
+test.describe('Faker tree keyboard', () => {
+    test('Down and Up move the selection and the address', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/name`)
+        await faker.row('/name').element.focus()
+
+        await page.keyboard.press('ArrowDown')
+
+        await expect(faker.row('/email').element).toBeFocused()
+        await expect(faker.row('/email').element).toHaveAttribute('aria-selected', 'true')
+        expect(faker.selectedInAddress()).toBe('/email')
+        await expect(faker.detail.field('Path')).toHaveText('/email')
+
+        await page.keyboard.press('ArrowUp')
+
+        await expect(faker.row('/name').element).toBeFocused()
+        expect(faker.selectedInAddress()).toBe('/name')
+    })
+
+    test('Down from the tab stop selects the next node', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+        await faker.row('/').element.focus()
+
+        await page.keyboard.press('ArrowDown')
+
+        expect(faker.selectedInAddress()).toBe('/name')
+    })
+
+    test('Right opens a node and then moves to its first child, Left closes it again', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/person`)
+        await faker.row('/person').element.focus()
+        await expect(faker.row('/person/name').element).toHaveCount(0)
+
+        await page.keyboard.press('ArrowRight')
+
+        await expect(faker.row('/person/name').element).toBeVisible()
+        await expect(faker.row('/person').element).toHaveAttribute('aria-expanded', 'true')
+        expect(faker.selectedInAddress()).toBe('/person')
+
+        await page.keyboard.press('ArrowRight')
+
+        await expect(faker.row('/person/name').element).toBeFocused()
+        expect(faker.selectedInAddress()).toBe('/person/name')
+
+        await page.keyboard.press('ArrowLeft')
+
+        await expect(faker.row('/person').element).toBeFocused()
+        expect(faker.selectedInAddress()).toBe('/person')
+
+        await page.keyboard.press('ArrowLeft')
+
+        await expect(faker.row('/person/name').element).toHaveCount(0)
+        await expect(faker.row('/person').element).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    test('Home and End select the first and last node', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/city`)
+        await faker.row('/city').element.focus()
+
+        await page.keyboard.press('End')
+        expect(faker.selectedInAddress()).toBe('/shipping')
+
+        await page.keyboard.press('Home')
+        expect(faker.selectedInAddress()).toBe('/')
+    })
+
+    test('keys work while a filter shows the matches', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+        await faker.filter.fill('code')
+        await expect.poll(() => faker.nodePaths()).toContain('/billing/code')
+        await faker.row('/billing').element.focus()
+
+        await page.keyboard.press('ArrowDown')
+
+        expect(faker.selectedInAddress()).toBe('/billing/code')
+        await page.keyboard.press('ArrowLeft')
+        expect(faker.selectedInAddress()).toBe('/billing')
+        await expect(faker.filter).toHaveValue('code')
+    })
+
+    test('typing in the filter does not move the selection', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/city`)
+
+        await faker.filter.focus()
+        await page.keyboard.press('ArrowDown')
+
+        expect(faker.selectedInAddress()).toBe('/city')
+    })
+})
+
+test.describe('Faker tree scrolling', () => {
+    // a short window, so the list of nodes has to scroll
+    test.use({ viewport: { width: 1280, height: 500 } })
+
+    test('shows the selected node of the address when the page opens', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/shipping/code`)
+
+        await expect.poll(() => faker.isRowVisibleInTree('/shipping/code')).toBe(true)
+        expect(await faker.nodes.evaluate(list => list.scrollTop)).toBeGreaterThan(0)
+    })
+
+    test('shows the selected node after Reload', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/shipping/code`)
+        await expect.poll(() => faker.isRowVisibleInTree('/shipping/code')).toBe(true)
+        await faker.nodes.evaluate(list => { list.scrollTop = 0 })
+        expect(await faker.isRowVisibleInTree('/shipping/code')).toBe(false)
+
+        await faker.reload.click()
+
+        await expect.poll(() => faker.isRowVisibleInTree('/shipping/code')).toBe(true)
+    })
+
+    test('shows the node of a clicked result row', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+
+        await faker.playground.path.fill('frequency')
+        await faker.playground.generate.click()
+        await faker.playground.nodeButton(1).click()
+
+        expect(faker.selectedInAddress()).toBe('/frequency')
+        await expect.poll(() => faker.isRowVisibleInTree('/frequency')).toBe(true)
+    })
+
+    test('keeps the page where it is', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/shipping/code`)
+        await expect.poll(() => faker.isRowVisibleInTree('/shipping/code')).toBe(true)
+
+        expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    })
+
+    test('shows the node that the keyboard selects', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(`${fakerPath}?node=/city`)
+        await faker.row('/city').element.focus()
+
+        await page.keyboard.press('End')
+
+        await expect.poll(() => faker.isRowVisibleInTree('/shipping')).toBe(true)
     })
 })
 
@@ -132,10 +334,10 @@ test.describe('Faker node detail', () => {
         await page.goto(fakerPath)
         await faker.row('/person').toggle.click()
 
-        await faker.row('/person/firstname').select.click()
+        await faker.row('/person/firstname').element.click()
 
         expect(faker.selectedInAddress()).toBe('/person/firstname')
-        await expect(faker.row('/person/firstname').select).toHaveAttribute('aria-current', 'true')
+        await expect(faker.row('/person/firstname').element).toHaveAttribute('aria-selected', 'true')
         await expect(faker.detail.field('Name')).toHaveText('firstname')
         await expect(faker.detail.field('Path')).toHaveText('/person/firstname')
         await expect(faker.detail.field('Attributes')).toHaveText('firstname, firstname2')
@@ -158,12 +360,12 @@ test.describe('Faker node detail', () => {
         await page.goto(`${fakerPath}?node=/contact/email`)
 
         await expect(faker.detail.field('Path')).toHaveText('/contact/email')
-        await expect(faker.row('/contact/email').select).toHaveAttribute('aria-current', 'true')
+        await expect(faker.row('/contact/email').element).toHaveAttribute('aria-selected', 'true')
 
         await page.reload()
 
         await expect(faker.detail.field('Path')).toHaveText('/contact/email')
-        await expect(faker.row('/contact/email').select).toHaveAttribute('aria-current', 'true')
+        await expect(faker.row('/contact/email').element).toHaveAttribute('aria-selected', 'true')
     })
 
     test('selecting does not add history entries and keeps the filter', async ({ page }) => {
@@ -172,8 +374,8 @@ test.describe('Faker node detail', () => {
         const historyLength = await page.evaluate(() => history.length)
         await faker.filter.fill('code')
 
-        await faker.row('/billing/code').select.click()
-        await faker.row('/shipping/code').select.click()
+        await faker.row('/billing/code').element.click()
+        await faker.row('/shipping/code').element.click()
 
         expect(await page.evaluate(() => history.length)).toBe(historyLength)
         await expect(faker.filter).toHaveValue('code')
@@ -201,7 +403,7 @@ test.describe('Faker node detail', () => {
         await expect(faker.detail.value).toHaveText(/^"BILL-\d+"$/)
 
         await faker.row('/shipping').toggle.click()
-        await faker.row('/shipping/code').select.click()
+        await faker.row('/shipping/code').element.click()
         await expect(faker.detail.value).toHaveCount(0)
         await faker.detail.generate.click()
         await expect(faker.detail.value).toHaveText(/^"SHIP-\d+"$/)
@@ -288,7 +490,7 @@ test.describe('Faker playground', () => {
 
         expect(faker.selectedInAddress()).toBe('/contact/email')
         await expect(faker.detail.field('Path')).toHaveText('/contact/email')
-        await expect(faker.row('/contact/email').select).toHaveAttribute('aria-current', 'true')
+        await expect(faker.row('/contact/email').element).toHaveAttribute('aria-selected', 'true')
     })
 
     test('shows the selected node of a result row although the filter hides it', async ({ page }) => {
@@ -300,7 +502,7 @@ test.describe('Faker playground', () => {
         await faker.playground.generate.click()
         await faker.playground.nodeButton(1).click()
 
-        await expect(faker.row('/contact/email').select).toBeVisible()
+        await expect(faker.row('/contact/email').element).toBeVisible()
         await expect(faker.filter).toHaveValue('')
     })
 
@@ -368,8 +570,8 @@ test.describe('Faker route', () => {
         await faker.playground.path.fill('customerEmail')
         const tabCount = await tabs.count()
 
-        await faker.row('/email').select.click()
-        await faker.row('/city').select.click()
+        await faker.row('/email').element.click()
+        await faker.row('/city').element.click()
 
         await expect(faker.playground.path).toHaveValue('customerEmail')
         await expect(tabs).toHaveCount(tabCount)

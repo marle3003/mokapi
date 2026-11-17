@@ -8,6 +8,9 @@ import {
   keepExpanded,
   noFilter,
   pathsToNode,
+  scrollDelta,
+  tabbablePath,
+  treeKeyAction,
   selectedNodePath,
   toggleExpanded,
   withNode,
@@ -224,6 +227,95 @@ describe('faker tree', () => {
 
     it('removes the node', () => {
       expect(withNode({ refresh: '20', node: '/email' }, undefined)).toEqual({ refresh: '20' })
+    })
+  })
+
+  describe('keyboard', () => {
+    const open = new Set(['/', '/person', '/billing'])
+    // / /email /person /person/name /person/email /billing /billing/code /shipping
+    const rows = flattenTree(tree, open)
+    const key = (current: string | undefined, k: string, toggleable = true) => treeKeyAction(rows, current, k, toggleable)
+
+    it('moves to the next and previous row', () => {
+      expect(key('/email', 'ArrowDown')).toEqual({ type: 'select', path: '/person' })
+      expect(key('/person/email', 'ArrowDown')).toEqual({ type: 'select', path: '/billing' })
+      expect(key('/person', 'ArrowUp')).toEqual({ type: 'select', path: '/email' })
+    })
+
+    it('stays at the first and last row', () => {
+      expect(key('/', 'ArrowUp')).toBeUndefined()
+      expect(key('/shipping', 'ArrowDown')).toBeUndefined()
+    })
+
+    it('moves to the first and last row with Home and End', () => {
+      expect(key('/person/name', 'Home')).toEqual({ type: 'select', path: '/' })
+      expect(key('/person/name', 'End')).toEqual({ type: 'select', path: '/shipping' })
+    })
+
+    it('starts at the first row with Down and at the last with Up when nothing is current', () => {
+      expect(key(undefined, 'ArrowDown')).toEqual({ type: 'select', path: '/' })
+      expect(key('/gone', 'ArrowUp')).toEqual({ type: 'select', path: '/shipping' })
+      expect(key(undefined, 'ArrowLeft')).toBeUndefined()
+      expect(treeKeyAction([], undefined, 'ArrowDown', true)).toBeUndefined()
+    })
+
+    it('opens a closed node with Right and moves to the first child of an open one', () => {
+      const closed = flattenTree(tree, new Set(['/']))
+      expect(treeKeyAction(closed, '/person', 'ArrowRight', true)).toEqual({ type: 'expand', path: '/person' })
+      expect(key('/person', 'ArrowRight')).toEqual({ type: 'select', path: '/person/name' })
+    })
+
+    it('does nothing with Right on a leaf', () => {
+      expect(key('/email', 'ArrowRight')).toBeUndefined()
+    })
+
+    it('closes an open node with Left and moves to the parent of a closed node or leaf', () => {
+      expect(key('/person', 'ArrowLeft')).toEqual({ type: 'collapse', path: '/person' })
+      expect(key('/person/email', 'ArrowLeft')).toEqual({ type: 'select', path: '/person' })
+      expect(key('/shipping', 'ArrowLeft')).toEqual({ type: 'select', path: '/' })
+      expect(key('/', 'ArrowLeft', true)).toEqual({ type: 'collapse', path: '/' })
+    })
+
+    it('has no parent for the root when it is not toggleable', () => {
+      expect(key('/', 'ArrowLeft', false)).toBeUndefined()
+    })
+
+    it('leaves open nodes as they are while a filter is active', () => {
+      expect(key('/person', 'ArrowLeft', false)).toEqual({ type: 'select', path: '/' })
+      expect(key('/person', 'ArrowRight', false)).toEqual({ type: 'select', path: '/person/name' })
+      const closed = flattenTree(tree, new Set(['/']))
+      expect(treeKeyAction(closed, '/person', 'ArrowRight', false)).toBeUndefined()
+    })
+
+    it('ignores other keys', () => {
+      expect(key('/email', 'a')).toBeUndefined()
+    })
+
+    it('can reach the selected row with Tab, otherwise the first', () => {
+      expect(tabbablePath(rows, '/person/email')).toBe('/person/email')
+      expect(tabbablePath(rows, '/hidden')).toBe('/')
+      expect(tabbablePath(rows, undefined)).toBe('/')
+      expect(tabbablePath([], undefined)).toBeUndefined()
+    })
+  })
+
+  describe('scrollDelta', () => {
+    const container = { top: 100, bottom: 200 }
+
+    it('is 0 for an item that is visible', () => {
+      expect(scrollDelta({ top: 120, bottom: 140 }, container)).toBe(0)
+    })
+
+    it('scrolls up to an item above', () => {
+      expect(scrollDelta({ top: 80, bottom: 100 }, container)).toBe(-20)
+    })
+
+    it('scrolls down to an item below', () => {
+      expect(scrollDelta({ top: 190, bottom: 230 }, container)).toBe(30)
+    })
+
+    it('shows the top of an item taller than the list', () => {
+      expect(scrollDelta({ top: 150, bottom: 400 }, container)).toBe(50)
     })
   })
 })

@@ -27,7 +27,7 @@ function generate() {
         <div class="mb-2">
             <label for="faker-path" class="label">Property path</label>
             <input id="faker-path" v-model="pathText" type="text" class="form-control form-control-sm"
-                placeholder="user.email" autocomplete="off" spellcheck="false" />
+                placeholder="customerEmail" autocomplete="off" spellcheck="false" />
         </div>
         <div class="mb-2">
             <label for="faker-schema" class="label">Schema</label>

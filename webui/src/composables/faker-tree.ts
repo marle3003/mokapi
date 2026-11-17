@@ -137,3 +137,64 @@ export function withNode(query: LocationQuery, path: string | undefined): Locati
     }
     return result
 }
+
+export interface TreeKeyAction {
+    type: 'select' | 'expand' | 'collapse'
+    path: string
+}
+
+// The tree can be used with the keys of the WAI-ARIA tree pattern. `current` is the node that has
+// the focus. Up and Down move to the neighbour row, Home and End to the first and last row. Right
+// opens a closed node and otherwise moves to its first child, Left closes an open node and
+// otherwise moves to the parent. While a filter shows the matches open (`toggleable` is false)
+// nodes stay as they are. Undefined if the key does nothing.
+export function treeKeyAction(rows: readonly TreeRow[], current: string | undefined, key: string, toggleable: boolean): TreeKeyAction | undefined {
+    const index = rows.findIndex(row => row.node.path === current)
+    const select = (i: number): TreeKeyAction | undefined => rows[i] && { type: 'select', path: rows[i].node.path }
+    if (index < 0) {
+        return key === 'ArrowDown' || key === 'Home' ? select(0)
+            : key === 'ArrowUp' || key === 'End' ? select(rows.length - 1)
+            : undefined
+    }
+    const row = rows[index]
+    switch (key) {
+        case 'ArrowDown': return select(index + 1)
+        case 'ArrowUp': return select(index - 1)
+        case 'Home': return select(0)
+        case 'End': return select(rows.length - 1)
+        case 'ArrowRight':
+            if (!row.hasChildren) {
+                return undefined
+            }
+            return row.expanded ? select(index + 1) : toggleable ? { type: 'expand', path: row.node.path } : undefined
+        case 'ArrowLeft': {
+            if (row.hasChildren && row.expanded && toggleable) {
+                return { type: 'collapse', path: row.node.path }
+            }
+            for (let i = index - 1; i >= 0; i--) {
+                if (rows[i].depth < row.depth) {
+                    return select(i)
+                }
+            }
+            return undefined
+        }
+    }
+    return undefined
+}
+
+// Only one row can be reached with the Tab key (roving tabindex): the selected one, otherwise the first.
+export function tabbablePath(rows: readonly TreeRow[], selected: string | undefined): string | undefined {
+    return rows.some(row => row.node.path === selected) ? selected : rows[0]?.node.path
+}
+
+// How far a list has to scroll to show the whole item (0 if it is visible). Both are given as
+// positions on the page, so only the list moves and not the page.
+export function scrollDelta(item: { top: number, bottom: number }, container: { top: number, bottom: number }): number {
+    if (item.top < container.top) {
+        return item.top - container.top
+    }
+    if (item.bottom > container.bottom) {
+        return Math.min(item.bottom - container.bottom, item.top - container.top)
+    }
+    return 0
+}

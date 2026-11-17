@@ -222,7 +222,9 @@ the API. See [Using Mokapi Dashboard](/docs/get-started/dashboard.md#faker) for 
 The Faker tree starts with a root row. Click the chevron of a node to open or close its
 children, and click the node to show its details: name, path, attributes, weight, dependencies
 and whether it is custom. A folder icon marks a node that only groups its children and has no
-fake function. A person icon marks a node that a script added or changed.
+fake function. A person icon marks a node that a script added or changed. You can also move
+through the tree with the arrow keys: Up and Down select the previous and next node, Right and
+Left open, close or step to the child or parent.
 
 Type in the filter field to search by name or attribute. While a filter is active, the matches
 are shown open. **Custom only** hides everything except the nodes that your scripts changed, for

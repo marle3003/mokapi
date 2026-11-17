@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from '@/router'
 import { useFetch } from '@/composables/fetch'
@@ -18,6 +18,7 @@ const router = useRouter()
 const response = useFetch('/api/faker/tree', undefined, false, false)
 const root = computed<FakerNode | undefined>(() => response.data ?? undefined)
 
+const treeList = ref<InstanceType<typeof FakerTreeList>>()
 const filter = ref<TreeFilter>({ ...noFilter })
 const expanded = ref<Set<string>>(new Set())
 const selectedPath = computed(() => selectedNodePath(route.query))
@@ -29,15 +30,18 @@ const rows = computed(() => filtered.value
     ? flattenTree(filtered.value.root, filtering.value ? filtered.value.expand : expanded.value)
     : [])
 
-// The first level is open at the start. A reload keeps the open nodes that still exist, the selected node is always shown.
+// The first level is open at the start. A reload keeps the open nodes that still exist, the selected node is always shown
+// and scrolled into view (on load, after Reload and when the selection changes).
 let loaded = false
-watch([root, selectedPath], () => {
+watch([root, selectedPath], async () => {
     if (!root.value) {
         return
     }
     const open = loaded ? keepExpanded(expanded.value, root.value) : initialExpanded(root.value)
     loaded = true
     expanded.value = new Set([...open, ...(selectedPath.value ? pathsToNode(selectedPath.value) : [])])
+    await nextTick()
+    treeList.value?.reveal()
 }, { immediate: true })
 
 // replace: selecting a node is no navigation, the history keeps no entry for it
@@ -67,7 +71,7 @@ function selectFromResult(path: string) {
                         </div>
                         <button type="button" class="btn btn-outline-secondary btn-compact" @click="response.refresh()">Reload</button>
                     </div>
-                    <faker-tree-list v-if="rows.length" :rows="rows" :selected="selectedPath" :toggleable="!filtering"
+                    <faker-tree-list v-if="rows.length" ref="treeList" :rows="rows" :selected="selectedPath" :toggleable="!filtering"
                         @select="select" @toggle="path => expanded = toggleExpanded(expanded, path)" />
                     <p v-else-if="root" class="faker-hint">No nodes match</p>
                     <p v-else-if="response.error" class="faker-hint">The tree could not be loaded: {{ response.error }}</p>
