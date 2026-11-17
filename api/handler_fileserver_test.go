@@ -99,11 +99,11 @@ func TestHandler_FileServer(t *testing.T) {
 			},
 		},
 		{
-			name:   "request jpg",
+			name:   "request docs image",
 			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				// docs images are bundled with a hashed file name
-				images, err := fs.Glob(webui.App, "dist/assets/*.jpg")
+				images, err := fs.Glob(webui.App, "dist/assets/*.png")
 				require.NoError(t, err)
 				require.NotEmpty(t, images)
 				try.Handler(t,
