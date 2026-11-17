@@ -110,6 +110,7 @@ describe('pinned entries', () => {
       '/dashboard/search',
       '/dashboard/jobs',
       '/dashboard/configs',
+      '/dashboard/faker',
       '/dashboard/tree',
       '/dashboard/http',
       '/dashboard/kafka',

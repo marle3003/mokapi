@@ -124,7 +124,7 @@ describe('routeLabel', () => {
     ['job', 'Job'],
     ['configs', 'Configs'],
     ['config', 'Config'],
-    ['tree', 'Faker'],
+    ['faker', 'Faker'],
     ['httpRequest', 'HTTP Request'],
     ['kafkaMessage', 'Kafka Message'],
     ['smtpMail', 'Mail'],
@@ -135,7 +135,7 @@ describe('routeLabel', () => {
 
   it('treats a demo route like the live route', () => {
     expect(routeLabel('kafkaTopic-demo', { topic: 'orders' })).toBe('orders')
-    expect(routeLabel('tree-demo', {})).toBe('Faker')
+    expect(routeLabel('faker-demo', {})).toBe('Faker')
     expect(routeLabel('job-demo', { id: 'x' })).toBe('Job')
   })
 

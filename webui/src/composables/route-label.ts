@@ -17,7 +17,7 @@ const pageLabels: Record<string, string> = {
     job: 'Job',
     configs: 'Configs',
     config: 'Config',
-    tree: 'Faker',
+    faker: 'Faker',
     httpLog: 'Requests',
     ldapLog: 'Requests',
     mailLog: 'Mails',

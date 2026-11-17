@@ -466,6 +466,11 @@ describe('dashboard tabs', () => {
       expect(tabIdentity('/dashboard/jobs?a=1&job=abc&refresh=5&b=2')).toBe('/dashboard/jobs?a=1&b=2')
     })
 
+    it('removes the selected Faker node like the selected request', () => {
+      expect(tabIdentity('/dashboard/faker?node=/person/email')).toBe('/dashboard/faker')
+      expect(tabIdentity('/dashboard/faker?a=1&node=/email&refresh=5&b=2')).toBe('/dashboard/faker?a=1&b=2')
+    })
+
     it('keeps a parameter that only starts with a view-state name', () => {
       expect(tabIdentity('/dashboard/search?requests=1&refreshing=2')).toBe('/dashboard/search?requests=1&refreshing=2')
     })
@@ -493,6 +498,11 @@ describe('dashboard tabs', () => {
       expect(viewKey('/dashboard/jobs?job=abc')).toBe('/dashboard/jobs')
       expect(viewKey('/dashboard/jobs?job=abc&refresh=5')).toBe('/dashboard/jobs?refresh=5')
       expect(viewKey('/dashboard/jobs?a=1&job=abc&b=2')).toBe('/dashboard/jobs?a=1&b=2')
+    })
+
+    it('stays the same when a Faker node is selected, so filter and playground stay', () => {
+      expect(viewKey('/dashboard/faker?node=/person/email')).toBe('/dashboard/faker')
+      expect(viewKey('/dashboard/faker?node=/email&refresh=5')).toBe('/dashboard/faker?refresh=5')
     })
 
     it('still changes with the refresh interval and the hash', () => {

@@ -39,7 +39,7 @@ import Message from '@/components/Message.vue'
 import JobsPage from '@/components/dashboard/job/JobsPage.vue'
 import Job from '@/components/dashboard/job/Job.vue'
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
-import FakerTree from '@/components/dashboard/FakerTree.vue'
+import FakerExplorer from '@/components/dashboard/faker/FakerExplorer.vue'
 
 import Config from '@/components/dashboard/Config.vue'
 import WebsocketService from '@/components/dashboard/websocket/WebsocketService.vue'
@@ -241,11 +241,7 @@ function isAnyServiceAvailable() {
             <config-card />
         </div>
     </div>
-    <div v-if="$route.name === getRouteName('tree').value">
-        <div class="card-group">
-            <faker-tree v-if="$route.name === 'tree'"></faker-tree>
-        </div>
-    </div>
+    <faker-explorer v-if="$route.name === getRouteName('faker').value" />
 
     <div v-if="$route.name === getRouteName('search').value">
         <search v-if="$route.name === 'search'"></search>

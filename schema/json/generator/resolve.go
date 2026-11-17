@@ -38,13 +38,13 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 	}
 
 	s := req.Schema
-	if f, ok := nullable(s); ok {
+	if f, ok := nullable(req); ok {
 		return f, nil
 	}
 
 	if err := r.guardLoopLimit(s); err != nil {
 		if s.IsNullable() {
-			return nullFaker, nil
+			return newNullFaker(req), nil
 		}
 		return nil, err
 	}
@@ -96,13 +96,13 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		}
 	}
 
-	n := findBestMatch(g.root, req)
+	n, tokens := findBestMatch(g.root, req)
 	if n == g.root.defaultNode {
 		path := tokenize(req.Path)
-		n = findBestMatch(g.root, req.WithPath(path))
+		n, tokens = findBestMatch(g.root, req.WithPath(path))
 	}
 
-	return newFakerWithFallback(n, req), nil
+	return newFakerWithFallback(n, tokens, req), nil
 }
 
 func (r *resolver) guardLoopLimit(s *schema.Schema) error {
@@ -124,30 +124,31 @@ func (r *resolver) guardLoopLimit(s *schema.Schema) error {
 	return nil
 }
 
-func findBestMatch(root *Node, r *Request) *Node {
+// findBestMatch returns the best matching node and the path tokens the match was made with.
+func findBestMatch(root *Node, r *Request) (*Node, []string) {
 	for {
-		if match := root.findBestMatch(r); match != nil {
-			return match
+		if match, tokens := root.findBestMatch(r); match != nil {
+			return match, tokens
 		}
 		if len(r.Path) == 0 {
-			return root.defaultNode
+			return root.defaultNode, nil
 		}
 		r = r.shift()
 	}
 }
 
-func (n *Node) findBestMatch(r *Request) *Node {
+func (n *Node) findBestMatch(r *Request) (*Node, []string) {
 	token := r.NextToken()
 	if token == "" && n.Name != "root" && n.Fake != nil {
-		return n
+		return n, nil
 	}
 
 	for _, child := range n.Children {
 		for _, attr := range child.Attributes {
 			if attr == "*" || strings.EqualFold(attr, token) {
-				match := child.findBestMatch(r.shift())
+				match, tokens := child.findBestMatch(r.shift())
 				if match != nil {
-					return match
+					return match, prependToken(token, tokens)
 				}
 			}
 		}
@@ -157,9 +158,9 @@ func (n *Node) findBestMatch(r *Request) *Node {
 		singular := g.inflector.Singular(token)
 		if singular != token {
 			r.Path[0] = singular
-			match := n.findBestMatch(r)
+			match, tokens := n.findBestMatch(r)
 			if match != nil {
-				return match
+				return match, tokens
 			}
 		}
 	}
@@ -172,13 +173,20 @@ func (n *Node) findBestMatch(r *Request) *Node {
 			sb.WriteString(p)
 		}
 		merged := r.WithPath([]string{sb.String()})
-		match := n.findBestMatch(merged)
+		match, tokens := n.findBestMatch(merged)
 		if match != nil {
-			return match
+			return match, tokens
 		}
 	}
 
-	return nil
+	return nil, nil
+}
+
+func prependToken(token string, tokens []string) []string {
+	if token == "" {
+		return tokens
+	}
+	return append([]string{token}, tokens...)
 }
 
 func tokenize(path []string) []string {
@@ -216,13 +224,11 @@ func (e *RecursionGuard) Error() string {
 	return fmt.Sprintf("recursion in object path found but schema does not allow null: %v", e.s)
 }
 
-func nullable(s *schema.Schema) (*faker, bool) {
-	if s != nil && s.IsNullable() {
+func nullable(r *Request) (*faker, bool) {
+	if s := r.Schema; s != nil && s.IsNullable() {
 		n := gofakeit.Float32Range(0, 1)
 		if n < 0.05 {
-			return newFaker(func() (any, error) {
-				return nil, nil
-			}), true
+			return newNullFaker(r), true
 		}
 	}
 	return nil, false
@@ -235,6 +241,7 @@ func useFromContext(r *Request) (*faker, bool) {
 			p := parser.Parser{Schema: r.Schema}
 			if v, err := p.Parse(v); err == nil {
 				return newFaker(func() (any, error) {
+					r.recordSource(SourceContext, v)
 					return v, nil
 				}), true
 			}
@@ -243,6 +250,7 @@ func useFromContext(r *Request) (*faker, bool) {
 					if _, err := p.Parse(arr[0]); err == nil {
 						return newFaker(func() (any, error) {
 							i := r.g.rand.Intn(len(arr))
+							r.recordSource(SourceContext, arr[i])
 							return arr[i], nil
 						}), true
 					}

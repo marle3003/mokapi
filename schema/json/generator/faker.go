@@ -7,18 +7,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	nullFaker = &faker{fake: func() (any, error) {
-		return nil, nil
-	}}
-)
-
 type faker struct {
 	fake fakeFunc
 	node *Node
+	// tokens are the path tokens node was matched with
+	tokens []string
 }
 
-func newFakerWithFallback(n *Node, r *Request) *faker {
+func newFakerWithFallback(n *Node, tokens []string, r *Request) *faker {
 	return &faker{
 		fake: func() (any, error) {
 			if n.Fake == nil {
@@ -37,14 +33,25 @@ func newFakerWithFallback(n *Node, r *Request) *faker {
 				}
 				return fakeBySchema(r)
 			}
+			if n != g.root.defaultNode {
+				r.recordNode(n, tokens, v)
+			}
 			return v, nil
 		},
-		node: n,
+		node:   n,
+		tokens: tokens,
 	}
 }
 
 func newFaker(f fakeFunc) *faker {
 	return &faker{fake: f}
+}
+
+func newNullFaker(r *Request) *faker {
+	return newFaker(func() (any, error) {
+		r.recordSource(SourceNull, nil)
+		return nil, nil
+	})
 }
 
 func fakeWithRetries(attempts int, fake func() error) error {

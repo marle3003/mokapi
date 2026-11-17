@@ -32,7 +32,7 @@ The icons of the activity bar open the main areas:
 | Search   | Shows the search panel in the sidebar. Click it again to collapse or expand the sidebar. Shown only if search is enabled, not in the demo. |
 | Jobs     | Opens the scheduled jobs as a tab. Always shown.                                    |
 | Configs  | Opens all configuration files as a tab.                                             |
-| Faker    | Opens the Faker tree as a tab. Shown only in the live dashboard, not in the demo.   |
+| Faker    | Opens the Faker explorer as a tab, with the tree, a playground and the node details. Shown only in the live dashboard, not in the demo. |
 
 Press `/` anywhere in the dashboard to open the search panel and focus its input. If the sidebar
 is collapsed, Mokapi expands it, or opens the overlay in a narrow window. In the Classic view,
@@ -307,6 +307,25 @@ it after a reload.
 Auto refresh and **Pause** work as in the [mail log](/docs/mail/dashboard.md#pause-the-log).
 **Pause** is only shown while auto refresh is on. The demo dashboard has no Pause button. In the Classic view, the log has the same panel, filter and
 **Pause** button.
+
+### Faker
+
+The Faker page shows the tree of nodes that Mokapi uses to generate data, and lets you try the
+generator. See [Validate in the Dashboard](/docs/get-started/test-data.md#validate-in-the-dashboard)
+for a walkthrough.
+
+<img src="/docs/get-started/dashboard-faker-explorer.png" width="700" alt="The Faker page with the tree, the playground and the details of a node" />
+
+The page has three cards:
+
+| Card         | Description                                                                                  |
+|--------------|----------------------------------------------------------------------------------------------|
+| Faker tree   | The nodes with their attributes. Filter by name or attribute, switch on **Custom only** to show only nodes changed by a script, or click **Reload** to fetch the tree again. |
+| Playground   | Enter a property path and a schema, click **Generate** and see the value and which node produced each part of it. |
+| Node details | Name, path, attributes, weight, dependencies and whether the node is custom. **Generate** creates a value from this node. |
+
+Scripts can add and change nodes while Mokapi runs, so the page doesn't refresh by itself. Click
+**Reload** to see the current tree. The selected node is part of the address, so you can share it.
 
 ### Generate sample data from the specification
 

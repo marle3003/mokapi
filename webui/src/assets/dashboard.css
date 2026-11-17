@@ -996,6 +996,146 @@ a.search-result:focus-visible {
   }
 }
 
+/* Faker explorer: the tree beside the playground and the node detail */
+.faker-layout {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+.faker-tree-column {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.faker-tree-column > .card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.faker-side {
+  flex: 1.4 1 0;
+  min-width: 0;
+}
+.faker-side .card-group {
+  display: block;
+}
+.dashboard .faker-side .card-group .card {
+  width: auto;
+}
+.faker-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.faker-toolbar input[type='search'] {
+  flex: 1 1 12rem;
+  width: auto;
+}
+.faker-toolbar .form-switch {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.faker-hint {
+  color: var(--layout-text-subtle);
+}
+.faker-nodes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: calc(100vh - var(--header-height) - 12rem);
+  overflow-y: auto;
+}
+.faker-node-row {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+.faker-node-row:hover {
+  background-color: var(--layout-hover-background);
+}
+.faker-node-row.selected {
+  background-color: var(--layout-selected-background);
+  box-shadow: inset 2px 0 0 var(--layout-accent);
+}
+.faker-toggle {
+  flex: none;
+  width: 1.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--layout-text-subtle);
+  padding: 0;
+}
+.faker-node {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--layout-text);
+  text-align: left;
+  font-size: 0.85rem;
+}
+.faker-toggle:focus-visible,
+.faker-node:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+/* a node that only groups its children */
+.faker-node.grouping .faker-node-name {
+  color: var(--layout-text-muted);
+  font-style: italic;
+}
+.faker-node-attributes {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--layout-text-subtle);
+  font-size: 0.75rem;
+}
+.faker-node .bi-person-fill-gear {
+  margin-left: auto;
+  color: var(--layout-accent);
+}
+.faker-playground .label {
+  display: block;
+  font-size: 0.7rem;
+  margin: 0 0 0.3rem;
+  color: var(--color-text-light);
+}
+.faker-value {
+  margin: 0 0 0.5rem;
+  max-height: 16rem;
+  overflow: auto;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.faker-matches .faker-node-link {
+  padding: 0;
+  font-size: inherit;
+  text-align: left;
+}
+.faker-source {
+  margin-left: 0.4rem;
+  color: var(--layout-text-subtle);
+  font-size: 0.75rem;
+}
+
+@media only screen and (max-width: 767.98px) {
+  /* the playground and the detail follow the tree */
+  .faker-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .faker-nodes {
+    max-height: 24rem;
+  }
+}
+
 /* Connection lost: dim the data that may be stale. Controls, headings and labels keep their look and
    everything stays clickable (no pointer-events). Navigation such as search results is not dimmed.
    Opacity compounds, so only leaf values are dimmed: the value after a label is skipped when it

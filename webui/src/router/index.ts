@@ -438,10 +438,15 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         }
       },
       {
-        path: 'tree',
-        name: getRouteName('tree'),
+        path: 'faker',
+        name: getRouteName('faker'),
         component: dashboardView,
-        meta: { title: 'Dashboard - Tree' }
+        meta: { title: 'Dashboard - Faker' }
+      },
+      {
+        // the former path of the Faker view, kept for pinned tabs and links
+        path: 'tree',
+        redirect: to => ({ name: getRouteName('faker'), query: to.query, hash: to.hash })
       },
     ]
   }

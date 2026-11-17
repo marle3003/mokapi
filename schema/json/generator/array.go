@@ -35,15 +35,17 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		}
 		if len(s.Items.Enum) > 0 && (s.UniqueItems != nil && *s.UniqueItems) {
 			index := gofakeit.Number(0, len(s.Items.Enum)-1)
+			itemReq := req.property(itemSegment)
 			item = newFaker(func() (any, error) {
 				index = (index + 1) % len(s.Items.Enum)
+				itemReq.recordSource(SourceEnum, s.Items.Enum[index])
 				return s.Items.Enum[index], nil
 			})
 		}
 	}
 	if item == nil {
 		req.examples = examplesFromRequest(req)
-		item, err = r.resolve(req.With(path, s.Items, itemsFromExample(req)), true)
+		item, err = r.resolve(req.With(path, s.Items, itemsFromExample(req)).property(itemSegment), true)
 	}
 	if err != nil {
 		var guard *RecursionGuard
@@ -117,7 +119,7 @@ func fakeArray(r *Request, fakeItem *faker) (any, error) {
 		r.Context.Snapshot()
 
 		prefixItem := newFaker(func() (any, error) {
-			return fakeBySchema(r.WithSchema(ps))
+			return fakeBySchema(r.WithSchema(ps).property(itemSegment))
 		})
 
 		var v any
@@ -157,7 +159,7 @@ func fakeArray(r *Request, fakeItem *faker) (any, error) {
 			return nil, err
 		}
 		containsFaker = newFaker(func() (any, error) {
-			return fakeBySchema(r.WithSchema(s.Contains))
+			return fakeBySchema(r.WithSchema(s.Contains).property(itemSegment))
 		})
 		containsNum = gofakeit.Number(minContains, maxContains) - containsNum
 		// Shuffle the array so the contains items are randomly distributed.
@@ -306,9 +308,9 @@ func findWithPlural(req *Request) (*faker, error) {
 	}
 
 	path := tokenize(req.Path)
-	n := findBestMatch(g.root, req.WithPath(path))
+	n, tokens := findBestMatch(g.root, req.WithPath(path))
 	if n != nil && !n.isRootOrDefault() && n.Fake != nil {
-		return newFakerWithFallback(n, req), nil
+		return newFakerWithFallback(n, tokens, req), nil
 	}
 	return nil, NotSupported
 }

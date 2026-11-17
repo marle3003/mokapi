@@ -362,7 +362,7 @@ function showImage(evt: MouseEvent) {
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img src="/mock-realistic-test-data.png" alt="Mokapi Faker decision tree for generating realistic random data." />
+            <img src="/mock-realistic-test-data.png" alt="Mokapi dashboard showing the Faker explorer with the generated value and the node that produced each property." />
           </div>
         </div>
 

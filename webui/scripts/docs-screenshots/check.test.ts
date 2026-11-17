@@ -78,4 +78,10 @@ describe('compareShots', () => {
   it('reports a shot that no page references', () => {
     expect(compareShots([shot], [], []).shotsWithoutReference).toEqual([shot])
   })
+
+  it('does not report a website shot without reference in docs', () => {
+    const home = { name: 'faker-home', file: '../webui/public/website/home.png', website: true }
+
+    expect(compareShots([home], [], []).shotsWithoutReference).toEqual([])
+  })
 })

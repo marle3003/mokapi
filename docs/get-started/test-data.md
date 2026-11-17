@@ -211,14 +211,56 @@ timestamp instead of a static mock value.
 
 ## Validate in the Dashboard
 
-The Mokapi dashboard lets you:
+Open the dashboard at `http://localhost:8080` and click Faker in the activity bar. The page
+shows which node generates a value, so you can check that your own node is used before you call
+the API. See [Using Mokapi Dashboard](/docs/get-started/dashboard.md#faker) for an overview.
 
-- **Generate sample data:** See what Mokapi produces for your schemas
-- **Validate against spec:** Ensure mock data matches your OpenAPI definition
-- **Inspect requests:** View generated responses for different request parameters
-- **Test edge cases:** Verify your custom generators work as expected
+<img src="/docs/get-started/dashboard-faker-explorer.png" width="700" alt="The Faker page with the tree, the playground and the details of a node" />
 
-Access the dashboard at `http://localhost:8080` when Mokapi is running.
+### Find your node
+
+The Faker tree starts with a root row. Click the chevron of a node to open or close its
+children, and click the node to show its details: name, path, attributes, weight, dependencies
+and whether it is custom. A folder icon marks a node that only groups its children and has no
+fake function. A person icon marks a node that a script added or changed.
+
+Type in the filter field to search by name or attribute. While a filter is active, the matches
+are shown open. **Custom only** hides everything except the nodes that your scripts changed, for
+example the `Frequency` node from the example above. The tree is loaded when you open the page.
+Click **Reload** after a script has changed it.
+
+### Test a value
+
+The playground generates a value and explains how Mokapi got it. Enter a property path, a
+schema, or both, and click **Generate**:
+
+| Field         | Example                                    |
+|---------------|--------------------------------------------|
+| Property path | `customerEmail`                            |
+| Schema        | `{"type": "string", "format": "email"}`    |
+
+The property path is a dot-separated path such as `address.city`, the schema is JSON. Below the
+value, the Matches table has one row for each generated value:
+
+| Column        | Description                                                                          |
+|---------------|--------------------------------------------------------------------------------------|
+| Property path | The location of the value. `tags[]` is an array item, `*` a value of `additionalProperties`. |
+| Node          | The path of the node that produced the value. Click it to show the node in the tree. |
+| Tokens        | The words of the property name that Mokapi matched against the tree.                 |
+| Value         | The generated value                                                                  |
+
+For example, the property path `customerEmail` resolves to the node `/email` with the token
+`email`.
+
+Some rows show `-` as Node and a note such as "from enum". The value didn't come from a node but
+from the schema: `enum`, `const`, `examples`, the context or `null`. If no node fits, the node is
+`fakeBySchema`, the fallback that generates a value from the schema type and format alone. If
+your node doesn't appear, check its `attributes` and the tokens of the row.
+
+``` box=info
+If a custom `fake` function calls `fake()` again, Mokapi doesn't break down the nested values.
+The Matches table shows only the row of the outer node.
+```
 
 ## What's Next?
 

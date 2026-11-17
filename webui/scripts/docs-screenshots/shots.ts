@@ -22,6 +22,10 @@ export type Shot = {
   steps?: (page: Page) => Promise<void>
   clip?: (page: Page) => Promise<{ x: number; y: number; width: number; height: number }>
   viewport?: { width: number; height: number }
+  /** 2 by default; 1 for images shown at their pixel size */
+  deviceScaleFactor?: number
+  /** used by the website, not by a docs page: `file` points out of docs/ and `--check` doesn't expect a reference */
+  website?: boolean
 }
 
 // panels next to a log need more width than the default 1400 px
@@ -423,4 +427,44 @@ const ldap: Shot[] = [
   },
 ]
 
-export const shots: Shot[] = [...getStarted, ...http, ...kafka, ...mqtt, ...websocket, ...mail, ...ldap]
+// ---- faker explorer: get-started/dashboard.md, test-data.md and the home page ----
+
+// customerEmail resolves to the email node (customerEmailAddress would not), sku to the custom node
+// of demo-configs/faker.ts
+const orderLineSchema = (...properties: string[]) =>
+  JSON.stringify({ type: 'object', properties: Object.fromEntries(properties.map((name) => [name, { type: 'string' }])) })
+
+async function generateOrderLine(page: Page, schema: string) {
+  const playground = page.getByRole('region', { name: 'Playground' })
+  await playground.getByLabel('Schema').fill(schema)
+  await playground.getByRole('button', { name: 'Generate' }).click()
+  await playground.getByRole('table', { name: 'Matches' }).locator('tbody tr').first().waitFor()
+}
+
+const faker: Shot[] = [
+  {
+    name: 'faker-explorer',
+    file: 'get-started/dashboard-faker-explorer.png',
+    url: `${dashboard}/faker?node=/sku`,
+    viewport: { width: 1600, height: 1000 },
+    steps: async (page) => {
+      await page.getByRole('region', { name: 'Node details' }).getByText('/sku', { exact: true }).waitFor()
+      await generateOrderLine(page, orderLineSchema('customerEmail', 'firstName', 'city', 'sku'))
+    },
+  },
+  {
+    name: 'faker-home',
+    file: '../webui/public/website/mock-realistic-test-data.png',
+    url: `${dashboard}/faker?node=/sku`,
+    viewport: { width: 1600, height: 900 },
+    clip: async () => ({ x: 350, y: 115, width: 1200, height: 583 }),
+    deviceScaleFactor: 1,
+    website: true,
+    steps: async (page) => {
+      await page.getByRole('region', { name: 'Node details' }).getByText('/sku', { exact: true }).waitFor()
+      await generateOrderLine(page, orderLineSchema('customerEmail', 'firstName', 'sku'))
+    },
+  },
+]
+
+export const shots: Shot[] = [...getStarted, ...faker, ...http, ...kafka, ...mqtt, ...websocket, ...mail, ...ldap]

@@ -21,7 +21,7 @@ export function isShadowedSelection(query: LocationQuery, key: string): boolean 
     return rawId(query, key) !== undefined && selectedLogId(query, key) === undefined
 }
 
-function rawId(query: LocationQuery, key: string): string | undefined {
+export function rawId(query: LocationQuery, key: string): string | undefined {
     const value = query[key]
     const id = Array.isArray(value) ? value[0] : value
     return id || undefined

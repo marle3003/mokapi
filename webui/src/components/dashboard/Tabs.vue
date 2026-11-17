@@ -24,7 +24,7 @@ const tabItems = computed(() => [
   { text: 'LDAP', isVisible: isServiceAvailable('ldap'), to: { name: getRouteName('ldap').value }  },
   { text: 'Jobs', isVisible: sections.value.jobs, to: { name: getRouteName('jobs').value }  },
   { text: 'Configs', isVisible: true, to: { name: getRouteName('configs').value }  },
-  { text: 'Faker', isVisible: sections.value.faker, to: { name: getRouteName('tree').value }  },
+  { text: 'Faker', isVisible: sections.value.faker, to: { name: getRouteName('faker').value }  },
   { text: 'Search', isVisible: sections.value.search, to: { name: getRouteName('search').value }  },
 ]);
 const route = useRoute();

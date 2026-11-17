@@ -1,6 +1,6 @@
 export type Placeholder = { file: string; line: number; description: string }
 export type ImageRef = { file: string; line: number; src: string }
-export type ShotTarget = { name: string; file: string }
+export type ShotTarget = { name: string; file: string; website?: boolean }
 export type CheckReport = {
   placeholders: Placeholder[]
   imagesWithoutShot: ImageRef[]
@@ -36,6 +36,7 @@ export function compareShots(shots: ShotTarget[], placeholders: Placeholder[], i
   return {
     placeholders,
     imagesWithoutShot: images.filter((image) => DASHBOARD_PAGES.includes(image.file) && !isShotTarget(image.src)),
-    shotsWithoutReference: shots.filter((shot) => !images.some((image) => image.src === shot.file)),
+    // website shots are used by the website (src/views), not by a docs page
+    shotsWithoutReference: shots.filter((shot) => !shot.website && !images.some((image) => image.src === shot.file)),
   }
 }

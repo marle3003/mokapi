@@ -1,4 +1,4 @@
-import { app, sleep } from 'mokapi'
+import { app, sleep, type HttpResponse } from 'mokapi'
 import { get, post, fetch } from 'mokapi/http'
 import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './http'
@@ -9,6 +9,7 @@ import { services as websocketServices, events as websocketEvents } from './webs
 import { sum, max } from './metrics'
 import { getInfo } from './helpers'
 import { jobs, jobList, config as jobConfig } from './jobs'
+import { tree as fakerTree, explain, fakeOfNode } from './faker'
 import { match, type Query } from '../../lib/events'
 
 export default async function() {
@@ -71,6 +72,29 @@ export default async function() {
             res.body = resp.body
             res.data = null
         })
+        .operation('fakerTree', (_, res) => {
+            res.data = fakerTree
+        })
+        .operation('fakerFake', (req, res) => {
+            const result = explain(req.body?.path, req.body?.schema)
+            if (result.error) {
+                badRequest(res, result.error)
+                return
+            }
+            res.data = result
+        })
+        .operation('fakerNodeFake', (req, res) => {
+            const result = fakeOfNode(req.query['path'])
+            if (!result.found) {
+                res.rebuild(404)
+                return
+            }
+            if (result.error) {
+                badRequest(res, result.error)
+                return
+            }
+            res.data = result.value
+        })
         .operation('jobs', (req, res) => {
             res.data = jobList
         })
@@ -117,6 +141,13 @@ const configs = [
 
 const configData: Record<string, { data: string, headers: Record<string, string> }> = {}
 
+
+// The generator reports its errors as text.
+function badRequest(res: HttpResponse, message: string) {
+    res.statusCode = 400
+    res.headers['Content-Type'] = 'text/plain'
+    res.body = message
+}
 
 function getServices(type: string) {
     const services = []

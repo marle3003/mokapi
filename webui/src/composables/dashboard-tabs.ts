@@ -1,3 +1,4 @@
+import { nodeKey } from '@/composables/faker-tree'
 import { selectionKeys } from '@/composables/log-selection'
 
 export const maxTabs = 10
@@ -24,9 +25,11 @@ export function emptyTabs(): TabsState {
 }
 
 // Parameters that change how a view looks, not what it shows: the refresh interval is a setting of
-// the dashboard, `request`, `message` and `job` select a row of a request, message or job log.
+// the dashboard, `request`, `message` and `job` select a row of a request, message or job log and
+// `node` a node of the Faker tree (it is no log selection, so it is not one of the selectionKeys).
 const refreshParameter = 'refresh'
-const viewStateParameters = [refreshParameter, ...selectionKeys]
+const selectionParameters = [...selectionKeys, nodeKey]
+const viewStateParameters = [refreshParameter, ...selectionParameters]
 
 // The hash selects a sub tab of the view. Neither it nor a view-state parameter is part of what a
 // tab shows.
@@ -35,10 +38,11 @@ export function tabIdentity(fullPath: string): string {
 }
 
 // Identifies the rendered view: a new key mounts the view again. The selected row is state of
-// the view, so selecting it must keep the view (and the log with its pause and filters) mounted.
+// the view, so selecting it must keep the view (and the log with its pause and filters, the Faker
+// tree with its filter) mounted.
 export function viewKey(fullPath: string): string {
     const [pathAndQuery, hash] = splitAt(fullPath, '#')
-    return withoutParameters(pathAndQuery, selectionKeys) + (hash === undefined ? '' : `#${hash}`)
+    return withoutParameters(pathAndQuery, selectionParameters) + (hash === undefined ? '' : `#${hash}`)
 }
 
 function withoutParameters(pathAndQuery: string, names: string[]): string {

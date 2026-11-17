@@ -130,6 +130,10 @@ export default function() {
 }
 ```
 
+To check that the node is in the tree and that a property is matched to it, open the Faker page
+in the [dashboard](/docs/get-started/test-data.md#validate-in-the-dashboard). Filter by
+`frequency` or switch on **Custom only**, then try the property path `frequency` in the playground.
+
 ### Generate addresses for your own country
 
 This example overrides the existing name and address nodes. Street, house number,

@@ -13,10 +13,12 @@ func applyConstraints(r *Request) (fakeFunc, bool) {
 	case len(r.Schema.Enum) > 0:
 		return func() (interface{}, error) {
 			v := pickEnumValue(r)
+			r.recordSource(SourceEnum, v)
 			return v, nil
 		}, true
 	case r.Schema.Const != nil:
 		return func() (any, error) {
+			r.recordSource(SourceConst, *r.Schema.Const)
 			return *r.Schema.Const, nil
 		}, true
 	}

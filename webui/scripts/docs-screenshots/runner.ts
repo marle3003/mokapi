@@ -54,7 +54,7 @@ async function takeShot(browser: Browser, shot: Shot, theme: string, clockStart:
   const context = await browser.newContext({
     baseURL: viteOrigin,
     viewport: shot.viewport ?? { width: 1400, height: 900 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: shot.deviceScaleFactor ?? 2,
     colorScheme: theme === 'light' ? 'light' : 'dark',
     storageState: { cookies: [], origins: [{ origin: viteOrigin, localStorage: [{ name: 'theme', value: theme }] }] },
   })

@@ -3,6 +3,7 @@ package generator
 import (
 	"maps"
 	"mokapi/schema/json/schema"
+	"slices"
 )
 
 type Request struct {
@@ -12,6 +13,11 @@ type Request struct {
 
 	g        *generator
 	examples []any
+	// trace is only set when the request is explained, see Explain
+	trace *trace
+	// at is the path of the value in the result. In contrast to Path it is not rewritten
+	// while matching nodes.
+	at []string
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
@@ -65,7 +71,20 @@ func (r *Request) With(path []string, s *schema.Schema, example []any) *Request 
 		g:        r.g,
 		Context:  r.Context,
 		examples: example,
+		trace:    r.trace,
+		at:       r.at,
 	}
+}
+
+// property returns the request for a property or the items of an array below this request.
+// It is only needed to explain a request, otherwise r is returned.
+func (r *Request) property(name string) *Request {
+	if r.trace == nil {
+		return r
+	}
+	r2 := *r
+	r2.at = append(slices.Clone(r.at), name)
+	return &r2
 }
 
 type Context struct {

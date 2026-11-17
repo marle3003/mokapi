@@ -35,8 +35,8 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
 		}
-		match := findBestMatch(g.root, req)
-		return newFakerWithFallback(match, req), nil
+		match, tokens := findBestMatch(g.root, req)
+		return newFakerWithFallback(match, tokens, req), nil
 	}
 
 	var fakes *sortedmap.LinkedHashMap[string, *faker]
@@ -230,7 +230,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 			prop := append(req.Path, propName)
 			ex := propertyFromExample(propName, req)
-			f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
+			f, err := r.resolve(req.With(prop, it.Value(), ex).property(propName), fallback)
 			if err != nil {
 				var guard *RecursionGuard
 				if errors.As(err, &guard) {
@@ -240,7 +240,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				}
 				if errors.Is(err, NoMatchFound) {
 					if domain != "" {
-						f, err = r.resolve(req.With([]string{domain, propName}, it.Value(), ex), true)
+						f, err = r.resolve(req.With([]string{domain, propName}, it.Value(), ex).property(propName), true)
 						if err != nil {
 							return nil, err
 						}
@@ -282,7 +282,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				gen.regexGenerate(re, len(pattern)*100)
 				propName := gen.sb.String()
 				ex := propertyFromExample(propName, req)
-				f, err := r.resolve(req.With(append(req.Path), prop, ex), fallback)
+				f, err := r.resolve(req.With(append(req.Path), prop, ex).property(propName), fallback)
 				if err != nil {
 					return nil, err
 				}
@@ -300,7 +300,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 
 		length := numProperties(1, 10, s)
 		for range length {
-			f, err := r.resolve(req.WithSchema(s.AdditionalProperties), true)
+			f, err := r.resolve(req.WithSchema(s.AdditionalProperties).property(additionalPropertySegment), true)
 			if err != nil {
 				return nil, err
 			}
@@ -314,7 +314,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 
 	for _, name := range s.Required {
 		if _, ok := fakes.Get(name); !ok {
-			f, err := r.resolve(req.With(append(req.Path, name), s.AdditionalProperties, req.examples), false)
+			f, err := r.resolve(req.With(append(req.Path, name), s.AdditionalProperties, req.examples).property(name), false)
 			if err != nil {
 				return nil, err
 			}
@@ -538,6 +538,7 @@ func fakeByExample(r *Request) (*faker, error) {
 		return nil, NoMatchFound
 	}
 	f := func() (any, error) {
+		r.recordSource(SourceExamples, m)
 		return m, nil
 	}
 	return newFaker(f), nil

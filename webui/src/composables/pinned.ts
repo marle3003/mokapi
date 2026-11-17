@@ -41,7 +41,8 @@ const protocolRoutes: Record<string, { service: string, item?: string, log?: str
 }
 
 // Pages without a service in the path: the dashboard's own pages and a config.
-const standalonePages = ['search', 'jobs', 'configs', 'tree', 'config']
+// `tree` is the former path of `faker`, it still redirects.
+const standalonePages = ['search', 'jobs', 'configs', 'faker', 'tree', 'config']
 
 // Requests, messages, mails and events are recorded data, the services don't list them.
 const recordedData = ['requests', 'messages', 'events', 'mail', 'ldap']

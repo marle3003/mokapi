@@ -1,27 +1,14 @@
 import { on } from 'mokapi'
 import { configs as kafkaConfigs } from './kafka.ts'
 import { configs as httpConfigs } from './http'
-import { get, fetch } from 'mokapi/http'
+import { fetch } from 'mokapi/http'
 
 const configs = {}
 
 export default async function() {
-    const apiBaseUrl = `http://localhost:8091/mokapi`
-
     on('http', function(request, response) {
 
         switch (request.operationId) {
-            case 'fakerTree': {
-                const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
-                response.body = resp.body
-                return
-            }
-            case 'fakerNodeFake': {
-                const resp = get(`${apiBaseUrl}/mokapi/api/faker/node/${request.path.name}/fake`)
-                response.statusCode = resp.statusCode
-                response.body = resp.body
-                return
-            }
             case 'search':
                 switch (request.query.q) {
                     case 'bad':
