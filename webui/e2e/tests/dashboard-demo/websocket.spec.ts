@@ -15,7 +15,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
     await test.step('Verify Dashboard', async () => {
 
-        await expect(page.getByLabel('Websocket Messages')).toHaveText('3')
+        await expect(page.getByLabel('Websocket Messages')).toHaveText('4')
 
         // the overview shows only the metrics, the services are on the protocol page
         await expect(page.getByRole('table', { name: 'Websocket Services' })).toHaveCount(0)
@@ -45,7 +45,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
         await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('Template /chats/{roomId}, 1 path');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
-        await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('3');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('4');
 
         await test.step('Visit /chats/{roomId}', async () => {
             const topics = page.getByRole('table', { name: 'Paths' });
@@ -61,7 +61,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
             await expect(rows).toHaveCount(1);
             await expect(await getCellByColumnName(topics, 'Path', rows.nth(0))).toHaveText('/chats/general');
             await expect(await getCellByColumnName(topics, 'Last Message', rows.nth(0))).not.toBeEmpty();
-            await expect(await getCellByColumnName(topics, 'Messages', rows.nth(0))).toHaveText('3');
+            await expect(await getCellByColumnName(topics, 'Messages', rows.nth(0))).toHaveText('4');
 
             const messages = page.getByRole('table', { name: 'Messages' });
 
@@ -71,7 +71,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 await expect(info.getByLabel('Path', { exact: true })).toHaveText('/chats/general');
                 await expect(info.getByLabel('Description')).toHaveText('The communication channel for a specific chat room.')
                 await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
-                await expect(messages.locator('tbody tr')).toHaveCount(3);
+                await expect(messages.locator('tbody tr')).toHaveCount(4);
 
                 // the new layout has no breadcrumb: back to the channel page
                 await page.goBack();
@@ -79,14 +79,15 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
             });
 
             rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(3);
+            await expect(rows).toHaveCount(4);
             await expect(await getCellByColumnName(messages, 'Path', rows.nth(0))).toHaveText('/chats/general');
-            await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('{"text":"Hello there!"');
+            // the newest message is the invalid one, its text is a number
+            await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('{"text":42');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
 
             await test.step('Visit message', async () => {
 
-                await openFullView(rows.nth(2));
+                await openFullView(rows.filter({ hasText: '"text":"Hello there!","username"' }));
 
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Path')).toHaveText('/chats/general');
@@ -143,7 +144,7 @@ test('Metric tiles of the websocket page', async ({ page, baseURL }) => {
     await page.goto(`${demoDashboardPath(baseURL)}/websocket`)
     const { count, second, last } = new ProtocolMetricsModel(page, 'websocket')
 
-    await expect(count.value).toHaveText('3')
+    await expect(count.value).toHaveText('4')
     await expect(second.value).toHaveText('0')
     // the recording is renewed on every build, so only the format of the time is fixed
     await expect(last.value).toHaveText(/ ago$/)

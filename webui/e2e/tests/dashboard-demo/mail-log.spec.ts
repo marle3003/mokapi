@@ -19,7 +19,7 @@ test.describe('Mail log in the demo dashboard', () => {
         await page.goto(`${dashboardPath}${serviceLog}`)
 
         const log = new MailLogModel(page)
-        await expect(log.rows).toHaveCount(2)
+        await expect(log.rows).toHaveCount(3)
     })
 
     test('log of all services shows the recorded mails', async ({ page }) => {
@@ -47,6 +47,17 @@ test.describe('Mail log in the demo dashboard', () => {
         await expect(log.panel.content.getByRole('link', { name: /headerimg/ })).toBeVisible()
     })
 
+    // the rule denies the sender in the MAIL command, so the row has neither subject nor sender
+    test('a mail from the denied sender domain is listed as rejected', async ({ page }) => {
+        await page.goto(`${dashboardPath}${serviceLog}`)
+
+        const log = new MailLogModel(page)
+        const row = log.rejectedRow('Sender domain spam.example is blocked')
+        await expect(row).toHaveCount(1)
+        await expect(row).toContainText('Rejected')
+        await expect(row.getByRole('link')).toHaveCount(0)
+    })
+
     test('an unknown mail id shows that the mail is not found', async ({ page }) => {
         await page.goto(`${dashboardPath}${serviceLog}?message=00000000-0000-4000-8000-000000000000`)
 
@@ -57,14 +68,14 @@ test.describe('Mail log in the demo dashboard', () => {
     test('the Service chip filters the log', async ({ page }) => {
         await page.goto(`${dashboardPath}/mail/log`)
         const log = new MailLogModel(page)
-        await expect(log.rows).toHaveCount(2)
+        await expect(log.rows).toHaveCount(3)
 
         const popover = await log.openAddFilter('Service')
         await popover.getByRole('combobox', { name: 'Service' }).selectOption('Mail Server')
         await page.keyboard.press('Escape')
 
         await expect(log.chips).toHaveText(['Service: Mail Server'])
-        await expect(log.rows).toHaveCount(2)
+        await expect(log.rows).toHaveCount(3)
     })
 
     test('Pause is not offered', async ({ page }) => {
@@ -72,7 +83,7 @@ test.describe('Mail log in the demo dashboard', () => {
         await page.goto(`${dashboardPath}${serviceLog}`)
 
         const log = new MailLogModel(page)
-        await expect(log.rows).toHaveCount(2)
+        await expect(log.rows).toHaveCount(3)
         await expect(log.pause).toHaveCount(0)
     })
 })

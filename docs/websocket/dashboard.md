@@ -44,7 +44,7 @@ The Channels sub tab lists the channels only.
 In the Classic view, the log has the same panel, filters and **Pause** button. Only the link in a
 row opens a browser tab with Ctrl+click, Cmd+click or middle click.
 
-<!-- screenshot: Messages sub tab of a WebSocket service with the log, the chips and the Open as tab link -->
+<img src="/docs/websocket/dashboard-message-log.png" width="700" alt="The Messages sub tab of a WebSocket service with the message log, the chips and the Open as tab link" />
 
 ### Message details
 
@@ -87,8 +87,8 @@ a limited number of messages in memory. If Mokapi has dropped the message, the p
 
 In windows narrower than 768 px, the panel is shown below the table.
 
-<!-- screenshot: message log with the detail panel open on the Value sub tab -->
-<!-- screenshot: panel of an invalid message with the Validation sub tab -->
+<img src="/docs/websocket/dashboard-message-log-panel.png" width="700" alt="The WebSocket message log with the detail panel open on the Value sub tab" />
+<img src="/docs/websocket/dashboard-message-validation.png" width="700" alt="The detail panel of an invalid WebSocket message on the Validation sub tab" />
 
 ### Filter messages
 
@@ -113,7 +113,7 @@ Mokapi saves the filters in the browser, separately for the log of all services,
 service, for each channel (and instance of a template channel) and for each client. It restores
 them after a reload.
 
-<!-- screenshot: filter chips, an open popover for Path and the + Add filter menu -->
+<img src="/docs/websocket/dashboard-message-log-filter.png" width="700" alt="The WebSocket message log with a Service filter chip and the open Path popover" />
 
 ### Pause the log
 
@@ -157,7 +157,7 @@ A client view has one selection. Selecting a request closes the message panel an
 message closes the request panel. **Pause** and **Resume** work as described in
 [Pause the log](#pause-the-log) and also apply to the request log.
 
-<!-- screenshot: client view with the Connection Requests table and the detail panel of a Close event -->
+<img src="/docs/websocket/dashboard-client-requests.png" width="700" alt="The view of a WebSocket client with the Connection Requests table and the detail panel of a Connect event" />
 
 See [Using Mokapi Dashboard](/docs/get-started/dashboard.md) for tabs, Pinned and the other
 parts of the layout.

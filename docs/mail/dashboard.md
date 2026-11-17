@@ -41,7 +41,7 @@ row opens a browser tab with Ctrl+click, Cmd+click or middle click.
 The Mailboxes sub tab and the view of a mailbox list the mails of a mailbox. They don't show the
 rejected mails and have no detail panel.
 
-<!-- screenshot: Mails sub tab of a mail service with the log, the chips and the Open as tab link -->
+<img src="/docs/mail/dashboard-mail-log.png" width="700" alt="The Mails sub tab of a mail service with the mail log, the chips and the Open as tab link" />
 
 ### Rejected mails
 
@@ -58,6 +58,9 @@ A [rule](/docs/mail/rules.md) that rejects a mail after the server received its 
 DATA command) shows two rows. The first row reads **Accepted** and has the subject, but its panel
 says "Mail content is no longer available", because Mokapi never stores the mail. The second row
 reads **Rejected** and shows the error.
+
+A rule on the sender or a recipient rejects the mail earlier, in the MAIL FROM or RCPT TO command,
+before the server receives the content. That gives a single **Rejected** row without a subject.
 
 ### Mail details
 
@@ -104,8 +107,8 @@ a limited number of events in memory. If Mokapi has dropped the event, the panel
 
 In windows narrower than 768 px, the panel is shown below the table.
 
-<!-- screenshot: mail log with the detail panel open on the Body sub tab -->
-<!-- screenshot: panel of a rejected mail with the error and the Details sub tab -->
+<img src="/docs/mail/dashboard-mail-log-panel.png" width="700" alt="The mail log with the detail panel open on the Body sub tab" />
+<img src="/docs/mail/dashboard-mail-rejected.png" width="700" alt="The detail panel of a rejected mail on the Details sub tab, showing that the sender domain spam.example is blocked" />
 
 ### Filter mails
 
@@ -122,7 +125,7 @@ it already fixes it. Subject, From, To and status aren't available as filters.
 Mokapi saves the filter in the browser, separately for the log of all services and for each
 service. It restores it after a reload.
 
-<!-- screenshot: Service chip with an open popover -->
+<img src="/docs/mail/dashboard-mail-log-filter.png" width="700" alt="The mail log with the open Service popover of a filter chip" />
 
 ### Pause the log
 

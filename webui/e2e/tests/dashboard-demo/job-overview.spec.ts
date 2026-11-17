@@ -32,7 +32,7 @@ test.describe('Job overview in the demo dashboard', () => {
 
         const overview = new JobOverviewModel(page)
         const row = overview.rows.first()
-        await expect(overview.cell(row, 'Last Run')).toContainText('Success')
+        await expect(overview.cell(row, 'Last Run')).toContainText('Error')
         await expect(overview.cell(row, 'Last Run').getByRole('link')).toHaveAttribute('href', /\/jobs\/[\w-]+$/)
     })
 

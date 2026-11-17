@@ -94,7 +94,8 @@ async function fetchEvents(url: string, key: string, snapshot: Record<string, un
     const detail = await fetchJson(`${baseUrl}/api/events/${event.id}`);
     snapshot['event_'+event.id] = detail
     
-    if (event.traits.namespace !== 'mail') {
+    // a rejected mail is only an event, it has no stored message
+    if (event.traits.namespace !== 'mail' || !event.data.messageId) {
       continue;
     }
 

@@ -19,11 +19,10 @@ view in a tab. In this detailed view you can see:
 
 Click the **HTTP** heading to see the metrics and the log of all HTTP APIs (see [Metrics](#metrics)).
 
-In the next image you can see an example of a REST API showing four Paths one is deprecated
-and therefore marked with a warning icon. In the Recent Requests log, you can see
-four HTTP requests, one of which has a validation error that is counted in the Errors metric.
+The next image shows the Paths tab of a REST API. One path is deprecated and therefore marked with a
+warning icon. The last columns show the time of the last request and the number of requests and errors.
 
-<img src="/docs/http/dashboard-mock-rest-api.jpg" width="700" alt="Dashboard shows a REST API including metric, recent requests and config file." title="" />
+<img src="/docs/http/dashboard-mock-rest-api.png" width="700" alt="The Paths tab of the Petstore API with the operations, the last request and the number of requests and errors of each path" />
 
 ## Metrics
 
@@ -48,7 +47,7 @@ Cmd+click or middle click opens a new tab. Click the star in the tab to pin the 
 always in the **Pinned** section of the sidebar. The tab shows "Requests" for the log of all APIs and
 "`<service>` requests" for one API.
 
-<!-- screenshot: Requests sub tab of an API with the log, the chips and the Open as tab link -->
+<img src="/docs/http/dashboard-request-log.png" width="700" alt="The Requests sub tab of an HTTP API with the request log, the chips and the Open as tab link" />
 
 ### Request details
 
@@ -76,7 +75,7 @@ a limited number of requests in memory. If Mokapi has dropped the request, the p
 
 In windows narrower than 768 px, the panel is shown below the table.
 
-<!-- screenshot: request log with the detail panel open on the Response sub tab -->
+<img src="/docs/http/dashboard-request-log-panel.png" width="700" alt="The request log with the detail panel open on the Response sub tab of a failed request" />
 
 ### Filter requests
 
@@ -109,7 +108,7 @@ the field.
 Mokapi saves the filters in the browser, separately for each API, path and method, and restores them
 after a reload.
 
-<!-- screenshot: filter chips, an open popover for Status Code and the + Add filter menu -->
+<img src="/docs/http/dashboard-request-log-filter.png" width="700" alt="The request log with a URL filter chip and the open Status Code popover" />
 
 ### Pause the log
 
@@ -133,7 +132,7 @@ to open the endpoint in a new tab, for example to compare two endpoints. The tab
 with the HTTP method. Click the star in the row or in the tab to pin the endpoint, so it's
 always one click away in the **Pinned** section of the sidebar.
 
-<!-- screenshot: HTTP endpoint tab with method badge, pinned star and the Pinned section in the sidebar -->
+<img src="/docs/http/dashboard-endpoint-pinned.png" width="700" alt="An HTTP endpoint tab with the method badge and the pinned star, and the Pinned section in the sidebar" />
 
 ### Group endpoints by tag
 

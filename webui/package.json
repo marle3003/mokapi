@@ -18,7 +18,8 @@
     "copy-docs": "ncp ../docs ./src/assets/docs",
     "clean": "del-cli ./src/assets/docs",
     "build-sitemap": "node build-sitemap.js",
-    "test-htaccess": "node ssg/test-htaccess.js"
+    "test-htaccess": "node ssg/test-htaccess.js",
+    "docs-screenshots": "node scripts/docs-screenshots/index.ts"
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",

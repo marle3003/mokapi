@@ -35,7 +35,7 @@ services and "`<service>` requests" for one service.
 In the Classic view, the log has the same panel, filters and **Pause** button. Only the link in a
 row opens a browser tab with Ctrl+click, Cmd+click or middle click.
 
-<!-- screenshot: Requests sub tab of an LDAP service with the log, the chips and the Open as tab link -->
+<img src="/docs/ldap/dashboard-request-log.png" width="700" alt="The Requests sub tab of an LDAP service with the request log, the chips and the Open as tab link" />
 
 ### Request details
 
@@ -79,8 +79,8 @@ a limited number of requests in memory. If Mokapi has dropped the request, the p
 
 In windows narrower than 768 px, the panel is shown below the table.
 
-<!-- screenshot: request log with the detail panel open on the Request sub tab of a Bind -->
-<!-- screenshot: panel of a Search with the Response sub tab and the attributes dialog -->
+<img src="/docs/ldap/dashboard-request-log-panel.png" width="700" alt="The LDAP request log with the detail panel open on the Request sub tab of a Bind" />
+<img src="/docs/ldap/dashboard-search-response.png" width="700" alt="The detail panel of an LDAP Search on the Response sub tab with the attributes dialog of an entry" />
 
 ### Filter requests
 
@@ -98,7 +98,7 @@ it already fixes it.
 Mokapi saves the filters in the browser, separately for the log of all services and for each
 service. It restores them after a reload.
 
-<!-- screenshot: filter chips, an open popover for Operation and the + Add filter menu -->
+<img src="/docs/ldap/dashboard-request-log-filter.png" width="700" alt="The LDAP request log with a Service filter chip and the open Operation popover" />
 
 ### Pause the log
 

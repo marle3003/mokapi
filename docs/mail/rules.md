@@ -40,5 +40,5 @@ rules:
     rejectResponse:
       statusCode: 550
       enhancedStatusCode: 5.7.1
-      text: Your error message
+      message: Your error message
 ```

@@ -40,12 +40,13 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     build: { copyPublicDir: !isSsrBuild },
     server: {
       proxy: {
-        '/api': 'http://localhost:8090'
+        // MOKAPI_DASHBOARD_API: used by scripts/docs-screenshots to point the dashboard at a live Mokapi
+        '/api': process.env.MOKAPI_DASHBOARD_API ?? 'http://localhost:8090'
       }
     },
     test: {
       environment: 'jsdom',
-      include: ['src/**/*.test.ts'],
+      include: ['src/**/*.test.ts', 'scripts/docs-screenshots/**/*.test.ts'],
       coverage: {
         provider: 'v8',
         include: ['src/composables/**/*.ts'],

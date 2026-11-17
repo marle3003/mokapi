@@ -20,7 +20,7 @@ test.describe('WebSocket message log in the demo dashboard', () => {
         await page.goto(`${dashboardPath}${serviceLog}`)
 
         const log = new WebsocketMessageLogModel(page)
-        await expect(log.rows).toHaveCount(3)
+        await expect(log.rows).toHaveCount(4)
         await expect(log.rows.first()).toContainText('/chats/general')
     })
 
@@ -44,6 +44,17 @@ test.describe('WebSocket message log in the demo dashboard', () => {
         await expect(page).toHaveURL(/message=/)
     })
 
+    test('a message that does not match the schema shows the validation error', async ({ page }) => {
+        await page.goto(`${dashboardPath}${serviceLog}`)
+
+        const log = new WebsocketMessageLogModel(page)
+        await log.time(log.rows.filter({ hasText: '"text":42' })).click()
+
+        await expect(log.panel.tabs).toContainText(['Validation'])
+        await log.panel.tab('Validation').click()
+        await expect(log.panel.content).toContainText('expected string but got number')
+    })
+
     test('an unknown message id shows that the message is not found', async ({ page }) => {
         await page.goto(`${dashboardPath}${serviceLog}?message=00000000-0000-4000-8000-000000000000`)
 
@@ -54,14 +65,14 @@ test.describe('WebSocket message log in the demo dashboard', () => {
     test('the Path chip with the template matches its instances', async ({ page }) => {
         await page.goto(`${dashboardPath}${serviceLog}`)
         const log = new WebsocketMessageLogModel(page)
-        await expect(log.rows).toHaveCount(3)
+        await expect(log.rows).toHaveCount(4)
 
         const popover = await log.openAddFilter('Path')
         await popover.getByRole('combobox', { name: 'Path' }).fill(templatePath)
         await page.keyboard.press('Escape')
 
         await expect(log.chips).toHaveText([`Path: ${templatePath}`])
-        await expect(log.rows).toHaveCount(3)
+        await expect(log.rows).toHaveCount(4)
 
         await log.chip(`Path: ${templatePath}`).edit.click()
         await page.getByRole('dialog', { name: 'Path', exact: true }).getByRole('combobox', { name: 'Path' }).fill('/no-such-path')
@@ -73,9 +84,10 @@ test.describe('WebSocket message log in the demo dashboard', () => {
     test('the Client chip filters the log', async ({ page }) => {
         await page.goto(`${dashboardPath}${serviceLog}`)
         const log = new WebsocketMessageLogModel(page)
-        await expect(log.rows).toHaveCount(3)
+        await expect(log.rows).toHaveCount(4)
         // the Details tab shows the address of the client, its id is the last part of the link to the client view
-        await log.time(log.rows.first()).click()
+        // dave's connection is closed, so only the messages of bob and carol link to a client view
+        await log.time(log.rows.filter({ hasText: 'Hello there!' }).first()).click()
         await log.panel.tab('Details').click()
         const clientLink = log.panel.content.getByLabel('Client', { exact: true }).getByRole('link')
         const clientId = (await clientLink.getAttribute('href'))!.split('/').pop()!
@@ -102,7 +114,7 @@ test.describe('WebSocket message log in the demo dashboard', () => {
         await page.goto(`${dashboardPath}${serviceLog}`)
 
         const log = new WebsocketMessageLogModel(page)
-        await expect(log.rows).toHaveCount(3)
+        await expect(log.rows).toHaveCount(4)
         await expect(log.pause).toHaveCount(0)
     })
 })

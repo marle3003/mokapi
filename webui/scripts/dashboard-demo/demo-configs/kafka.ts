@@ -4,6 +4,8 @@ import kafka from 'mokapi/kafka';
 export default async function() {
     let counter = 1;
     every('5m', async function() {
+        console.warn(`producing message ${counter} took longer than expected`)
+        console.error(`could not enrich message ${counter} with customer data, using defaults`)
         const result = await kafka.produceAsync({
             topic: 'order-topic',
             messages: [

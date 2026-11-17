@@ -38,7 +38,7 @@ clusters and "`<cluster>` messages" for one cluster.
 The Topics sub tab lists the topics only. Selecting tags there filters the topic table, not the
 message log.
 
-<!-- screenshot: Messages sub tab of a Kafka cluster with the log, the chips and the Open as tab link -->
+<img src="/docs/kafka/dashboard-message-log.png" width="700" alt="The Messages sub tab of a Kafka cluster with the message log, the chips and the Open as tab link" />
 
 ### Message details
 
@@ -66,7 +66,7 @@ a limited number of messages in memory. If Mokapi has dropped the message, the p
 
 In windows narrower than 768 px, the panel is shown below the table.
 
-<!-- screenshot: message log with the detail panel open on the Value sub tab -->
+<img src="/docs/kafka/dashboard-message-log-panel.png" width="700" alt="The Kafka message log with the detail panel open on the Value sub tab" />
 
 ### Filter messages
 
@@ -95,7 +95,7 @@ Mokapi saves the filters in the browser, separately for the log of all clusters,
 cluster, for each topic (and instance of a template topic) and for each client. It restores them
 after a reload.
 
-<!-- screenshot: filter chips, an open popover for Partition and the + Add filter menu -->
+<img src="/docs/kafka/dashboard-message-log-filter.png" width="700" alt="The Kafka message log with a Cluster filter chip and the open Partition popover" />
 
 ### Pause the log
 
@@ -123,7 +123,7 @@ The selected request is part of the address (`?request=<id>`). After a reload, t
 
 A client view has one selection. Selecting a request closes the message panel and selecting a message closes the request panel. **Pause** and **Resume** work as described in [Pause the log](#pause-the-log) and also apply to the request log.
 
-<!-- screenshot: client view with the Recent Requests table and the detail panel on the Request sub tab -->
+<img src="/docs/kafka/dashboard-client-requests.png" width="700" alt="The view of a Kafka client with the Recent Requests table and the detail panel on the Request sub tab" />
 
 See [Using Mokapi Dashboard](/docs/get-started/dashboard.md) for tabs, Pinned and the other
 parts of the layout.

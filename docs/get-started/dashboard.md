@@ -12,7 +12,7 @@ and ensuring the mock APIs works seamlessly under various scenarios.
 
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
 
-<!-- screenshot: new layout with sidebar and tabs (replaces dashboard-overview-mock-api.png, which shows the classic layout) -->
+<img src="/docs/get-started/dashboard-overview-mock-api.png" width="700" alt="The dashboard overview with the sidebar, the tabs and the metric tiles of all protocols" />
 
 ## Layout
 
@@ -88,7 +88,7 @@ Search is enabled by default. If you turn it off with `api.search.enabled: false
 `--no-api-search-enabled`, see the [configuration reference](/docs/configuration/reference.md)),
 the Search icon and the panel are hidden. They're also hidden in the demo dashboard.
 
-<!-- screenshot: search panel with results, facet selects and the Search tips section -->
+<img src="/docs/get-started/dashboard-search.png" width="700" alt="The search panel with results, the facet selects and the search tips" />
 
 If the API returns facets, the panel shows one select for each of them, for example Type, to
 restrict the results. The panel shows "Showing 20 of 57 results" and loads 20 results at a time.
@@ -175,7 +175,7 @@ two options:
 
 Mokapi remembers your choice for each service.
 
-<!-- screenshot: HTTP endpoint list grouped by tag -->
+<img src="/docs/get-started/dashboard-http-endpoints-by-tag.png" width="700" alt="The paths of an HTTP API grouped by tag" />
 
 ### Narrow windows
 
@@ -251,7 +251,7 @@ export default function() {
 The Runs tab lists the runs of your jobs, newest first. The log is titled "Recent Jobs" and is
 always shown, also when it's empty. An address with `?job=<id>` opens this tab with the run selected.
 
-<!-- screenshot: jobs log with the detail panel open on the Logs sub tab -->
+<img src="/docs/get-started/dashboard-jobs-log-panel.png" width="700" alt="The jobs log with the detail panel of a run open on the Logs sub tab" />
 
 The log has these columns:
 
@@ -281,7 +281,7 @@ Next Run shows the date and, while it's in the future, a countdown, for example
 `2026-11-16 12:00:00 (in 1h 2min 3s)`. The countdown keeps running while the log is paused. Next Run
 is `-` if the job has no further run. The tag `file` links to the configuration of the script.
 
-<!-- screenshot: panel with the Details sub tab and the countdown in Next Run -->
+<img src="/docs/get-started/dashboard-job-details.png" width="700" alt="The detail panel of a job run on the Details sub tab with the countdown in Next Run" />
 
 Click **Open as tab** to show the run in the full view, `/dashboard/jobs/<id>`. A click replaces the
 active tab, Ctrl+click or Cmd+click opens a new one. In the new layout, Ctrl+click, Cmd+click or
@@ -314,14 +314,14 @@ request body, navigate to an HTTP endpoint and look for the "Example & Validate"
 In the opened dialog you can create, edit, validate, copy to the clipboard and download 
 your sample data.
 
-<img src="/docs/get-started/dashboard-rest-api-endpoint-example-validate.jpg" alt="Localizes the sample and validation functionality in the REST API endpoint view." />
+<img src="/docs/get-started/dashboard-endpoint-example-validate.png" width="700" alt="The request body of an HTTP endpoint with the Example & Validate button" />
 
 ### Validate data
 
 In the same dialog where we can create sample data, we can also validate it. The next image
 shows an example of an HTTP REST request body that is not valid according to the specification.
 
-<img src="/docs/get-started/dashboard-rest-api-data-validation-with-error.jpg" width="700" alt="Indicates an error validating an HTTP REST request body" />
+<img src="/docs/get-started/dashboard-validate-error.png" width="700" alt="The Data Validator dialog showing a validation error for a request body" />
 
 ## How to customize?
 

@@ -6,7 +6,7 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-// The recording has one run of kafka.ts (max runs 2, runs 1, no logs, no error).
+// The recording has one run of kafka.ts (max runs 2, runs 1, a warning and an error in the logs).
 test.describe('Job log in the demo dashboard', () => {
     let dashboardPath: string
     let isDemo: boolean
@@ -21,11 +21,11 @@ test.describe('Job log in the demo dashboard', () => {
 
         const log = new JobLogModel(page)
         await expect(log.rows).toHaveCount(1)
-        await expect(log.rows.first().getByRole('cell')).toContainText(['Success', 'kafka.ts', '5m'])
+        await expect(log.rows.first().getByRole('cell')).toContainText(['Error', 'kafka.ts', '5m'])
     })
 
     // the ids of the events change with every recording, the row is found by its name
-    test('a run opens in the panel with the hint on console.log() and its details', async ({ page }) => {
+    test('a run opens in the panel with its logs and details', async ({ page }) => {
         await page.goto(`${dashboardPath}/jobs#tab-runs`)
         const log = new JobLogModel(page)
         const view = useRequestView(page)
@@ -36,7 +36,8 @@ test.describe('Job log in the demo dashboard', () => {
         await expect(page).toHaveURL(/job=/)
         await expect(log.panel.openAsTab).toBeVisible()
         await expect(log.panel.tabs).toHaveText(['Logs', 'Details'])
-        await expect(log.panel.content.getByText('console.log()')).toBeVisible()
+        await expect(log.panel.content).toContainText('producing message 1 took longer than expected')
+        await expect(log.panel.content).toContainText('could not enrich message 1 with customer data')
 
         await log.panel.tab('Details').click()
         await expect(view.field(log.panel.element, 'Runs')).toHaveText('1 / 2')
