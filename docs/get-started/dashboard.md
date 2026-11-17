@@ -144,10 +144,12 @@ the window is too narrow, the tabs that don't fit move into a **+N** menu at the
 and the active tab stays visible.
 
 Mokapi saves your open tabs in the browser and restores them after a reload. Each browser window
-keeps its own tabs. If you open the dashboard with a URL, for example from a link or a bookmark,
-the saved tabs are restored and the URL opens as an additional tab. The browser's back and
-forward buttons work as usual. Because a click replaces the active tab, back shows the previous
-view in the active tab.
+keeps its own tabs. If you open the dashboard with its start URL (`/dashboard`, which is what
+`mokapi` opens), Mokapi restores the saved tabs and shows the tab that was active last time. It
+adds no tab, and the address bar shows the address of that tab. If there are no saved tabs, the
+Overview opens. Any other URL, for example from a link or a bookmark, opens as an additional tab,
+or activates its tab if it's already open. The browser's back and forward buttons work as usual.
+Because a click replaces the active tab, back shows the previous view in the active tab.
 
 Switching to a tab loads its view again, so data is fetched again and the scroll position starts
 at the top.

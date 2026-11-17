@@ -100,8 +100,14 @@ export function closeTab(state: TabsState, id: number, whenEmpty?: string): Tabs
 }
 
 // The saved tabs come back, the URL of the page is added as a tab and activated (or its tab is).
-export function restoreTabs(saved: unknown, urlFullPath: string, capacity = maxTabs): TabsState {
+// The start URL (`startPath`) is the exception: it adds no tab and shows the tab that was active
+// last time, or the most recently active one if there is no usable active tab. Without saved tabs
+// it opens like any other URL.
+export function restoreTabs(saved: unknown, urlFullPath: string, capacity = maxTabs, startPath?: string): TabsState {
     const state = withUniqueIds(saved)
+    if (state.tabs.length > 0 && tabIdentity(urlFullPath) === startPath) {
+        return state.active === null ? activateTab(state, mostRecentlyActive(state.tabs).id) : state
+    }
     const open = findTabShowing(state, urlFullPath)
     return open ? activateTab(state, open.id) : openTab(state, urlFullPath, capacity)
 }

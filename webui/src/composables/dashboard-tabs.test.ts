@@ -357,6 +357,92 @@ describe('dashboard tabs', () => {
     })
   })
 
+  describe('restoreTabs with the start URL', () => {
+    const start = '/dashboard'
+
+    it('shows the tab that was active last time and adds no tab', () => {
+      const saved = withTabs('/dashboard', '/a', '/b')
+
+      const state = restoreTabs(saved, '/dashboard', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/b'])
+      expect(activePath(state)).toBe('/b')
+    })
+
+    it.each(['/dashboard?refresh=20', '/dashboard#tab'])('treats %s as the start URL', (url) => {
+      const state = restoreTabs(withTabs('/dashboard', '/a', '/b'), url, maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/b'])
+      expect(activePath(state)).toBe('/b')
+    })
+
+    it('does not activate an open Overview that was not active', () => {
+      const saved = withTabs('/dashboard', '/a', '/b')
+
+      const state = restoreTabs(saved, '/dashboard', maxTabs, start)
+
+      expect(state).toEqual(saved)
+    })
+
+    it.each([
+      ['an active id that matches no tab', 'missing'],
+      ['no active tab', null],
+    ])('shows the most recently active tab with %s', (_, active) => {
+      const saved = { ...withTabs('/dashboard', '/a', '/b'), active }
+      saved.tabs = [saved.tabs[0], { ...saved.tabs[1], lastActive: 5 }, saved.tabs[2]]
+
+      const state = restoreTabs(saved, '/dashboard', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/b'])
+      expect(activePath(state)).toBe('/a')
+    })
+
+    it('shows the most recently active tab of the earlier format without ids', () => {
+      const saved = {
+        tabs: [{ path: '/dashboard', lastActive: 1 }, { path: '/a', lastActive: 3 }, { path: '/b', lastActive: 2 }],
+        active: 'missing',
+      }
+
+      const state = restoreTabs(saved, '/dashboard', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/b'])
+      expect(activePath(state)).toBe('/a')
+    })
+
+    it.each([
+      ['nothing saved', undefined],
+      ['garbage', 'classic'],
+      ['no tabs', { tabs: [], active: null }],
+    ])('opens the Overview when %s was saved', (_, saved) => {
+      const state = restoreTabs(saved, '/dashboard', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard'])
+      expect(activePath(state)).toBe('/dashboard')
+    })
+
+    it('adds another URL as a tab and activates it', () => {
+      const state = restoreTabs(withTabs('/dashboard', '/a'), '/c', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/c'])
+      expect(activePath(state)).toBe('/c')
+    })
+
+    it('activates the open tab of another URL', () => {
+      const state = restoreTabs(withTabs('/dashboard', '/a', '/b'), '/a', maxTabs, start)
+
+      expect(tabPaths(state)).toEqual(['/dashboard', '/a', '/b'])
+      expect(activePath(state)).toBe('/a')
+    })
+
+    it('uses the start path of the demo dashboard', () => {
+      const demo = '/dashboard-demo'
+      const saved = withTabs('/dashboard-demo', '/dashboard-demo/a', '/dashboard-demo/b')
+
+      expect(restoreTabs(saved, '/dashboard-demo', maxTabs, demo)).toEqual(saved)
+      expect(tabPaths(restoreTabs(saved, '/dashboard', maxTabs, demo))).toEqual([...tabPaths(saved), '/dashboard'])
+    })
+  })
+
   describe('tabIdentity', () => {
     it('removes the refresh query and keeps other parameters', () => {
       expect(tabIdentity('/dashboard/configs?refresh=20')).toBe('/dashboard/configs')

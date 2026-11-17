@@ -6,7 +6,7 @@ import { routeTitle } from '@/composables/route-title'
 import { routeLabel } from '@/composables/route-label'
 import { useLocalStorage } from '@/composables/local-storage'
 import {
-    activateTab, closeTab, emptyTabs, endpointMethod, maxTabs, openTab, restoreTabs, showPath, tabTitle, type Tab, type TabsState,
+    activateTab, closeTab, emptyTabs, endpointMethod, maxTabs, openTab, restoreTabs, showPath, tabIdentity, tabTitle, type Tab, type TabsState,
 } from '@/composables/dashboard-tabs'
 import { maxTabsThatFit } from '@/composables/tabs-fit'
 
@@ -33,7 +33,19 @@ function createTabs() {
     const rowWidth = ref(Infinity)
     const capacity = computed(() => Math.min(maxTabs, maxTabsThatFit(rowWidth.value)))
 
-    state.value = restoreTabs(state.value, router.currentRoute.value.fullPath, capacity.value)
+    const activeTab = computed(() => state.value.tabs.find(t => t.id === state.value.active))
+
+    // The Overview is the start URL of the dashboard: /dashboard, or /dashboard-demo in the demo.
+    function overviewPath(): string {
+        return router.resolve({ name: getRouteName('dashboard').value }).fullPath
+    }
+
+    const current = router.currentRoute.value
+    state.value = restoreTabs(state.value, current.fullPath, capacity.value, overviewPath())
+    // The start URL shows the tab that was active last time, so the address bar has to follow.
+    if (activeTab.value && activeTab.value.path !== tabIdentity(current.fullPath)) {
+        void router.replace(activeTab.value.path)
+    }
 
     router.afterEach((to, _from, failure) => {
         if (failure || !isDashboardRoute(to)) {
@@ -41,8 +53,6 @@ function createTabs() {
         }
         state.value = showPath(state.value, to.fullPath)
     })
-
-    const activeTab = computed(() => state.value.tabs.find(t => t.id === state.value.active))
 
     function isDashboardRoute(route: Pick<RouteLocationNormalized, 'matched'>): boolean {
         return route.matched[0]?.meta.mode === mode
@@ -61,7 +71,7 @@ function createTabs() {
 
     async function close(id: number) {
         const wasActive = state.value.active === id
-        state.value = closeTab(state.value, id, router.resolve({ name: getRouteName('dashboard').value }).fullPath)
+        state.value = closeTab(state.value, id, overviewPath())
         if (wasActive) {
             await router.push(activeTab.value!.path)
         }

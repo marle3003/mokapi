@@ -123,4 +123,21 @@ test.describe('Demo dashboard layout', () => {
         await expect(sidebar).toBeVisible()
         await expect(page).toHaveURL(/\/dashboard-demo$/)
     })
+
+    test('the start URL shows the tab that was active last time and adds no tab', async ({ page }) => {
+        const { tabBar } = new DashboardModel(page)
+        await page.addInitScript(value => localStorage.setItem('dashboard-demo-tabs', value), JSON.stringify({
+            tabs: [
+                { id: 1, path: '/dashboard-demo', lastActive: 1 },
+                { id: 2, path: '/dashboard-demo/configs', lastActive: 2 },
+            ],
+            active: 2,
+        }))
+
+        await page.goto('/dashboard-demo')
+
+        await expect(tabBar.locator('a[aria-current="page"]')).toHaveText('Configs')
+        await expect(tabBar.getByRole('list', { name: 'Open tabs' }).getByRole('listitem')).toHaveText(['Overview', 'Configs'])
+        await expect(page).toHaveURL(/\/dashboard-demo\/configs$/)
+    })
 })

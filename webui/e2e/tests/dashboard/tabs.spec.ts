@@ -398,16 +398,115 @@ test.describe('Dashboard tabs: restore', () => {
     })
 
     test('a deep link to an open tab activates it', async ({ page }) => {
-        const { tabs, activeTab } = layoutLocators(page)
+        const { tabs, tab, activeTab } = layoutLocators(page)
         await page.goto('/dashboard')
         await expect(tabs).toHaveText(['Overview'])
         await page.goto('/dashboard/configs')
         await expect(tabs).toHaveText(['Overview', 'Configs'])
+        await tab('Overview').getByRole('link').click()
+        await expect(activeTab).toHaveText('Overview')
+
+        await page.goto('/dashboard/configs')
+
+        await expect(tabs).toHaveText(['Overview', 'Configs'])
+        await expect(activeTab).toHaveText('Configs')
+    })
+})
+
+// Tabs are saved in localStorage, so a spec can start with some. Only on the first load of the tab,
+// so a reload shows what the dashboard saved.
+async function seedTabs(page: Page, state: { tabs: { id: number, path: string, lastActive: number }[], active: number | string | null }) {
+    await page.addInitScript(value => {
+        if (!sessionStorage.getItem('tabs-seeded')) {
+            sessionStorage.setItem('tabs-seeded', 'true')
+            localStorage.setItem('dashboard-tabs', value)
+        }
+    }, JSON.stringify(state))
+}
+
+const booksApi = '/dashboard/http/services/Books%20API'
+const savedTabs = [
+    { id: 1, path: '/dashboard', lastActive: 1 },
+    { id: 2, path: booksApi, lastActive: 3 },
+    { id: 3, path: '/dashboard/configs', lastActive: 2 },
+]
+
+test.describe('Dashboard tabs: start URL', () => {
+    test('shows the tab that was active last time and adds no tab', async ({ page }) => {
+        const { tabs, activeTab } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 2 })
 
         await page.goto('/dashboard')
 
-        await expect(tabs).toHaveText(['Overview', 'Configs'])
-        await expect(activeTab).toHaveText('Overview')
+        await expect(tabs).toHaveText(['Overview', 'Books API', 'Configs'])
+        await expect(activeTab).toHaveText('Books API')
+        await expect(page).toHaveURL(new RegExp(`${booksApi}$`))
+
+        await page.reload()
+
+        await expect(tabs).toHaveText(['Overview', 'Books API', 'Configs'])
+        await expect(activeTab).toHaveText('Books API')
+        await expect(page).toHaveURL(new RegExp(`${booksApi}$`))
+    })
+
+    test('keeps the refresh query of the start URL', async ({ page }) => {
+        const { tabs, activeTab, activityBar } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 2 })
+
+        await page.goto('/dashboard?refresh=20')
+
+        await expect(activeTab).toHaveText('Books API')
+        await expect(tabs).toHaveCount(3)
+        await expect(page).toHaveURL(new RegExp(`${booksApi}\\?refresh=20$`))
+
+        await activityBar.getByRole('link', { name: 'Configs' }).click()
+        await expect(page).toHaveURL(/\/dashboard\/configs\?refresh=20$/)
+    })
+
+    test('does not add a history entry for the start URL', async ({ page }) => {
+        const { activeTab } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 2 })
+        await page.goto('about:blank')
+
+        await page.goto('/dashboard')
+        await expect(activeTab).toHaveText('Books API')
+        await page.goBack()
+
+        await expect(page).toHaveURL('about:blank')
+    })
+
+    test('an open Overview that was not active stays inactive', async ({ page }) => {
+        const { tabs, activeTab } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 3 })
+
+        await page.goto('/dashboard')
+
+        await expect(activeTab).toHaveText('Configs')
+        await expect(tabs.first()).not.toHaveClass(/active/)
+        await expect(tabs).toHaveCount(3)
+        await expect(page).toHaveURL(/\/dashboard\/configs$/)
+    })
+
+    test('shows the most recently active tab when the saved active tab matches no tab', async ({ page }) => {
+        const { tabs, activeTab } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 'missing' })
+
+        await page.goto('/dashboard')
+
+        await expect(tabs).toHaveCount(3)
+        await expect(activeTab).toHaveText('Books API')
+        await expect(page).toHaveURL(new RegExp(`${booksApi}$`))
+    })
+
+    test('the redirect from / shows the last active tab too', async ({ page }) => {
+        const { tabs, activeTab } = layoutLocators(page)
+        await seedTabs(page, { tabs: savedTabs, active: 2 })
+
+        await page.goto('/')
+
+        await expect(tabs).toHaveCount(3)
+        await expect(activeTab).toHaveText('Books API')
+        await expect(page).toHaveURL(new RegExp(`${booksApi}\\?refresh=20$`))
     })
 })
 
