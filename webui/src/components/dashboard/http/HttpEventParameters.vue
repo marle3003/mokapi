@@ -83,7 +83,7 @@ function schema(p: HttpEventParameter) {
         <tbody>
             <tr v-for="p in sorted" :key="`${p.type}-${p.name}`"  @click="openDialog(p)" class="table-row-clickable">
                 <td v-if="useValueSwitcher">
-                    <button v-if="p.value && p.rendered !== p.raw && p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
+                    <button v-if="p.value && p.rendered !== p.raw && p.raw" class="btn btn-outline-secondary btn-compact btn-compact-icon"
                         @click.stop="showRaw[p.name] = !showRaw[p.name]">
                         <i v-if="showRaw[p.name]" class="bi bi-layout-text-sidebar" title="Show parsed value"></i>
                         <i v-else class="bi bi-code" title="Show raw value"></i>

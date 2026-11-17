@@ -884,6 +884,10 @@ a.search-result:focus-visible {
   --bs-btn-color: var(--color-text);
   --bs-btn-border-color: var(--color-text-light);
 }
+/* Icon-only buttons in narrow table columns need less horizontal padding. */
+.btn-compact-icon {
+  --bs-btn-padding-x: .25rem;
+}
 .filter-menu,
 .filter-popover {
   position: absolute;
