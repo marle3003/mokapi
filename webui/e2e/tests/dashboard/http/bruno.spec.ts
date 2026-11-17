@@ -7,8 +7,8 @@ test('verify bruno export dialog', async ({ dashboard, page, context, baseURL })
     const serviceName = 'Swagger Petstore'
     await page.getByRole('link', { name: serviceName }).click()
 
-    await page.getByRole('button', { name: `Actions for ${serviceName}` }).click()
-    await page.getByRole('button', { name: 'Export Bruno Collection' }).click()
+    await page.getByTestId('service-info').getByRole('button', { name: 'Export', exact: true }).click()
+    await page.getByRole('button', { name: 'Bruno collection' }).click()
     const dialog = page.getByRole('dialog', { name: 'Export Bruno Collection' })
     await expect(dialog).toBeVisible()
 

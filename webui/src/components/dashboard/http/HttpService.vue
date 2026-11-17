@@ -121,14 +121,14 @@ const status = computed(() => {
 
 useToolbarItem(
     {
-        label: 'Export OpenAPI',
+        label: 'OpenAPI specification',
         icon: 'bi-file-earmark-code',
         onClick: () => {
             exportOpenAPIDialogVisible.value = true
         }
     },
     {
-        label: 'Export Bruno Collection',
+        label: 'Bruno collection',
         icon: 'bi-collection',
         onClick: () => {
             exportBrunoDialogVisible.value = true

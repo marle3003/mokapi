@@ -43,7 +43,7 @@ watch(() => route.hash, (hash) => {
 )
 useToolbarItem(
     {
-        label: 'Export AsyncAPI',
+        label: 'AsyncAPI specification',
         icon: 'bi-file-earmark-code',
         onClick: () => {
             exportAsyncAPIDialogVisible.value = true

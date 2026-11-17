@@ -16,13 +16,13 @@ so you can send the first request right away.
 ## Export from the Dashboard
 
 1. Open the [Dashboard](/docs/get-started/dashboard.md) and select an HTTP service.
-2. Click the **⋮** button at the top right of the service card.
-3. Select **Export Bruno Collection**.
+2. Click **Export** at the top right of the service card.
+3. Select **Bruno collection**.
 4. Adjust the options if needed and click **Download**.
 
 You can also copy the download URL from the dialog to use it in scripts or CI pipelines.
 
-> The same menu contains **Export OpenAPI**, which downloads the specification of the service as JSON or YAML.
+> The same menu contains **OpenAPI specification**, which downloads the specification of the service as JSON or YAML.
 
 ## Import into Bruno
 
