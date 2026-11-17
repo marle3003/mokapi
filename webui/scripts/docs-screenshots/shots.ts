@@ -432,7 +432,7 @@ const ldap: Shot[] = [
 // customerEmail resolves to the email node (customerEmailAddress would not), sku to the custom node
 // of demo-configs/faker.ts
 const orderLineSchema = (...properties: string[]) =>
-  JSON.stringify({ type: 'object', properties: Object.fromEntries(properties.map((name) => [name, { type: 'string' }])) })
+  JSON.stringify({ type: 'object', required: properties, properties: Object.fromEntries(properties.map((name) => [name, { type: 'string' }])) })
 
 async function generateOrderLine(page: Page, schema: string) {
   const playground = page.getByRole('region', { name: 'Playground' })

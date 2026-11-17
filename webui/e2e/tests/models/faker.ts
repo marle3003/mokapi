@@ -61,10 +61,10 @@ export class NodeRowModel {
     constructor(element: Locator) {
         this.element = element
         this.toggle = element.locator('.faker-toggle')
-        this.customMarker = element.getByRole('img', { name: 'Custom node' })
-        this.groupMarker = element.getByRole('img', { name: 'Group', exact: true })
-        this.leafMarker = element.getByRole('img', { name: 'Generator', exact: true })
-        this.parentMarker = element.getByRole('img', { name: 'Generator with children', exact: true })
+        this.customMarker = element.locator('[title="customized node"]')
+        this.groupMarker = element.locator('[title="Groups its children, has no fake function"]')
+        this.leafMarker = element.locator('[title="Has a fake function"]')
+        this.parentMarker = element.locator('[title="Has a fake function and children"]')
     }
 }
 

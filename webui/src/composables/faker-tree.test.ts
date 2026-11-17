@@ -143,6 +143,18 @@ describe('faker tree', () => {
     })
   })
 
+  describe('position among the siblings', () => {
+    it('numbers the rows below the same parent', () => {
+      const rows = flattenTree(tree, new Set(['/', '/person']))
+
+      expect(rows.find(r => r.node.path === '/')).toMatchObject({ position: 1, siblings: 1 })
+      expect(rows.find(r => r.node.path === '/email')).toMatchObject({ position: 1, siblings: 4 })
+      expect(rows.find(r => r.node.path === '/shipping')).toMatchObject({ position: 4, siblings: 4 })
+      const children = tree.children!.find(c => c.path === '/person')!.children!
+      expect(rows.find(r => r.node.path === '/person/name')).toMatchObject({ position: 1, siblings: children.length })
+    })
+  })
+
   describe('toggleExpanded', () => {
     it('opens and closes a node without changing the set', () => {
       const closed = new Set<string>()

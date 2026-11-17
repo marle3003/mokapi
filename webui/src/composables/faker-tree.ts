@@ -32,6 +32,9 @@ export interface TreeRow {
     depth: number
     hasChildren: boolean
     expanded: boolean
+    // position among the siblings, 1-based, and their number (aria-posinset, aria-setsize)
+    position: number
+    siblings: number
 }
 
 // Attributes and dependencies as text, "-" if there are none.
@@ -75,15 +78,15 @@ export function filterTree(root: FakerNode, filter: TreeFilter): FilteredTree | 
 // The visible rows of the tree in display order: the children of a node only follow it when it is open.
 export function flattenTree(root: FakerNode, expanded: ReadonlySet<string>): TreeRow[] {
     const rows: TreeRow[] = []
-    const add = (node: FakerNode, depth: number) => {
+    const add = (node: FakerNode, depth: number, position: number, siblings: number) => {
         const children = node.children ?? []
         const isOpen = expanded.has(node.path)
-        rows.push({ node, depth, hasChildren: children.length > 0, expanded: isOpen })
+        rows.push({ node, depth, hasChildren: children.length > 0, expanded: isOpen, position, siblings })
         if (isOpen) {
-            children.forEach(child => add(child, depth + 1))
+            children.forEach((child, i) => add(child, depth + 1, i + 1, children.length))
         }
     }
-    add(root, 0)
+    add(root, 0, 1, 1)
     return rows
 }
 

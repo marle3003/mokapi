@@ -38,7 +38,7 @@ async function onKeydown(event: KeyboardEvent) {
     if (action.type === 'select') {
         emit('select', action.path)
         await nextTick()
-        itemOf(action.path)?.focus()
+        itemOf(action.path)?.focus({ preventScroll: true })
     } else {
         emit('toggle', action.path)
     }

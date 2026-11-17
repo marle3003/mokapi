@@ -51,6 +51,18 @@ test.describe('Faker tree', () => {
         await expect(faker.row('/person').groupMarker).toHaveCount(0)
     })
 
+    test('tells assistive technology the position among the siblings and names the row after the node', async ({ page }) => {
+        const faker = new FakerModel(page)
+        await page.goto(fakerPath)
+
+        const city = faker.row('/city').element
+        const siblings = firstLevel.filter(path => path !== '/')
+        await expect(city).toHaveAttribute('aria-setsize', String(siblings.length))
+        await expect(city).toHaveAttribute('aria-posinset', String(siblings.indexOf('/city') + 1))
+        // the icons are decoration, the name starts with the node name
+        await expect(city).toHaveAccessibleName(/^city\b(?!.*(Generator|Group))/)
+    })
+
     test('shows the custom marker next to the name', async ({ page }) => {
         const faker = new FakerModel(page)
         await page.goto(fakerPath)
@@ -325,6 +337,7 @@ test.describe('Faker tree scrolling', () => {
         await page.keyboard.press('End')
 
         await expect.poll(() => faker.isRowVisibleInTree('/shipping')).toBe(true)
+        expect(await page.evaluate(() => window.scrollY)).toBe(0)
     })
 })
 
