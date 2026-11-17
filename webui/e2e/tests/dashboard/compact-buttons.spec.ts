@@ -1,0 +1,96 @@
+import type { Locator, Page } from '@playwright/test'
+import { test, expect } from '../models/fixture-dashboard'
+import { HttpRequestLogModel } from '../models/http'
+import { pauseClock } from '../helpers/clock'
+
+test.use({ layout: 'new' })
+
+// Pause, "Add filter", Export and the A-Z/By tag switch are toolbar buttons of the same size. They
+// don't share a page: Export and the tag switch are on the service page, Pause (only shown with
+// auto refresh) and "Add filter" in the request log.
+const servicePage = '/dashboard/http/services/Books%20API'
+const logPage = '/dashboard/http/log/Books%20API?refresh=1'
+
+async function useTheme(page: Page, theme: string) {
+    await page.addInitScript((t) => localStorage.setItem('theme', t), theme)
+}
+
+async function openService(page: Page, theme: string) {
+    await useTheme(page, theme)
+    await page.goto(servicePage)
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+    const group = page.getByRole('group', { name: 'Group rows' })
+    return {
+        export: page.getByRole('button', { name: 'Export' }),
+        az: group.getByRole('button', { name: 'A-Z' }),
+        byTag: group.getByRole('button', { name: 'By tag' }),
+    }
+}
+
+async function openLog(page: Page, theme: string) {
+    await useTheme(page, theme)
+    const log = new HttpRequestLogModel(page)
+    await page.clock.install()
+    await page.goto(logPage)
+    await expect(log.rows).toHaveCount(12)
+    await pauseClock(page)
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+    return log
+}
+
+async function size(button: Locator) {
+    return button.evaluate((el) => ({
+        height: el.getBoundingClientRect().height,
+        fontSize: getComputedStyle(el).fontSize,
+    }))
+}
+
+async function textColor(page: Page) {
+    return page.evaluate(() => {
+        const probe = document.createElement('span')
+        probe.style.color = 'var(--color-text)'
+        document.body.appendChild(probe)
+        const color = getComputedStyle(probe).color
+        probe.remove()
+        return color
+    })
+}
+
+for (const theme of ['light', 'dark']) {
+    test.describe(`${theme} theme`, () => {
+        test('Pause, "Add filter", Export and A-Z have the same height and a font size of 12px', async ({ page }) => {
+            const service = await openService(page, theme)
+            const exportSize = await size(service.export)
+            const azSize = await size(service.az)
+
+            const log = await openLog(page, theme)
+            const pauseSize = await size(log.pause)
+            const addFilterSize = await size(log.addFilter)
+
+            for (const button of [exportSize, azSize, pauseSize, addFilterSize]) {
+                expect(button.fontSize).toBe('12px')
+            }
+            expect(exportSize.height).toBe(azSize.height)
+            expect(pauseSize.height).toBe(azSize.height)
+            expect(addFilterSize.height).toBe(azSize.height)
+        })
+
+        test('Pause and "Add filter" use the text color, readable on the background', async ({ page }) => {
+            const log = await openLog(page, theme)
+            const expected = await textColor(page)
+
+            await expect(log.pause).toHaveCSS('color', expected)
+            await expect(log.addFilter).toHaveCSS('color', expected)
+        })
+
+        test('the tag switch shows the selected entry', async ({ page }) => {
+            const service = await openService(page, theme)
+            await expect(service.az).toHaveAttribute('aria-pressed', 'true')
+
+            const active = await service.az.evaluate((el) => getComputedStyle(el).backgroundColor)
+            const inactive = await service.byTag.evaluate((el) => getComputedStyle(el).backgroundColor)
+
+            expect(active).not.toBe(inactive)
+        })
+    })
+}

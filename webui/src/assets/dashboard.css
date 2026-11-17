@@ -875,6 +875,15 @@ a.search-result:focus-visible {
 .filter-add {
   position: relative;
 }
+/* Bootstrap sets the button variables on each .btn, so a size class or a button group can't pass them on.
+   The secondary gray is hard to read on the dark dashboard background. */
+.btn-compact {
+  --bs-btn-padding-y: .1rem;
+  --bs-btn-padding-x: .5rem;
+  --bs-btn-font-size: .75rem;
+  --bs-btn-color: var(--color-text);
+  --bs-btn-border-color: var(--color-text-light);
+}
 .filter-menu,
 .filter-popover {
   position: absolute;

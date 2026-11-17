@@ -59,7 +59,7 @@ onUnmounted(() => document.removeEventListener('mousedown', closeMenuOnOutsideCl
         </ul>
 
         <div class="filter-add" v-if="addable.length > 0">
-            <button type="button" class="btn btn-outline-primary btn-sm" aria-haspopup="menu" :aria-expanded="menuOpen"
+            <button type="button" class="btn btn-outline-secondary btn-compact" aria-haspopup="menu" :aria-expanded="menuOpen"
                 @click="menuOpen = !menuOpen">
                 <i class="bi bi-plus" aria-hidden="true"></i> Add filter
             </button>

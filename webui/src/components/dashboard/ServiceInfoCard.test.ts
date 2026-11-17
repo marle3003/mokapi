@@ -76,12 +76,15 @@ describe('ServiceInfoCard export button', () => {
         expect(wrapper.find('.card-toolbar').exists()).toBe(false)
     })
 
-    it('groups the button and the type badge', () => {
+    it('shows the type badge in front of the service name, not next to the button', () => {
         addItems()
         const wrapper = mountCard()
 
-        const group = wrapper.find('button.dropdown-toggle').element.closest('.d-flex')
-        expect(group?.contains(wrapper.find('[data-testid="service-type"]').element)).toBe(true)
+        const badge = wrapper.find('[data-testid="service-type"]').element
+        const name = wrapper.find('[data-testid="service-name"]').element
+        expect(badge.nextElementSibling).toBe(name)
+        expect(wrapper.find('.dropdown').element.parentElement?.contains(badge)).toBe(false)
+        expect(wrapper.find('[data-testid="service-name"]').text()).toBe('Swagger Petstore')
     })
 
     it('runs onClick once per click on an entry', async () => {

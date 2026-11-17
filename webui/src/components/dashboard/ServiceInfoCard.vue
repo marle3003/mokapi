@@ -35,7 +35,10 @@ watch(() => [route.query.demo, exportButton.value], async ([kind]) => {
             <div class="row">
                 <div class="col header mb-3">
                     <p id="name" class="label">Name</p>
-                    <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
+                    <div class="service-title d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
+                        <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
+                    </div>
                 </div>
                 <div class="col-1">
                     <p id="version" class="label">Version</p>
@@ -58,27 +61,24 @@ watch(() => [route.query.demo, exportButton.value], async ([kind]) => {
                         </li>
                     </ul>
                 </div>
-                <div class="col-auto ms-auto">
-                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
-                        <div class="dropdown" v-if="toolbar.items.length > 0">
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-secondary dropdown-toggle export-button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                                ref="export-button"
-                            >
-                                <i class="bi bi-box-arrow-up me-1" aria-hidden="true"></i>Export
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end export-menu">
-                                <li v-for="item in toolbar.items" :key="item.id">
-                                    <button class="dropdown-item" @click.prevent="highlightItem = null; item.onClick()" :class="{ 'menu-highlight': highlightItem == item.label}">
-                                        <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
+                <div class="col-auto ms-auto" v-if="toolbar.items.length > 0">
+                    <div class="dropdown">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary btn-compact dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            ref="export-button"
+                        >
+                            <i class="bi bi-box-arrow-up me-1" aria-hidden="true"></i>Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end export-menu">
+                            <li v-for="item in toolbar.items" :key="item.id">
+                                <button class="dropdown-item" @click.prevent="highlightItem = null; item.onClick()" :class="{ 'menu-highlight': highlightItem == item.label}">
+                                    <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -99,6 +99,17 @@ watch(() => [route.query.demo, exportButton.value], async ([kind]) => {
 </template>
 
 <style scoped>
+/* the badge scales with the font size of the name (1.4rem in .header p) */
+.service-title {
+    font-size: 1.4rem;
+    margin-bottom: .3rem;
+}
+.dashboard .card .service-title p {
+    margin: 0;
+}
+.service-title .badge {
+    font-size: .55em;
+}
 ul.contact {
     list-style: none; 
     padding: 0;
@@ -109,15 +120,6 @@ ul.contact li {
 }
 ul.contact li span.bi {
     vertical-align:middle;
-}
-/* Bootstrap sets the button variables on each .btn, same size as the switch in TagGroupSwitch */
-.export-button {
-    --bs-btn-padding-y: .1rem;
-    --bs-btn-padding-x: .5rem;
-    --bs-btn-font-size: .75rem;
-    /* the secondary gray is hard to read on the dark dashboard background */
-    --bs-btn-color: var(--color-text);
-    --bs-btn-border-color: var(--color-text-light);
 }
 /* same look as the "Add filter" menu (.filter-menu in dashboard.css) */
 .export-menu {
