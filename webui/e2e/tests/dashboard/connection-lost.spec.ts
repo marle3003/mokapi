@@ -74,6 +74,8 @@ const effectiveOpacity = (element: Locator) => element.evaluate(e => {
     }
     return opacity
 })
+// retries: a fade-in of an ancestor (e.g. a Bootstrap tab pane) runs on real time, not on the paused clock
+const expectEffectiveOpacity = (element: Locator, opacity: number) => expect.poll(() => effectiveOpacity(element)).toBe(opacity)
 const expectNotDimmed = (...elements: Locator[]) => Promise.all(elements.map(e => expect(e).toHaveCSS('opacity', '1')))
 
 test.describe('Connection lost', () => {
@@ -359,12 +361,13 @@ test.describe('Connection lost: stale data is dimmed', () => {
 
         await disconnect(page)
 
-        // the paused clock holds the modal fade-in back until the heartbeat tick above
+        // the paused clock holds the modal fade-in back until the heartbeat tick above;
+        // the Headers tab pane around the dialog may still be fading in
         await expect(dialog).toHaveCSS('opacity', '1')
         await expect(source.locator('.source')).toHaveCSS('opacity', '0.5')
-        expect(await effectiveOpacity(source.locator('.source'))).toBe(0.5)
-        expect(await effectiveOpacity(source.getByRole('button', { name: 'Copy raw content' }))).toBe(1)
-        expect(await effectiveOpacity(source.getByRole('button', { name: 'Download raw content' }))).toBe(1)
+        await expectEffectiveOpacity(source.locator('.source'), 0.5)
+        await expectEffectiveOpacity(source.getByRole('button', { name: 'Copy raw content' }), 1)
+        await expectEffectiveOpacity(source.getByRole('button', { name: 'Download raw content' }), 1)
     })
 
     test('mail body is dimmed, the theme switch is not', async ({ page }) => {
