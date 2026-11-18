@@ -3,6 +3,8 @@ package generator
 import (
 	"mokapi/config/static"
 	"mokapi/schema/json/schema/schematest"
+	"mokapi/sortedmap"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -579,4 +581,103 @@ func TestObject(t *testing.T) {
 			tc.test(t, v, err)
 		})
 	}
+}
+
+func TestObject_PropertyOrderDoesNotMatter(t *testing.T) {
+	t.Run("email uses the person name", func(t *testing.T) {
+		orders := [][]string{
+			{"email", "firstName", "lastName"},
+			{"email", "lastName", "firstName"},
+			{"firstName", "email", "lastName"},
+			{"firstName", "lastName", "email"},
+			{"lastName", "firstName", "email"},
+		}
+
+		for _, order := range orders {
+			t.Run(strings.Join(order, ","), func(t *testing.T) {
+				Seed(1234567)
+
+				s := schematest.New("object", schematest.WithRequired(order...))
+				for _, name := range order {
+					schematest.WithProperty(name, schematest.New("string"))(s)
+				}
+
+				v, err := New(&Request{Schema: s})
+
+				require.NoError(t, err)
+				obj := v.(map[string]any)
+				first := strings.ToLower(obj["firstName"].(string))
+				last := strings.ToLower(obj["lastName"].(string))
+				require.True(t, strings.HasPrefix(obj["email"].(string), first+"."+last+"@"), "%v", obj)
+			})
+		}
+	})
+
+	t.Run("all email properties use the person name", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{
+			Schema: schematest.New("object",
+				schematest.WithProperty("email", schematest.New("string")),
+				schematest.WithProperty("emailAddress", schematest.New("string")),
+				schematest.WithProperty("firstName", schematest.New("string")),
+				schematest.WithProperty("lastName", schematest.New("string")),
+				schematest.WithRequired("email", "emailAddress", "firstName", "lastName"),
+			),
+		})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		prefix := strings.ToLower(obj["firstName"].(string)) + "." + strings.ToLower(obj["lastName"].(string)) + "@"
+		require.True(t, strings.HasPrefix(obj["email"].(string), prefix), "%v", obj)
+		require.True(t, strings.HasPrefix(obj["emailAddress"].(string), prefix), "%v", obj)
+	})
+}
+
+func TestTopologicalSort(t *testing.T) {
+	fakes := func(props ...any) *sortedmap.LinkedHashMap[string, *faker] {
+		m := &sortedmap.LinkedHashMap[string, *faker]{}
+		for i := 0; i < len(props); i += 2 {
+			m.Set(props[i].(string), &faker{node: props[i+1].(*Node)})
+		}
+		return m
+	}
+
+	t.Run("dependency is resolved by node name, not property key", func(t *testing.T) {
+		sorted, err := topologicalSort(fakes(
+			"end_date", &Node{Name: "endDate", DependsOn: []string{"startDate"}},
+			"begin", &Node{Name: "startDate"},
+			"other", (*Node)(nil),
+		))
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"begin", "other", "end_date"}, sorted)
+	})
+
+	t.Run("every property of a node is ordered after the dependency", func(t *testing.T) {
+		sorted, err := topologicalSort(fakes(
+			"a", &Node{Name: "email", DependsOn: []string{"lastname"}},
+			"b", &Node{Name: "email", DependsOn: []string{"lastname"}},
+			"c", &Node{Name: "lastname"},
+		))
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"c", "a", "b"}, sorted)
+	})
+
+	t.Run("dependency on own node name is ignored", func(t *testing.T) {
+		sorted, err := topologicalSort(fakes("a", &Node{Name: "x", DependsOn: []string{"x"}}))
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"a"}, sorted)
+	})
+
+	t.Run("circular dependency", func(t *testing.T) {
+		_, err := topologicalSort(fakes(
+			"a", &Node{Name: "x", DependsOn: []string{"y"}},
+			"b", &Node{Name: "y", DependsOn: []string{"x"}},
+		))
+
+		require.EqualError(t, err, "circular dependency detected")
+	})
 }

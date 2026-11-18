@@ -466,8 +466,13 @@ func scoreDomain(attribute []string, n *Node) float64 {
 func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, error) {
 	inDegree := map[string]int{}
 	graph := map[string][]string{}
+	// DependsOn holds node names, but properties are keyed by their schema name
+	keysByNode := map[string][]string{}
 	for it := fakes.Iter(); it.Next(); {
 		inDegree[it.Key()] = 0
+		if node := it.Value().node; node != nil {
+			keysByNode[node.Name] = append(keysByNode[node.Name], it.Key())
+		}
 	}
 
 	for it := fakes.Iter(); it.Next(); {
@@ -477,12 +482,14 @@ func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, 
 			continue
 		}
 		for _, dep := range val.node.DependsOn {
-			if _, ok := inDegree[dep]; !ok {
-				// Skip dependents that are not present
-				continue
+			// dependencies that are not present are skipped
+			for _, depKey := range keysByNode[dep] {
+				if depKey == key {
+					continue
+				}
+				graph[depKey] = append(graph[depKey], key)
+				inDegree[key]++
 			}
-			graph[dep] = append(graph[dep], key)
-			inDegree[key]++
 		}
 	}
 
