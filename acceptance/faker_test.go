@@ -7,6 +7,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/try"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"strings"
 )
@@ -235,5 +236,28 @@ func (suite *FakerSuite) TestGenerateByPathRejectsUnknownAndNonGeneratingNodes()
 		status, _ := suite.generateNode(tc.path)
 
 		suite.Equal(tc.status, status, tc.path)
+	}
+}
+
+func (suite *FakerSuite) TestCompoundEmailAddressPropertyResolvesToTheEmailNode() {
+	tests := []struct {
+		property string
+		tokens   []string
+	}{
+		{property: "customerEmailAddress", tokens: []string{"emailaddress"}},
+		{property: "emailAddress", tokens: []string{"emailAddress"}},
+		{property: "email_address", tokens: []string{"emailaddress"}},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.property, func() {
+			result := suite.mustExplain(fmt.Sprintf(`{"path": [%q]}`, tc.property))
+
+			suite.Require().Len(result.Matches, 1)
+			m := result.Matches[0]
+			suite.Equal("/email", m.Node)
+			suite.Equal(tc.tokens, m.Tokens)
+			_, err := mail.ParseAddress(fmt.Sprint(m.Value))
+			suite.NoError(err, m.Value)
+		})
 	}
 }

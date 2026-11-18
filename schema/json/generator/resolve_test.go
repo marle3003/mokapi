@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,9 +33,33 @@ func TestFindBestMatch_ConsumedTokens(t *testing.T) {
 	}{
 		{
 			name:   "leading tokens without a match are not consumed",
-			path:   tokenize([]string{"customerEmailAddress"}),
+			path:   tokenize([]string{"customerAddress"}),
 			node:   "address",
 			tokens: []string{"address"},
+		},
+		{
+			name:   "compound email address after a leading token",
+			path:   tokenize([]string{"customerEmailAddress"}),
+			node:   "email",
+			tokens: []string{"emailaddress"},
+		},
+		{
+			name:   "email address as attribute",
+			path:   []string{"emailAddress"},
+			node:   "email",
+			tokens: []string{"emailAddress"},
+		},
+		{
+			name:   "email address with underscore",
+			path:   tokenize([]string{"email_address"}),
+			node:   "email",
+			tokens: []string{"emailaddress"},
+		},
+		{
+			name:   "email address below contact",
+			path:   []string{"contact", "emailAddress"},
+			node:   "email",
+			tokens: []string{"contact", "emailAddress"},
 		},
 		{
 			name: "singular form of the first token",
@@ -105,6 +130,31 @@ func TestResolve_StoresMatchOnFaker(t *testing.T) {
 	f, err := resolve(r, true)
 
 	require.NoError(t, err)
-	require.Equal(t, "/address", NodePath(f.node))
-	require.Equal(t, []string{"address"}, f.tokens)
+	require.Equal(t, "/email", NodePath(f.node))
+	require.Equal(t, []string{"emailaddress"}, f.tokens)
+}
+
+func TestResolve_NodePathOfEmailAddress(t *testing.T) {
+	testcases := []struct {
+		path []string
+		node string
+	}{
+		{path: []string{"emailAddress"}, node: "/email"},
+		{path: []string{"contact", "emailAddress"}, node: "/contact/email"},
+		{path: []string{"shippingAddress"}, node: "/address"},
+		{path: []string{"billingAddress"}, node: "/address"},
+		{path: []string{"customerAddress"}, node: "/address"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(strings.Join(tc.path, "."), func(t *testing.T) {
+			r := NewRequest(tc.path, nil, nil)
+			r.g = g
+
+			f, err := resolve(r, true)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.node, NodePath(f.node))
+		})
+	}
 }

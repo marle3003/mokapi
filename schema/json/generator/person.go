@@ -107,7 +107,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "email",
-				Attributes: []string{"email"},
+				Attributes: []string{"email", "emailAddress"},
 				Weight:     0.5,
 				Fake:       fakeEmail,
 			},

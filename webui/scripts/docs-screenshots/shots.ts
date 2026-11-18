@@ -429,7 +429,7 @@ const ldap: Shot[] = [
 
 // ---- faker explorer: get-started/dashboard.md, test-data.md and the home page ----
 
-// customerEmail resolves to the email node (customerEmailAddress would not), sku to the custom node
+// customerEmail resolves to the email node (customerEmailAddress does too), sku to the custom node
 // of demo-configs/faker.ts
 const orderLineSchema = (...properties: string[]) =>
   JSON.stringify({ type: 'object', required: properties, properties: Object.fromEntries(properties.map((name) => [name, { type: 'string' }])) })

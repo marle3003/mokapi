@@ -10,7 +10,7 @@ import (
 func newEmailNode() *Node {
 	return &Node{
 		Name:       "email",
-		Attributes: []string{"email"},
+		Attributes: []string{"email", "emailAddress"},
 		DependsOn:  []string{"firstname", "lastname"},
 		Fake:       fakeEmail,
 	}
