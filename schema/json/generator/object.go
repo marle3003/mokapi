@@ -448,12 +448,20 @@ func detectDomain(s *schema.Schema, root *Node) string {
 	return best.Name
 }
 
+var separators = strings.NewReplacer("_", "", "-", "")
+
+// sameName compares property names and attributes ignoring case, '_' and '-',
+// so first_name matches firstname.
+func sameName(a, b string) bool {
+	return strings.EqualFold(separators.Replace(a), separators.Replace(b))
+}
+
 func scoreDomain(attribute []string, n *Node) float64 {
 	score := 0.0
 	for _, attr := range attribute {
 		for _, child := range n.Children {
 			found := slices.ContainsFunc(child.Attributes, func(s string) bool {
-				return strings.EqualFold(attr, s)
+				return sameName(attr, s)
 			})
 			if found {
 				score += child.Weight

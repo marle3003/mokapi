@@ -2,6 +2,7 @@ package generator
 
 import (
 	"mokapi/schema/json/schema/schematest"
+	"strings"
 	"testing"
 	"time"
 
@@ -423,6 +424,116 @@ func TestPerson(t *testing.T) {
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestPersonNameSpellings(t *testing.T) {
+	t.Run("object: email uses the person name", func(t *testing.T) {
+		spellings := [][2]string{
+			{"firstName", "lastName"},
+			{"first_name", "last_name"},
+			{"first-name", "last-name"},
+			{"FirstName", "LastName"},
+			{"givenName", "familyName"},
+			{"given_name", "family_name"},
+			{"givenName", "surname"},
+		}
+
+		for _, sp := range spellings {
+			t.Run(sp[0]+","+sp[1], func(t *testing.T) {
+				Seed(1234567)
+
+				v, err := New(&Request{
+					Schema: schematest.New("object",
+						schematest.WithProperty("email", schematest.New("string")),
+						schematest.WithProperty(sp[0], schematest.New("string")),
+						schematest.WithProperty(sp[1], schematest.New("string")),
+						schematest.WithRequired("email", sp[0], sp[1]),
+					),
+				})
+
+				require.NoError(t, err)
+				obj := v.(map[string]any)
+				prefix := strings.ToLower(obj[sp[0]].(string)) + "." + strings.ToLower(obj[sp[1]].(string)) + "@"
+				require.True(t, strings.HasPrefix(obj["email"].(string), prefix), "%v", obj)
+			})
+		}
+	})
+
+	t.Run("single path resolves to the person name node", func(t *testing.T) {
+		paths := map[string]string{
+			"firstName":         "/firstname",
+			"first_name":        "/firstname",
+			"first-name":        "/firstname",
+			"FirstName":         "/firstname",
+			"givenName":         "/firstname",
+			"given_name":        "/firstname",
+			"lastName":          "/lastname",
+			"last_name":         "/lastname",
+			"last-name":         "/lastname",
+			"LastName":          "/lastname",
+			"familyName":        "/lastname",
+			"surname":           "/lastname",
+			"customerFirstName": "/firstname",
+			"billingLastName":   "/lastname",
+		}
+
+		for path, node := range paths {
+			t.Run(path, func(t *testing.T) {
+				Seed(1234567)
+
+				result, err := Explain(NewRequest([]string{path}, nil, nil))
+
+				require.NoError(t, err)
+				require.Len(t, result.Matches, 1)
+				require.True(t, strings.HasSuffix(result.Matches[0].Node, node), "node %v, value %v", result.Matches[0].Node, result.Value)
+			})
+		}
+	})
+}
+
+func TestDetectDomain_IgnoresUnderscoreAndHyphen(t *testing.T) {
+	for _, names := range [][]string{{"first_name", "last_name"}, {"first-name", "last-name"}, {"FirstName", "LastName"}} {
+		s := schematest.New("object")
+		for _, name := range names {
+			schematest.WithProperty(name, schematest.New("string"))(s)
+		}
+
+		require.Equal(t, "person", detectDomain(s, g.root), "%v", names)
+	}
+}
+
+func TestFirstAndLastNameNodesAreSharedWithRoot(t *testing.T) {
+	for _, name := range []string{"firstname", "lastname"} {
+		require.Same(t, g.root.child(name), personal[0].child(name), name)
+		require.Same(t, g.root.child(name), FindByName(name), name)
+	}
+}
+
+func TestPersonNameAttributesDoNotCaptureOtherNames(t *testing.T) {
+	// guards the nodes these paths resolved to before the person name attributes were added
+	paths := map[string]string{
+		"name":        "/name",
+		"productName": "/product/name",
+		"companyName": "/company/name",
+		"username":    "/username",
+		"userName":    "/username",
+		"fullName":    "/name",
+		"displayName": "/name",
+		"nickname":    "fakeBySchema",
+		"lastLogin":   "/lastlogin",
+	}
+
+	for path, node := range paths {
+		t.Run(path, func(t *testing.T) {
+			Seed(1234567)
+
+			result, err := Explain(NewRequest([]string{path}, nil, nil))
+
+			require.NoError(t, err)
+			require.Len(t, result.Matches, 1)
+			require.Equal(t, node, result.Matches[0].Node, "tokens %v", result.Matches[0].Tokens)
 		})
 	}
 }

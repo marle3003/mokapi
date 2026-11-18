@@ -183,6 +183,7 @@ func TestTimePairs(t *testing.T) {
 	pairs := []struct{ start, end string }{
 		{"startDate", "endDate"},
 		{"validFrom", "validUntil"},
+		{"start_date", "end_date"},
 	}
 	formats := map[string]string{
 		"":          "2006-01-02",

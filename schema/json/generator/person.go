@@ -23,7 +23,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "firstname",
-				Attributes: []string{"firstname", "firstname2"},
+				Attributes: []string{"firstname", "firstname2", "givenName"},
 				DependsOn:  []string{"gender", "sex"},
 				Weight:     1.0,
 				Fake:       fakeFirstname,
@@ -37,7 +37,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "lastname",
-				Attributes: []string{"lastname"},
+				Attributes: []string{"lastname", "familyName", "surname"},
 				Weight:     1.0,
 				Fake:       fakeLastname,
 			},

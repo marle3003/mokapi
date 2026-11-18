@@ -192,6 +192,8 @@ func buildTree() *Node {
 	r.Children = append(r.Children, ictNodes()...)
 	r.Children = append(r.Children, textNodes()...)
 	r.Children = append(r.Children, personal...)
+	// shared with the person domain, so a property called firstName is a first name without a domain
+	r.Children = append(r.Children, personal[0].child("firstname"), personal[0].child("lastname"))
 	r.Children = append(r.Children, addresses()...)
 	r.Children = append(r.Children, locations()...)
 	r.Children = append(r.Children, financials()...)

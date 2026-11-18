@@ -261,3 +261,37 @@ func (suite *FakerSuite) TestCompoundEmailAddressPropertyResolvesToTheEmailNode(
 		})
 	}
 }
+
+func (suite *FakerSuite) TestSnakeCasePersonNamesResolveToPersonNodes() {
+	for _, path := range []string{"first_name", "firstName", "givenName"} {
+		result := suite.mustExplain(fmt.Sprintf(`{"path": [%q]}`, path))
+
+		suite.Require().Len(result.Matches, 1, path)
+		suite.True(strings.HasSuffix(result.Matches[0].Node, "/firstname"), "%v: %v", path, result.Matches[0].Node)
+	}
+}
+
+func (suite *FakerSuite) TestEmailUsesSnakeCasePersonNames() {
+	result := suite.mustExplain(`{
+		"schema": {
+			"type": "object",
+			"required": ["email", "first_name", "last_name"],
+			"properties": {
+				"email": { "type": "string" },
+				"first_name": { "type": "string" },
+				"last_name": { "type": "string" }
+			}
+		}
+	}`)
+
+	obj := result.Value.(map[string]any)
+	prefix := strings.ToLower(obj["first_name"].(string)) + "." + strings.ToLower(obj["last_name"].(string)) + "@"
+	suite.True(strings.HasPrefix(obj["email"].(string), prefix), "%v", obj)
+}
+
+func (suite *FakerSuite) TestSurnameResolvesToLastNameNode() {
+	result := suite.mustExplain(`{"path": ["surname"]}`)
+
+	suite.Require().Len(result.Matches, 1)
+	suite.True(strings.HasSuffix(result.Matches[0].Node, "/lastname"), "%v", result.Matches[0].Node)
+}

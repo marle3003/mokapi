@@ -585,31 +585,33 @@ func TestObject(t *testing.T) {
 
 func TestObject_PropertyOrderDoesNotMatter(t *testing.T) {
 	t.Run("email uses the person name", func(t *testing.T) {
-		orders := [][]string{
-			{"email", "firstName", "lastName"},
-			{"email", "lastName", "firstName"},
-			{"firstName", "email", "lastName"},
-			{"firstName", "lastName", "email"},
-			{"lastName", "firstName", "email"},
-		}
+		for _, names := range [][2]string{{"firstName", "lastName"}, {"first_name", "last_name"}} {
+			first, last := names[0], names[1]
+			orders := [][]string{
+				{"email", first, last},
+				{"email", last, first},
+				{first, "email", last},
+				{first, last, "email"},
+				{last, first, "email"},
+			}
 
-		for _, order := range orders {
-			t.Run(strings.Join(order, ","), func(t *testing.T) {
-				Seed(1234567)
+			for _, order := range orders {
+				t.Run(strings.Join(order, ","), func(t *testing.T) {
+					Seed(1234567)
 
-				s := schematest.New("object", schematest.WithRequired(order...))
-				for _, name := range order {
-					schematest.WithProperty(name, schematest.New("string"))(s)
-				}
+					s := schematest.New("object", schematest.WithRequired(order...))
+					for _, name := range order {
+						schematest.WithProperty(name, schematest.New("string"))(s)
+					}
 
-				v, err := New(&Request{Schema: s})
+					v, err := New(&Request{Schema: s})
 
-				require.NoError(t, err)
-				obj := v.(map[string]any)
-				first := strings.ToLower(obj["firstName"].(string))
-				last := strings.ToLower(obj["lastName"].(string))
-				require.True(t, strings.HasPrefix(obj["email"].(string), first+"."+last+"@"), "%v", obj)
-			})
+					require.NoError(t, err)
+					obj := v.(map[string]any)
+					prefix := strings.ToLower(obj[first].(string)) + "." + strings.ToLower(obj[last].(string)) + "@"
+					require.True(t, strings.HasPrefix(obj["email"].(string), prefix), "%v", obj)
+				})
+			}
 		}
 	})
 

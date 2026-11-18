@@ -80,7 +80,7 @@ domain.
 For an object schema, Mokapi calculates a score for each domain:
 
 1. Take all property names of the schema.
-2. For each domain, add up the weights of its children that list one of the property names in their `attributes`. The comparison is case-insensitive.
+2. For each domain, add up the weights of its children that list one of the property names in their `attributes`. The comparison ignores case, `_` and `-`, so `first_name` matches `firstname`.
 3. The domain with the highest score wins. If no domain scores above 0, no domain is used.
 
 The name of the winning domain is appended to the request path. Nodes below the domain, such as `product/name`, can then
