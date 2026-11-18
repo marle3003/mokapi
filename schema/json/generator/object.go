@@ -51,6 +51,11 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 	fake := func() (any, error) {
 		req.Context.Snapshot()
 		defer req.Context.Restore()
+		if len(req.Context.snapshots) > 1 {
+			for it := fakes.Iter(); it.Next(); {
+				req.Context.forgetNode(it.Value().node)
+			}
+		}
 
 		var propNames []string
 		props := map[string]any{}

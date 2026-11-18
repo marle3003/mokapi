@@ -2,6 +2,7 @@ package generator
 
 import (
 	"mokapi/config/static"
+	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/sortedmap"
 	"strings"
@@ -681,5 +682,141 @@ func TestTopologicalSort(t *testing.T) {
 		))
 
 		require.EqualError(t, err, "circular dependency detected")
+	})
+}
+
+func TestObject_NestedObjectsAndContext(t *testing.T) {
+	str := func() *schema.Schema { return schematest.New("string") }
+	emailMatchesName := func(t *testing.T, obj map[string]any) {
+		t.Helper()
+		prefix := strings.ToLower(obj["firstName"].(string)) + "." + strings.ToLower(obj["lastName"].(string)) + "@"
+		require.True(t, strings.HasPrefix(obj["email"].(string), prefix), "%v", obj)
+	}
+
+	t.Run("email after a nested object uses the name", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("address", schematest.New("object",
+				schematest.WithProperty("city", str()),
+				schematest.WithRequired("city"))),
+			schematest.WithProperty("email", str()),
+			schematest.WithRequired("firstName", "lastName", "address", "email"),
+		)})
+
+		require.NoError(t, err)
+		emailMatchesName(t, v.(map[string]any))
+	})
+
+	t.Run("email of a nested object uses the name of the parent", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("contact", schematest.New("object",
+				schematest.WithProperty("email", str()),
+				schematest.WithRequired("email"))),
+			schematest.WithRequired("firstName", "lastName", "contact"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		obj["email"] = obj["contact"].(map[string]any)["email"]
+		emailMatchesName(t, obj)
+	})
+
+	t.Run("items of an array get different names", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("array",
+			schematest.WithItems("object",
+				schematest.WithProperty("firstName", str()),
+				schematest.WithProperty("lastName", str()),
+				schematest.WithProperty("email", str()),
+				schematest.WithRequired("firstName", "lastName", "email")),
+			schematest.WithMinItems(5), schematest.WithMaxItems(5),
+		)})
+
+		require.NoError(t, err)
+		names := map[string]bool{}
+		for _, item := range v.([]any) {
+			obj := item.(map[string]any)
+			emailMatchesName(t, obj)
+			names[obj["firstName"].(string)+" "+obj["lastName"].(string)] = true
+		}
+		require.Greater(t, len(names), 1)
+	})
+
+	t.Run("values of a nested object do not leak into the next one", func(t *testing.T) {
+		Seed(1234567)
+		address := func() *schema.Schema {
+			return schematest.New("object",
+				schematest.WithProperty("street", str()),
+				schematest.WithProperty("city", str()),
+				schematest.WithRequired("street", "city"))
+		}
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("billingAddress", address()),
+			schematest.WithProperty("shippingAddress", address()),
+			schematest.WithRequired("billingAddress", "shippingAddress"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		require.NotEqual(t, obj["billingAddress"], obj["shippingAddress"])
+	})
+
+	t.Run("nested object with its own name gets a new name", func(t *testing.T) {
+		Seed(99)
+		person := func() *schema.Schema {
+			return schematest.New("object",
+				schematest.WithProperty("firstName", str()),
+				schematest.WithProperty("lastName", str()),
+				schematest.WithRequired("firstName", "lastName"))
+		}
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("manager", person()),
+			schematest.WithRequired("firstName", "lastName", "manager"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		manager := obj["manager"].(map[string]any)
+		require.NotEqual(t, obj["firstName"], manager["firstName"])
+		require.NotEqual(t, obj["lastName"], manager["lastName"])
+	})
+
+	t.Run("array of persons inside a person does not copy the name", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("friends", schematest.New("array",
+				schematest.WithItems("object",
+					schematest.WithProperty("firstName", str()),
+					schematest.WithProperty("lastName", str()),
+					schematest.WithProperty("email", str()),
+					schematest.WithRequired("firstName", "lastName", "email")),
+				schematest.WithMinItems(3), schematest.WithMaxItems(3))),
+			schematest.WithRequired("firstName", "lastName", "friends"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		names := map[string]bool{obj["firstName"].(string) + " " + obj["lastName"].(string): true}
+		for _, f := range obj["friends"].([]any) {
+			friend := f.(map[string]any)
+			emailMatchesName(t, friend)
+			names[friend["firstName"].(string)+" "+friend["lastName"].(string)] = true
+		}
+		require.Len(t, names, 4)
 	})
 }

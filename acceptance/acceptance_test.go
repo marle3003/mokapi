@@ -26,6 +26,7 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(FakerSuite))
 	suite.Run(t, new(RequestUrlSuite))
 	suite.Run(t, new(EmailAddressSuite))
+	suite.Run(t, new(FakerContextSuite))
 	suite.Run(t, new(HttpValidateSuite))
 }
 

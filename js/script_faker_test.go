@@ -234,6 +234,110 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
+		{
+			name: "custom node reads a value of the parent object in a nested object",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { fakeAsync, findByName } from 'mokapi/faker'
+						 export default async function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'producer',
+								attributes: ['producer'],
+								fake: (r) => {
+									r.context.values['token'] = 'abc'
+									return 'produced'
+								}
+							})
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => {
+									return r.context.values['token']
+								}
+							})
+							return await fakeAsync({
+								type: 'object',
+								required: ['producer', 'nested'],
+								properties: {
+									producer: { type: 'string' },
+									nested: {
+										type: 'object',
+										required: ['consumer'],
+										properties: { consumer: { type: 'string' } }
+									}
+								}
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"producer": "produced",
+					"nested":   map[string]any{"consumer": "abc"},
+				}, v.Export())
+				n := generator.FindByName(generator.RootName)
+				r.NoError(t, n.Remove("producer"))
+				r.NoError(t, n.Remove("consumer"))
+			},
+		},
+		{
+			name: "custom node writes a value in a nested object that does not reach the parent",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { fakeAsync, findByName } from 'mokapi/faker'
+						 export default async function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'producer',
+								attributes: ['producer'],
+								fake: (r) => {
+									r.context.values['token'] = 'abc'
+									return 'produced'
+								}
+							})
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => {
+									return r.context.values['token'] ?? 'none'
+								}
+							})
+							return await fakeAsync({
+								type: 'object',
+								required: ['nested', 'consumer'],
+								properties: {
+									nested: {
+										type: 'object',
+										required: ['producer'],
+										properties: { producer: { type: 'string' } }
+									},
+									consumer: { type: 'string' }
+								}
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"nested":   map[string]any{"producer": "produced"},
+					"consumer": "none",
+				}, v.Export())
+				n := generator.FindByName(generator.RootName)
+				r.NoError(t, n.Remove("producer"))
+				r.NoError(t, n.Remove("consumer"))
+			},
+		},
 	}
 
 	for _, tc := range testcases {

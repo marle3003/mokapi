@@ -182,6 +182,7 @@ func fakeArray(r *Request, fakeItem *faker) (any, error) {
 				var err error
 				r.Context.Snapshot()
 				defer r.Context.Restore()
+				r.Context.forgetNode(nextItem.node)
 
 				if s.UniqueItems != nil && *s.UniqueItems {
 					v, err = nextUnique(arr, nextItem.fake)

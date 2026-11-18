@@ -88,10 +88,9 @@ func (r *Request) property(name string) *Request {
 }
 
 type Context struct {
-	Values    map[string]any `json:"values"`
+	Values map[string]any `json:"values"`
+	// snapshots holds the values of the enclosing objects, the innermost last
 	snapshots []map[string]any
-	// represents how many steps current context is away from the root
-	level int
 }
 
 type Values map[string]any
@@ -100,24 +99,29 @@ func newContext() *Context {
 	return &Context{Values: make(Values)}
 }
 
+// Snapshot starts a nested level that sees a copy of the current values.
+// Restore discards everything the nested level has written.
 func (c *Context) Snapshot() {
-	if c.level != 0 {
-		m := map[string]any{}
-		maps.Copy(m, c.Values)
-		c.Values = map[string]any{}
-		c.snapshots = append(c.snapshots, m)
-	}
-	c.level++
+	c.snapshots = append(c.snapshots, c.Values)
+	c.Values = maps.Clone(c.Values)
 }
 
 func (c *Context) Restore() {
-	if len(c.snapshots) <= 1 {
+	if len(c.snapshots) == 0 {
 		return
 	}
 
-	snapshot := c.snapshots[len(c.snapshots)-1]
-	c.snapshots = c.snapshots[:len(c.snapshots)-1]
-	c.Values = snapshot
+	last := len(c.snapshots) - 1
+	c.Values = c.snapshots[last]
+	c.snapshots = c.snapshots[:last]
+}
+
+// forgetNode drops the value a node has stored under its name, so a nested level generates it
+// again instead of reusing the one of its parent.
+func (c *Context) forgetNode(n *Node) {
+	if n != nil {
+		delete(c.Values, n.Name)
+	}
 }
 
 func (c *Context) Has(key string) bool {

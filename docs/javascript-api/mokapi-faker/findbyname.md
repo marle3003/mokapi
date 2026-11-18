@@ -68,6 +68,24 @@ Use the context to keep related values consistent. For example, an email address
 be built from a previously generated first and last name, or street, zip and city can
 all come from the same address.
 
+### Nested objects and arrays
+
+A nested object or an array item starts with a copy of its parent's values. Everything
+it writes to `values` is discarded when it returns, so values don't leak into the parent
+or into sibling objects. A `billingAddress` and a `shippingAddress` in the same schema
+therefore get different addresses.
+
+A property that the nested object declares itself, meaning one that matches a faker node,
+is generated again instead of copying the parent's value. A `manager` object with its own
+`firstName` and `lastName` gets a new name. Properties it doesn't declare are inherited:
+the `email` in a nested `contact` object is built from the parent's `firstName` and
+`lastName`.
+
+Values that a node stores under its own key, such as the `city` of an address, are
+inherited by nested objects as well. "One address per context" in the
+[example](#generate-addresses-for-your-own-country) below therefore means one address per
+object level.
+
 ## Domain detection
 
 Many property names are ambiguous. A `name` can be a person's name, a product name or a category name. To resolve this,
@@ -157,7 +175,7 @@ export default function() {
     findByName('firstname').fake = () => random(firstnames)
     findByName('lastname').fake = () => random(lastnames)
 
-    // Pick one address per context and reuse it for all address parts
+    // Pick one address per object level and reuse it for all address parts
     const getAddress = (ctx) => {
         let address = ctx.values['selected_address']
         if (!address) {
