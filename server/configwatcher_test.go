@@ -557,13 +557,13 @@ func TestConfigWatcher_Start(t *testing.T) {
 				require.Equal(t, int32(1), listenerReceived.Load())
 				pool.Stop()
 
-				func() {
-					defer func() {
-						err := recover()
-						require.Equal(t, err.(error).Error(), "send on closed channel")
-					}()
-					ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}}
-				}()
+				// the channel stays open for providers that are still sending, nobody reads it anymore
+				select {
+				case ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}}:
+					t.Fatal("event was consumed after the pool was stopped")
+				case <-time.After(50 * time.Millisecond):
+				}
+				require.Equal(t, int32(1), listenerReceived.Load())
 			},
 		},
 	}

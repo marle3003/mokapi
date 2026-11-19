@@ -439,3 +439,31 @@ func mustUrl(s string) *url.URL {
 	}
 	return u
 }
+
+func TestProvider_StopWhileForwardingToUnreadChannel(t *testing.T) {
+	fs := &filetest.MockFS{
+		WorkingDir: "/",
+		Entries: []*filetest.Entry{
+			{Name: "/node_modules", IsDir: true},
+			{Name: "/node_modules/foo", IsDir: true},
+			{Name: "/node_modules/foo/foo.txt", Data: []byte("foobar")},
+		},
+	}
+	pool := safe.NewPool(context.Background())
+	p := NewFS(static.NpmProvider{Packages: []static.NpmPackage{{Name: "foo"}}}, fs)
+	require.NoError(t, p.Start(make(chan dynamic.ConfigEvent), pool))
+
+	// give the provider time to run into the send, nobody reads the channel
+	time.Sleep(200 * time.Millisecond)
+
+	done := make(chan struct{})
+	go func() {
+		pool.Stop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("pool.Stop() blocked, a producer still waits for the consumer")
+	}
+}

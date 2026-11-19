@@ -133,7 +133,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 		for {
 			select {
 			case <-ctx.Done():
-				close(ch)
+				// ch stays open: providers may still be sending and stop on their own context
 				return
 			case evt := <-ch:
 				if evt.Event == dynamic.Delete {

@@ -114,14 +114,14 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		p.checkFiles(ch)
+		p.checkFiles(ctx, ch)
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				p.checkFiles(ch)
+				p.checkFiles(ctx, ch)
 			}
 		}
 	})
@@ -130,7 +130,7 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) checkFiles(ch chan dynamic.ConfigEvent) {
+func (p *Provider) checkFiles(ctx context.Context, ch chan<- dynamic.ConfigEvent) {
 	for f, hash := range p.files {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
@@ -148,7 +148,9 @@ func (p *Provider) checkFiles(ch chan dynamic.ConfigEvent) {
 			} else {
 				e.Event = dynamic.Update
 			}
-			ch <- e
+			if !safe.Send(ctx, ch, e) {
+				return
+			}
 		}
 	}
 }

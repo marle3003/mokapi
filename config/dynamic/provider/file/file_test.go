@@ -757,24 +757,13 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 
 func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 	ch := make(chan dynamic.ConfigEvent)
-	defer close(ch)
 
 	tempDir := t.TempDir()
 	t.Cleanup(func() { _ = os.RemoveAll(tempDir) })
 
 	p := New(static.FileProvider{Directories: []static.FileConfig{{Path: tempDir}}})
 	pool := safe.NewPool(context.Background())
-	defer func() {
-		pool.Stop()
-		// todo refactor channel handling to prevent "send on closed channel"
-		timeout := time.After(1 * time.Second)
-		select {
-		case <-ch:
-			return
-		case <-timeout:
-			return
-		}
-	}()
+	t.Cleanup(pool.Stop)
 
 	err := p.Start(ch, pool)
 	require.NoError(t, err)

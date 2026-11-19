@@ -146,7 +146,10 @@ func (p *Provider) forward(ch chan dynamic.ConfigEvent, ctx context.Context) {
 						e.Name = u.String()
 					}
 
-					ch <- e
+					if !safe.Send(ctx, ch, e) {
+						p.m.Unlock()
+						return
+					}
 				}
 			}
 			p.m.Unlock()
