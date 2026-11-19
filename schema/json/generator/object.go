@@ -289,7 +289,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				gen.regexGenerate(re, len(pattern)*100)
 				propName := gen.sb.String()
 				ex := propertyFromExample(propName, req)
-				f, err := r.resolve(req.With(append(req.Path), prop, ex).property(propName), fallback)
+				f, err := r.resolve(req.With(append(req.Path, propName), prop, ex).property(propName), fallback)
 				if err != nil {
 					return nil, err
 				}

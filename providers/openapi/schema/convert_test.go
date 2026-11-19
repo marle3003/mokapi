@@ -428,7 +428,7 @@ func TestConvert(t *testing.T) {
 			name: "examples",
 			s:    schematest.New("object", schematest.WithExamples(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, []jsonSchema.Example{{true}}, s.Examples)
+				require.Equal(t, []jsonSchema.Example{{Value: true}}, s.Examples)
 			},
 		},
 		{

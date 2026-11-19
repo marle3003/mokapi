@@ -1053,3 +1053,20 @@ func TestObject_ParametersAndNodes(t *testing.T) {
 		}
 	})
 }
+
+func TestObject_PatternPropertyIsGeneratedByItsName(t *testing.T) {
+	Seed(1234567)
+	s := schematest.New("object", schematest.WithPatternProperty("^email$", schematest.New("string")))
+
+	// the number of pattern properties is random and can be 0
+	generated := 0
+	for range 20 {
+		v, err := New(NewRequest(nil, s, nil))
+		require.NoError(t, err)
+		for _, email := range v.(map[string]any) {
+			require.Contains(t, email, "@")
+			generated++
+		}
+	}
+	require.Greater(t, generated, 0)
+}

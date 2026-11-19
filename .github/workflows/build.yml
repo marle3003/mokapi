@@ -31,6 +31,9 @@ jobs:
           npm run copy-docs
           npm run build
 
+      - name: Run go vet
+        run: go vet ./...
+
       - name: Run Unit tests.
         run: go test -v --cover -coverprofile=coverage.out -covermode=atomic ./...
 

@@ -269,22 +269,22 @@ func TestGroupBalancing(t *testing.T) {
 			name: "sync group successfully with two consumers",
 			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				groupAssign := []syncGroup.GroupAssignment{
-					{"leader", []byte{
+					{MemberId: "leader", Assignment: []byte{
 						0, 1, // version
 						0, 0, 0, 1, // topic array length
 						0, 3, 'f', 'o', 'o', // topic foo
 						0, 0, 0, 1, // partition array length
 						0, 0, 0, 1, // partition 1
 						0, 0, 0, 3, 0x01, 0x02, 0x03, // userdata
-					}, nil},
-					{"member", []byte{
+					}},
+					{MemberId: "member", Assignment: []byte{
 						0, 1, // version
 						0, 0, 0, 1, // topic array length
 						0, 3, 'f', 'o', 'o', // topic foo
 						0, 0, 0, 1, // partition array length
 						0, 0, 0, 2, // partition 2
 						0, 0, 0, 3, 0x01, 0x02, 0x03, // userdata
-					}, nil},
+					}},
 				}
 
 				joinFn := func(clientId string, ga []syncGroup.GroupAssignment) (*joinGroup.Response, *syncGroup.Response, error) {

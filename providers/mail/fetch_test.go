@@ -54,8 +54,8 @@ func TestImapHandler_Fetch(t *testing.T) {
 					UId: uint32(10849681),
 					Message: &smtp.Message{
 						MessageId:   "abc123@mokapi.io",
-						From:        []smtp.Address{{"Alice", "alice@mokapi.io"}},
-						To:          []smtp.Address{{"Bob", "bob@mokapi.io"}},
+						From:        []smtp.Address{{Name: "Alice", Address: "alice@mokapi.io"}},
+						To:          []smtp.Address{{Name: "Bob", Address: "bob@mokapi.io"}},
 						Subject:     "Hello Bob",
 						ContentType: "text/html",
 						Date:        mustTime("2025-07-06T13:01:30+00:00"),
@@ -101,8 +101,8 @@ func TestImapHandler_Fetch(t *testing.T) {
 					UId: uint32(10849681),
 					Message: &smtp.Message{
 						MessageId:   "abc123@mokapi.io",
-						From:        []smtp.Address{{"Alice", "alice@mokapi.io"}},
-						To:          []smtp.Address{{"Bob", "bob@mokapi.io"}},
+						From:        []smtp.Address{{Name: "Alice", Address: "alice@mokapi.io"}},
+						To:          []smtp.Address{{Name: "Bob", Address: "bob@mokapi.io"}},
 						Subject:     "Hello Bob",
 						ContentType: "text/html",
 						Date:        mustTime("2025-07-06T13:01:30+00:00"),

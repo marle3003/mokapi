@@ -701,7 +701,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExamples("foo")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []jsonSchema.Example{{"foo"}}, result.Examples)
+				require.Equal(t, []jsonSchema.Example{{Value: "foo"}}, result.Examples)
 			},
 		},
 		{
@@ -711,7 +711,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExamples("foo")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []jsonSchema.Example{{"foo"}}, result.Examples)
+				require.Equal(t, []jsonSchema.Example{{Value: "foo"}}, result.Examples)
 			},
 		},
 		{
