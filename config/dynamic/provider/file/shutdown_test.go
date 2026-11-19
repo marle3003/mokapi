@@ -8,6 +8,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/safe"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -178,4 +179,89 @@ func TestProcessEvents_RemoveWhileWatchingPaths(t *testing.T) {
 	}()
 	p.processEvents(context.Background(), events)
 	<-done
+}
+
+// Start walks the configured directories in one pool goroutine while Watch (npm provider)
+// walks another directory in a second one. Both read and write the .mokapiignore files.
+func TestWalk_ConcurrentWalksWithMokapiIgnoreFiles(t *testing.T) {
+	var entries []*filetest.Entry
+	for _, root := range []string{"a", "b"} {
+		entries = append(entries, &filetest.Entry{Name: root, IsDir: true})
+		for i := 0; i < 200; i++ {
+			dir := fmt.Sprintf("%s/dir%d", root, i)
+			entries = append(entries,
+				&filetest.Entry{Name: dir, IsDir: true},
+				&filetest.Entry{Name: dir + "/.mokapiignore", Data: []byte("*.log")},
+				&filetest.Entry{Name: dir + "/foo.txt", Data: []byte("foo")},
+			)
+		}
+	}
+	p := NewWithWalker(static.FileProvider{}, &filetest.MockFS{Entries: entries})
+	ch := make(chan dynamic.ConfigEvent)
+	p.ch = ch
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		for {
+			select {
+			case <-ch:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	var wg sync.WaitGroup
+	for _, root := range []string{"a", "b"} {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			require.NoError(t, p.walk(ctx, static.FileConfig{Path: root}))
+		}()
+	}
+	wg.Wait()
+}
+
+// skip combines the provider's patterns with those of a directory. The result must be a new
+// slice, otherwise concurrent walks write their patterns into the shared backing array.
+func TestSkip_DoesNotWriteIntoProviderPatterns(t *testing.T) {
+	testcases := []struct {
+		name  string
+		setup func(cfg *static.FileProvider) []string
+		info  static.FileConfig
+	}{
+		{
+			name: "include",
+			setup: func(cfg *static.FileProvider) []string {
+				backing := make([]string, 1, 10)
+				backing[0] = "*.txt"
+				cfg.Include = backing
+				return backing
+			},
+			info: static.FileConfig{Include: []string{"*.json"}},
+		},
+		{
+			name: "exclude",
+			setup: func(cfg *static.FileProvider) []string {
+				backing := make([]string, 1, 10)
+				backing[0] = "*.log"
+				cfg.Exclude = backing
+				return backing
+			},
+			info: static.FileConfig{Exclude: []string{"*.tmp"}},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			var cfg static.FileProvider
+			backing := tc.setup(&cfg)
+			p := NewWithWalker(cfg, &filetest.MockFS{})
+
+			p.skip("foo.txt", false, tc.info)
+
+			require.Empty(t, backing[:2][1])
+		})
+	}
 }

@@ -38,6 +38,7 @@ type Provider struct {
 	watched    map[string]watch
 	isInit     atomic.Bool
 	ignores    IgnoreFiles
+	ignoresM   sync.RWMutex
 
 	watcher *fsnotify.Watcher
 	fs      FSReader
@@ -185,19 +186,13 @@ func (p *Provider) skip(path string, isDir bool, info static.FileConfig) bool {
 	}
 
 	if !isDir {
-		inc := p.cfg.Include
-		if len(info.Include) > 0 {
-			inc = append(inc, info.Include...)
-		}
+		inc := slices.Concat(p.cfg.Include, info.Include)
 		if len(inc) > 0 {
 			if !include(inc, path) {
 				return true
 			}
 		}
-		ex := p.cfg.Exclude
-		if len(info.Exclude) > 0 {
-			ex = append(ex, info.Exclude...)
-		}
+		ex := slices.Concat(p.cfg.Exclude, info.Exclude)
 		if len(ex) > 0 {
 			if include(ex, path) {
 				return true
@@ -215,6 +210,9 @@ func (p *Provider) skip(path string, isDir bool, info static.FileConfig) bool {
 			return true
 		}
 	}
+
+	p.ignoresM.RLock()
+	defer p.ignoresM.RUnlock()
 	return p.ignores.Match(path)
 }
 
@@ -305,7 +303,9 @@ func (p *Provider) readMokapiIgnore(path string) {
 		log.Errorf("unable to read file %v: %v", f, err)
 	} else {
 		key := filepath.Clean(path)
+		p.ignoresM.Lock()
 		p.ignores[key] = i
+		p.ignoresM.Unlock()
 	}
 }
 
