@@ -154,16 +154,7 @@ func (suite *JobsSuite) TestLastRunLinksToTheEventOfTheRun() {
 }
 
 func (suite *JobsSuite) TestJobsAreSortedByNameThenFile() {
-	suite.waitForJob("warning.js", func(j jobsApiJob) bool { return true })
-	suite.waitForJob("throws.js", func(j jobsApiJob) bool { return true })
-	suite.waitForJob("shared-b.js", func(j jobsApiJob) bool { return true })
-
-	var order []string
-	for _, j := range suite.getJobs() {
-		order = append(order, j.Name+" "+filepath.Base(j.Tags["file"]))
-	}
-
-	suite.Equal([]string{
+	expected := []string{
 		"cron.js cron.js",
 		"cron.js cron.js",
 		"every.js every.js",
@@ -174,5 +165,18 @@ func (suite *JobsSuite) TestJobsAreSortedByNameThenFile() {
 		"shared shared-b.js",
 		"throws.js throws.js",
 		"warning.js warning.js",
-	}, order)
+	}
+
+	// scripts run in parallel, so wait until every script has registered its jobs
+	var jobs []jobsApiJob
+	try.WaitFor(suite.T(), func() bool {
+		jobs = suite.getJobs()
+		return len(jobs) == len(expected)
+	})
+
+	var order []string
+	for _, j := range jobs {
+		order = append(order, j.Name+" "+filepath.Base(j.Tags["file"]))
+	}
+	suite.Equal(expected, order)
 }
