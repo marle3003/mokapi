@@ -7,7 +7,7 @@ func RegisterTlsFlags(cmd *cli.Command) {
 	cmd.Flags().String("root-ca-key", "", caKey)
 }
 
-var caCert = cli.FlagDoc{
+var caKey = cli.FlagDoc{
 	Short: "Private key of the root CA",
 	Long: `Specifies the private key corresponding to the root CA certificate.
 The private key is required to sign generated TLS certificates. It must match the certificate provided via root-ca-cert.`,
@@ -22,7 +22,7 @@ The private key is required to sign generated TLS certificates. It must match th
 	},
 }
 
-var caKey = cli.FlagDoc{
+var caCert = cli.FlagDoc{
 	Short: "Root CA certificate used for signing generated certificates",
 	Long: `Specifies the root certificate authority (CA) certificate used by Mokapi to sign generated TLS certificates.
 This certificate is used when Mokapi dynamically generates certificates for mocked services that require TLS.`,

@@ -32,10 +32,21 @@ In this example:
 By default, Mokapi uses its own built-in Certificate Authority to sign any certificates it
 generates. The Root CA certificate and key are stored in the [Mokapi GitHub repository](https://github.com/marle3003/mokapi/tree/master/assets).
 
-If you want to use your own CA for signing, you can specify it, for example, by setting environment variables.
+If you want to use your own CA for signing, set the `rootCaCert` and `rootCaKey` options.
+You can pass them as environment variables, CLI flags or in the static configuration file.
+
+```bash
+export MOKAPI_ROOT_CA_CERT=/path/to/caCert.pem
+export MOKAPI_ROOT_CA_KEY=/path/to/caKey.pem
+```
+
+```bash
+mokapi --root-ca-cert /path/to/caCert.pem --root-ca-key /path/to/caKey.pem
+```
+
 ```yaml
-MOKAPI_RootCaCert: /path/to/caCert.pem
-MOKAPI_RootCaKey: /path/to/caKey.pem
+rootCaCert: /path/to/caCert.pem
+rootCaKey: /path/to/caKey.pem
 ```
 
 Why use your own CA?
