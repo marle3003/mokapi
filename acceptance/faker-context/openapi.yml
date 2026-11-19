@@ -20,6 +20,212 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Friend'
+  /wrapped/users/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A user wrapped in data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [id, friends]
+                    properties:
+                      id:
+                        type: integer
+                      friends:
+                        type: array
+                        minItems: 3
+                        maxItems: 3
+                        items:
+                          type: object
+                          required: [id]
+                          properties:
+                            id:
+                              type: integer
+  /pets:
+    get:
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pets filtered by status
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 3
+                maxItems: 3
+                items:
+                  type: object
+                  required: [status]
+                  properties:
+                    status:
+                      type: string
+  /orders:
+    get:
+      parameters:
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orders filtered by status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    minItems: 3
+                    maxItems: 3
+                    items:
+                      type: object
+                      required: [status]
+                      properties:
+                        status:
+                          type: string
+                  total:
+                    type: integer
+  /accounts/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An account with two addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [billing, shipping]
+                properties:
+                  billing:
+                    type: object
+                    required: [id]
+                    properties:
+                      id:
+                        type: integer
+                  shipping:
+                    type: object
+                    required: [id]
+                    properties:
+                      id:
+                        type: integer
+  /mismatch/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The root id is an integer, the nested id is a string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, friends]
+                properties:
+                  id:
+                    type: integer
+                  friends:
+                    type: array
+                    minItems: 3
+                    maxItems: 3
+                    items:
+                      type: object
+                      required: [id]
+                      properties:
+                        id:
+                          type: string
+  /tenants:
+    get:
+      parameters:
+        - name: tenant
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: session
+          in: cookie
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Header and cookie parameter in a root and a nested object
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tenant, session, child]
+                properties:
+                  tenant:
+                    type: string
+                  session:
+                    type: string
+                  child:
+                    type: object
+                    required: [tenant, session]
+                    properties:
+                      tenant:
+                        type: string
+                      session:
+                        type: string
+  /owners/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A custom node reads the path id in a nested object
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, friends]
+                properties:
+                  id:
+                    type: integer
+                  friends:
+                    type: array
+                    minItems: 3
+                    maxItems: 3
+                    items:
+                      type: object
+                      required: [ownerId]
+                      properties:
+                        ownerId:
+                          type: integer
 components:
   schemas:
     Friend:

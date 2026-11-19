@@ -820,3 +820,236 @@ func TestObject_NestedObjectsAndContext(t *testing.T) {
 		require.Len(t, names, 4)
 	})
 }
+
+func TestObject_RequestParametersAreEchoedAtTheShallowestLevel(t *testing.T) {
+	const pathId = int64(7000001) // outside the range of generated ids
+	str := func() *schema.Schema { return schematest.New("string") }
+	integer := func() *schema.Schema { return schematest.New("integer") }
+	idObject := func() *schema.Schema {
+		return schematest.New("object", schematest.WithProperty("id", integer()), schematest.WithRequired("id"))
+	}
+	list := func(items *schema.Schema) *schema.Schema {
+		return schematest.New("array", schematest.WithItemsNew(items), schematest.WithMinItems(3), schematest.WithMaxItems(3))
+	}
+	generate := func(t *testing.T, s *schema.Schema, params map[string]any) any {
+		t.Helper()
+		v, err := New(NewRequest(nil, s, params))
+		require.NoError(t, err)
+		return v
+	}
+	idParam := map[string]any{"id": pathId}
+	requireIdsNotEqual := func(t *testing.T, items any) {
+		t.Helper()
+		require.Len(t, items, 3)
+		for _, item := range items.([]any) {
+			require.NotEqual(t, pathId, item.(map[string]any)["id"], "%v", items)
+		}
+	}
+
+	t.Run("root object", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("id", integer()),
+			schematest.WithProperty("friends", list(idObject())),
+			schematest.WithRequired("id", "friends"),
+		), idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["id"])
+		requireIdsNotEqual(t, v["friends"])
+	})
+
+	t.Run("wrapper", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("data", schematest.New("object",
+				schematest.WithProperty("id", integer()),
+				schematest.WithProperty("friends", list(idObject())),
+				schematest.WithRequired("id", "friends"))),
+			schematest.WithRequired("data"),
+		), idParam).(map[string]any)
+
+		data := v["data"].(map[string]any)
+		require.Equal(t, pathId, data["id"])
+		requireIdsNotEqual(t, data["friends"])
+	})
+
+	t.Run("filter in a root array", func(t *testing.T) {
+		item := schematest.New("object", schematest.WithProperty("status", str()), schematest.WithRequired("status"))
+
+		v := generate(t, list(item), map[string]any{"status": "available"})
+
+		for _, e := range v.([]any) {
+			require.Equal(t, "available", e.(map[string]any)["status"])
+		}
+	})
+
+	t.Run("filter in a wrapper", func(t *testing.T) {
+		item := schematest.New("object", schematest.WithProperty("status", str()), schematest.WithRequired("status"))
+
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("items", list(item)),
+			schematest.WithProperty("total", integer()),
+			schematest.WithRequired("items", "total"),
+		), map[string]any{"status": "active"}).(map[string]any)
+
+		for _, e := range v["items"].([]any) {
+			require.Equal(t, "active", e.(map[string]any)["status"])
+		}
+	})
+
+	t.Run("siblings", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("billing", idObject()),
+			schematest.WithProperty("shipping", idObject()),
+			schematest.WithRequired("billing", "shipping"),
+		), idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["billing"].(map[string]any)["id"])
+		require.Equal(t, pathId, v["shipping"].(map[string]any)["id"])
+	})
+
+	t.Run("uneven depth", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("a", idObject()),
+			schematest.WithProperty("b", schematest.New("object",
+				schematest.WithProperty("c", idObject()),
+				schematest.WithRequired("c"))),
+			schematest.WithRequired("a", "b"),
+		), idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["a"].(map[string]any)["id"])
+		require.NotEqual(t, pathId, v["b"].(map[string]any)["c"].(map[string]any)["id"])
+	})
+
+	t.Run("type mismatch at the shallowest level is not moved deeper", func(t *testing.T) {
+		nested := schematest.New("object", schematest.WithProperty("id", str()), schematest.WithRequired("id"))
+
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("id", integer()),
+			schematest.WithProperty("friends", list(nested)),
+			schematest.WithRequired("id", "friends"),
+		), map[string]any{"id": "abc"}).(map[string]any)
+
+		require.IsType(t, int64(0), v["id"])
+		for _, f := range v["friends"].([]any) {
+			require.NotEqual(t, "abc", f.(map[string]any)["id"])
+		}
+	})
+
+	t.Run("array parameter picks an element at the shallowest level", func(t *testing.T) {
+		ids := []any{pathId, pathId + 1}
+
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("id", integer()),
+			schematest.WithProperty("friends", list(idObject())),
+			schematest.WithRequired("id", "friends"),
+		), map[string]any{"id": ids}).(map[string]any)
+
+		require.Contains(t, ids, v["id"])
+		for _, f := range v["friends"].([]any) {
+			require.NotContains(t, ids, f.(map[string]any)["id"])
+		}
+	})
+
+	t.Run("oneOf variant belongs to the level of the object", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("friends", list(idObject())),
+			schematest.WithRequired("friends"),
+			schematest.WithOneOf(idObject()),
+		), idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["id"])
+		requireIdsNotEqual(t, v["friends"])
+	})
+
+	t.Run("allOf variant belongs to the level of the object", func(t *testing.T) {
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("friends", list(idObject())),
+			schematest.WithRequired("friends"),
+			schematest.WithAllOf(idObject()),
+		), idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["id"])
+		requireIdsNotEqual(t, v["friends"])
+	})
+
+	t.Run("recursive reference", func(t *testing.T) {
+		node := schematest.New("object", schematest.WithProperty("id", integer()), schematest.WithRequired("id"))
+		node.Ref = "#/components/schemas/Node"
+		node.Properties.Set("children", &schema.Schema{Type: schema.Types{"array"}, Items: node})
+
+		v := generate(t, node, idParam).(map[string]any)
+
+		require.Equal(t, pathId, v["id"])
+	})
+
+	t.Run("values written by nodes are still reused when parameters exist", func(t *testing.T) {
+		Seed(1234567)
+
+		v := generate(t, schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("email", str()),
+			schematest.WithRequired("firstName", "lastName", "email"),
+		), idParam).(map[string]any)
+
+		prefix := strings.ToLower(v["firstName"].(string)) + "." + strings.ToLower(v["lastName"].(string)) + "@"
+		require.True(t, strings.HasPrefix(v["email"].(string), prefix), "%v", v)
+	})
+}
+
+func TestObject_ParametersAndNodes(t *testing.T) {
+	str := func() *schema.Schema { return schematest.New("string") }
+	// every nested object declares the name again, like friends[] in GET /users/{id}
+	withNested := func(name string) *schema.Schema {
+		nested := schematest.New("object", schematest.WithProperty(name, str()), schematest.WithRequired(name))
+		return schematest.New("object",
+			schematest.WithProperty(name, str()),
+			schematest.WithProperty("friends", schematest.New("array",
+				schematest.WithItemsNew(nested), schematest.WithMinItems(3), schematest.WithMaxItems(3))),
+			schematest.WithRequired(name, "friends"),
+		)
+	}
+
+	for _, name := range []string{"id", "name", "firstname", "lastname", "gender", "title", "pet", "category"} {
+		t.Run("parameter "+name+" is only echoed at the shallowest level", func(t *testing.T) {
+			const value = "from-request"
+
+			v, err := New(NewRequest(nil, withNested(name), map[string]any{name: value}))
+
+			require.NoError(t, err)
+			obj := v.(map[string]any)
+			if name != "id" { // a string id that is not an uuid
+				require.Equal(t, value, obj[name])
+			}
+			for _, f := range obj["friends"].([]any) {
+				require.NotEqual(t, value, f.(map[string]any)[name])
+			}
+		})
+	}
+
+	t.Run("parameter stays visible for nodes in nested objects", func(t *testing.T) {
+		root := FindByName(RootName)
+		root.Children = append(root.Children, &Node{
+			Name:       "ownerId",
+			Attributes: []string{"ownerId"},
+			Fake: func(r *Request) (any, error) {
+				return r.Context.Values["id"], nil
+			},
+		})
+		defer func() { _ = root.Remove("ownerId") }()
+		friend := schematest.New("object", schematest.WithProperty("id", str()), schematest.WithProperty("ownerId", str()), schematest.WithRequired("id", "ownerId"))
+		s := schematest.New("object",
+			schematest.WithProperty("id", str()),
+			schematest.WithProperty("friends", schematest.New("array", schematest.WithItemsNew(friend), schematest.WithMinItems(2), schematest.WithMaxItems(2))),
+			schematest.WithRequired("id", "friends"),
+		)
+
+		v, err := New(NewRequest(nil, s, map[string]any{"id": "42"}))
+
+		require.NoError(t, err)
+		for _, f := range v.(map[string]any)["friends"].([]any) {
+			friend := f.(map[string]any)
+			require.Equal(t, "42", friend["ownerId"])
+			require.NotEqual(t, "42", friend["id"])
+		}
+	})
+}

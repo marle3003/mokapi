@@ -18,6 +18,8 @@ type Request struct {
 	// at is the path of the value in the result. In contrast to Path it is not rewritten
 	// while matching nodes.
 	at []string
+	// level is the number of enclosing objects, see Context.valueAt
+	level int
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
@@ -25,10 +27,13 @@ func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
 		ctx = make(map[string]any)
 	}
 
+	c := &Context{Values: ctx}
+	c.findEchoLevels(s)
+
 	return &Request{
 		Path:    nonNilPath(path),
 		Schema:  s,
-		Context: &Context{Values: ctx},
+		Context: c,
 	}
 }
 
@@ -73,7 +78,15 @@ func (r *Request) With(path []string, s *schema.Schema, example []any) *Request 
 		examples: example,
 		trace:    r.trace,
 		at:       r.at,
+		level:    r.level,
 	}
+}
+
+// inObject returns the request for the children of the object this request describes.
+func (r *Request) inObject() *Request {
+	r2 := *r
+	r2.level++
+	return &r2
 }
 
 // property returns the request for a property or the items of an array below this request.
@@ -91,6 +104,11 @@ type Context struct {
 	Values map[string]any `json:"values"`
 	// snapshots holds the values of the enclosing objects, the innermost last
 	snapshots []map[string]any
+	// params are the names of the values the request was created with, e.g. the parameters of
+	// an HTTP request. Unlike values written by nodes they describe the requested resource.
+	params map[string]struct{}
+	// echoLevel is the shallowest object level that declares a property for a parameter
+	echoLevel map[string]int
 }
 
 type Values map[string]any
@@ -116,10 +134,44 @@ func (c *Context) Restore() {
 	c.snapshots = c.snapshots[:last]
 }
 
+// findEchoLevels remembers the parameters and the object level they are echoed to.
+func (c *Context) findEchoLevels(s *schema.Schema) {
+	if len(c.Values) == 0 {
+		return
+	}
+	c.params = make(map[string]struct{}, len(c.Values))
+	names := make([]string, 0, len(c.Values))
+	for name := range c.Values {
+		c.params[name] = struct{}{}
+		names = append(names, name)
+	}
+	c.echoLevel = shallowestLevels(s, names)
+}
+
+// valueAt returns the value stored under name if it may be used for a property at the given
+// object level. A parameter describes the requested resource or filter, so it is only used where
+// its name is declared at the shallowest level (echoLevel). Parameters that no schema declares
+// and all values written by nodes can be used anywhere.
+func (c *Context) valueAt(name string, level int) (any, bool) {
+	v, ok := c.Values[name]
+	if !ok {
+		return nil, false
+	}
+	if _, isParam := c.params[name]; isParam {
+		if shallowest, found := c.echoLevel[name]; found && shallowest != level {
+			return nil, false
+		}
+	}
+	return v, true
+}
+
 // forgetNode drops the value a node has stored under its name, so a nested level generates it
-// again instead of reusing the one of its parent.
+// again instead of reusing the one of its parent. Parameters stay, nodes check valueAt.
 func (c *Context) forgetNode(n *Node) {
-	if n != nil {
+	if n == nil {
+		return
+	}
+	if _, isParam := c.params[n.Name]; !isParam {
 		delete(c.Values, n.Name)
 	}
 }

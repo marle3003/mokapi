@@ -86,6 +86,27 @@ inherited by nested objects as well. "One address per context" in the
 [example](#generate-addresses-for-your-own-country) below therefore means one address per
 object level.
 
+Request parameters of an OpenAPI operation stay in `context.values` at every level. Only
+the automatic copy is limited: a parameter is filled in only for the properties with the
+same name at the shallowest object level, which also applies to built-in nodes such as `id`.
+For `GET /users/123` the root `id` is `123`, but `friends[].id` is generated. A custom node
+can still read the parameter in nested objects. Built-in nodes that store their own
+generated value, such as `firstname`, `lastname` or `gender`, replace the parameter of the
+same name in a nested object that declares such a property. `id` and `name` don't.
+
+```javascript
+import { findByName, ROOT_NAME } from 'mokapi/faker'
+
+export default function () {
+    // ownerId inside friends[] receives the path id, here 123
+    findByName(ROOT_NAME).children.push({
+        name: 'ownerId',
+        attributes: ['ownerId'],
+        fake: (r) => r.context.values.id
+    })
+}
+```
+
 ## Domain detection
 
 Many property names are ambiguous. A `name` can be a person's name, a product name or a category name. To resolve this,

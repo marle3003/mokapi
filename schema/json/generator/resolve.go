@@ -237,7 +237,7 @@ func nullable(r *Request) (*faker, bool) {
 func useFromContext(r *Request) (*faker, bool) {
 	if len(r.Path) > 0 {
 		last := r.Path[len(r.Path)-1]
-		if v, ok := r.Context.Values[last]; ok {
+		if v, ok := r.Context.valueAt(last, r.level); ok {
 			p := parser.Parser{Schema: r.Schema}
 			if v, err := p.Parse(v); err == nil {
 				return newFaker(func() (any, error) {

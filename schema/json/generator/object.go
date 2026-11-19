@@ -226,6 +226,8 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		req.Path = append(req.Path, domain)
 	}
 	propertyNameParser := propertyNamesParser(s)
+	// everything built below is a child of this object
+	req = req.inObject()
 
 	if s.Properties != nil {
 		for it := s.Properties.Iter(); it.Next(); {

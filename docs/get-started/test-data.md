@@ -87,6 +87,12 @@ Content-Type: application/json
 Notice how the status field in the second example matches the query parameter.
 Mokapi understands the request context and generates appropriate data.
 
+A request parameter is copied only into the properties with the same name at the shallowest
+object level where such a property exists. For `GET /users/123` with a schema
+`{ id, friends: [{ id }] }`, the root `id` is `123` and the `id` of each friend is generated
+randomly. Query filters in a root array or in a wrapper such as `{ items: [...] }` still
+apply to every item, because the items are the shallowest level that has the property.
+
 ## Declarative Formats in Schema
 
 Use standard OpenAPI formats to generate specific data types automatically. 

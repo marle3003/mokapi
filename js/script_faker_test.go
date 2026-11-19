@@ -6,6 +6,7 @@ import (
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"mokapi/schema/json/generator"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -336,6 +337,82 @@ func TestScript_Faker(t *testing.T) {
 				n := generator.FindByName(generator.RootName)
 				r.NoError(t, n.Remove("producer"))
 				r.NoError(t, n.Remove("consumer"))
+			},
+		},
+		{
+			name: "custom node reads a request parameter in a nested object",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+				s, err := jstest.New(jstest.WithSource(
+					`import { findByName } from 'mokapi/faker'
+						 export default function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => r.context.values['status']
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				defer func() { r.NoError(t, generator.FindByName(generator.RootName).Remove("consumer")) }()
+
+				v, err := generator.New(generator.NewRequest(nil, schematest.New("object",
+					schematest.WithProperty("status", schematest.New("string")),
+					schematest.WithProperty("nested", schematest.New("object",
+						schematest.WithProperty("consumer", schematest.New("string")),
+						schematest.WithRequired("consumer"))),
+					schematest.WithRequired("status", "nested"),
+				), map[string]any{"status": "active"}))
+
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"status": "active",
+					"nested": map[string]any{"consumer": "active"},
+				}, v)
+			},
+		},
+		{
+			name: "custom node reads a request parameter in a nested object that declares the same name",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+				s, err := jstest.New(jstest.WithSource(
+					`import { findByName } from 'mokapi/faker'
+						 export default function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'ownerId',
+								attributes: ['ownerId'],
+								fake: (r) => r.context.values['id']
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				defer func() { r.NoError(t, generator.FindByName(generator.RootName).Remove("ownerId")) }()
+
+				v, err := generator.New(generator.NewRequest(nil, schematest.New("object",
+					schematest.WithProperty("id", schematest.New("integer")),
+					schematest.WithProperty("friend", schematest.New("object",
+						schematest.WithProperty("id", schematest.New("integer")),
+						schematest.WithProperty("ownerId", schematest.New("integer")),
+						schematest.WithRequired("id", "ownerId"))),
+					schematest.WithRequired("id", "friend"),
+				), map[string]any{"id": int64(7000001)}))
+
+				r.NoError(t, err)
+				obj := v.(map[string]any)
+				r.Equal(t, int64(7000001), obj["id"])
+				friend := obj["friend"].(map[string]any)
+				r.Equal(t, int64(7000001), friend["ownerId"])
+				r.NotEqual(t, int64(7000001), friend["id"])
 			},
 		},
 	}

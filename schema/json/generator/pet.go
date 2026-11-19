@@ -49,7 +49,7 @@ func fakePet(r *Request) (any, error) {
 }
 
 func fakePetName(r *Request) (any, error) {
-	if v, ok := r.Context.Values["pet"]; ok {
+	if v, ok := r.Context.valueAt("pet", r.level); ok {
 		return v, nil
 	}
 
@@ -59,7 +59,7 @@ func fakePetName(r *Request) (any, error) {
 }
 
 func fakePetCategory(r *Request) (any, error) {
-	if v, ok := r.Context.Values["category"]; ok {
+	if v, ok := r.Context.valueAt("category", r.level); ok {
 		return v, nil
 	}
 
@@ -70,7 +70,7 @@ func fakePetCategory(r *Request) (any, error) {
 }
 
 func fakePetCategoryId(r *Request) (any, error) {
-	if v, ok := r.Context.Values["category.id"]; ok {
+	if v, ok := r.Context.valueAt("category.id", r.level); ok {
 		return v, nil
 	}
 
