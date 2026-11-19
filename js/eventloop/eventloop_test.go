@@ -502,6 +502,58 @@ func TestEventLoop_RunSync_AfterStop(t *testing.T) {
 	require.ErrorIs(t, err, eventloop.ErrStopped)
 }
 
+func TestEventLoop_RunSync_ConcurrentCallersAfterStop(t *testing.T) {
+	loop := startLoop(t)
+	loop.Stop()
+	time.Sleep(50 * time.Millisecond)
+
+	// queueChan has room for one job, so a second caller would block on the send
+	const callers = 3
+	errs := make(chan error, callers)
+	for i := 0; i < callers; i++ {
+		go func() { errs <- runSyncWithTimeout(t, loop) }()
+	}
+
+	for i := 0; i < callers; i++ {
+		require.ErrorIs(t, <-errs, eventloop.ErrStopped)
+	}
+}
+
+// The loop picks randomly between a queued job and the stop signal, so the caller gets
+// either the result or ErrStopped. What must never happen is a caller waiting forever.
+func TestEventLoop_RunSync_LoopStopsWhileJobIsQueued(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		loop := eventloop.New(goja.New(), &enginetest.Host{})
+		loop.StartLoop()
+
+		blocked := make(chan struct{})
+		release := make(chan struct{})
+		loop.Run(func(*goja.Runtime) {
+			close(blocked)
+			<-release
+		})
+		<-blocked
+
+		result := make(chan error, 1)
+		go func() {
+			_, err := loop.RunSync(func(*goja.Runtime) (goja.Value, error) { return nil, nil })
+			result <- err
+		}()
+		time.Sleep(5 * time.Millisecond)
+		loop.Stop()
+		close(release)
+
+		select {
+		case err := <-result:
+			if err != nil {
+				require.ErrorIs(t, err, eventloop.ErrStopped)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("RunSync did not return after the loop stopped")
+		}
+	}
+}
+
 func TestEventLoop_RunSync_NotStarted(t *testing.T) {
 	loop := eventloop.New(goja.New(), &enginetest.Host{})
 

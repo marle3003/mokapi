@@ -11,6 +11,7 @@ import (
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
 	"testing"
+	"time"
 
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
@@ -390,6 +391,58 @@ func TestModule_On(t *testing.T) {
 			tc.test(t, loop, host)
 		})
 	}
+}
+
+// stoppingHost stops the loop when the event logger is reset, which the handler does on the
+// caller's goroutine right after its RunAsync call, and so before it calls the track function.
+type stoppingHost struct {
+	*enginetest.Host
+	loop *eventloop.EventLoop
+}
+
+func (h *stoppingHost) SetEventLogger(fn func(level, message string)) {
+	h.Host.SetEventLogger(fn)
+	if fn != nil {
+		return
+	}
+	h.loop.Stop()
+	for {
+		_, err := h.loop.RunSync(func(*goja.Runtime) (goja.Value, error) { return nil, nil })
+		if err != nil {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+func TestModule_On_TrackAfterLoopStopped(t *testing.T) {
+	reg, err := require.NewRegistry(nil)
+	r.NoError(t, err)
+	reg.RegisterNativeModule("mokapi", mokapi.Require)
+
+	vm := goja.New()
+	host := &stoppingHost{Host: &enginetest.Host{}}
+	loop := eventloop.New(vm, host)
+	host.loop = loop
+	loop.StartLoop()
+	defer loop.Stop()
+	js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+	reg.Enable(vm)
+
+	var handler common.EventHandlerFunc
+	host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandlerFunc, args common.EventArgs) {
+		handler = do
+	}
+	_, err = evalOnLoop(loop, `
+		const m = require('mokapi')
+		m.on('http', () => {}, { track: () => true })
+	`)
+	r.NoError(t, err)
+
+	changed, err := handler(&common.EventContext{EventLogger: func(level, message string) {}})
+
+	r.ErrorIs(t, err, eventloop.ErrStopped)
+	r.False(t, changed)
 }
 
 func TestModule_On_Run(t *testing.T) {

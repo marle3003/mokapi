@@ -10,6 +10,7 @@ import (
 	"mokapi/js/require"
 	"mokapi/schema/json/generator"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/dop251/goja"
@@ -215,6 +216,57 @@ func TestTree(t *testing.T) {
 				r.Len(t, root.Children, 2)
 				cleanup(host)
 				r.Len(t, root.Children, 0)
+			},
+		},
+		{
+			name: "restore push, unshift and push",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					root.children.push({ name: 'foo' });
+					root.children.unshift({ name: 'bar' });
+					root.children.push({ name: 'yuh' });
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []string{"bar", "foo", "yuh"}, getNames(root.Children))
+				cleanup(host)
+				r.Len(t, root.Children, 0)
+			},
+		},
+		{
+			name: "restore push and fake override",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					root.children.push({ name: 'foo' });
+					root.fake = () => 'bar';
+					root.children.push({ name: 'yuh' });
+				`)
+				r.NoError(t, err)
+				r.NotNil(t, root.Fake)
+				r.True(t, root.Custom)
+				cleanup(host)
+				r.Len(t, root.Children, 0)
+				r.Nil(t, root.Fake)
+				r.False(t, root.Custom)
 			},
 		},
 		{
@@ -537,4 +589,40 @@ func TestTree(t *testing.T) {
 			tc.test(t, vm, host)
 		})
 	}
+}
+
+// A custom node outlives its script when the loop stops before the node is removed.
+// Faking with it must fail instead of waiting for a loop that never answers.
+func TestTree_CustomNodeOfStoppedLoop(t *testing.T) {
+	reg, err := require.NewRegistry(nil)
+	r.NoError(t, err)
+	reg.RegisterNativeModule("faker", faker.Require)
+
+	vm := goja.New()
+	host := &enginetest.Host{}
+	root := generator.NewNode("root")
+	host.FindFakerNodeFunc = func(name string) *generator.Node { return root }
+	loop := eventloop.New(vm, host)
+	loop.StartLoop()
+	defer loop.Stop()
+	js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+	reg.Enable(vm)
+
+	_, err = loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+		return vm.RunString(`
+			const m = require('faker');
+			m.findByName('root').children.push({ name: 'foo', fake: () => 'bar' });
+		`)
+	})
+	r.NoError(t, err)
+	r.Len(t, root.Children, 1)
+
+	loop.Stop()
+	r.Eventually(t, func() bool {
+		_, err := loop.RunSync(func(*goja.Runtime) (goja.Value, error) { return nil, nil })
+		return err != nil
+	}, time.Second, time.Millisecond)
+
+	_, err = root.Children[0].Fake(&generator.Request{Context: &generator.Context{}})
+	r.ErrorIs(t, err, eventloop.ErrStopped)
 }
