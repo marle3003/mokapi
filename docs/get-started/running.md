@@ -22,8 +22,9 @@ to skip SSL verification: "--providers-http-tls-skip-verify".
 
 This launches Mokapi with the Petstore API on port 80 and the dashboard on port 8080. 
 The mock API is accessible at /api/v3, as defined in the OpenAPI specification. 
-Mokapi supports many options that can be passed in multiple places, check 
-[options reference](/docs/configuration/reference.md) for more info.
+For more ways to start Mokapi, see [Running Mokapi](/docs/configuration/running-mokapi.md).
+Mokapi supports many options that can be set as a flag, an environment variable or in a
+configuration file, see the [CLI Flags](/docs/configuration/static/cli-flags) page for the list.
 
 ## Test Your Mock REST API
 

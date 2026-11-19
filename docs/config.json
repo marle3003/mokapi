@@ -185,8 +185,13 @@
         "items": [
           {
             "label": "Overview",
-            "source": "configuration/introduction.md",
+            "source": "configuration/overview.md",
             "path": "/docs/configuration/overview"
+          },
+          {
+            "label": "Running Mokapi",
+            "source": "configuration/running-mokapi.md",
+            "path": "/docs/configuration/running-mokapi"
           },
           {
             "label": "Patching",
@@ -197,7 +202,7 @@
             "label": "Static",
             "items": [
               {
-                "label": "CLI Usage",
+                "label": "CLI Syntax",
                 "source": "configuration/static/cli.md",
                 "path": "/docs/configuration/static/cli-usage"
               },
@@ -235,11 +240,6 @@
                 "label": "NPM",
                 "source": "configuration/dynamic/npm.md",
                 "path": "/docs/configuration/dynamic/npm"
-              },
-              {
-                "label": "Reference",
-                "source": "configuration/reference.md",
-                "path": "/docs/configuration/reference"
               }
             ]
           },

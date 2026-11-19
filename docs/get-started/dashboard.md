@@ -85,7 +85,7 @@ search one second after your last key press if the text has at least 3 character
 end with `:`. Press `Enter` to search immediately.
 
 Search is enabled by default. If you turn it off with `api.search.enabled: false` (CLI flag
-`--no-api-search-enabled`, see the [configuration reference](/docs/configuration/reference.md)),
+`--no-api-search-enabled`, see [`--api-search-enabled`](/docs/configuration/static/cli-flags#api-search-enabled)),
 the Search icon and the panel are hidden. They're also hidden in the demo dashboard.
 
 <img src="/docs/get-started/dashboard-search.png" width="700" alt="The search panel with results, the facet selects and the search tips" />
@@ -397,7 +397,7 @@ api:
  base: /app/mokapi
 ```
 
-Further configuration options are documented [here](/docs/configuration/reference.md).
+The [CLI Flags](/docs/configuration/static/cli-flags#api-base) page lists further dashboard options, such as `--api-port` and `--api-path`.
 
 ## API
 

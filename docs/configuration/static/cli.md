@@ -1,55 +1,64 @@
 ---
 title: Use Mokapi CLI
-description: This page provides information on how to configure Mokapi using CLI parameters.
+description: This page provides information on how to configure Mokapi using CLI flags.
 ---
-# Use Mokapi CLI
+# CLI Syntax
 
-This page provides information on how to configure Mokapi using CLI parameters. A list of available parameters can be found [here](/docs/configuration/static/cli-flags)
+This page explains how to write flag values on the command line: lists, booleans, JSON and the shorthand syntax.
+For the common commands see [Running Mokapi](/docs/configuration/running-mokapi.md), for where options come from
+and which source wins see the [Overview](/docs/configuration/overview.md). All flags are listed on the
+[CLI Flags](/docs/configuration/static/cli-flags) page.
 
 ## Command structure
 
 Mokapi has a simple command structure that contains
 
 1. mokapi as the command name
-2. optional a list of options and parameters
+2. optional a list of flags
+3. optional a list of positional arguments, see [Running Mokapi](/docs/configuration/running-mokapi.md)
 
 ```bash
-mokapi [options and parameters]
+mokapi [flags] [CONFIG-URL|DIRECTORY|FILE]...
 ```
 
-Parameter and option names are marked with a double hyphen and are not case-sensitive, e.g. "--Providers.File" = "--providers.file"
-Parameters can take various types of input values, such as strings, numbers, booleans and JSON structure.
+Flag names start with a double hyphen and are not case-sensitive, e.g. `--Providers-File-Directory` is the same as
+`--providers-file-directory`. Flags take various types of input values, such as strings, numbers, booleans and JSON structures.
 
-## Specify parameter values
+## Specify flag values
 
-Many parameters are simple string or numeric values, such as the `providers-file-directory`. An equal sign (=) between 
-parameter and value is optional.
+Many flags are simple string or numeric values, such as `--providers-file-directory`. An equal sign (=) between
+flag and value is optional.
 
 ```bash
 mokapi --providers-file-directory /foo
 mokapi --providers-file-directory=/foo # equal sign is optional
-mokapi --providers.file.directory=/foo # Separation by dot is also possible as old style (previous v0.10)
+```
+
+``` box=info title="Dot syntax"
+Before v0.10, flag names used dots, e.g. `--providers.file.directory`. Mokapi still accepts this for compatibility,
+but it is not recommended and may be removed in a future release. The documentation uses dashes.
 ```
 
 ### List
 
-One or more value separated by spaces. If any value contain a space, you must put quotation marks around that item.
-Using index operator is also possible which can overwrite values. The include list in the last example only contains `*.yaml`
+One or more values separated by spaces. If a value contains a space, you must put quotation marks around that item.
+You can also repeat the flag, or use the index operator to overwrite a value. In the last example the include list
+contains only `*.yaml`.
 
 ```bash
-mokapi --providers-file-include *.json *.yaml
-mokapi --providers-file-include *.json --providers.file.include *.yaml
+mokapi --providers-file-include '*.json' '*.yaml'
+mokapi --providers-file-include '*.json' --providers-file-include '*.yaml'
 mokapi --providers-file-include "C:\Documents and Settings\" C:\Work
-mokapi --providers-file-include *.json --providers.file.include[0] *.yaml
+mokapi --providers-file-include '*.json' --providers-file-include[0] '*.yaml'
 ```
 
 A list flag takes all following values until the next argument that starts with `-`. To end the list and pass
-[positional arguments](#positional-arguments) afterwards, use `--` as separator. With the equal sign form
+positional arguments afterwards, use `--` as separator. With the equal sign form
 (`--providers-file-include=*.json`) the flag takes only that one value, so following values are positional arguments.
 
 ```bash
-mokapi --providers-file-include *.json *.yaml -- petstore.yaml
-mokapi --providers-file-include=*.json petstore.yaml
+mokapi --providers-file-include '*.json' '*.yaml' -- petstore.yaml
+mokapi --providers-file-include='*.json' petstore.yaml
 ```
 
 ### Boolean
@@ -71,99 +80,66 @@ Enabling the dashboard is not necessary as this is the default behavior. The las
 There is nothing special about using integer values.
 
 ```bash
+mokapi --api-port 9090
 mokapi --providers-git-repositories[0]-auth-github-appId 12345
 ```
 
-## Parameters from file
+## Values from a file
 
-For some parameters the file name can be specified directly, for others a file URL is required.
-The parameter `--config-file` provides the ability to define all parameters in a file.
+For some flags the file name can be specified directly, for others a file URL is required.
+The flag `--config-file` (alias `--cli-input`) reads all options from a file, see the
+[Overview](/docs/configuration/overview.md) for the format.
 
 ```bash
+mokapi --config-file=/path/to/mokapi.yaml
 mokapi --providers-file file:/tmp/file.json
 mokapi --root-ca-cert=/path/to/caCert.pem
-mokapi --cli-input=/path/to/config.json
-```
-
-## Positional Arguments
-
-Mokapi CLI supports positional arguments, which are used specifically to provide:
-- a configuration URL
-- a directory path
-- a file path
-
-These arguments must be placed at the end, after all options.
-
-```bash
-mokapi [OPTIONS] [config-url|directory|file]
-```
-
-A flag that takes a single value or a boolean flag can be followed directly by positional arguments. Because a list
-flag takes all following values, separate the options from the positional arguments with `--` in that case.
-
-```bash
-mokapi --log-level debug petstore.yaml
-mokapi --api-dashboard petstore.yaml
-mokapi --providers-file-include *.json *.yaml -- petstore.yaml
-```
-
-- Positional arguments are optional (0-N).
-- You can specify multiple files, directories, or URLs.
-
-Using a single configuration file:
-```bash
-mokapi config.yaml
-```
-Using multiple configuration files:
-```bash
-mokapi config1.yaml config2.yaml
-```
-Using remote configurations:
-```bash
-mokapi https://example.com/config.yaml
-```
-Using GIT configurations:
-```bash
-mokapi git+https://github.com/foo/bar.git
 ```
 
 ## Shorthand Syntax
 
-Mokapi's parameters can accept values in JSON format to simplify the configuration.
-However, entering large JSON lists or structures into the command line can be tedious and difficult to read.
-Therefore, Mokapi supports a shorthand syntax that allows a simpler representation of your configuration.
+Flags with structured values accept JSON. However, entering large JSON lists or structures into the command line can
+be tedious and difficult to read. Therefore, Mokapi supports a shorthand syntax that allows a simpler representation
+of your configuration.
 
-### Structure parameters
+### Structure values
 
 The shorthand syntax for flat (non-nested) structures makes it easier for you to define your inputs.
+This example configures the first Git repository:
 
 ```bash
---parameter key1=value1,key2=value2,key3=value3
+--providers-git-repositories[0] url=https://github.com/foo/foo.git,include=*.json
 ```
 
 This is equivalent to the following JSON example.
 
 ```bash
---parameter '{"key1":"value1","key2"="value2","key3"="value3"}'
+--providers-git-repositories[0] '{"url":"https://github.com/foo/foo.git","include":["*.json"]}'
 ```
 
 ``` box=warning title=PowerShell
 When using PowerShell, you must place the stop-parsing symbol (--%) before any arguments and escape quotation marks.
---parameter --% "{\"key1\":\"value1\",\"key2\",\"value2\",\"key3\":\"value3\"}" 
+--providers-git-repositories[0] --% "{\"url\":\"https://github.com/foo/foo.git\",\"include\":[\"*.json\"]}"
 ```
 
-This corresponds to the following example, where each parameter is defined separately.
+This corresponds to the following example, where each field is defined separately.
 
 ```bash
---parameter-key1 value1 --parameter.key2 value2 --parameter.key3 value3
+--providers-git-repositories[0]-url https://github.com/foo/foo.git --providers-git-repositories[0]-include '*.json'
 ```
 
-### List parameters
-
-Lists can also be defined as JSON or in short form.
+Some flags use a name instead of an index, such as the event store. Here `foo` is the name of the API:
 
 ```bash
---parameter value1 value2 value3
---parameter '[value1,value2,value3]'
---parameter value1 --parameter value2 --parameter value3
+--event-store 'foo={"size": 250}'
+--event-store-foo-size 250
+```
+
+### List values
+
+For a list of structures, repeat the singular flag or pass several shorthand values to the plural flag.
+
+```bash
+--providers-git-repository url=https://github.com/foo/foo.git --providers-git-repository url=https://github.com/bar/bar.git
+--providers-git-repositories url=https://github.com/foo/foo.git url=https://github.com/bar/bar.git
 ```

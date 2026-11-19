@@ -17,16 +17,16 @@ providers:
     url: http://127.0.0.1/api
 ```
 ```bash tab=CLI
---providers-file-directory http://127.0.0.1/api
+--providers-http-url http://127.0.0.1/api
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_FILE_DIRECTORY=http://127.0.0.1/api
+MOKAPI_PROVIDERS_HTTP_URL=http://127.0.0.1/api
 ```
 
 ## Provider Configuration
 
 A list of all options that can be used with the HTTP provider, refer to
-the [reference page](/docs/configuration/reference.md).
+the [CLI Flags](/docs/configuration/static/cli-flags#providers-http) page.
 
 ``` box=tip
 You can also use CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli-usage.md)

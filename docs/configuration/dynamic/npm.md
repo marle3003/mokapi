@@ -24,7 +24,7 @@ providers:
 
 ## Provider Configuration
 A list of all options that can be used with the npm provider, refer to
-the [reference page](/docs/configuration/reference.md).
+the [CLI Flags](/docs/configuration/static/cli-flags#providers-npm) page.
 
 ### Packages
 Defines NPM packages that Mokapi looks for.

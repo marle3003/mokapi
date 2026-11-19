@@ -98,7 +98,7 @@ Use aliases to:
 - Give long or deeply nested paths a short, stable name
 - Switch an implementation in one place without changing every import
 
-Aliases are defined in the [static configuration](/docs/configuration/reference.md#javascript-modules):
+Aliases are defined in the [static configuration](/docs/configuration/static/cli-flags#javascript-modules):
 
 ```yaml tab=File (YAML)
 javascript:
