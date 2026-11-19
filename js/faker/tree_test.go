@@ -195,6 +195,29 @@ func TestTree(t *testing.T) {
 			},
 		},
 		{
+			name: "restore push two new nodes",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					root.children.push({ name: 'foo' });
+					root.children.push({ name: 'bar' });
+				`)
+				r.NoError(t, err)
+				r.Len(t, root.Children, 2)
+				cleanup(host)
+				r.Len(t, root.Children, 0)
+			},
+		},
+		{
 			name: "set children",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				root := generator.NewNode("root")

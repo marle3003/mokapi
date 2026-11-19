@@ -470,3 +470,42 @@ func TestEventLoop_Stop_TimerGoroutinesExit(t *testing.T) {
 		require.False(t, ran.Load(), "a job must not run once the loop is stopped")
 	})
 }
+
+// runSyncWithTimeout makes a hanging RunSync fail the test instead of blocking it.
+func runSyncWithTimeout(t *testing.T, loop *eventloop.EventLoop) error {
+	t.Helper()
+	result := make(chan error, 1)
+	go func() {
+		_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+			return goja.Undefined(), nil
+		})
+		result <- err
+	}()
+
+	select {
+	case err := <-result:
+		return err
+	case <-time.After(time.Second):
+		t.Fatal("RunSync did not return within 1s")
+		return nil
+	}
+}
+
+func TestEventLoop_RunSync_AfterStop(t *testing.T) {
+	loop := startLoop(t)
+	loop.Stop()
+	time.Sleep(50 * time.Millisecond)
+
+	// queueChan has a buffer of one, so the job is accepted but nobody runs it
+	err := runSyncWithTimeout(t, loop)
+
+	require.ErrorIs(t, err, eventloop.ErrStopped)
+}
+
+func TestEventLoop_RunSync_NotStarted(t *testing.T) {
+	loop := eventloop.New(goja.New(), &enginetest.Host{})
+
+	err := runSyncWithTimeout(t, loop)
+
+	require.NoError(t, err)
+}

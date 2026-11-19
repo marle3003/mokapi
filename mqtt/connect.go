@@ -20,9 +20,9 @@ type ConnectRequest struct {
 
 func (r *ConnectRequest) Read(d *Decoder, _ *Header) {
 	r.Protocol = d.ReadString()
-	r.Version = d.ReadByte()
+	r.Version = d.ReadUInt8()
 
-	b := d.ReadByte()
+	b := d.ReadUInt8()
 	r.HasUsername = (b>>7)&0x1 > 0
 	r.HasPassword = (b>>6)&0x1 > 0
 	r.WillRetain = (b>>5)&0x1 > 0
@@ -113,9 +113,9 @@ func (r *ConnectResponse) Write(e *Encoder, _ *Header) {
 }
 
 func (r *ConnectResponse) Read(d *Decoder, _ *Header) {
-	r.SessionPresent = d.ReadByte() == 0x1
+	r.SessionPresent = d.ReadUInt8() == 0x1
 	r.ReasonCode = Code{
-		Code: d.ReadByte(),
+		Code: d.ReadUInt8(),
 	}
 
 	if d.IsV5() {
