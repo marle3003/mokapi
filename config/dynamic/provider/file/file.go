@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"math"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -136,14 +135,16 @@ func (p *Provider) Watch(dir string, pool *safe.Pool) {
 }
 
 func (p *Provider) watch(pool *safe.Pool) error {
-	var (
-		mu     sync.Mutex
-		t      *time.Timer
-		events []fsnotify.Event
-	)
-
 	pool.Go(func(ctx context.Context) {
+		var (
+			events   []fsnotify.Event
+			debounce *time.Timer
+			fire     <-chan time.Time
+		)
 		defer func() {
+			if debounce != nil {
+				debounce.Stop()
+			}
 			_ = p.watcher.Close()
 		}()
 
@@ -161,20 +162,17 @@ func (p *Provider) watch(pool *safe.Pool) error {
 					return
 				}
 
-				mu.Lock()
 				events = append(events, evt)
-				if t == nil {
-					t = time.AfterFunc(math.MaxInt64, func() {
-						mu.Lock()
-						e := events
-						events = nil
-						t = nil
-						mu.Unlock()
-						go p.processEvents(ctx, e)
-					})
+				if debounce != nil {
+					debounce.Stop()
 				}
-				t.Reset(time.Second)
-				mu.Unlock()
+				debounce = time.NewTimer(time.Second)
+				fire = debounce.C
+			case <-fire:
+				batch := events
+				events, debounce, fire = nil, nil, nil
+				// processed inside the loop so that pool.Stop waits for it and batches never overlap
+				p.processEvents(ctx, batch)
 			}
 		}
 	})
@@ -332,6 +330,15 @@ func (p *Provider) watchPath(path string) {
 	_ = p.watcher.Add(path)
 }
 
+func (p *Provider) unwatch(path string) (watch, bool) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	w, ok := p.watched[path]
+	delete(p.watched, path)
+	return w, ok
+}
+
 func (p *Provider) processEvents(ctx context.Context, events []fsnotify.Event) {
 	done := map[string]bool{}
 	var walkList []string
@@ -351,18 +358,11 @@ func (p *Provider) processEvents(ctx context.Context, events []fsnotify.Event) {
 		done[key] = true
 
 		if evt.Has(fsnotify.Remove) || evt.Has(fsnotify.Rename) {
-			p.m.Lock()
-			p.m.Unlock()
-
-			if w, ok := p.watched[evt.Name]; ok {
-				if !w.isDir {
-					e := dynamic.ConfigEvent{Event: dynamic.Delete, Name: evt.Name}
-					if !safe.Send(ctx, p.ch, e) {
-						return
-					}
+			if w, ok := p.unwatch(evt.Name); ok && !w.isDir {
+				e := dynamic.ConfigEvent{Event: dynamic.Delete, Name: evt.Name}
+				if !safe.Send(ctx, p.ch, e) {
+					return
 				}
-
-				delete(p.watched, evt.Name)
 			}
 			continue
 		}
