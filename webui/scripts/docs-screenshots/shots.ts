@@ -176,6 +176,17 @@ const http: Shot[] = [
     },
   },
   {
+    // README.md and npm/go-mokapi/README.md
+    name: 'readme-request-log',
+    file: '../webui.png',
+    url: `${dashboard}/http/log/${petstore}`,
+    viewport: { width: 1800, height: 850 },
+    website: true,
+    steps: async (page) => {
+      await openRow(page, httpLog, (rows) => rows.filter({ hasText: '400 Bad Request' }), 3)
+    },
+  },
+  {
     name: 'http-request-log-filter',
     file: 'http/dashboard-request-log-filter.png',
     url: `${dashboard}/http/log/${petstore}`,
