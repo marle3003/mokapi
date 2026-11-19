@@ -6,6 +6,7 @@ import (
 	"mokapi/pkg/cmd/mokapi"
 	"mokapi/schema/json/generator"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -168,4 +169,78 @@ func TestMain_Help_ListsSampleData(t *testing.T) {
 	require.NoError(t, cmd.Execute())
 
 	require.Contains(t, sb.String(), "\nCommands:\n  sample-data  Generate sample data from a schema\n")
+}
+
+func TestMain_SampleData_Stdin(t *testing.T) {
+	t.Run("schema piped to stdin", func(t *testing.T) {
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		_, err = w.WriteString(`{"type":"integer"}`)
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = r
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("empty piped stdin", func(t *testing.T) {
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = r
+
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data"})
+		logrus.SetOutput(io.Discard)
+
+		err = cmd.Execute()
+
+		require.EqualError(t, err, "failed to read : no input provided (expected file, URL, or stdin)")
+	})
+
+	t.Run("no input and stdin is a terminal-like char device", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("/dev/null as character device is Unix-only")
+		}
+		// /dev/null is a character device like a terminal, so it is not treated as piped data
+		devNull, err := os.Open(os.DevNull)
+		require.NoError(t, err)
+		defer devNull.Close()
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = devNull
+
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data"})
+		logrus.SetOutput(io.Discard)
+
+		err = cmd.Execute()
+
+		require.EqualError(t, err, "failed to read : no input provided (expected file, URL, or stdin)")
+	})
+}
+
+// executeSampleData runs the CLI and returns everything written to stdout.
+func executeSampleData(t *testing.T, args ...string) string {
+	t.Helper()
+	stdOut := os.Stdout
+	reader, writer, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = writer
+	defer func() { os.Stdout = stdOut }()
+
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs(args)
+	logrus.SetOutput(io.Discard)
+	execErr := cmd.Execute()
+
+	_ = writer.Close()
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, reader)
+	_ = reader.Close()
+	require.NoError(t, execErr)
+	return buf.String()
 }

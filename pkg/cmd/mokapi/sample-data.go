@@ -171,15 +171,13 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 
 	// nothing provided, read from stdin (pipe)
 	if input == "" {
-		stat, _ := os.Stdin.Stat()
-		if (stat.Mode() & os.ModeCharDevice) == 0 {
-			// data is piped
-			c.Raw, err = io.ReadAll(os.Stdin)
-			if err != nil {
-				return nil, nil, err
-			}
+		c.Raw, err = readPipedStdin()
+		if err != nil {
+			return nil, nil, err
 		}
-		return nil, nil, fmt.Errorf("no input provided (expected file, URL, or stdin)")
+		if len(c.Raw) == 0 {
+			return nil, nil, fmt.Errorf("no input provided (expected file, URL, or stdin)")
+		}
 	} else {
 		// input is a URL
 		var u *url.URL
@@ -205,6 +203,15 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 		return nil, nil, err
 	}
 	return readFromConfig(c, inputType, r)
+}
+
+// readPipedStdin returns the data piped to stdin, or nil if stdin is a terminal.
+func readPipedStdin() ([]byte, error) {
+	stat, err := os.Stdin.Stat()
+	if err != nil || (stat.Mode()&os.ModeCharDevice) != 0 {
+		return nil, nil
+	}
+	return io.ReadAll(os.Stdin)
 }
 
 func readFromConfig(c *dynamic.Config, inputType *string, r dynamic.Reader) (schema any, path []string, err error) {
