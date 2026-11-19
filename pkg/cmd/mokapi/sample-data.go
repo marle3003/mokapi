@@ -178,24 +178,23 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 		if len(c.Raw) == 0 {
 			return nil, nil, fmt.Errorf("no input provided (expected file, URL, or stdin)")
 		}
+	} else if isSchemaString(input) {
+		c.Raw = []byte(input)
 	} else {
-		// input is a URL
 		var u *url.URL
 		u, err = url.Parse(input)
 		if err != nil {
-			// treat as raw JSON/YAML schema string
-			c.Raw = []byte(input)
-		} else {
-			if u.Scheme == "" {
-				u.Scheme = "file"
-			}
-
-			c, err = r.Read(u, nil)
-			if err != nil {
-				return nil, nil, err
-			}
-			return readFromConfig(c, inputType, r)
+			return nil, nil, err
 		}
+		if u.Scheme == "" {
+			u.Scheme = "file"
+		}
+
+		c, err = r.Read(u, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+		return readFromConfig(c, inputType, r)
 	}
 
 	err = dynamic.Parse(c, r)
@@ -252,55 +251,56 @@ func readFromConfig(c *dynamic.Config, inputType *string, r dynamic.Reader) (sch
 	return
 }
 
-func parseSchema(c *dynamic.Config, inputType string, r dynamic.Reader) (s any, err error) {
+// isSchemaString reports whether the argument is an inline JSON/YAML schema.
+// A schema is always a mapping, whereas a file path or URL is a plain scalar.
+func isSchemaString(input string) bool {
+	var m map[string]any
+	return decode([]byte(input), "", &m) == nil && m != nil
+}
+
+func parseSchema(c *dynamic.Config, inputType string, r dynamic.Reader) (any, error) {
+	var s interface {
+		Parse(*dynamic.Config, dynamic.Reader) error
+	}
 	switch inputType {
 	case "jsonschema":
-		js := &jsonSchema.Schema{}
-		s = js
-		defer func() {
-			if err == nil {
-				err = js.Parse(c, r)
-			}
-		}()
+		s = &jsonSchema.Schema{}
 	case "openapi":
-		openSchema := &schema.Schema{}
-		s = openSchema
-		defer func() {
-			if err == nil {
-				err = openSchema.Parse(c, r)
-			}
-		}()
+		s = &schema.Schema{}
 	case "avro":
-		avroSchema := &avro.Schema{}
-		s = avroSchema
-		defer func() {
-			if err == nil {
-				err = avroSchema.Parse(c, r)
-			}
-		}()
+		s = &avro.Schema{}
+	default:
+		return nil, fmt.Errorf("unsupported input type: %s", inputType)
 	}
 
+	ext := ""
 	if c.Info.Url != nil {
-		ext := filepath.Ext(c.Info.Url.Path)
-		switch ext {
-		case ".json":
-			err = json.Unmarshal(c.Raw, &s)
-		}
-	} else {
-		if json.Unmarshal(c.Raw, &s) == nil {
-			return s, nil
-		}
-
-		if yaml.Unmarshal(c.Raw, &s) == nil {
-			return s, nil
-		}
-
-		return "", fmt.Errorf("input data format not supported")
+		ext = filepath.Ext(c.Info.Url.Path)
+	}
+	if err := decode(c.Raw, ext, s); err != nil {
+		return nil, err
 	}
 
 	c.Data = s
+	return s, s.Parse(c, r)
+}
 
-	return
+// decode reads JSON or YAML into v. The file extension decides the format;
+// without a known extension (raw input) JSON is tried first, then YAML.
+func decode(raw []byte, ext string, v any) error {
+	switch ext {
+	case ".json":
+		return json.Unmarshal(raw, v)
+	case ".yaml", ".yml":
+		return yaml.Unmarshal(raw, v)
+	}
+	if json.Unmarshal(raw, v) == nil {
+		return nil
+	}
+	if yaml.Unmarshal(raw, v) == nil {
+		return nil
+	}
+	return fmt.Errorf("input data format not supported")
 }
 
 func getPathFromOpenAPI(cfg *openapi.Config, ref string) []string {

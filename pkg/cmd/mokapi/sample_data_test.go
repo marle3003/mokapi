@@ -6,6 +6,7 @@ import (
 	"mokapi/pkg/cmd/mokapi"
 	"mokapi/schema/json/generator"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -243,4 +244,107 @@ func executeSampleData(t *testing.T, args ...string) string {
 	_ = reader.Close()
 	require.NoError(t, execErr)
 	return buf.String()
+}
+
+func TestMain_SampleData_Yaml(t *testing.T) {
+	pipeToStdin := func(t *testing.T, data string) {
+		t.Helper()
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		_, err = w.WriteString(data)
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		old := os.Stdin
+		t.Cleanup(func() { os.Stdin = old })
+		os.Stdin = r
+	}
+
+	t.Run("json schema as argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", `{"type":"integer"}`)
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml jsonschema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: integer\n")
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml openapi schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: integer\n")
+
+		out := executeSampleData(t, "sample-data", "--input-type", "openapi")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml avro schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: string\n")
+
+		out := executeSampleData(t, "sample-data", "--input-type", "avro")
+
+		require.NotEmpty(t, out)
+	})
+
+	t.Run("yaml object schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\n")
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("yaml jsonschema as argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "type: integer")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.yaml")
+		require.NoError(t, os.WriteFile(file, []byte("type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n"), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("yml schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.yml")
+		require.NoError(t, os.WriteFile(file, []byte("type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n"), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("multi-line yaml argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n")
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("json schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.json")
+		require.NoError(t, os.WriteFile(file, []byte(`{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"],"additionalProperties":false}`), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("missing file reports read error", func(t *testing.T) {
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data", "./missing.yaml"})
+		logrus.SetOutput(io.Discard)
+
+		err := cmd.Execute()
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to read ./missing.yaml")
+		require.NotContains(t, err.Error(), "schema")
+	})
 }
