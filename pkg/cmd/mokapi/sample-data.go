@@ -206,7 +206,8 @@ var windowsDrivePath = regexp.MustCompile(`^[A-Za-z]:[\\/]`)
 
 // parseFileOrUrl turns a file path or URL argument into a URL. A Windows path
 // such as C:\x.yaml would otherwise be parsed as scheme "c", so it is
-// treated as an opaque file URL and keeps its optional #fragment.
+// treated as an opaque file URL and keeps its optional #fragment. A URL with a
+// one-letter scheme followed by ":/" or ":\" (e.g. a://b) is read as a file path too.
 func parseFileOrUrl(input string) (*url.URL, error) {
 	if windowsDrivePath.MatchString(input) {
 		path, fragment, _ := strings.Cut(input, "#")
@@ -238,34 +239,15 @@ func readFromConfig(c *dynamic.Config, inputType *string, r dynamic.Reader) (sch
 		return
 	}
 
-	ref := ""
-	if c.Info.Url.Fragment != "" {
-		ref = fmt.Sprintf("#%s", c.Info.Url.Fragment)
-	}
+	ref := "#" + c.Info.Url.Fragment
 	if h, ok := runtime.IsHttpConfig(c); ok {
-		if ref != "" {
-			path = getPathFromOpenAPI(h, ref)
-		}
+		path = getPathFromOpenAPI(h, ref)
 		*inputType = "openapi"
 	}
 
-	schema, err = (&dynamic.Reference[any]{Ref: fmt.Sprintf("#%s", c.Info.Url.Fragment)}).Resolve(c, r)
+	schema, err = (&dynamic.Reference[any]{Ref: ref}).Resolve(c, r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to resolve fragment %s: %v", c.Info.Url.Fragment, err)
-	}
-
-	if c.Info.Url.Fragment != "" {
-
-	} else {
-		if h, ok := runtime.IsHttpConfig(c); ok {
-			if h.OpenApi.Major == 2 {
-				return nil, nil, fmt.Errorf("failed to generate data for Swagger file %s: requiring fragment", c.Info.Url)
-			}
-			return nil, nil, fmt.Errorf("failed to generate data for OpenAPI file %s: requiring fragment", c.Info.Url)
-		} else if _, ok := runtime.IsAsyncApiConfig(c); ok {
-			return nil, nil, fmt.Errorf("failed to generate data for AsyncAPI file %s: requiring fragment", c.Info.Url)
-		}
-		return nil, nil, fmt.Errorf("unsupported file: %s", c.Info.Url)
 	}
 	return
 }

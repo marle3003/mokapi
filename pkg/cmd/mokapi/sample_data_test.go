@@ -2,9 +2,12 @@ package mokapi_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"mokapi/pkg/cmd/mokapi"
 	"mokapi/schema/json/generator"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -388,6 +391,36 @@ func TestMain_SampleData_WindowsPaths(t *testing.T) {
 		t.Chdir(dir)
 
 		out := executeSampleData(t, "sample-data", "C:/x.yaml#/components/schemas/Pet")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+}
+
+func TestMain_SampleData_Url(t *testing.T) {
+	spec := "openapi: 3.0.0\ninfo:\n  title: test\n  version: '1'\npaths: {}\ncomponents:\n  schemas:\n    Pet:\n      type: integer\n"
+	pet, err := os.ReadFile(filepath.Join("test", "pet.json"))
+	require.NoError(t, err)
+	mux := http.NewServeMux()
+	// write the bytes directly: http.ServeFile returned a truncated body in the sandboxed test run
+	mux.HandleFunc("/pet.json", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(pet)
+	})
+	mux.HandleFunc("/api.yaml", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(spec))
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	t.Run("schema without fragment", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", server.URL+"/pet.json")
+
+		var sample map[string]any
+		require.NoError(t, json.Unmarshal([]byte(out), &sample))
+		require.Contains(t, sample, "name")
+	})
+
+	t.Run("openapi schema with fragment", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", server.URL+"/api.yaml#/components/schemas/Pet")
 
 		require.Regexp(t, `^-?\d+$`, out)
 	})
