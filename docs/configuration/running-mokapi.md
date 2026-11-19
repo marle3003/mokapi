@@ -95,7 +95,7 @@ following values, so separate it from the positional arguments with `--`:
 ```bash
 mokapi --log-level debug petstore.yaml
 mokapi --api-dashboard petstore.yaml
-mokapi --providers-file-include *.json *.yaml -- petstore.yaml
+mokapi --providers-file-include '*.json' '*.yaml' -- petstore.yaml
 ```
 
 See [CLI Syntax](/docs/configuration/static/cli-usage.md) for the equals form and other ways to write list values.

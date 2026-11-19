@@ -5,13 +5,12 @@ description: Discover how to configure Mokapi using static files or dynamic upda
 # Configuration
 
 Mokapi has two types of configuration:
-- The startup configuration (referred as the static configuration)
-- The dynamic configuration (e.g. OpenApi configuration)
+- The startup configuration, referred to as the static configuration
+- The dynamic configuration (e.g. an OpenAPI specification)
 
-Static configuration sets up the providers which reads dynamic 
-configurations. Dynamic configurations contains mock service like 
-a REST API or a Kafka Topic. This configuration can change without 
-restarting of Mokapi
+The static configuration sets up the providers, which read the dynamic
+configuration. The dynamic configuration contains the mocked services,
+like a REST API or a Kafka topic. It can change without restarting Mokapi.
 
 ## Static Configuration
 
