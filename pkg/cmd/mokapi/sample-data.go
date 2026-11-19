@@ -28,6 +28,7 @@ import (
 func NewCmdSampleData() *cli.Command {
 	var sampleDataCommand = &cli.Command{
 		Name:  "sample-data",
+		Use:   "mokapi sample-data [flags] [FILE|URL|SCHEMA]",
 		Short: "Generate sample data from a schema",
 		Long: `Generates random example data from a schema definition.
 

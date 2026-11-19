@@ -50,13 +50,17 @@ func (c *Command) Execute() error {
 		}
 	}
 
+	if cmd.output == nil {
+		cmd.output = c.output
+	}
+
 	positional, err := parseFlags(args, envPrefix, cmd.Flags())
 	if err != nil {
 		return err
 	}
 
 	if cmd.Flags().GetBool("help") {
-		c.printHelp()
+		cmd.printHelp()
 		return nil
 	}
 

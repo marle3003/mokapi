@@ -140,3 +140,32 @@ func TestMain_SampleData(t *testing.T) {
 		})
 	}
 }
+
+func TestMain_SampleData_Help(t *testing.T) {
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs([]string{"sample-data", "--help"})
+	var sb strings.Builder
+	cmd.SetOutput(&sb)
+
+	require.NoError(t, cmd.Execute())
+
+	out := sb.String()
+	require.Contains(t, out, "Generates random example data from a schema definition.")
+	require.Contains(t, out, "Usage:\n  mokapi sample-data [flags] [FILE|URL|SCHEMA]\n")
+	require.Contains(t, out, "--count")
+	require.Contains(t, out, "--input-type")
+	require.Contains(t, out, "--output")
+	require.Contains(t, out, "mokapi sample-data ./schema.json")
+	require.NotContains(t, out, "--log-level")
+}
+
+func TestMain_Help_ListsSampleData(t *testing.T) {
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs([]string{"--help"})
+	var sb strings.Builder
+	cmd.SetOutput(&sb)
+
+	require.NoError(t, cmd.Execute())
+
+	require.Contains(t, sb.String(), "\nCommands:\n  sample-data  Generate sample data from a schema\n")
+}
