@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterFileProvider(cmd *cli.Command) {
+	cmd.Flags().Group("File Provider")
 	cmd.Flags().String("providers-file", "", providerFile)
 	cmd.Flags().StringSlice("providers-file-filename", nil, true, providerFileFilename)
 	cmd.Flags().StringSlice("providers-file-filenames", nil, false, providerFileFilenames)
@@ -29,7 +30,7 @@ When set, Mokapi loads dynamic configuration files from the specified path. You 
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-file directory=/foo,fileSkipPrefix=skip"},
-				{Title: "Env", Source: "MOKAPI_FILE=directory=/foo,fileSkipPrefix=skip"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE=directory=/foo,fileSkipPrefix=skip"},
 				{Title: "File", Source: "providers:\n  file:\n    directory: /foo\n    fileSkipPrefix: [skip]", Language: "yaml"},
 			},
 		},
@@ -39,7 +40,8 @@ When set, Mokapi loads dynamic configuration files from the specified path. You 
 var providerFileFilename = cli.FlagDoc{
 	Short: "Load dynamic configuration from a file",
 	Long: `Specifies a single configuration file to load using the file provider.
-This option can be used multiple times to load additional files.`,
+This option can be used multiple times to load additional files.
+To pass several files in one argument, use --providers-file-filenames instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -54,7 +56,7 @@ This option can be used multiple times to load additional files.`,
 var providerFileFilenames = cli.FlagDoc{
 	Short: "Load dynamic configuration from a file",
 	Long: `Specifies multiple configuration files to load using the file provider.
-This option is equivalent to using providers-file-filename multiple times, but allows defining all files in a single argument`,
+This option is equivalent to using --providers-file-filename multiple times, but allows defining all files in a single argument.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -69,7 +71,8 @@ This option is equivalent to using providers-file-filename multiple times, but a
 var providerFileDirectory = cli.FlagDoc{
 	Short: "Load the dynamic configuration from directories",
 	Long: `Specifies a directory from which configuration files are loaded.
-All supported configuration files in the directory are processed. The directory is watched for changes, allowing dynamic reloading when files are added, modified, or removed.`,
+All supported configuration files in the directory are processed. The directory is watched for changes, allowing dynamic reloading when files are added, modified, or removed.
+To pass several directories in one argument, use --providers-file-directories instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -84,7 +87,8 @@ All supported configuration files in the directory are processed. The directory 
 var providerFileDirectories = cli.FlagDoc{
 	Short: "Load the dynamic configuration from directories",
 	Long: `Specifies multiple directories from which configuration files are loaded.
-All supported configuration files in each directory are processed. Directories are watched for changes, allowing dynamic reloading across all configured paths.`,
+All supported configuration files in each directory are processed. Directories are watched for changes, allowing dynamic reloading across all configured paths.
+To add a single directory per flag, use --providers-file-directory instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -178,8 +182,8 @@ This option allows directory-specific configuration and is mainly intended for a
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "CLI", Source: "--providers-file-directories[0]-path ./mocks"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[0]_PATH=./mocks"},
+				{Title: "CLI", Source: "--providers-file-directories[0] ./mocks"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[0]=./mocks"},
 			},
 		},
 	},
@@ -223,8 +227,8 @@ Any file or directory matching one of the exclude patterns is ignored, even if i
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "CLI", Source: "--providers-file-exclude[1] *.tmp"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_EXCLUDE[1]=*.tmp"},
+				{Title: "CLI", Source: "--providers-file-directories[0]-exclude *.tmp"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[0]_EXCLUDE=*.tmp"},
 			},
 		},
 	},

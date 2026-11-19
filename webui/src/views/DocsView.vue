@@ -542,11 +542,17 @@ blockquote span {
 [data-bs-theme="light"] .carousel-control-next-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708'/%3e%3c/svg%3e") 
 }
-a[name] {
+a[name], a[id] {
   scroll-margin-top: calc(2 * var(--header-height));
 }
 .flags table tr th:nth-child(1){
   width: 40%;
+}
+.flags h3 {
+  margin-top: 1.5rem;
+}
+.flags table {
+  margin-bottom: 1rem;
 }
 
 .content p.subtitle {

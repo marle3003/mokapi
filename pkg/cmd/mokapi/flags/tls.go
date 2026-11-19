@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterTlsFlags(cmd *cli.Command) {
+	cmd.Flags().Group("Certificates")
 	cmd.Flags().String("root-ca-cert", "", caCert)
 	cmd.Flags().String("root-ca-key", "", caKey)
 }

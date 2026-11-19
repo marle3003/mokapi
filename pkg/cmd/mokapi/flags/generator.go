@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterDataGeneratorFlags(cmd *cli.Command) {
+	cmd.Flags().Group("Data Generator")
 	cmd.Flags().String("data-gen-optional-properties", "0.85", generatorOptionalProperties)
 }
 
@@ -23,7 +24,7 @@ Higher values result in more optional properties being present in generated data
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--data-gen-optional-properties 0.9\n--data-gen-optional-properties sometimes"},
 				{Title: "Env", Source: "MOKAPI_DATA_GEN_OPTIONAL_PROPERTIES=0.9"},
-				{Title: "File", Source: "data-gen: optionalProperties: sometimes", Language: "yaml"},
+				{Title: "File", Source: "data-gen:\n  optionalProperties: sometimes", Language: "yaml"},
 			},
 		},
 	},

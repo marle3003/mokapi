@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterHttpProvider(cmd *cli.Command) {
+	cmd.Flags().Group("HTTP Provider")
 	cmd.Flags().String("providers-http", "", providerHttp)
 	cmd.Flags().StringSlice("providers-http-url", []string{}, true, providerHttpUrl)
 	cmd.Flags().StringSlice("providers-http-urls", []string{}, false, providerHttpUrls)
@@ -23,7 +24,7 @@ Additional flags allow you to control polling behavior, timeouts, proxy settings
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-http url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP=url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml\n    proxy: https://proxy.example.com", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file.yaml]\n    proxy: https://proxy.example.com", Language: "yaml"},
 			},
 		},
 	},
@@ -32,13 +33,14 @@ Additional flags allow you to control polling behavior, timeouts, proxy settings
 var providerHttpUrl = cli.FlagDoc{
 	Short: "Fetch configuration from an HTTP endpoint",
 	Long: `Specifies a single HTTP endpoint from which configuration is fetched.
-This option can be used multiple times to define additional endpoints. Each endpoint is polled at the configured interval, and changes are applied dynamically.`,
+This option can be used multiple times to define additional endpoints. Each endpoint is polled at the configured interval, and changes are applied dynamically.
+To pass several endpoints in one argument, use --providers-http-urls instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-http-url https://foo.bar/file.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_URL=https://foo.bar/file.yaml"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file.yaml]", Language: "yaml"},
 			},
 		},
 	},
@@ -47,13 +49,13 @@ This option can be used multiple times to define additional endpoints. Each endp
 var providerHttpUrls = cli.FlagDoc{
 	Short: "Fetch configurations from HTTP endpoints",
 	Long: `Specifies multiple HTTP endpoints from which configuration is fetched.
-This option is equivalent to using providers-http-url multiple times, but allows defining all endpoints in a single argument or configuration block.`,
+This option is equivalent to using --providers-http-url multiple times, but allows defining all endpoints in a single argument or configuration block.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-http-urls https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_URLS=https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file1.yaml https://foo.bar/file2.yaml]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file1.yaml, https://foo.bar/file2.yaml]", Language: "yaml"},
 			},
 		},
 	},

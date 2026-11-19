@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterApiFlags(cmd *cli.Command) {
+	cmd.Flags().Group("API & Dashboard")
 	cmd.Flags().Int("api-port", 8080, apiPort)
 	cmd.Flags().String("api-path", "", apiPath)
 	cmd.Flags().String("api-base", "", apiBase)
@@ -21,7 +22,7 @@ The API server is the central entry point where developers can access all mocked
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--api-port 5000"},
 				{Title: "Env", Source: "MOKAPI_API_PORT=5000"},
-				{Title: "File", Source: "api:\n  port: 5000"},
+				{Title: "File", Source: "api:\n  port: 5000", Language: "yaml"},
 			},
 		},
 	},
@@ -36,7 +37,7 @@ This is useful when Mokapi is hosted behind a reverse proxy and needs to be acce
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--api-path /mokapi/dashboard"},
 				{Title: "Env", Source: "MOKAPI_API_PATH=/mokapi/dashboard"},
-				{Title: "File", Source: "api:\n  path: /mokapi/dashboard"},
+				{Title: "File", Source: "api:\n  path: /mokapi/dashboard", Language: "yaml"},
 			},
 		},
 	},
@@ -51,7 +52,7 @@ This value is used to generate correct URLs in responses and in the web dashboar
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--api-base /mokapi/dashboard"},
 				{Title: "Env", Source: "MOKAPI_API_BASE=/mokapi/dashboard"},
-				{Title: "File", Source: "api:\n  base: /mokapi/dashboard"},
+				{Title: "File", Source: "api:\n  base: /mokapi/dashboard", Language: "yaml"},
 			},
 		},
 	},
@@ -65,8 +66,8 @@ When disabled, the API server continues to run, but the dashboard UI is not expo
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--api-dashboard true\n--api-dashboard\n--no-api-dashboard"},
-				{Title: "Env", Source: "MOKAPI_API_BASE=/mokapi/dashboard"},
-				{Title: "File", Source: "api:\n  base: /mokapi/dashboard"},
+				{Title: "Env", Source: "MOKAPI_API_DASHBOARD=false"},
+				{Title: "File", Source: "api:\n  dashboard: false", Language: "yaml"},
 			},
 		},
 	},
@@ -81,7 +82,7 @@ When enabled, users can search through mocked APIs, resources, and requests dire
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--api-search-enabled true\n--api-search-enabled\n--no-api-search-enabled"},
 				{Title: "Env", Source: "MOKAPI_API_SEARCH_ENABLED=true"},
-				{Title: "File", Source: "api:\n  search:\n    enabled: true"},
+				{Title: "File", Source: "api:\n  search:\n    enabled: true", Language: "yaml"},
 			},
 		},
 	},
@@ -112,6 +113,7 @@ The index is rebuilt at startup and does not block application startup.`,
 					Source: `api:
   search:
     indexPath: /var/lib/mokapi/search`,
+					Language: "yaml",
 				},
 			},
 		},
@@ -141,6 +143,7 @@ This option is recommended only for small projects or development environments.`
 					Source: `api:
   search:
     inMemory: true`,
+					Language: "yaml",
 				},
 			},
 		},

@@ -349,16 +349,22 @@ func (f *flagConfigBinder) explode(v reflect.Value, name string, value []string)
 }
 
 func getFieldByTag(structValue reflect.Value, name, tag string) reflect.Value {
-	for i := 0; i < structValue.NumField(); i++ {
-		v := structValue.Type().Field(i).Tag.Get(tag)
-		tagValues := strings.Split(v, ",")
-		for _, tagValue := range tagValues {
+	if i := fieldIndexByTag(structValue.Type(), name, tag); i >= 0 {
+		return structValue.Field(i)
+	}
+	return reflect.Value{}
+}
+
+// fieldIndexByTag returns the index of the field whose tag contains name, or -1.
+func fieldIndexByTag(t reflect.Type, name, tag string) int {
+	for i := 0; i < t.NumField(); i++ {
+		for _, tagValue := range strings.Split(t.Field(i).Tag.Get(tag), ",") {
 			if tagValue == name {
-				return structValue.Field(i)
+				return i
 			}
 		}
 	}
-	return reflect.Value{}
+	return -1
 }
 
 func (f *flagConfigBinder) convert(value any, target reflect.Value) error {
@@ -531,50 +537,53 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 }
 
 func (c *bindContext) setFieldFromStruct() error {
-	name := strings.ToLower(c.paths[0])
-	field := c.element.FieldByNameFunc(func(f string) bool {
-		return strings.ToLower(f) == name
-	})
-	if field.IsValid() {
-		c.Next(field)
-		return nil
+	index, consumed, ok := matchField(c.element.Type(), c.paths)
+	if !ok {
+		return fmt.Errorf("no configuration found")
+	}
+	c.element = c.element.FieldByIndex(index)
+	c.paths = c.paths[consumed:]
+	return nil
+}
+
+// matchField finds the field of struct type t addressed by the beginning of paths and returns its
+// index path and the number of path segments it consumed. A field matches by its name
+// (case-insensitive) or, joined by "-" over several segments, by its flag, name or aliases tag.
+// The binder and the CLI documentation both use it, so the documented config file key is the one the binder reads.
+func matchField(t reflect.Type, paths []string) (index []int, consumed int, ok bool) {
+	name := strings.ToLower(paths[0])
+	if f, found := t.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == name }); found {
+		return f.Index, 1, true
 	}
 
-	for i := 0; i < c.element.NumField(); i++ {
-		f := c.element.Type().Field(i)
-
-		var names []string
-		tag := f.Tag.Get("flag")
-		if len(tag) == 0 {
-			tag = f.Tag.Get("name")
-			if len(tag) > 0 {
-				names = append(names, tag)
-			} else {
-				tag = f.Tag.Get("aliases")
-				if len(tag) > 0 {
-					names = append(names, strings.Split(tag, ",")...)
-				} else {
-					continue
-				}
+	for i := 0; i < t.NumField(); i++ {
+		names := fieldFlagNames(t.Field(i))
+		joined := ""
+		for j := range paths {
+			if len(joined) > 0 {
+				joined += "-"
 			}
-		} else {
-			names = append(names, tag)
-		}
-
-		name = ""
-		for j := 0; j < len(c.paths); j++ {
-			if len(name) > 0 {
-				name += "-"
-			}
-			name += c.paths[j]
-			if slices.Contains(names, name) {
-				c.element = c.element.Field(i)
-				c.paths = c.paths[j+1:]
-				return nil
+			joined += paths[j]
+			if slices.Contains(names, joined) {
+				return []int{i}, j + 1, true
 			}
 		}
 	}
-	return fmt.Errorf("no configuration found")
+	return nil, 0, false
+}
+
+// fieldFlagNames returns the flag names of a field from its flag, name or aliases tag, in this priority.
+func fieldFlagNames(f reflect.StructField) []string {
+	if tag := f.Tag.Get("flag"); tag != "" {
+		return []string{tag}
+	}
+	if tag := f.Tag.Get("name"); tag != "" {
+		return []string{tag}
+	}
+	if tag := f.Tag.Get("aliases"); tag != "" {
+		return strings.Split(tag, ",")
+	}
+	return nil
 }
 
 func (c *bindContext) Next(element reflect.Value) *bindContext {

@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterNpmProvider(cmd *cli.Command) {
+	cmd.Flags().Group("NPM Provider")
 	cmd.Flags().String("providers-npm", "", providerNpm)
 	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, true, providerNpmGlobalFolder)
 	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, false, providerNpmGlobalFolders)
@@ -25,7 +26,7 @@ Additional flags allow you to control which packages or files are loaded.`,
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-npm package={\"name\": \"foo-api\"},globalFolders=/npm\n--providers-npm package={\\\"name\\\": \\\"foo-api\\\"},globalFolders=/npm # Windows\n"},
-				{Title: "Env", Source: "MOKAPI__PROVIDERS_NPM=url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM=package={\"name\": \"foo-api\"},globalFolders=/npm"},
 				{Title: "File", Source: "providers:\n  npm:\n    packages:\n     - name: foo-api\n    globalFolders: [/npm]", Language: "yaml"},
 			},
 		},
@@ -35,7 +36,8 @@ Additional flags allow you to control which packages or files are loaded.`,
 var providerNpmGlobalFolder = cli.FlagDoc{
 	Short: "Load configuration from a global npm folder",
 	Long: `Adds additional folders where Mokapi looks for npm packages.
-By default, Mokapi resolves npm packages by searching the current working directory and its parent directories, following the same resolution strategy as npm. This option allows you to extend that search path with one or more additional global npm folders.`,
+By default, Mokapi resolves npm packages by searching the current working directory and its parent directories, following the same resolution strategy as npm. This option allows you to extend that search path with one or more additional global npm folders.
+To pass several folders in one argument, use --providers-npm-global-folders instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -50,12 +52,12 @@ By default, Mokapi resolves npm packages by searching the current working direct
 var providerNpmGlobalFolders = cli.FlagDoc{
 	Short: "Load configuration from a global npm folder",
 	Long: `Specifies multiple global npm folders from which configuration files are loaded.
-This option is equivalent to using providers-npm-global-folder multiple times.`,
+This option is equivalent to using --providers-npm-global-folder multiple times.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-npm-global-folders /npm /npm2"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_GLOBAL_FOLDER=/npm /npm2"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_GLOBAL_FOLDERS=/npm /npm2"},
 				{Title: "File", Source: "providers:\n  npm:\n    globalFolders: [/npm, /npm2]", Language: "yaml"},
 			},
 		},
@@ -65,7 +67,8 @@ This option is equivalent to using providers-npm-global-folder multiple times.`,
 var providerNpmPackage = cli.FlagDoc{
 	Short: "Configure an npm package using shorthand syntax",
 	Long: `Configures a single npm package as a source for configuration files.
-The package must be available locally or installed globally. Configuration files are loaded from the package contents.`,
+The package must be available locally or installed globally. Configuration files are loaded from the package contents.
+To pass several packages in one argument, use --providers-npm-packages instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -80,12 +83,12 @@ The package must be available locally or installed globally. Configuration files
 var providerNpmPackages = cli.FlagDoc{
 	Short: "Configure npm packages using shorthand syntax",
 	Long: `Configures multiple npm packages as sources for configuration files.
-This option is equivalent to using providers-npm-package multiple times.`,
+This option is equivalent to using --providers-npm-package multiple times.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-npm-packages name=foo-api name=bar-api"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGE=name=foo-api,file=api.yaml"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGES=name=foo-api name=bar-api"},
 				{Title: "File", Source: "providers:\n  npm:\n    packages:\n     - name: foo-api\n       files: [api.yaml]", Language: "yaml"},
 			},
 		},
@@ -115,16 +118,17 @@ This is commonly used to adjust a package definition that was initially provided
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-npm-packages[0]-name bar-api"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGES[0]-name=bar-api"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGES[0]_NAME=bar-api"},
 			},
 		},
 	},
 }
 
 var providerNpmPackagesIndexFile = cli.FlagDoc{
-	Short: "Allow only specific files from the package",
+	Short: "Allow a single file from the package (repeatable)",
 	Long: `Restricts configuration loading to specific files within the npm package at the specified index.
-This option can be used multiple times and is useful for refining or overriding file selection defined via environment variables or configuration files.`,
+This option can be used multiple times and is useful for refining or overriding file selection defined via environment variables or configuration files.
+To pass several files in one argument, use --providers-npm-packages[<index>]-files instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -157,7 +161,7 @@ This option is useful for narrowing or overriding file selection rules defined v
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-npm-packages[0]-include **/api/"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGES[0]_FILES=**/api/"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_NPM_PACKAGES[0]_INCLUDE=**/api/"},
 			},
 		},
 	},

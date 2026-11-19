@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterHealthFlags(cmd *cli.Command) {
+	cmd.Flags().Group("Health")
 	cmd.Flags().Bool("health-enabled", true, healthEnabled)
 	cmd.Flags().Int("health-port", 8080, healthPort)
 	cmd.Flags().String("health-path", "/health", healthPath)
@@ -18,7 +19,7 @@ When set to false, Mokapi will not expose any health endpoint.`,
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--health-enabled false"},
 				{Title: "Env", Source: "MOKAPI_HEALTH_ENABLED=false"},
-				{Title: "File", Source: "health:\n  enabled: false"},
+				{Title: "File", Source: "health:\n  enabled: false", Language: "yaml"},
 			},
 		},
 	},
@@ -34,7 +35,7 @@ var healthPort = cli.FlagDoc{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--health-port 8081"},
 				{Title: "Env", Source: "MOKAPI_HEALTH_PORT=8081"},
-				{Title: "File", Source: "health:\n  port: 8081"},
+				{Title: "File", Source: "health:\n  port: 8081", Language: "yaml"},
 			},
 		},
 	},
@@ -50,7 +51,7 @@ var healthPath = cli.FlagDoc{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--health-path /health/live"},
 				{Title: "Env", Source: "MOKAPI_HEALTH_PATH=/health/live"},
-				{Title: "File", Source: "health:\n  path: /health/live"},
+				{Title: "File", Source: "health:\n  path: /health/live", Language: "yaml"},
 			},
 		},
 	},
@@ -68,7 +69,7 @@ Enable this option when debugging health check behavior.`,
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--health-log"},
 				{Title: "Env", Source: "MOKAPI_HEALTH_LOG=true"},
-				{Title: "File", Source: "health:\n  log: true"},
+				{Title: "File", Source: "health:\n  log: true", Language: "yaml"},
 			},
 		},
 	},

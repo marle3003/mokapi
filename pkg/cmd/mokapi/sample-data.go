@@ -62,12 +62,37 @@ Supports JSON Schema, OpenAPI Schema, and Avro Schema formats.`,
 		},
 	}
 
-	sampleDataCommand.Flags().IntShort("count", "n", 1, cli.FlagDoc{Short: "Number of samples to generate (default 1)"})
-	sampleDataCommand.Flags().String("input-type", "jsonschema", cli.FlagDoc{Short: "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)"})
-	sampleDataCommand.Flags().StringShort("output", "o", "application/json",
-		cli.FlagDoc{Short: "Output format: json, xml, yaml, binary (or full content type, e.g. application/json)"})
+	sampleDataCommand.Flags().IntShort("count", "n", 1, sampleDataCount)
+	sampleDataCommand.Flags().String("input-type", "jsonschema", sampleDataInputType)
+	sampleDataCommand.Flags().StringShort("output", "o", "application/json", sampleDataOutput)
 
 	return sampleDataCommand
+}
+
+var sampleDataCount = cli.FlagDoc{
+	Short: "Number of samples to generate (default 1)",
+	Long:  "Defines how many samples are generated. Each sample is generated independently from the schema.",
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --count 5 ./schema.json"}}},
+	},
+}
+
+var sampleDataInputType = cli.FlagDoc{
+	Short: "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)",
+	Long: `Defines the format of the input schema. Supported types are jsonschema, openapi and avro.
+Use openapi if the input is an OpenAPI schema object and avro for an Avro schema.`,
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --input-type avro ./schema.avsc"}}},
+	},
+}
+
+var sampleDataOutput = cli.FlagDoc{
+	Short: "Output format: json, xml, yaml, binary (or full content type, e.g. application/json)",
+	Long: `Defines the format of the generated data. Use one of json, xml, yaml or binary, or a full content type such as application/json.
+The default is application/json.`,
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --output yaml ./schema.json"}}},
+	},
 }
 
 func sampleData(flags *cli.FlagSet, input string) error {
