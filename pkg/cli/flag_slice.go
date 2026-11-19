@@ -17,7 +17,8 @@ func (f *stringSliceFlag) Set(values []string, source Source) error {
 		return nil
 	}
 
-	if !f.isSet {
+	// a higher source replaces the list of a lower one; the same source accumulates
+	if !f.isSet || source > f.source {
 		f.value = nil
 	}
 

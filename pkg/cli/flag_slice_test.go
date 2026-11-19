@@ -109,3 +109,37 @@ func TestFlagSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestFlagSlice_Sources(t *testing.T) {
+	type config struct {
+		Foo []string
+	}
+
+	testcases := []struct {
+		name    string
+		explode bool
+		env     string
+		args    []string
+		expect  []string
+	}{
+		{name: "cli replaces env", env: "x,y,z", args: []string{"--foo", "a"}, expect: []string{"a"}},
+		{name: "cli replaces env with explode", explode: true, env: "x", args: []string{"--foo", "a", "--foo", "b"}, expect: []string{"a", "b"}},
+		{name: "env only", env: "x,y", args: []string{}, expect: []string{"x", "y"}},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("MOKAPI_FOO", tc.env)
+			cmd := &cli.Command{Name: "foo", EnvPrefix: "MOKAPI_", Config: &config{}}
+			cmd.Flags().StringSlice("foo", nil, tc.explode, cli.FlagDoc{})
+			cmd.SetArgs(tc.args)
+			cmd.Run = func(c *cli.Command, a []string) error { return nil }
+
+			err := cmd.Execute()
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expect, cmd.Flags().GetStringSlice("foo"))
+			require.Equal(t, &config{Foo: tc.expect}, cmd.Config)
+		})
+	}
+}

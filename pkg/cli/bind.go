@@ -25,21 +25,52 @@ type bindContext struct {
 	value   any
 }
 
+// Decode binds all set flags to element. A flag that replaces a whole list is bound
+// before flags with an index path (e.g. repositories[0]-auth-github-privatekey),
+// so that index flags refine the items of the new list instead of being discarded.
 func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
-	return flags.Visit(func(flag *Flag) error {
+	var indexed []*Flag
+	err := flags.Visit(func(flag *Flag) error {
 		if !flag.Value.IsSet() {
 			return nil
 		}
-
-		paths := ParsePath(flag.Name)
-		v := flag.Value.Value()
-		ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
-		err := f.setValue(ctx)
-		if err != nil {
-			return fmt.Errorf("configuration error '%v' value '%v': %w", flag.Name, v, err)
+		if hasIndexPath(flag.Name) {
+			indexed = append(indexed, flag)
+			return nil
 		}
-		return nil
+		return f.bind(flag, element)
 	})
+	if err != nil {
+		return err
+	}
+	for _, flag := range indexed {
+		if err := f.bind(flag, element); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// hasIndexPath reports whether the flag name addresses a list item,
+// either as repositories[0] or, for environment variables, as repositories-0.
+func hasIndexPath(name string) bool {
+	for _, p := range ParsePath(name) {
+		if _, err := strconv.Atoi(p); err == nil || strings.HasPrefix(p, "[") {
+			return true
+		}
+	}
+	return false
+}
+
+func (f *flagConfigBinder) bind(flag *Flag, element interface{}) error {
+	paths := ParsePath(flag.Name)
+	v := flag.Value.Value()
+	ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
+	err := f.setValue(ctx)
+	if err != nil {
+		return fmt.Errorf("configuration error '%v' value '%v': %w", flag.Name, v, err)
+	}
+	return nil
 }
 
 func (f *flagConfigBinder) setValue(ctx *bindContext) error {
@@ -206,19 +237,14 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 		values = splitArrayItems(values[0])
 	}
 
-	arr := ctx.element.Interface()
-	_ = arr
+	if len(values) == 0 {
+		// an empty value does not clear the list of a lower source
+		return nil
+	}
 
-	for index, v := range values {
-		var ptr reflect.Value
-		if index < ctx.element.Len() {
-			item := ctx.element.Index(index)
-			ptr = reflect.New(ctx.element.Type().Elem())
-			ptr.Elem().Set(item)
-		} else {
-			ptr = reflect.New(ctx.element.Type().Elem())
-		}
-
+	ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(values)))
+	for _, v := range values {
+		ptr := reflect.New(ctx.element.Type().Elem())
 		ctxItem := &bindContext{
 			paths:   ctx.paths,
 			element: ptr,
@@ -227,15 +253,8 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 		if err := f.setValue(ctxItem); err != nil {
 			return err
 		}
-
-		if index < ctx.element.Len() {
-			ctx.element.Index(index).Set(ptr.Elem())
-		} else {
-			ctx.element.Set(reflect.Append(ctx.element, ptr.Elem()))
-		}
+		ctx.element.Set(reflect.Append(ctx.element, ptr.Elem()))
 	}
-
-	arr = ctx.element.Interface()
 
 	return nil
 }

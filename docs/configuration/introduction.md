@@ -17,29 +17,44 @@ restarting of Mokapi
 
 Elements in the static configuration don't often change and changes require a restart of the application.
 
-There are three different ways to define a static configuration options.
+There are three ways to define static configuration options:
 1. Configuration file
 2. Command-line arguments
 3. Environment variables
 
-These ways are evaluated in the order listed above.
+If the same option is set in more than one place, the highest source wins:
+command-line argument, then environment variable, then configuration file.
+
+```bash
+MOKAPI_LOG_LEVEL=info mokapi --log-level debug
+```
+
+This example runs with log level `debug`.
+
+A list option is replaced as a whole, not merged. If `mokapi.yaml` sets
+`providers.file.filenames` and you start Mokapi with
+`--providers-file-filename b.yaml`, only `b.yaml` is used. Repeating a list
+flag on the command line collects all values.
 
 ### Configuration File
 
-At first, Mokapi searches for static configuration in a file in:
+Mokapi looks for a configuration file named `mokapi` in these locations and
+uses the first file it finds:
 
 1. ./mokapi.yaml
 2. ./mokapi.yml
-3. /etc/mokapi.yaml
-4. /etc/mokapi.yml
+3. ./mokapi.json
+4. /etc/mokapi/mokapi.yaml
+5. /etc/mokapi/mokapi.yml
+6. /etc/mokapi/mokapi.json
 
 You can override this:
 
 ```bash tab=CLI
-mokapi --configFile=/foo/mokapi.yaml
+mokapi --config-file=/foo/mokapi.yaml
 ```
 ```bash tab=Env
-MOKAPI_CONFIGFILE=/foo/mokapi.yaml
+MOKAPI_CONFIG_FILE=/foo/mokapi.yaml
 ```
 
 ### CLI Arguments

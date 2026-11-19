@@ -69,7 +69,7 @@ mokapi --providers-git-repositories[0]-auth-github-appId 12345
 ## Parameters from file
 
 For some parameters the file name can be specified directly, for others a file URL is required.
-The parameter `--configfile` provides the ability to define all parameters in a file.
+The parameter `--config-file` provides the ability to define all parameters in a file.
 
 ```bash
 mokapi --providers-file file:/tmp/file.json
