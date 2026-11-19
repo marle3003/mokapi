@@ -11,7 +11,7 @@ var regexKey = regexp.MustCompile(`<.*>`)
 func (fs *FlagSet) DynamicInt(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
 		Name:    name,
-		Flag:    Flag{FlagDoc: doc},
+		Flag:    Flag{FlagDoc: doc, Type: "int"},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
@@ -35,7 +35,7 @@ func (fs *FlagSet) DynamicInt(name string, doc FlagDoc) *FlagBuilder {
 func (fs *FlagSet) DynamicString(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
 		Name:    name,
-		Flag:    Flag{FlagDoc: doc},
+		Flag:    Flag{FlagDoc: doc, Type: "string"},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
@@ -59,7 +59,7 @@ func (fs *FlagSet) DynamicString(name string, doc FlagDoc) *FlagBuilder {
 func (fs *FlagSet) DynamicStringSlice(name string, explode bool, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
 		Name:    name,
-		Flag:    Flag{FlagDoc: doc},
+		Flag:    Flag{FlagDoc: doc, Type: "list"},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]

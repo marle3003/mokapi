@@ -36,6 +36,13 @@ func TestMain_SampleData(t *testing.T) {
 			},
 		},
 		{
+			name: "generate using shorthand count followed by inline schema",
+			args: []string{"sample-data", "-n", "2", `{"type":"integer"}`},
+			test: func(t *testing.T, out string) {
+				require.Len(t, strings.Split(out, "\n"), 2)
+			},
+		},
+		{
 			name: "generate from json output xml",
 			args: []string{"sample-data", "./test/pet.json", "--output", "xml", "--input-type", "openapi"},
 			test: func(t *testing.T, out string) {

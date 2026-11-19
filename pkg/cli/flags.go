@@ -103,6 +103,21 @@ func (fs *FlagSet) setValue(name string, value []string, source Source) error {
 	return fmt.Errorf("unknown flag '%v'", name)
 }
 
+// flagType returns the type of the flag, also for dynamic flags not yet created.
+// It returns an empty string for unknown flags.
+func (fs *FlagSet) flagType(name string) string {
+	name = strings.ReplaceAll(name, ".", "-")
+	if f, ok := fs.flags[name]; ok {
+		return f.Type
+	}
+	for _, d := range fs.dynamic {
+		if d.isValidFlag(name) {
+			return d.Type
+		}
+	}
+	return ""
+}
+
 func (fs *FlagSet) IsValidFlag(name string) bool {
 	if fs.flags == nil {
 		return false

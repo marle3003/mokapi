@@ -43,20 +43,28 @@ mokapi --providers-file-include "C:\Documents and Settings\" C:\Work
 mokapi --providers-file-include *.json --providers.file.include[0] *.yaml
 ```
 
-### Boolean
-
-Binary flag that turns an option on or off if no value is specified. It can also be used with a value.
+A list flag takes all following values until the next argument that starts with `-`. To end the list and pass
+[positional arguments](#positional-arguments) afterwards, use `--` as separator. With the equal sign form
+(`--providers-file-include=*.json`) the flag takes only that one value, so following values are positional arguments.
 
 ```bash
-mokapi --dashboard
-mokapi --dashboard true
-mokapi --dashboard 1
-mokapi --dashboard false
-mokapi --no-dashboard
-mokapi --no-dashboard true
+mokapi --providers-file-include *.json *.yaml -- petstore.yaml
+mokapi --providers-file-include=*.json petstore.yaml
 ```
 
-Enabling dashboard is not necessary as this is the default behavior. The last example turns dashboard off.
+### Boolean
+
+Binary flag that turns an option on or off if no value is specified. It can also be used with the value `true` or `false`.
+
+```bash
+mokapi --api-dashboard
+mokapi --api-dashboard true
+mokapi --api-dashboard false
+mokapi --no-api-dashboard
+mokapi --no-api-dashboard true
+```
+
+Enabling the dashboard is not necessary as this is the default behavior. The last three examples turn the dashboard off.
 
 ### Integer
 
@@ -88,6 +96,15 @@ These arguments must be placed at the end, after all options.
 
 ```bash
 mokapi [OPTIONS] [config-url|directory|file]
+```
+
+A flag that takes a single value or a boolean flag can be followed directly by positional arguments. Because a list
+flag takes all following values, separate the options from the positional arguments with `--` in that case.
+
+```bash
+mokapi --log-level debug petstore.yaml
+mokapi --api-dashboard petstore.yaml
+mokapi --providers-file-include *.json *.yaml -- petstore.yaml
 ```
 
 - Positional arguments are optional (0-N).
