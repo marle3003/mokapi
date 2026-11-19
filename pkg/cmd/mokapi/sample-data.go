@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -182,12 +183,9 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 		c.Raw = []byte(input)
 	} else {
 		var u *url.URL
-		u, err = url.Parse(input)
+		u, err = parseFileOrUrl(input)
 		if err != nil {
 			return nil, nil, err
-		}
-		if u.Scheme == "" {
-			u.Scheme = "file"
 		}
 
 		c, err = r.Read(u, nil)
@@ -202,6 +200,27 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 		return nil, nil, err
 	}
 	return readFromConfig(c, inputType, r)
+}
+
+var windowsDrivePath = regexp.MustCompile(`^[A-Za-z]:[\\/]`)
+
+// parseFileOrUrl turns a file path or URL argument into a URL. A Windows path
+// such as C:\x.yaml would otherwise be parsed as scheme "c", so it is
+// treated as an opaque file URL and keeps its optional #fragment.
+func parseFileOrUrl(input string) (*url.URL, error) {
+	if windowsDrivePath.MatchString(input) {
+		path, fragment, _ := strings.Cut(input, "#")
+		return &url.URL{Scheme: "file", Opaque: path, Fragment: fragment}, nil
+	}
+
+	u, err := url.Parse(input)
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme == "" {
+		u.Scheme = "file"
+	}
+	return u, nil
 }
 
 // readPipedStdin returns the data piped to stdin, or nil if stdin is a terminal.

@@ -348,3 +348,47 @@ func TestMain_SampleData_Yaml(t *testing.T) {
 		require.NotContains(t, err.Error(), "schema")
 	})
 }
+
+// Windows paths must be treated as files, not as URLs with a one-letter scheme.
+func TestMain_SampleData_WindowsPaths(t *testing.T) {
+	testcases := []struct {
+		name  string
+		input string
+		path  string
+	}{
+		{name: "drive letter with backslash", input: `C:\x.yaml`, path: `C:\x.yaml`},
+		{name: "drive letter with slash", input: `C:/x.yaml`, path: `C:/x.yaml`},
+		{name: "lower case drive letter in directory", input: `c:\dir\x.yaml`, path: `c:\dir\x.yaml`},
+		{name: "drive letter with fragment", input: `C:\x.yaml#/components/schemas/Pet`, path: `C:\x.yaml`},
+		{name: "UNC path", input: `\\server\share\x.yaml`, path: `\\server\share\x.yaml`},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := mokapi.NewCmdMokapi()
+			cmd.SetArgs([]string{"sample-data", tc.input})
+			logrus.SetOutput(io.Discard)
+
+			err := cmd.Execute()
+
+			// the files do not exist: the file provider fails to open the path (without fragment)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "open "+tc.path+": ")
+		})
+	}
+
+	t.Run("drive letter path with fragment reads the schema", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("creates a directory named C: in the working directory")
+		}
+		dir := t.TempDir()
+		require.NoError(t, os.Mkdir(filepath.Join(dir, "C:"), 0o700))
+		spec := "openapi: 3.0.0\ninfo:\n  title: test\n  version: '1'\npaths: {}\ncomponents:\n  schemas:\n    Pet:\n      type: integer\n"
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "C:", "x.yaml"), []byte(spec), 0o600))
+		t.Chdir(dir)
+
+		out := executeSampleData(t, "sample-data", "C:/x.yaml#/components/schemas/Pet")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+}
