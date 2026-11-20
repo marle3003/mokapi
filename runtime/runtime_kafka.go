@@ -34,7 +34,7 @@ type KafkaStore struct {
 type KafkaInfo struct {
 	*store.Store
 	config                atomic.Pointer[asyncapi3.Config]
-	m                     sync.RWMutex // guards configs, which are only written under the store lock
+	m                     sync.RWMutex // guards configs for Configs; writers also hold KafkaStore.m, so update and Remove read configs without m
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *KafkaInfo)
