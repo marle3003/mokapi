@@ -255,6 +255,27 @@ func TestDirectory_ServeSearch(t *testing.T) {
 			},
 		},
 		{
+			name: "unknown scope is a protocol error",
+			config: &directory.Config{Info: directory.Info{Name: "foo"},
+				Entries: convert(map[string]directory.Entry{
+					"": {Dn: "dc=foo,dc=com", Attributes: map[string][]string{"objectclass": {"foo"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				for _, scope := range []int64{-1, 3, 5} {
+					rr := ldaptest.NewRecorder()
+					h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+						BaseDN: "dc=bar,dc=com",
+						Scope:  scope,
+						Filter: "(objectClass=*)",
+					}))
+					res := rr.Message.(*ldap.SearchResponse)
+
+					require.Equal(t, ldap.ProtocolError, res.Status, "scope %v", scope)
+					require.Len(t, res.Results, 0, "scope %v", scope)
+				}
+			},
+		},
+		{
 			name:   "objectclass=* scope=ScopeSingleLevel",
 			config: testConfig,
 			fn: func(t *testing.T, h ldap.Handler) {

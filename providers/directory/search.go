@@ -106,6 +106,15 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		_ = rw.Write(&ldap.SearchResponse{Status: ldap.OperationsError})
 		return
 	}
+	switch msg.Scope {
+	case ldap.ScopeBaseObject, ldap.ScopeSingleLevel, ldap.ScopeWholeSubtree:
+	default:
+		log.Errorf("ldap: unsupported search scope: %v", msg.Scope)
+		countError()
+		event.SetStatus(ldap.StatusText[ldap.ProtocolError])
+		_ = rw.Write(&ldap.SearchResponse{Status: ldap.ProtocolError, Message: "unsupported search scope"})
+		return
+	}
 	status := ldap.Success
 	subschemaDN := d.subschemaDN()
 	for _, e := range d.config.Entries.Entries() {
