@@ -38,8 +38,8 @@ If your company already provides a root or intermediate CA for development, use 
 
 ## Start Mokapi with the CA
 
-Pass the certificate and the key with [`--root-ca-cert`](/docs/configuration/static/mokapi.md#root-ca-cert) and
-[`--root-ca-key`](/docs/configuration/static/mokapi.md#root-ca-key).
+Pass the certificate and the key with [`--root-ca-cert`](/docs/configuration/static/cli-flags#root-ca-cert) and
+[`--root-ca-key`](/docs/configuration/static/cli-flags#root-ca-key).
 
 ```yaml tab=File
 rootCaCert: ./ca.pem
@@ -125,6 +125,6 @@ you no longer need it. Don't install it on machines that are used for anything b
 
 ## Trusting a CA when fetching configuration
 
-[`--providers-http-ca`](/docs/configuration/static/mokapi.md#providers-http-ca) is the opposite direction. It
+[`--providers-http-ca`](/docs/configuration/static/cli-flags#providers-http-ca) is the opposite direction. It
 tells Mokapi which CA to trust when it downloads configuration over HTTPS. See
 [Running Mokapi Behind a Corporate Proxy](/docs/configuration/use-cases/corporate-proxy.md).

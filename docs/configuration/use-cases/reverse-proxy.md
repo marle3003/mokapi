@@ -5,8 +5,8 @@ description: Serve the Mokapi dashboard and API under a URL prefix behind a reve
 # Running the Dashboard Behind a Reverse Proxy
 
 When a reverse proxy publishes the Mokapi dashboard under a prefix such as `/mokapi`, two options come into
-play: [`--api-path`](/docs/configuration/static/mokapi.md#api-path) and
-[`--api-base`](/docs/configuration/static/mokapi.md#api-base). They are easy to mix up because both take a
+play: [`--api-path`](/docs/configuration/static/cli-flags#api-path) and
+[`--api-base`](/docs/configuration/static/cli-flags#api-base). They are easy to mix up because both take a
 path and often have the same value. They answer different questions.
 
 | Option | Question it answers | What Mokapi does with it |

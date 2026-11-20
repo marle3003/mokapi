@@ -29,7 +29,7 @@ cloned over `http(s)`. It has no proxy option of its own.
 
 ## Set the proxy explicitly
 
-Use [`--providers-http-proxy`](/docs/configuration/static/mokapi.md#providers-http-proxy) if you don't want to
+Use [`--providers-http-proxy`](/docs/configuration/static/cli-flags#providers-http-proxy) if you don't want to
 change the environment. When it is set, it replaces the environment variables for the HTTP provider, so
 `NO_PROXY` no longer applies to it.
 
@@ -56,7 +56,7 @@ variables.
 A proxy that inspects HTTPS traffic presents certificates signed by your company's certificate authority.
 If that CA isn't in the system certificate pool, requests fail with a certificate error. The cleanest fix is to
 install the CA in the system pool. Otherwise pass it to Mokapi with
-[`--providers-http-ca`](/docs/configuration/static/mokapi.md#providers-http-ca). Mokapi adds it to the system
+[`--providers-http-ca`](/docs/configuration/static/cli-flags#providers-http-ca). Mokapi adds it to the system
 pool.
 
 ```yaml tab=File
@@ -86,7 +86,7 @@ with the system pool only.
 ## Skip certificate verification
 
 For a quick test you can turn verification off with
-[`--providers-http-tls-skip-verify`](/docs/configuration/static/mokapi.md#providers-http-tls-skip-verify).
+[`--providers-http-tls-skip-verify`](/docs/configuration/static/cli-flags#providers-http-tls-skip-verify).
 
 ```yaml tab=File
 providers:
@@ -110,6 +110,6 @@ precedence over `providers-http-ca`. Use it only against hosts you know.
 
 ## Not related: root-ca-cert
 
-[`--root-ca-cert`](/docs/configuration/static/mokapi.md#root-ca-cert) and `--root-ca-key` configure the CA
+[`--root-ca-cert`](/docs/configuration/static/cli-flags#root-ca-cert) and `--root-ca-key` configure the CA
 that Mokapi uses to sign the certificates of its own mocked services. They have no effect on outgoing
 requests through a proxy.
