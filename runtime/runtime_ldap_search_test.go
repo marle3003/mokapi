@@ -14,7 +14,6 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"mokapi/safe"
-	"mokapi/sortedmap"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -93,7 +92,7 @@ func TestIndex_Ldap(t *testing.T) {
 		{
 			name: "Search entry",
 			test: func(t *testing.T, app *runtime.App) {
-				entries := &sortedmap.LinkedHashMap[string, directory.Entry]{}
+				entries := directory.NewEntryStore()
 				entries.Set("foo", directory.Entry{
 					Dn:         "cn=alice,dc=foo,dc=com",
 					Attributes: map[string][]string{"objectclass": {"user"}},

@@ -9,7 +9,11 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
@@ -218,4 +222,34 @@ func TestMqttClient_Publish(t *testing.T) {
 			tc.test(t, retained, result, err)
 		})
 	}
+}
+
+func TestMqttClient_Publish_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// a cluster whose last file was removed keeps its store but has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		cfg := asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel("sensors", asyncapi3test.WithMessage("msg")),
+		)
+		st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
+		return runtimetest.NewApp(runtimetest.WithMqttInfo("foo", runtime.NewMqttInfo(nil, st)))
+	}
+
+	t.Run("cluster given returns not found", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			_, err := engine.NewMqttClient(newApp()).Publish(&common.MqttPublishArgs{Cluster: "foo", Topic: "sensors"})
+
+			require.EqualError(t, err, "mqtt API 'foo' not found")
+		})
+	})
+
+	t.Run("cluster searched by topic skips it", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			_, err := engine.NewMqttClient(newApp()).Publish(&common.MqttPublishArgs{Topic: "sensors"})
+
+			require.EqualError(t, err, "kafka topic 'sensors' not found")
+		})
+	})
 }

@@ -10,6 +10,8 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
+	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/kafkatest"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -106,13 +108,13 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get cluster with contact",
 			app: func() *runtime.App {
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: asyncapi3test.NewConfig(
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(
+					asyncapi3test.NewConfig(
 						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 						asyncapi3test.WithContact("foo", "https://foo.bar", "foo@bar.com"),
 					),
-					Store: &store.Store{},
-				}))
+					&store.Store{},
+				)))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","contact":{"name":"foo","url":"https://foo.bar","email":"foo@bar.com"}}`,
@@ -120,14 +122,14 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get cluster with server",
 			app: func() *runtime.App {
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: asyncapi3test.NewConfig(
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(
+					asyncapi3test.NewConfig(
 						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 						asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("bar")),
 						asyncapi3test.WithServer("bar", "mqtt", "foo.bar", asyncapi3test.WithServerDescription("bar")),
 					),
-					Store: &store.Store{},
-				}))
+					&store.Store{},
+				)))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":"bar"}]}`,
@@ -135,8 +137,8 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get cluster with server and tags",
 			app: func() *runtime.App {
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: asyncapi3test.NewConfig(
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(
+					asyncapi3test.NewConfig(
 						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 						asyncapi3test.WithServer("foo", "kafka", "foo.bar",
 							asyncapi3test.WithServerDescription("bar"),
@@ -145,8 +147,8 @@ func TestHandler_Kafka(t *testing.T) {
 								Description: "This environment is for running internal tests",
 							}),
 						)),
-					Store: &store.Store{},
-				}))
+					&store.Store{},
+				)))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":"bar","tags":[{"name":"env:test","description":"This environment is for running internal tests"}]}]}`,
@@ -170,10 +172,7 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: c,
-					Store:  s,
-				}))
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(c, s)))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","summary":"bar","metrics":{"messages_total":0,"message_timestamp":0}}]}`,
@@ -190,10 +189,7 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
-				app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: c,
-					Store:  s,
-				}))
+				app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(c, s)))
 
 				app.Monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
 				app.Monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(2)
@@ -220,10 +216,7 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
-					Config: c,
-					Store:  s,
-				}))
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(c, s)))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/channels/foo",
 			responseBody: `{"name":"foo","description":"bar","messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`,
@@ -1288,10 +1281,7 @@ func Test_IsAsyncApiConfig(t *testing.T) {
 }
 
 func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
-	return &runtime.KafkaInfo{
-		Config: config,
-		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka()),
-	}
+	return runtime.NewKafkaInfo(config, store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka()))
 }
 
 func getKafkaInfoWithGroup(config *asyncapi3.Config, name string, state store.GroupState, generation *store.Generation) *runtime.KafkaInfo {
@@ -1299,10 +1289,7 @@ func getKafkaInfoWithGroup(config *asyncapi3.Config, name string, state store.Gr
 	g := s.GetOrCreateGroup(name, &store.Broker{})
 	g.SetState(state)
 	g.SetGeneration(generation)
-	return &runtime.KafkaInfo{
-		Config: config,
-		Store:  s,
-	}
+	return runtime.NewKafkaInfo(config, s)
 }
 
 func newClientContext(addr, clientId, softwareName, softwareVersion string, heartbeat time.Time) *kafka.ClientContext {
@@ -1385,4 +1372,79 @@ func TestHandler_Kafka_ServiceItems(t *testing.T) {
 				try.HasBody(`[{"name":"foo","version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
 		})
 	}
+}
+
+func TestHandler_Kafka_ConfigRemovedWhileRequestIsRunning(t *testing.T) {
+	// an info whose last file was removed has no config snapshot (nil), but keeps its broker store
+	newApp := func() *runtime.App {
+		cfg := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", "1.0"), asyncapi3test.WithChannel("topic-1"))
+		s := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+		s.GetOrCreateGroup("group-1", &store.Broker{})
+		s.ServeMessage(kafkatest.NewRecorder(), kafkatest.NewRequest("client1", 4, &heartbeat.Request{GroupId: "group-1"}))
+
+		return runtimetest.NewApp(
+			runtimetest.WithKafka(asyncapi3test.NewConfig(asyncapi3test.WithInfo("bar", "", "1.0"))),
+			runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, s)),
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0}}]`))
+	})
+
+	notFound := []struct {
+		name string
+		url  string
+	}{
+		{name: "cluster", url: "/api/services/kafka/foo"},
+		{name: "channel", url: "/api/services/kafka/foo/channels/topic-1"},
+		{name: "topics", url: "/api/services/kafka/foo/topics"},
+		{name: "topic", url: "/api/services/kafka/foo/topics/topic-1"},
+		{name: "partitions", url: "/api/services/kafka/foo/topics/topic-1/partitions"},
+		{name: "partition", url: "/api/services/kafka/foo/topics/topic-1/partitions/0"},
+		{name: "messages", url: "/api/services/kafka/foo/topics/topic-1/partitions/0/offsets"},
+		{name: "message", url: "/api/services/kafka/foo/topics/topic-1/partitions/0/offsets/0"},
+		{name: "group", url: "/api/services/kafka/foo/groups/group-1"},
+		{name: "AsyncAPI export as json", url: "/api/services/kafka/foo/asyncapi.json"},
+		{name: "AsyncAPI export as yaml", url: "/api/services/kafka/foo/asyncapi.yaml"},
+	}
+	for _, tc := range notFound {
+		t.Run(tc.name+" returns 404", func(t *testing.T) {
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api"+tc.url,
+				nil,
+				"",
+				api.New(newApp(), static.Api{}),
+				try.HasStatusCode(404))
+		})
+	}
+
+	t.Run("client is still served from the broker store", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/kafka/foo/clients/client1",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(200))
+	})
+
+	t.Run("produce is still served by the broker store", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodPost,
+			"http://foo.api/api/services/kafka/foo/topics/topic-1",
+			map[string]string{"Content-Type": "application/json"},
+			`{"records": [{"key": "foo", "value": "bar"}]}`,
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`{"offsets":[{"partition":0,"offset":0}]}`))
+	})
 }

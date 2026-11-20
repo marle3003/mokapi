@@ -44,6 +44,19 @@ func (s *store) Events(traits Traits) []Event {
 	return events
 }
 
+// find returns the event that holds exactly this data (same pointer).
+func (s *store) find(data EventData) (Event, bool) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	for _, e := range s.events {
+		if e.Data == data {
+			return e, true
+		}
+	}
+	return Event{}, false
+}
+
 func (s *store) some(traits Traits) bool {
 	if len(traits) == 0 {
 		return true

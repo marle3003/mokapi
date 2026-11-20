@@ -8,6 +8,8 @@ import (
 	"mokapi/schema/json/schema"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Encoder struct {
@@ -37,6 +39,8 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 		b, err = json.Marshal(i)
 	case contentType.Subtype == "xml" || strings.HasSuffix(contentType.Subtype, "+xml"):
 		b, err = MarshalXml(i, e.r)
+	case contentType.Subtype == "yaml" || strings.HasSuffix(contentType.Subtype, "+yaml"):
+		b, err = yaml.Marshal(i)
 	default:
 		var s string
 		switch i.(type) {

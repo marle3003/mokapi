@@ -6,10 +6,16 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
@@ -193,7 +199,7 @@ func TestMqttManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
 	require.NotPanics(t, func() { m.UpdateConfig(e) })
 
 	require.NotNil(t, app.Kafka.Get("foo"))
-	require.NotNil(t, app.Kafka.Get("foo").Config, "kafka config must survive a MQTT delete")
+	require.NotNil(t, app.Kafka.Get("foo").Config(), "kafka config must survive a MQTT delete")
 	require.Nil(t, app.Mqtt.Get("foo"), "config must be removed from the MQTT store")
 	requirePortClosed(t, port)
 }
@@ -204,4 +210,30 @@ func requirePortClosed(t *testing.T, port int) {
 		_ = conn.Close()
 	}
 	require.Error(t, err, "port must be closed after delete")
+}
+
+func TestMqttManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e := mqttConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}
+
+func TestMqttManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
+	e := mqttConfigEvent(try.GetFreePort())
+	cfg := e.Config.Data.(*asyncapi3.Config)
+	st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
+	defer st.Close()
+	app := runtimetest.NewApp(runtimetest.WithMqttInfo("foo", runtime.NewMqttInfo(nil, st)))
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Mqtt.Get("foo"))
 }

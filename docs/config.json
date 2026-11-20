@@ -255,6 +255,41 @@
                 "label": "Corporate Proxy",
                 "source": "configuration/use-cases/corporate-proxy.md",
                 "path": "/docs/configuration/use-cases/corporate-proxy"
+              },
+              {
+                "label": "Reverse Proxy",
+                "source": "configuration/use-cases/reverse-proxy.md",
+                "path": "/docs/configuration/use-cases/reverse-proxy"
+              },
+              {
+                "label": "Private GitHub Repository",
+                "source": "configuration/use-cases/private-github-repository.md",
+                "path": "/docs/configuration/use-cases/private-github-repository"
+              },
+              {
+                "label": "Own Root CA for HTTPS",
+                "source": "configuration/use-cases/custom-root-ca.md",
+                "path": "/docs/configuration/use-cases/custom-root-ca"
+              },
+              {
+                "label": "Docker and Docker Compose",
+                "source": "configuration/use-cases/docker.md",
+                "path": "/docs/configuration/use-cases/docker"
+              },
+              {
+                "label": "Mokapi in CI",
+                "source": "configuration/use-cases/ci-health-check.md",
+                "path": "/docs/configuration/use-cases/ci-health-check"
+              },
+              {
+                "label": "MCP Server",
+                "source": "configuration/use-cases/mcp-server.md",
+                "path": "/docs/configuration/use-cases/mcp-server"
+              },
+              {
+                "label": "Sample Data",
+                "source": "configuration/use-cases/sample-data.md",
+                "path": "/docs/configuration/use-cases/sample-data"
               }
             ]
           }

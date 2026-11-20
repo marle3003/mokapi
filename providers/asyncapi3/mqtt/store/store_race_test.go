@@ -152,6 +152,62 @@ func TestStore_EmptyChannelNextToValidChannel(t *testing.T) {
 	})
 	defer s.Close()
 
-	require.Contains(t, s.Topics, "foo")
-	require.NotContains(t, s.Topics, "empty")
+	require.Contains(t, topicNames(s.Topics()), "foo")
+	require.NotContains(t, topicNames(s.Topics()), "empty")
+}
+
+func topicNames(topics []*store.Topic) []string {
+	names := make([]string, 0, len(topics))
+	for _, topic := range topics {
+		names = append(names, topic.Name)
+	}
+	return names
+}
+
+func TestStore_TopicsSnapshot(t *testing.T) {
+	t.Run("reader does not race with update", func(t *testing.T) {
+		s := newStoreWithEmitter(&handlerEmitter{}, "foo")
+		defer s.Close()
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("test-server", "", ""),
+					asyncapi3test.WithChannel("channel-"+strconv.Itoa(i), asyncapi3test.WithMessage("msg"))))
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				for _, topic := range s.Topics() {
+					_ = topic.Name
+				}
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("returned slice is a copy", func(t *testing.T) {
+		s := newStoreWithEmitter(&handlerEmitter{}, "foo")
+		defer s.Close()
+
+		topics := s.Topics()
+		count := len(topics)
+		clear(topics)
+
+		require.Len(t, s.Topics(), count)
+		require.NotContains(t, s.Topics(), (*store.Topic)(nil))
+	})
+
+	t.Run("contains the $SYS topics", func(t *testing.T) {
+		s := newStoreWithEmitter(&handlerEmitter{}, "foo")
+		defer s.Close()
+
+		require.ElementsMatch(t,
+			[]string{"foo", "$SYS/broker/version", "$SYS/broker/uptime"},
+			topicNames(s.Topics()))
+	})
 }

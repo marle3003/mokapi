@@ -9,9 +9,9 @@ In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mok
 Start Mokapi with the following command
 
 ```
-docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://raw.githubusercontent.com/marle3003/mokapi/v0.9/examples/swagger/petstore-3.0.json mokapi/mokapi:latest
+docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_PROVIDERS_HTTP_URL=https://raw.githubusercontent.com/marle3003/mokapi/v0.9/examples/swagger/petstore-3.0.json mokapi/mokapi:latest
 ```
-When you use Mokapi in a company, you probably will need to skip SSL verification: `-e MOKAPI_Providers_Http_TlsSkipVerify=true`.
+When you use Mokapi in a company, you probably will need to skip SSL verification: `-e MOKAPI_PROVIDERS_HTTP_TLS_SKIP_VERIFY=true`.
 
 You can open a browser and go to Mokapi's Dashabord (`http://localhost:8080`) to browse the Petstore's API.
 

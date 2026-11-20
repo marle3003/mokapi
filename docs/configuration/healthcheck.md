@@ -13,7 +13,7 @@ Mokapi provides a simple health endpoint to monitor service availability. This e
 - **Uptime monitoring:** Check if Mokapi is responding to requests
 - **Load balancer health checks:** Ensure traffic is only routed to healthy instances
 - **Kubernetes probes:** Liveness and readiness probes for pod management
-- **CI/CD validation:** Verify Mokapi started successfully before running tests
+- **CI/CD validation:** Verify Mokapi started successfully before running tests (see [Start Mokapi in CI and Wait for the Health Check](/docs/configuration/use-cases/ci-health-check.md))
 
 By default, the health check listens on `http://localhost:8080/health` but can be fully customized.
 

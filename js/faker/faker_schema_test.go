@@ -419,7 +419,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ patternProperties: { '^S_': { type: 'string' } }, type: 'object' }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"S_4V": "syx"}, v.Export())
+				r.Equal(t, map[string]any{"S_gt": "syx"}, v.Export())
 			},
 		},
 		{
@@ -458,8 +458,8 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
-					"I_4V":      int64(-927324),
-					"S_XkY9X3":  " yByPS<qbft",
+					"I_gt":      int64(-927324),
+					"S_b4MnZ5":  " yByPS<qbft",
 					"ambulance": "nI fpidfoDeHcd",
 					"boat":      "Clq kaieGDf",
 					"body":      "VgPAl89Xbz v",

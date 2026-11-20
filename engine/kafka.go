@@ -33,6 +33,10 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	if err != nil {
 		return nil, err
 	}
+	snapshot := k.Config()
+	if snapshot == nil {
+		return nil, fmt.Errorf("kafka API '%v' not found", args.Cluster)
+	}
 	if args.Topic == "" {
 		args.Topic = ch.ResolveAddress()
 	}
@@ -91,7 +95,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	}
 
 	return &common.KafkaProduceResult{
-		Api:      k.Info.Name,
+		Api:      snapshot.Info.Name,
 		Topic:    args.Topic,
 		Messages: produced,
 	}, nil
@@ -190,14 +194,18 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 
 		var topics []*asyncapi3.Channel
 		for _, v := range c.app.Kafka.List() {
+			snapshot := v.Config()
+			if snapshot == nil {
+				continue
+			}
 			if t := v.Topic(topic); t != nil {
 				k = v
 				if len(cluster) == 0 {
-					cluster = v.Info.Name
+					cluster = snapshot.Info.Name
 				}
 				topics = append(topics, t.Config())
 			} else if topic != "" {
-				for _, ref := range v.Channels {
+				for _, ref := range snapshot.Channels {
 					if ref.Value == nil {
 						continue
 					}

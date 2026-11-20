@@ -1,5 +1,7 @@
 package directory
 
+import "slices"
+
 func (c *Config) Patch(patch *Config) {
 	if patch == nil {
 		return
@@ -39,26 +41,14 @@ func (e *Entry) patch(patch Entry) {
 			if e.Attributes == nil {
 				e.Attributes = map[string][]string{}
 			}
-			e.Attributes[k] = p
+			e.Attributes[k] = slices.Clone(p)
 		}
 	}
 }
 
 func (c *Config) patchEntries(patch *Config) {
-	if patch.Entries == nil {
-		return
-	}
 	if c.Entries == nil {
-		c.Entries = patch.Entries
-		return
+		c.Entries = NewEntryStore()
 	}
-
-	for it := patch.Entries.Iter(); it.Next(); {
-		if v, ok := c.Entries.Get(it.Key()); ok {
-			v.patch(it.Value())
-			c.Entries.Set(it.Key(), v)
-		} else {
-			c.Entries.Set(it.Key(), it.Value())
-		}
-	}
+	c.Entries.Merge(patch.Entries)
 }

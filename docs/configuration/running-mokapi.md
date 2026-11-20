@@ -105,3 +105,4 @@ See [CLI Syntax](/docs/configuration/static/cli-usage.md) for the equals form an
 - [Overview](/docs/configuration/overview.md): where options come from and which one wins
 - [CLI Syntax](/docs/configuration/static/cli-usage.md): how to write lists, booleans and JSON values
 - [CLI Flags](/docs/configuration/static/cli-flags): every flag, environment variable and config file option
+- [Docker and Docker Compose](/docs/configuration/use-cases/docker.md): run the official image with volumes, ports and environment variables

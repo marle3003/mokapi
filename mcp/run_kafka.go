@@ -76,7 +76,8 @@ type KafkaRecord struct {
 
 func (m *mokapi) getKafkaApi(name string) any {
 	for _, api := range m.app.Kafka.List() {
-		if api.Info.Name == name {
+		cfg := api.Config()
+		if cfg != nil && cfg.Info.Name == name {
 			client := store.NewClient(api.Store, m.app.Monitor.Kafka)
 			client.ClientId = "mokapi-mcp"
 
@@ -86,7 +87,7 @@ func (m *mokapi) getKafkaApi(name string) any {
 				info:   api,
 				client: client,
 			}
-			for it := api.Servers.Iter(); it.Next(); {
+			for it := cfg.Servers.Iter(); it.Next(); {
 				b := it.Value()
 				if b.Value == nil {
 					continue
@@ -104,9 +105,19 @@ func (m *mokapi) getKafkaApi(name string) any {
 	return nil
 }
 
-func (k *Kafka) GetTopics() []TopicSummary {
+// notFound is the error for an API whose last file was removed after the object was created.
+func (k *Kafka) notFound() error {
+	return fmt.Errorf("kafka API '%s' not found", k.Name)
+}
+
+func (k *Kafka) GetTopics() ([]TopicSummary, error) {
+	cfg := k.info.Config()
+	if cfg == nil {
+		return nil, k.notFound()
+	}
+
 	topics := []TopicSummary{}
-	for name, c := range k.info.Channels {
+	for name, c := range cfg.Channels {
 		if c.Value == nil {
 			continue
 		}
@@ -119,11 +130,16 @@ func (k *Kafka) GetTopics() []TopicSummary {
 	slices.SortStableFunc(topics, func(a, b TopicSummary) int {
 		return strings.Compare(a.Name, b.Name)
 	})
-	return topics
+	return topics, nil
 }
 
 func (k *Kafka) GetTopic(name string) (Topic, error) {
-	ch, ok := k.info.Channels[name]
+	cfg := k.info.Config()
+	if cfg == nil {
+		return Topic{}, k.notFound()
+	}
+
+	ch, ok := cfg.Channels[name]
 	if !ok || ch.Value == nil {
 		return Topic{}, fmt.Errorf("topic '%s' not found", name)
 	}
@@ -150,7 +166,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 		})
 	}
 
-	for _, op := range k.info.Operations {
+	for _, op := range cfg.Operations {
 		if op.Value == nil {
 			continue
 		}

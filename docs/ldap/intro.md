@@ -38,7 +38,7 @@ Key Features:
 - <p><strong>LDIF Import Support:</strong><br /> Load bulk user and group data using LDIF files.</p>
 - <p><strong>Hot-Reloading Configuration:</strong><br /> Update LDAP settings without restarting the server.</p>
 - <p><strong>CI/CD Integration:</strong><br /> Incorporate into automated pipelines to validate authentication and directory-based workflows.</p>
-- <p><strong>Write Operation Support:</strong><br />Making it a more dynamic testing solution.</p>
+- <p><strong>Write Operation Support:</strong><br />Making it a more dynamic testing solution. Write operations (add, modify, delete, modify DN) change the running directory. Reloading the LDAP file resets the directory to the file content (to the merged content if several files share the same <code>info.name</code>), so changes made by clients are lost.</p>
 
 Supported Operations:
 

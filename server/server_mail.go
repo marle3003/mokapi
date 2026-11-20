@@ -48,6 +48,9 @@ func (m *MailManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Mail.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Mail.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)

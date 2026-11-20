@@ -2,14 +2,18 @@ package mcp_test
 
 import (
 	"context"
+	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
+	"mokapi/engine/enginetest"
 	"mokapi/mcp"
 	"mokapi/providers/directory"
 	"mokapi/runtime"
 	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
-	"mokapi/sortedmap"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -66,7 +70,7 @@ func TestService_Run_Ldap(t *testing.T) {
 		{
 			name: "get entries",
 			app: func() *runtime.App {
-				entries := &sortedmap.LinkedHashMap[string, directory.Entry]{}
+				entries := directory.NewEntryStore()
 				entries.Set("foo", directory.Entry{
 					Dn: "dn",
 					Attributes: map[string][]string{
@@ -110,4 +114,69 @@ func TestService_Run_Ldap(t *testing.T) {
 			tc.test(t, s)
 		})
 	}
+}
+
+func TestService_Run_Ldap_ConfigRemoved(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// an info whose last file was removed has no config snapshot (nil)
+	t.Run("info without config is not found by getApi", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithLdapInfo("foo", &runtime.LdapInfo{}))
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+
+		require.NoError(t, err)
+		require.Nil(t, r.Result)
+	})
+
+	t.Run("info without config is skipped by getApis", func(t *testing.T) {
+		app := runtimetest.NewApp(
+			runtimetest.WithLdapInfo("foo", &runtime.LdapInfo{}),
+			runtimetest.WithLdap(&directory.Config{Info: directory.Info{Name: "bar"}}),
+		)
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApis()`})
+
+		require.NoError(t, err)
+		require.Equal(t, []mcp.ApiSummary{{Name: "bar", Type: "ldap"}}, r.Result)
+	})
+
+	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		file := &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Data: &directory.Config{Info: directory.Info{Name: "foo"}},
+		}
+		app.Ldap.Add(file, enginetest.NewEngine())
+		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+		require.NoError(t, err)
+		l := r.Result.(*mcp.LdapAPI)
+
+		app.Ldap.Remove(file)
+
+		require.NotPanics(t, func() {
+			_, err = l.GetEntries()
+			require.EqualError(t, err, "ldap API 'foo' not found")
+		})
+	})
+
+	t.Run("entries are copies", func(t *testing.T) {
+		entries := directory.NewEntryStore()
+		entries.Set("cn=foo", directory.Entry{Dn: "cn=foo", Attributes: map[string][]string{"mail": {"a@foo.bar"}}})
+		app := runtimetest.NewApp(runtimetest.WithLdap(&directory.Config{Info: directory.Info{Name: "foo"}, Entries: entries}))
+		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+		require.NoError(t, err)
+		l := r.Result.(*mcp.LdapAPI)
+
+		result, err := l.GetEntries()
+		require.NoError(t, err)
+		result[0].Attributes["mail"][0] = "changed"
+		result[0].Attributes["other"] = []string{"x"}
+
+		again, err := l.GetEntries()
+		require.NoError(t, err)
+		require.Equal(t, map[string][]string{"mail": {"a@foo.bar"}}, again[0].Attributes)
+	})
 }

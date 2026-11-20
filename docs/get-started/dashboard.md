@@ -373,7 +373,7 @@ added to the dashboard, so a link to `/dashboard` should be rewritten as `/mokap
 --api-path /mokapi
 ```
 ```bash tab=Env
-MOKAPI_API_PATH=/mokapi/dashboard
+MOKAPI_API_PATH=/mokapi
 ```
 ```yaml tab=File (YAML)
 api:
@@ -396,6 +396,8 @@ MOKAPI_API_BASE=/app/mokapi
 api:
  base: /app/mokapi
 ```
+
+[Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) explains when to use `--api-path`, `--api-base` or both.
 
 The [CLI Flags](/docs/configuration/static/cli-flags#api-base) page lists further dashboard options, such as `--api-port` and `--api-path`.
 

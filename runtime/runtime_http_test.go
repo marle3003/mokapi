@@ -548,3 +548,37 @@ func TestApp_AddHttp_SameCyclicSchemaInTwoFiles(t *testing.T) {
 	require.NotNil(t, info)
 	require.NotNil(t, info.Components.Schemas.Get("Node"))
 }
+
+func TestHttpStore_Remove(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(fileUrl, path string) *dynamic.Config {
+		c := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath(path, openapitest.WithOperation(http.MethodGet)),
+		))
+		c.Info.Url, _ = url.Parse(fileUrl)
+		return c
+	}
+
+	t.Run("unknown config does not panic and keeps the store usable", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		unknown := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("unknown", "", "")))
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Http.Remove(unknown) },
+			func() { app.Http.Add(newFile("https://mokapi.io/a.yml", "/a")) },
+		)
+	})
+
+	t.Run("two files removed at the same time", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("https://mokapi.io/a.yml", "/a")
+		b := newFile("https://mokapi.io/b.yml", "/b")
+		app.Http.Add(a)
+		app.Http.Add(b)
+
+		removeConcurrently(app.Http.Remove, a, b)
+
+		require.Equal(t, 0, app.Http.Len())
+	})
+}

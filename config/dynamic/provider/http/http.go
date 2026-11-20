@@ -41,11 +41,8 @@ func New(config static.HttpProvider) *Provider {
 		rootCAs = x509.NewCertPool()
 	}
 	if len(config.Ca) > 0 {
-		ca, err := parseCaCert(config)
-		if err != nil {
+		if err := addCaCert(rootCAs, config); err != nil {
 			log.Errorf("failed to use CA certification for http provider: %v", err)
-		} else {
-			rootCAs.AddCert(ca)
 		}
 	}
 
@@ -212,14 +209,20 @@ func checkUrl(s string) error {
 	return err
 }
 
-func parseCaCert(config static.HttpProvider) (*x509.Certificate, error) {
-	ca, err := config.Ca.Read("")
+// addCaCert adds the CA to the pool. The CA can be PEM encoded (one or more
+// certificates) or a single DER encoded certificate.
+func addCaCert(pool *x509.CertPool, config static.HttpProvider) error {
+	data, err := config.Ca.Read("")
 	if err != nil {
-		return nil, fmt.Errorf("failed to read CA cert from http provider config: %w", err)
+		return fmt.Errorf("failed to read CA cert from http provider config: %w", err)
 	}
-	cert, err := x509.ParseCertificate(ca)
+	if pool.AppendCertsFromPEM(data) {
+		return nil
+	}
+	cert, err := x509.ParseCertificate(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CA cert: %w", err)
+		return fmt.Errorf("failed to parse CA cert: %w", err)
 	}
-	return cert, nil
+	pool.AddCert(cert)
+	return nil
 }

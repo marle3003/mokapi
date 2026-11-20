@@ -3,10 +3,14 @@ package mcp_test
 import (
 	"context"
 	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/mcp"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
@@ -575,4 +579,55 @@ func TestTopic_Consume(t *testing.T) {
 
 	_, err = topic.Consume(5, 0, 10)
 	require.EqualError(t, err, "partition '5' not found")
+}
+
+func TestService_Run_Kafka_ConfigRemoved(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// an info whose last file was removed has no config snapshot (nil), but keeps its broker store
+	t.Run("info without config is not found by getApi", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, &store.Store{})))
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+
+		require.NoError(t, err)
+		require.Nil(t, r.Result)
+	})
+
+	t.Run("info without config is skipped by getApis", func(t *testing.T) {
+		app := runtimetest.NewApp(
+			runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, &store.Store{})),
+			runtimetest.WithKafka(asyncapi3test.NewConfig(asyncapi3test.WithInfo("bar", "", ""))),
+		)
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApis()`})
+
+		require.NoError(t, err)
+		require.Equal(t, []mcp.ApiSummary{{Name: "bar", Type: "kafka"}}, r.Result)
+	})
+
+	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		file := &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Data: asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar")),
+		}
+		_, err := app.Kafka.Add(file, enginetest.NewEngine())
+		require.NoError(t, err)
+		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+		require.NoError(t, err)
+		k := r.Result.(*mcp.Kafka)
+
+		app.Kafka.Remove(file)
+
+		require.NotPanics(t, func() {
+			_, err = k.GetTopics()
+			require.EqualError(t, err, "kafka API 'foo' not found")
+
+			_, err = k.GetTopic("bar")
+			require.EqualError(t, err, "kafka API 'foo' not found")
+		})
+	})
 }

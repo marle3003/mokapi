@@ -274,10 +274,10 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		for _, pattern := range keys {
 			prop := s.PatternProperties[pattern]
 			if !strings.HasPrefix(pattern, "^") {
-				pattern = "[a-zA-z0-9]*" + pattern
+				pattern = "[a-zA-Z0-9]*" + pattern
 			}
 			if !strings.HasSuffix(pattern, "$") {
-				pattern = pattern + "[a-zA-z0-9]*"
+				pattern = pattern + "[a-zA-Z0-9]*"
 			}
 			re, err := syntax.Parse(pattern, syntax.Perl)
 			if err != nil {

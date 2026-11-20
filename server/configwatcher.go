@@ -138,7 +138,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 			case evt := <-ch:
 				if evt.Event == dynamic.Delete {
 					w.m.Lock()
-					e, ok := w.configs[evt.Name]
+					e, ok := w.configForDeleteEvent(evt.Name)
 					w.m.Unlock()
 					if !ok {
 						continue
@@ -154,6 +154,21 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 		}
 	})
 	return nil
+}
+
+// configForDeleteEvent expects the caller to hold w.m. Providers name a delete event with the URL
+// of the config; the file provider names it with the path of the file instead.
+func (w *ConfigWatcher) configForDeleteEvent(name string) (*entry, bool) {
+	if e, ok := w.configs[name]; ok {
+		return e, true
+	}
+	// same conversion as the file provider uses for the config URL, so Windows paths match too
+	u, err := file.ParseUrl(name)
+	if err != nil {
+		return nil, false
+	}
+	e, ok := w.configs[getConfigKey(u)]
+	return e, ok
 }
 
 func (w *ConfigWatcher) AddListener(f func(e dynamic.ConfigEvent)) {
