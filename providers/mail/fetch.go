@@ -13,6 +13,9 @@ func (h *Handler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx cont
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
 	selected := c.Session["selected"].(string)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
 	f := mb.Select(selected)
 	if f == nil {
 		return fmt.Errorf("mailbox not found")

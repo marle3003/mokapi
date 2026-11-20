@@ -49,8 +49,10 @@ type Folder struct {
 
 func (mb *Mailbox) Append(m *smtp.Message) {
 	mb.EnsureInbox()
-	f := mb.Folders["INBOX"]
-	f.Append(m)
+
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	mb.Folders["INBOX"].Append(m)
 }
 
 // Offset to start UID from year 2000 instead of 1970 (Unix epoch)
@@ -217,9 +219,8 @@ func (mb *Mailbox) getNextUidValidity() uint32 {
 
 func (mb *Mailbox) EnsureInbox() {
 	mb.m.Lock()
-	_, ok := mb.Folders["INBOX"]
-	mb.m.Unlock()
-	if !ok {
+	defer mb.m.Unlock()
+	if _, ok := mb.Folders["INBOX"]; !ok {
 		mb.AddFolder(&Folder{Name: "INBOX", maxMails: mb.MaxInboxMails})
 	}
 }
@@ -268,6 +269,18 @@ func (f *Folder) Append(msg *smtp.Message) *Mail {
 	}
 
 	return m
+}
+
+// addWriter and removeWriter must be called with the lock of the mailbox held.
+func (f *Folder) addWriter(w imap.UpdateWriter) {
+	if f.writers == nil {
+		f.writers = map[imap.UpdateWriter]imap.UpdateWriter{}
+	}
+	f.writers[w] = w
+}
+
+func (f *Folder) removeWriter(w imap.UpdateWriter) {
+	delete(f.writers, w)
 }
 
 func (f *Folder) Copy(m *Mail) *Mail {

@@ -11,6 +11,9 @@ func (h *Handler) Search(req *imap.SearchRequest, ctx context.Context) (*imap.Se
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
 	selected := c.Session["selected"].(string)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
 	f := mb.Select(selected)
 	if f == nil {
 		return nil, fmt.Errorf("mailbox not found")
