@@ -109,6 +109,9 @@ Mokapi provides official Docker images on [Docker Hub](https://hub.docker.com/r/
 docker pull mokapi/mokapi
 ```
 
+To mount specs, publish ports and use Docker Compose, see
+[Running Mokapi in Docker and Docker Compose](/docs/configuration/use-cases/docker.md).
+
 :::
 
 ```` box=info title="Verify Installation"

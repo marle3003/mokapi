@@ -270,6 +270,11 @@
                 "label": "Own Root CA for HTTPS",
                 "source": "configuration/use-cases/custom-root-ca.md",
                 "path": "/docs/configuration/use-cases/custom-root-ca"
+              },
+              {
+                "label": "Docker and Docker Compose",
+                "source": "configuration/use-cases/docker.md",
+                "path": "/docs/configuration/use-cases/docker"
               }
             ]
           }
