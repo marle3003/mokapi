@@ -2,16 +2,19 @@ package acceptance
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/static"
 	"mokapi/ldap"
 	"mokapi/runtime/metrics"
 	"mokapi/try"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 )
 
 type LdapSuite struct {
@@ -57,6 +60,48 @@ func (suite *LdapSuite) TestSearch() {
 	require.Len(suite.T(), res.Results, 4)
 	require.True(suite.T(), hasResult(res.Results, "CN=farnsworthh,CN=users,DC=mokapi,DC=io"))
 	require.Len(suite.T(), res.Results[0].Attributes, 1, "mail")
+}
+
+// RFC 4511 section 4.1.1: a request that cannot be decoded is answered with a
+// Notice of Disconnection (unsolicited ExtendedResponse, messageID 0, protocolError)
+// and the server closes the connection.
+func (suite *LdapSuite) TestMalformedSearchRequestSendsNoticeOfDisconnection() {
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:8389", 2*time.Second)
+	require.NoError(suite.T(), err)
+	defer conn.Close()
+	require.NoError(suite.T(), conn.SetDeadline(time.Now().Add(3*time.Second)))
+
+	// scope must be an ENUMERATED/INTEGER but is sent as OCTET STRING
+	search := ber.Encode(ber.ClassApplication, ber.TypeConstructed, 3, nil, "search request")
+	search.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, "", "baseObject"))
+	search.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, "wholeSubtree", "scope"))
+	search.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagEnumerated, 0, "derefAliases"))
+	search.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, 0, "sizeLimit"))
+	search.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, 0, "timeLimit"))
+	search.AppendChild(ber.NewBoolean(ber.ClassUniversal, ber.TypePrimitive, ber.TagBoolean, false, "typesOnly"))
+	search.AppendChild(ber.NewString(ber.ClassContext, ber.TypePrimitive, 7, "objectClass", "present filter"))
+	search.AppendChild(ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "attributes"))
+
+	msg := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
+	msg.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, 1, "Message ID"))
+	msg.AppendChild(search)
+	_, err = conn.Write(msg.Bytes())
+	require.NoError(suite.T(), err)
+
+	p, err := ber.ReadPacket(conn)
+	require.NoError(suite.T(), err, "server should answer with a Notice of Disconnection")
+	require.Len(suite.T(), p.Children, 2)
+	require.Equal(suite.T(), int64(0), p.Children[0].Value, "messageID of unsolicited notification")
+	res := p.Children[1]
+	require.Equal(suite.T(), ber.ClassApplication, res.ClassType)
+	require.Equal(suite.T(), ber.Tag(24), res.Tag, "ExtendedResponse")
+	require.Equal(suite.T(), int64(ldap.ProtocolError), res.Children[0].Value, "resultCode")
+	require.Equal(suite.T(), "", res.Children[1].Value, "matchedDN")
+	require.NotEmpty(suite.T(), res.Children[2].Value, "diagnosticMessage")
+	require.Equal(suite.T(), "1.3.6.1.4.1.1466.20036", res.Children[3].Data.String(), "responseName")
+
+	_, err = conn.Read(make([]byte, 1))
+	require.ErrorIs(suite.T(), err, io.EOF, "server should close the connection")
 }
 
 func (suite *LdapSuite) TestLog() {
