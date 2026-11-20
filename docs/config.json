@@ -277,7 +277,7 @@
                 "path": "/docs/configuration/use-cases/docker"
               },
               {
-                "label": "Start Mokapi in CI and Wait for /health",
+                "label": "Mokapi in CI",
                 "source": "configuration/use-cases/ci-health-check.md",
                 "path": "/docs/configuration/use-cases/ci-health-check"
               }

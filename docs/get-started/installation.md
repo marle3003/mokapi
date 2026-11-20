@@ -30,7 +30,7 @@ Choose your preferred installation method based on your platform and workflow.
 Test Mokapi instantly with npx (requires Node.js):
 
 ```bash style=simple
-npx go-mokapi serve https://petstore3.swagger.io/api/v3/openapi.json
+npx go-mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
 
