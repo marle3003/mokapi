@@ -13,6 +13,7 @@ import (
 	"mokapi/runtime/search"
 	"mokapi/sortedmap"
 	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,9 +28,12 @@ type MqttStore struct {
 	reader  dynamic.Reader
 }
 
+// MqttInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type MqttInfo struct {
-	*asyncapi3.Config
 	*store.Store
+	config                atomic.Pointer[asyncapi3.Config]
+	m                     sync.RWMutex // guards configs, which are only written under the store lock
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *MqttInfo)
@@ -48,6 +52,15 @@ func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo))
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	return hc
+}
+
+// NewMqttInfo returns an info that publishes cfg as is, without merging files and
+// without the implicit default broker of Add. It is meant for tests of readers: it has no
+// event updater, so adding a file to it through MqttStore.Add panics.
+func NewMqttInfo(cfg *asyncapi3.Config, store *store.Store) *MqttInfo {
+	mi := newMqttInfo(store, nil)
+	mi.config.Store(cfg)
+	return mi
 }
 
 func (s *MqttStore) Get(name string) *MqttInfo {
@@ -102,7 +115,7 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 	ki.addConfig(c, s.reader)
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(ki.Config)
+		s.addToIndex(ki.Config())
 	}
 
 	return ki, nil
@@ -134,11 +147,10 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	}
 
 	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(mi.Config)
+		s.removeFromIndex(mi.Config())
 	}
 
-	delete(mi.configs, c.Info.Url.String())
-	mi.update(s.reader)
+	mi.removeConfig(c, s.reader)
 
 	if len(mi.configs) == 0 {
 		delete(s.infos, name)
@@ -147,15 +159,28 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 }
 
 func (c *MqttInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	key := config.Info.Url.String()
-	c.configs[key] = config
+	c.m.Lock()
+	c.configs[config.Info.Url.String()] = config
+	c.m.Unlock()
 	c.update(reader)
+}
+
+func (c *MqttInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
+	c.m.Lock()
+	delete(c.configs, config.Info.Url.String())
+	c.m.Unlock()
+	c.update(reader)
+}
+
+// Config returns the current merged config, or nil after the last file was removed.
+// The result must not be modified.
+func (c *MqttInfo) Config() *asyncapi3.Config {
+	return c.config.Load()
 }
 
 func (c *MqttInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
-		c.Config = nil
-		c.Store = nil
+		c.config.Store(nil)
 		return
 	}
 
@@ -178,7 +203,7 @@ func (c *MqttInfo) update(reader dynamic.Reader) {
 		})
 	}
 
-	c.Config = cfg
+	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
@@ -188,6 +213,9 @@ func (c *MqttInfo) Handler(Mqtt *monitor.Mqtt) mqtt.Handler {
 }
 
 func (c *MqttInfo) Configs() []*dynamic.Config {
+	c.m.RLock()
+	defer c.m.RUnlock()
+
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
@@ -211,12 +239,13 @@ func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 }
 
 func (s *MqttStore) updateEventStore(k *MqttInfo) {
-	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
+	cfg := k.Config()
+	eventStore, hasStoreConfig := s.cfg.Event.Store[cfg.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for topicName, topic := range k.Config.Channels {
+	for topicName, topic := range cfg.Channels {
 		if topic.Value == nil {
 			continue
 		}
@@ -226,9 +255,9 @@ func (s *MqttStore) updateEventStore(k *MqttInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
-		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("mqtt").WithName(k.Config.Info.Name).With("topic", topicName)
+		s.monitor.Mqtt.Messages.WithLabel(cfg.Info.Name, topicName)
+		s.monitor.Mqtt.LastMessage.WithLabel(cfg.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name).With("topic", topicName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}

@@ -6,10 +6,16 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
@@ -215,4 +221,19 @@ func TestMqttManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
 	e.Event = dynamic.Delete
 
 	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}
+
+func TestMqttManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
+	e := mqttConfigEvent(try.GetFreePort())
+	cfg := e.Config.Data.(*asyncapi3.Config)
+	st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
+	defer st.Close()
+	app := runtimetest.NewApp(runtimetest.WithMqttInfo("foo", runtime.NewMqttInfo(nil, st)))
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Mqtt.Get("foo"))
 }

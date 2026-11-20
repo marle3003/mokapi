@@ -20,7 +20,6 @@ type MqttManager struct {
 
 type mqttCluster struct {
 	brokers map[string]Broker
-	cfg     *runtime.MqttInfo
 }
 
 func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager {
@@ -50,7 +49,7 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 			return
 		}
 		m.app.Mqtt.Remove(e.Config)
-		if info.Config == nil {
+		if info.Config() == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
@@ -63,21 +62,21 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 		}
 	}
 
-	m.addOrUpdateCluster(info)
+	m.addOrUpdateCluster(cfg.Info.Name, info)
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
-func (m *MqttManager) addOrUpdateCluster(cfg *runtime.MqttInfo) {
-	c := m.getOrCreateCluster(cfg)
-	c.update(cfg, m.app.Monitor.Mqtt)
+func (m *MqttManager) addOrUpdateCluster(name string, info *runtime.MqttInfo) {
+	c := m.getOrCreateCluster(name)
+	c.update(info, m.app.Monitor.Mqtt)
 }
 
 // getOrCreateCluster expects the caller to hold m.m.
-func (m *MqttManager) getOrCreateCluster(cfg *runtime.MqttInfo) *mqttCluster {
-	c, ok := m.clusters[cfg.Info.Name]
+func (m *MqttManager) getOrCreateCluster(name string) *mqttCluster {
+	c, ok := m.clusters[name]
 	if !ok {
-		c = &mqttCluster{cfg: cfg, brokers: make(map[string]Broker)}
-		m.clusters[cfg.Info.Name] = c
+		c = &mqttCluster{brokers: make(map[string]Broker)}
+		m.clusters[name] = c
 	}
 	return c
 }
@@ -93,11 +92,15 @@ func (m *MqttManager) removeCluster(name string) {
 	delete(m.clusters, name)
 }
 
-func (c *mqttCluster) update(cfg *runtime.MqttInfo, monitor *monitor.Mqtt) {
-	c.updateBrokers(cfg, monitor)
+func (c *mqttCluster) update(info *runtime.MqttInfo, monitor *monitor.Mqtt) {
+	c.updateBrokers(info, monitor)
 }
 
-func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt) {
+func (c *mqttCluster) updateBrokers(info *runtime.MqttInfo, monitor *monitor.Mqtt) {
+	cfg := info.Config()
+	if cfg == nil {
+		return
+	}
 	brokers := c.brokers
 	c.brokers = make(map[string]Broker)
 	for it := cfg.Servers.Iter(); it.Next(); {
@@ -117,7 +120,7 @@ func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt
 			delete(brokers, port)
 		} else {
 			log.Infof("adding new MQTT broker '%v' on port %v to '%v'", name, port, cfg.Info.Name)
-			broker = service.NewMqttBroker(port, cfg.Handler(monitor))
+			broker = service.NewMqttBroker(port, info.Handler(monitor))
 			startAndLogError(broker)
 		}
 		c.brokers[port] = broker

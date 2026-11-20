@@ -151,9 +151,8 @@ func TestHandler_Mqtt(t *testing.T) {
 				err := mqtt.Parse(cfg, &dynamictest.Reader{})
 				require.NoError(t, err)
 
-				mi, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
+				_, err = app.Mqtt.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
 
 				return app
 			},
@@ -179,7 +178,8 @@ func TestHandler_Mqtt(t *testing.T) {
 
 				mi, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
+				_, ok := mi.Store.Topic("sensors/1234z/data")
+				require.True(t, ok)
 
 				app.Monitor.Mqtt.Messages.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Add(1)
 				app.Monitor.Mqtt.LastMessage.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Set(1234)
@@ -270,10 +270,7 @@ func TestHandler_Mqtt_Metrics(t *testing.T) {
 }
 
 func getMqttInfo(config *asyncapi3.Config) *runtime.MqttInfo {
-	return &runtime.MqttInfo{
-		Config: config,
-		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()),
-	}
+	return runtime.NewMqttInfo(config, store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()))
 }
 
 func TestHandler_Mqtt_ServiceItems(t *testing.T) {
@@ -337,4 +334,45 @@ func TestHandler_Mqtt_ServiceItems(t *testing.T) {
 				try.HasBody(`[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
 		})
 	}
+}
+
+func TestHandler_Mqtt_ConfigRemovedWhileRequestIsRunning(t *testing.T) {
+	// an info whose last file was removed has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(
+			runtimetest.WithMqtt(asyncapi3test.NewConfig(asyncapi3test.WithInfo("bar", "", "1.0"))),
+			runtimetest.WithMqttInfo("foo", &runtime.MqttInfo{}),
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0}}]`))
+	})
+
+	t.Run("cluster returns 404", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/mqtt/foo",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(404))
+	})
+
+	t.Run("topics return 404", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/mqtt/foo/topics",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(404))
+	})
 }

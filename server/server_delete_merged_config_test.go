@@ -100,7 +100,7 @@ func TestMqttManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Mqtt.Get("foo")
 	require.NotNil(t, info)
-	f.requireOnlyFileAIsLeft(t, info.Config, info.Configs())
+	f.requireOnlyFileAIsLeft(t, info.Config(), info.Configs())
 }
 
 func TestWebsocketManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {

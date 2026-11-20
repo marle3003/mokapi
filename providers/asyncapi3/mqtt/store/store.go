@@ -1,12 +1,14 @@
 package store
 
 import (
+	"maps"
 	engine "mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
+	"slices"
 	"sync"
 	"time"
 )
@@ -15,7 +17,7 @@ type Store struct {
 	RetryInterval time.Duration
 
 	clients      map[string]*Client
-	Topics       map[string]*Topic
+	topics       map[string]*Topic
 	startedQoS   bool
 	m            sync.RWMutex
 	close        chan bool
@@ -30,7 +32,7 @@ type Store struct {
 func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, m *monitor.Mqtt) *Store {
 	s := &Store{
 		RetryInterval: 10 * time.Second,
-		Topics:        make(map[string]*Topic),
+		topics:        make(map[string]*Topic),
 		close:         make(chan bool, 1),
 		cfg:           cfg,
 		eh:            eh,
@@ -46,6 +48,13 @@ func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, 
 	s.startClientSessionCleaner()
 
 	return s
+}
+
+// Topics returns a snapshot of the topics, including the $SYS topics.
+func (s *Store) Topics() []*Topic {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return slices.Collect(maps.Values(s.topics))
 }
 
 func (s *Store) Update(cfg *asyncapi3.Config) {
@@ -65,15 +74,15 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 			continue
 		}
 
-		if s.Topics == nil {
-			s.Topics = make(map[string]*Topic)
+		if s.topics == nil {
+			s.topics = make(map[string]*Topic)
 		}
 
 		if ch.Value.Address != "" {
 			address = ch.Value.Address
 		}
 
-		s.Topics[address] = &Topic{Name: address, cfg: ch.Value}
+		s.topics[address] = &Topic{Name: address, cfg: ch.Value}
 
 	}
 }

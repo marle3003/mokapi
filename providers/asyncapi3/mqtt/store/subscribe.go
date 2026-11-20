@@ -76,7 +76,7 @@ func (s *Store) unsubscribe(rw mqtt.MessageWriter, req *mqtt.UnsubscribeRequest,
 
 func (s *Store) getRetainedMessages(name string) []*Message {
 	var retained []*Message
-	for _, topic := range s.Topics {
+	for _, topic := range s.topics {
 		if topic.Retained == nil || !topicMatches(name, topic.Name) {
 			continue
 		}
