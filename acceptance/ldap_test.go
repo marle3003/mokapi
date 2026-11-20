@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,8 @@ func (suite *LdapSuite) SetupSuite() {
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./ldap"}}
+	cfg.Api.Search.Enabled = true
+	cfg.Api.Search.InMemory = true
 	suite.initCmd(cfg)
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)
@@ -60,6 +63,27 @@ func (suite *LdapSuite) TestSearch() {
 	require.Len(suite.T(), res.Results, 4)
 	require.True(suite.T(), hasResult(res.Results, "CN=farnsworthh,CN=users,DC=mokapi,DC=io"))
 	require.Len(suite.T(), res.Results[0].Attributes, 1, "mail")
+}
+
+// The event is pushed before the search has results, so the search index must be
+// updated when the response is known. The DN only exists in the results.
+func (suite *LdapSuite) TestSearchEventIsFoundByResultInDashboardSearch() {
+	_, err := suite.Client.Search(&ldap.SearchRequest{
+		Scope:  ldap.ScopeWholeSubtree,
+		Filter: "(objectClass=foo)",
+	})
+	require.NoError(suite.T(), err)
+
+	url := fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=%%2Btype:event%%20%%2Bbob", suite.cfg.Api.Port)
+	try.WaitFor(suite.T(), func() bool {
+		res, err := http.Get(url)
+		if err != nil {
+			return false
+		}
+		defer res.Body.Close()
+		body, _ := io.ReadAll(res.Body)
+		return strings.Contains(string(body), "(objectClass=foo)")
+	})
 }
 
 // RFC 4511 section 4.1.1: a request that cannot be decoded is answered with a

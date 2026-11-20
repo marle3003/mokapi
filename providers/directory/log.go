@@ -19,13 +19,15 @@ type LogInfo struct {
 }
 
 // SearchLog is pushed to the event store before the search has finished. The response is
-// filled when the search ends, so it is only changed through SetResponse and SetStatus.
+// filled when the search ends, so it is only changed through SetResponse and SetStatus, which
+// ask the event store to index the event again.
 type SearchLog struct {
 	common.EventLog
 	Request  *SearchRequest
 	Response *SearchResponse
 	// m guards Response
-	m sync.Mutex
+	m  sync.Mutex
+	eh events.Handler
 }
 
 // SetResponse logs what is sent to the client, including changes made by a JavaScript handler.
@@ -36,15 +38,19 @@ func (l *SearchLog) SetResponse(res *ldap.SearchResponse) {
 	}
 
 	l.m.Lock()
-	defer l.m.Unlock()
 	l.Response.Status = ldap.StatusText[res.Status]
 	l.Response.Results = results
+	l.m.Unlock()
+
+	l.eh.Update(l)
 }
 
 func (l *SearchLog) SetStatus(status string) {
 	l.m.Lock()
-	defer l.m.Unlock()
 	l.Response.Status = status
+	l.m.Unlock()
+
+	l.eh.Update(l)
 }
 
 type SearchRequest struct {
@@ -74,6 +80,7 @@ func NewSearchLogEvent(r *ldap.SearchRequest, eh events.Handler, traits events.T
 	event := &SearchLog{
 		Request:  fromRequest(r),
 		Response: &SearchResponse{},
+		eh:       eh,
 	}
 	_ = eh.Push(event, traits.WithNamespace("ldap").With("operation", "search"))
 	return event

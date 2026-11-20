@@ -142,3 +142,37 @@ func TestSearchLog_IndexFieldsDoesNotAliasResults(t *testing.T) {
 	require.Len(t, response.Results, 1)
 	require.Equal(t, "cn=foo", response.Results[0].Dn)
 }
+
+// updateRecorder records the events handed to Update, as the event store would re-index them.
+type updateRecorder struct {
+	eventstest.Handler
+	updated []events.EventData
+}
+
+func (r *updateRecorder) Update(data events.EventData) {
+	r.updated = append(r.updated, data)
+}
+
+func TestSearchLog_SetResponseUpdatesEvent(t *testing.T) {
+	eh := &updateRecorder{}
+	l := directory.NewSearchLogEvent(&ldap.SearchRequest{}, eh, events.NewTraits())
+
+	l.SetResponse(&ldap.SearchResponse{Status: ldap.Success, Results: []ldap.SearchResult{{Dn: "cn=bob"}}})
+
+	require.Len(t, eh.updated, 1)
+	require.Same(t, l, eh.updated[0])
+	response := l.IndexFields()["response"].(*directory.SearchResponse)
+	require.Equal(t, "cn=bob", response.Results[0].Dn)
+}
+
+func TestSearchLog_SetStatusUpdatesEvent(t *testing.T) {
+	eh := &updateRecorder{}
+	l := directory.NewSearchLogEvent(&ldap.SearchRequest{}, eh, events.NewTraits())
+
+	l.SetStatus(ldap.StatusText[ldap.ProtocolError])
+
+	require.Len(t, eh.updated, 1)
+	require.Same(t, l, eh.updated[0])
+	response := l.IndexFields()["response"].(*directory.SearchResponse)
+	require.Equal(t, ldap.StatusText[ldap.ProtocolError], response.Status)
+}

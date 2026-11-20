@@ -13,6 +13,8 @@ import (
 
 type Handler interface {
 	Push(data EventData, traits Traits) error
+	// Update re-indexes an event that was pushed before its data was complete.
+	Update(data EventData)
 	GetEvents(traits Traits) []Event
 }
 
@@ -68,6 +70,21 @@ func (m *StoreManager) PushEvent(data EventData, traits Traits) (Event, error) {
 	}
 
 	return evt, nil
+}
+
+// Update indexes the stored event of data again, after data has changed since Push. The write
+// lock keeps lookup and indexing atomic against the eviction in PushEvent, so the document of
+// an evicted event is not resurrected.
+func (m *StoreManager) Update(data EventData) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, s := range m.stores {
+		if evt, ok := s.find(data); ok {
+			m.addToIndex(&evt)
+			return
+		}
+	}
 }
 
 func (m *StoreManager) SetStore(size int, traits Traits) {
