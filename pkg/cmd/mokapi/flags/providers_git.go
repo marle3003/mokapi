@@ -212,7 +212,7 @@ If at least one include pattern is specified, only files matching one of the pat
 var providerGitRepositoriesAuthGitHub = cli.FlagDoc{
 	Short: "Authenticate using GitHub credentials",
 	Long: `Enables authentication using GitHub credentials for the repository.
-This option allows accessing private repositories hosted on GitHub by using credentials provided via environment variables or the GitHub CLI configuration.`,
+It authenticates as a GitHub App, using the app ID, the installation ID and the app's private key (file path or key content).`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{

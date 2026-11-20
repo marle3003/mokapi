@@ -1211,7 +1211,7 @@ providers:
 #### `--providers-git-repositories[<index>]-auth-github`
 
 Enables authentication using GitHub credentials for the repository.
-This option allows accessing private repositories hosted on GitHub by using credentials provided via environment variables or the GitHub CLI configuration.
+It authenticates as a GitHub App, using the app ID, the installation ID and the app's private key (file path or key content).
 
 ```bash tab=CLI
 --providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem

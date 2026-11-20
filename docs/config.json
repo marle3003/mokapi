@@ -260,6 +260,11 @@
                 "label": "Reverse Proxy",
                 "source": "configuration/use-cases/reverse-proxy.md",
                 "path": "/docs/configuration/use-cases/reverse-proxy"
+              },
+              {
+                "label": "Private GitHub Repository",
+                "source": "configuration/use-cases/private-github-repository.md",
+                "path": "/docs/configuration/use-cases/private-github-repository"
               }
             ]
           }
