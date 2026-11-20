@@ -40,6 +40,11 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
+	// another request may have created the channel while waiting for the lock
+	if t, ok := s.Channels[name]; ok {
+		return t, true
+	}
+
 	for _, ref := range s.cfg.Channels {
 		if ref == nil || ref.Value == nil {
 			continue

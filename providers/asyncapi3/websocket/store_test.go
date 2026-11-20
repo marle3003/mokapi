@@ -19,6 +19,7 @@ import (
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -721,4 +722,37 @@ func handlersFinished(evts []events.Event) bool {
 		}
 	}
 	return true
+}
+
+// Concurrent first requests for the same parameterized path must share one channel,
+// otherwise a broadcast only reaches the clients of the sender's channel.
+func TestStore_Channel_ConcurrentFirstRequestsShareChannel(t *testing.T) {
+	const iterations = 100
+	const clients = 8
+
+	for i := 0; i < iterations; i++ {
+		ch := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+		)
+		cfg := asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", ch))
+		s := websocket.New(cfg, nil, nil, nil)
+
+		start := make(chan struct{})
+		got := make([]*websocket.Channel, clients)
+		var wg sync.WaitGroup
+		for j := 0; j < clients; j++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				<-start
+				got[j], _ = s.Channel("/chats/general")
+			}()
+		}
+		close(start)
+		wg.Wait()
+
+		for j := 1; j < clients; j++ {
+			require.Same(t, got[0], got[j], "iteration %d: client %d got a different channel", i, j)
+		}
+	}
 }
