@@ -122,7 +122,7 @@ providers:
 --providers-http-ca=/path/to/mycert.pem
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_CA=/path/to/mycert.pem
+MOKAPI_PROVIDERS_HTTP_CA=/path/to/mycert.pem
 ```
 
 ### Skip TLS Verification

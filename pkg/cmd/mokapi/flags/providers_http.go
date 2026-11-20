@@ -125,7 +125,8 @@ However, skipping certificate verification is insecure and should be avoided whe
 var providerHttpCa = cli.FlagDoc{
 	Short: "Custom certificate authority file (default: system certification pool)",
 	Long: `Specifies a custom certificate authority (CA) file used to verify TLS connections.
-When set, the provided CA file is used in addition to, or instead of, the system certificate pool. This is useful when working with internal or self-signed certificates.`,
+The value can be a file path or the certificate content itself. PEM (including bundles with several certificates) and DER encoded certificates are accepted.
+The CA is added to the system certificate pool, so certificates signed by well-known authorities are still trusted. This is useful when working with internal or self-signed certificates.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
