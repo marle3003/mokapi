@@ -219,3 +219,41 @@ func TestSearch_ErrorMetric_WithoutMonitor(t *testing.T) {
 	})
 	require.Equal(t, uint8(ldap.Success), rec.Message.(*ldap.SearchResponse).Status)
 }
+
+// TestSearch_LogShowsStatusSentToClient checks that the search log event shows the status
+// the client gets, also when a JavaScript handler changed it.
+func TestSearch_LogShowsStatusSentToClient(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	noSuchObject := uint8(ldap.NoSuchObject)
+	success := uint8(ldap.Success)
+	testcases := []struct {
+		name      string
+		sizeLimit int64
+		emitter   *statusEmitter
+		status    uint8
+	}{
+		{name: "handler keeps success", emitter: &statusEmitter{}, status: ldap.Success},
+		{name: "server size limit exceeded", sizeLimit: 1, emitter: &statusEmitter{}, status: ldap.SizeLimitExceeded},
+		{name: "js handler sets noSuchObject", emitter: &statusEmitter{status: &noSuchObject}, status: ldap.NoSuchObject},
+		{name: "js handler clears size limit error", sizeLimit: 1, emitter: &statusEmitter{status: &success}, status: ldap.Success},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, SizeLimit: tc.sizeLimit, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, tc.emitter, eh)
+			rec := ldaptest.NewRecorder()
+			h.ServeLDAP(rec, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: "(cn=user*)",
+			}, context.Background()))
+
+			require.Equal(t, tc.status, rec.Message.(*ldap.SearchResponse).Status)
+			require.Len(t, eh.Events, 1)
+			require.Equal(t, ldap.StatusText[tc.status], eh.Events[0].Data.(*directory.SearchLog).Response.Status)
+		})
+	}
+}

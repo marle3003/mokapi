@@ -185,9 +185,9 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		Controls: msg.Controls,
 	}
 
-	event.SetStatus(ldap.StatusText[status])
 	event.SetActions(d.emitter.EmitLdap(msg, res))
-	// a JavaScript handler may have changed the status, so check after emitting
+	// a JavaScript handler may have changed the status, so log and count it after emitting
+	event.SetStatus(ldap.StatusText[res.Status])
 	if res.Status != ldap.Success {
 		countError()
 	}
