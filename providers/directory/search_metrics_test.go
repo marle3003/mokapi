@@ -101,6 +101,39 @@ func TestSearch_UnknownScope(t *testing.T) {
 	require.Equal(t, "ProtocolError", logs[0].Data.(*directory.SearchLog).Response.Status)
 }
 
+func TestSearch_FilterError(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name   string
+		filter string
+	}{
+		{name: "invalid filter", filter: "cn=user"},
+		{name: "unsupported filter", filter: "(cn=user))"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, &statusEmitter{}, eh)
+			rr := ldaptest.NewRecorder()
+			h.ServeLDAP(rr, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: tc.filter,
+			}, context.Background()))
+
+			res := rr.Message.(*ldap.SearchResponse)
+			require.Equal(t, uint8(ldap.OperationsError), res.Status)
+
+			logs := eh.Events
+			require.Len(t, logs, 1)
+			require.Equal(t, ldap.StatusText[ldap.OperationsError], logs[0].Data.(*directory.SearchLog).Response.Status)
+		})
+	}
+}
+
 func TestSearch_ErrorMetric_ClientLimits(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 

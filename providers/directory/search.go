@@ -103,6 +103,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 			log.Errorf("ldap: unsupported filter: %v", msg.Filter)
 		}
 		countError()
+		event.SetStatus(ldap.StatusText[ldap.OperationsError])
 		_ = rw.Write(&ldap.SearchResponse{Status: ldap.OperationsError})
 		return
 	}
