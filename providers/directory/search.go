@@ -135,7 +135,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 				continue
 			}
 		}
-		if skip(&e, msg.BaseDN, subschemaDN) {
+		if isHiddenSubschema(&e, msg.BaseDN, subschemaDN) {
 			continue
 		}
 

@@ -110,13 +110,10 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 	rw.Write(res)
 }
 
-// skip reports whether a search does not return e: the root DSE unless it is the base, and the
-// subschema entry unless it is the base. subschemaDN is the DN of the subschema entry named by
-// the root DSE.
-func skip(e *Entry, baseDN string, subschemaDN string) bool {
-	if baseDN != "" && e.Dn == "" {
-		return true
-	}
+// isHiddenSubschema reports whether a search omits e: the subschema entry named by the root DSE
+// (subschemaDN) is returned only when it is the search base. The root DSE needs no check here,
+// the scope filter in the search already drops it for every non-empty base and supported scope.
+func isHiddenSubschema(e *Entry, baseDN string, subschemaDN string) bool {
 	return subschemaDN != "" && e.Dn == subschemaDN && baseDN != subschemaDN
 }
 

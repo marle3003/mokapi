@@ -768,6 +768,133 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Len(t, res.Results, 0)
 			},
 		},
+		{
+			name: "subtree search from root does not return subschema but returns root DSE and entries",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"subschemaSubentry": {"cn=subschema"}}},
+					{Dn: "cn=subschema", Attributes: map[string][]string{"objectClass": {"subschema"}}},
+					{Dn: "cn=alice", Attributes: map[string][]string{"objectClass": {"person"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "",
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Equal(t, ldap.Success, res.Status)
+				require.False(t, hasResult(res.Results, "cn=subschema"))
+				require.True(t, hasResult(res.Results, "cn=alice"))
+				require.True(t, hasResult(res.Results, ""))
+			},
+		},
+		{
+			name: "subtree search from a base that includes the subschema does not return it",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"subschemaSubentry": {"cn=subschema,dc=foo"}}},
+					{Dn: "cn=subschema,dc=foo", Attributes: map[string][]string{"objectClass": {"subschema"}}},
+					{Dn: "cn=alice,dc=foo", Attributes: map[string][]string{"objectClass": {"person"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo",
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Equal(t, ldap.Success, res.Status)
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "cn=alice,dc=foo", res.Results[0].Dn)
+			},
+		},
+		{
+			name: "subtree search with the subschema DN as base returns the subschema",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"subschemaSubentry": {"cn=subschema"}}},
+					{Dn: "cn=subschema", Attributes: map[string][]string{"objectClass": {"subschema"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "cn=subschema",
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "cn=subschema", res.Results[0].Dn)
+			},
+		},
+		{
+			name: "base search with the subschema DN returns the subschema",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"subschemaSubentry": {"cn=subschema"}}},
+					{Dn: "cn=subschema", Attributes: map[string][]string{"objectClass": {"subschema"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "cn=subschema",
+					Scope:  ldap.ScopeBaseObject,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "cn=subschema", res.Results[0].Dn)
+			},
+		},
+		{
+			name: "without subschemaSubentry no entry is hidden except the root DSE",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"namingContexts": {"dc=foo"}}},
+					{Dn: "cn=subschema,dc=foo", Attributes: map[string][]string{"objectClass": {"subschema"}}},
+					{Dn: "cn=alice,dc=foo", Attributes: map[string][]string{"objectClass": {"person"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo",
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 2)
+				require.True(t, hasResult(res.Results, "cn=subschema,dc=foo"))
+				require.True(t, hasResult(res.Results, "cn=alice,dc=foo"))
+			},
+		},
+		{
+			name: "root DSE is hidden in a subtree search below the root",
+			config: &directory.Config{
+				Entries: convertArray([]directory.Entry{
+					{Dn: "", Attributes: map[string][]string{"namingContexts": {"dc=foo"}}},
+					{Dn: "cn=alice,dc=foo", Attributes: map[string][]string{"objectClass": {"person"}}},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo",
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(objectClass=*)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.False(t, hasResult(res.Results, ""))
+				require.True(t, hasResult(res.Results, "cn=alice,dc=foo"))
+			},
+		},
 	}
 
 	for _, test := range testcases {
