@@ -7,10 +7,13 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/directory"
 	"mokapi/runtime"
+	"mokapi/runtime/runtimetest"
 	"mokapi/try"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_Ldap(t *testing.T) {
@@ -32,11 +35,9 @@ func TestHandler_Ldap(t *testing.T) {
 		{
 			name: "get ldap services",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				app.Ldap.Set("foo", &runtime.LdapInfo{
-					Config: &directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
-				})
-				return app
+				return runtimetest.NewApp(runtimetest.WithLdap(
+					&directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
+				))
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
@@ -85,10 +86,9 @@ func TestHandler_Ldap(t *testing.T) {
 }
 
 func TestHandler_Ldap_ServiceHasNoItems(t *testing.T) {
-	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-	app.Ldap.Set("foo", &runtime.LdapInfo{
-		Config: &directory.Config{Info: directory.Info{Name: "foo", Version: "1.0"}},
-	})
+	app := runtimetest.NewApp(runtimetest.WithLdap(
+		&directory.Config{Info: directory.Info{Name: "foo", Version: "1.0"}},
+	))
 
 	try.Handler(t,
 		http.MethodGet,
@@ -98,4 +98,55 @@ func TestHandler_Ldap_ServiceHasNoItems(t *testing.T) {
 		New(app, static.Api{}),
 		try.HasStatusCode(200),
 		try.HasBody(`[{"name":"foo","version":"1.0","type":"ldap","metrics":{"requests_total":0,"request_timestamp":0}}]`))
+}
+
+// An info without a config snapshot is what a request sees when the last file of a directory is
+// removed while the request is running.
+func TestHandler_Ldap_ConfigRemoved(t *testing.T) {
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(
+			runtimetest.WithLdap(&directory.Config{Info: directory.Info{Name: "bar", Version: "1.0"}}),
+			runtimetest.WithLdapInfo("foo", &runtime.LdapInfo{}),
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"ldap","metrics":{"requests_total":0,"request_timestamp":0}}]`))
+	})
+
+	t.Run("service returns 404", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/ldap/foo",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(404))
+	})
+
+	t.Run("service returns 404 after the file was removed from the store", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		file := &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Data: &directory.Config{Info: directory.Info{Name: "foo"}},
+		}
+		info := app.Ldap.Add(file, enginetest.NewEngine())
+		app.Ldap.Remove(file)
+
+		require.Nil(t, info.Config())
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/ldap/foo",
+			nil,
+			"",
+			New(app, static.Api{}),
+			try.HasStatusCode(404))
+	})
 }

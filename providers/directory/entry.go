@@ -3,6 +3,7 @@ package directory
 import (
 	"fmt"
 	"mokapi/ldap"
+	"slices"
 	"strconv"
 )
 
@@ -22,7 +23,7 @@ func (e *Entry) copy() Entry {
 		Attributes: make(map[string][]string),
 	}
 	for k, v := range e.Attributes {
-		c.Attributes[k] = v
+		c.Attributes[k] = slices.Clone(v)
 	}
 	return c
 }

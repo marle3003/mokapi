@@ -15,6 +15,7 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/url"
+	"sync"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -87,7 +88,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Get("foo")
-				require.Equal(t, "bar", info.Info.Description)
+				require.Equal(t, "bar", info.Config().Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
 			},
@@ -100,7 +101,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Get("foo")
-				require.Equal(t, "foo", info.Info.Description)
+				require.Equal(t, "foo", info.Config().Info.Description)
 			},
 		},
 		{
@@ -111,7 +112,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Get("foo")
-				require.Equal(t, "foo", info.Info.Description)
+				require.Equal(t, "foo", info.Config().Info.Description)
 			},
 		},
 		{
@@ -183,5 +184,222 @@ func TestLdapStore_Remove(t *testing.T) {
 		removeConcurrently(app.Ldap.Remove, a, b)
 
 		require.Equal(t, 0, app.Ldap.Len())
+	})
+}
+
+// ldapFileWithEntries returns a file that holds one entry per given dn, each with the attribute
+// mail set to the given value.
+func ldapFileWithEntries(url, name, description string, mailByDn map[string]string) *dynamic.Config {
+	entries := directory.NewEntryStore()
+	for dn, mail := range mailByDn {
+		entries.Set(dn, directory.Entry{Dn: dn, Attributes: map[string][]string{"mail": {mail}}})
+	}
+	return newLdapConfig(url, &directory.Config{
+		Info:    directory.Info{Name: name, Description: description},
+		Entries: entries,
+	})
+}
+
+func TestLdapStore_ConcurrentAccess(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	emitter := enginetest.NewEngine()
+
+	t.Run("reader does not race with reload of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		reload := func(description string) *dynamic.Config {
+			return ldapFileWithEntries("https://mokapi.io/a.yml", "foo", description, map[string]string{"cn=alice": "alice@foo.bar"})
+		}
+		app.Ldap.Add(reload("first"), enginetest.NewEngine())
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				app.Ldap.Add(reload("second"), emitter)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			// what the dashboard API handler does: get the info, then read the config
+			for i := 0; i < 200; i++ {
+				info := app.Ldap.Get("foo")
+				cfg := info.Config()
+				_ = cfg.Info.Name
+				_ = cfg.Entries.Entries()
+				_ = info.Configs()
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("reader does not race with remove", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "", map[string]string{"cn=alice": "alice@foo.bar"})
+		b := ldapFileWithEntries("https://mokapi.io/b.yml", "foo", "", map[string]string{"cn=bob": "bob@foo.bar"})
+		info := app.Ldap.Add(a, enginetest.NewEngine())
+
+		done := make(chan struct{})
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			defer close(done)
+			for i := 0; i < 200; i++ {
+				app.Ldap.Add(b, emitter)
+				app.Ldap.Remove(b)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
+				if cfg := info.Config(); cfg != nil {
+					_ = cfg.Info.Name
+				}
+				_ = info.Configs()
+			}
+		}()
+		wg.Wait()
+	})
+}
+
+func TestLdapStore_MergedConfigs(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	t.Run("merge does not change the parsed file config", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "", map[string]string{"cn=alice": "a@foo.bar"})
+		b := ldapFileWithEntries("https://mokapi.io/b.yml", "foo", "", map[string]string{"cn=alice": "b@foo.bar", "cn=bob": "bob@foo.bar"})
+		app.Ldap.Add(a, enginetest.NewEngine())
+
+		app.Ldap.Add(b, enginetest.NewEngine())
+
+		fileA := a.Data.(*directory.Config)
+		require.Equal(t, 1, fileA.Entries.Len(), "entry of b.yml is not added to the file a.yml")
+		alice, _ := fileA.Entries.Get("cn=alice")
+		require.Equal(t, []string{"a@foo.bar"}, alice.Attributes["mail"], "attribute of b.yml is not added to the file a.yml")
+	})
+}
+
+func TestLdapInfo_Snapshot(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	alice := map[string]string{"cn=alice": "alice@foo.bar"}
+	fileWithDescription := func(description string) *dynamic.Config {
+		return ldapFileWithEntries("https://mokapi.io/a.yml", "foo", description, alice)
+	}
+
+	t.Run("snapshot is not changed by a reload of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		info := app.Ldap.Add(fileWithDescription("first"), enginetest.NewEngine())
+		snapshot := info.Config()
+
+		app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "second", map[string]string{"cn=bob": "bob@foo.bar"}), enginetest.NewEngine())
+
+		require.Equal(t, "first", snapshot.Info.Description)
+		_, hasAlice := snapshot.Entries.Get("cn=alice")
+		_, hasBob := snapshot.Entries.Get("cn=bob")
+		require.True(t, hasAlice)
+		require.False(t, hasBob)
+		require.NotSame(t, snapshot, info.Config())
+		require.Equal(t, "second", info.Config().Info.Description)
+	})
+
+	t.Run("published config is not the config of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		file := fileWithDescription("first")
+
+		info := app.Ldap.Add(file, enginetest.NewEngine())
+
+		fileConfig := file.Data.(*directory.Config)
+		require.NotSame(t, fileConfig, info.Config())
+		require.NotSame(t, fileConfig.Entries, info.Config().Entries)
+		require.Equal(t, 1, info.Config().Entries.Len())
+	})
+
+	t.Run("config is nil after the last file is removed", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		file := fileWithDescription("first")
+		info := app.Ldap.Add(file, enginetest.NewEngine())
+
+		app.Ldap.Remove(file)
+
+		require.Nil(t, info.Config())
+		require.Nil(t, app.Ldap.Get("foo"))
+	})
+
+	t.Run("Configs returns a copy", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "", alice), enginetest.NewEngine())
+		info := app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/b.yml", "foo", "", alice), enginetest.NewEngine())
+
+		configs := info.Configs()
+		require.Len(t, configs, 2)
+		configs[0] = nil
+
+		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
+		require.Len(t, info.Configs(), 2)
+	})
+
+	t.Run("Configs does not race with Add", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		emitter := enginetest.NewEngine()
+		info := app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "", alice), emitter)
+		b := ldapFileWithEntries("https://mokapi.io/b.yml", "foo", "", map[string]string{"cn=bob": "bob@foo.bar"})
+
+		done := make(chan struct{})
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			defer close(done)
+			for i := 0; i < 200; i++ {
+				app.Ldap.Add(b, emitter)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-done:
+					return
+				default:
+				}
+				_ = info.Configs()
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("client write to the snapshot does not reach the file config", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		file := fileWithDescription("first")
+		info := app.Ldap.Add(file, enginetest.NewEngine())
+		h := info.Handler(monitor.NewLdap(), app.Events)
+
+		rr := ldaptest.NewRecorder()
+		h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.AddRequest{Dn: "cn=bob"}))
+		require.Equal(t, uint8(ldap.Success), rr.Message.(*ldap.AddResponse).ResultCode)
+		rr = ldaptest.NewRecorder()
+		h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyRequest{
+			Dn: "cn=alice",
+			Items: []ldap.ModificationItem{{
+				Operation:    ldap.ReplaceOperation,
+				Modification: ldap.Modification{Type: "mail", Values: []string{"changed@foo.bar"}},
+			}},
+		}))
+		require.Equal(t, uint8(ldap.Success), rr.Message.(*ldap.ModifyResponse).ResultCode)
+
+		fileConfig := file.Data.(*directory.Config)
+		require.Equal(t, 1, fileConfig.Entries.Len())
+		e, _ := fileConfig.Entries.Get("cn=alice")
+		require.Equal(t, []string{"alice@foo.bar"}, e.Attributes["mail"])
+		_, ok := info.Config().Entries.Get("cn=bob")
+		require.True(t, ok, "the write is visible in the running directory")
 	})
 }

@@ -348,6 +348,44 @@ func TestConfigWatcher_Read(t *testing.T) {
 			},
 		},
 		{
+			name: "file delete event named by the path of the file",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file:/tmp/mokapi/file.yml")
+				var ch chan dynamic.ConfigEvent
+				w.AddProvider("file", &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				})
+				pool := safe.NewPool(context.Background())
+				_ = w.Start(pool)
+				defer pool.Stop()
+
+				c, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+
+				var deleted atomic.Pointer[dynamic.Config]
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						deleted.Store(e.Config)
+					}
+				})
+
+				time.Sleep(500 * time.Millisecond)
+				// the file provider names the event with the path, not with the URL
+				ch <- dynamic.ConfigEvent{Name: "/tmp/mokapi/file.yml", Event: dynamic.Delete}
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, deleted.Load())
+			},
+		},
+		{
 			name: "parent file deleted and child is updated",
 			test: func(t *testing.T) {
 				w := server.NewConfigWatcher(&static.Config{})

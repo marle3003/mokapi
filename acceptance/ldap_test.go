@@ -7,6 +7,8 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/try"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -106,4 +108,114 @@ func hasResult(results []ldap.SearchResult, dn string) bool {
 		}
 	}
 	return false
+}
+
+// LdapReloadSuite checks what happens to the directory when LDAP files are reloaded or removed.
+// The file is the source: entries written by an LDAP client are not kept.
+type LdapReloadSuite struct {
+	BaseSuite
+	dir        string
+	reloadPort int
+	mergedPort int
+}
+
+func (suite *LdapReloadSuite) SetupSuite() {
+	suite.reloadPort = try.GetFreePort()
+	suite.mergedPort = try.GetFreePort()
+	suite.dir = suite.T().TempDir()
+
+	suite.writeFile("reload.yml", suite.directory("Reload", fmt.Sprintf("127.0.0.1:%d", suite.reloadPort), "", "cn=bob,dc=mokapi,dc=io"))
+	suite.writeFile("merged-a.yml", suite.directory("Merged", fmt.Sprintf("127.0.0.1:%d", suite.mergedPort), "", "cn=amy,dc=mokapi,dc=io"))
+	suite.writeFile("merged-b.yml", suite.directory("Merged", "", "", "cn=leela,dc=mokapi,dc=io"))
+
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
+	suite.initCmd(cfg)
+}
+
+func (suite *LdapReloadSuite) directory(title, address, description, dn string) string {
+	server := ""
+	if address != "" {
+		server = fmt.Sprintf("server:\n  address: %q\n", address)
+	}
+	return fmt.Sprintf(`ldap: 1.0
+info:
+  title: %s
+  description: %q
+%sentries:
+  - dn: %s
+    objectClass: person
+`, title, description, server, dn)
+}
+
+func (suite *LdapReloadSuite) writeFile(name, content string) {
+	err := os.WriteFile(filepath.Join(suite.dir, name), []byte(content), 0o600)
+	suite.Require().NoError(err)
+}
+
+func (suite *LdapReloadSuite) dial(port int) *ldap.Client {
+	var client *ldap.Client
+	try.WaitFor(suite.T(), func() bool {
+		c := ldap.NewClient(fmt.Sprintf("127.0.0.1:%d", port))
+		if err := c.Dial(); err != nil {
+			return false
+		}
+		client = c
+		return true
+	})
+	suite.T().Cleanup(client.Close)
+	return client
+}
+
+func (suite *LdapReloadSuite) hasEntry(client *ldap.Client, cn string) bool {
+	res, err := client.Search(&ldap.SearchRequest{
+		Scope:  ldap.ScopeWholeSubtree,
+		Filter: fmt.Sprintf("(cn=%s)", cn),
+	})
+	suite.Require().NoError(err)
+	return len(res.Results) > 0
+}
+
+func (suite *LdapReloadSuite) waitForEntry(client *ldap.Client, cn string, expected bool) {
+	suite.T().Helper()
+	try.WaitFor(suite.T(), func() bool {
+		return suite.hasEntry(client, cn) == expected
+	})
+}
+
+// TestEntryAddedByClientIsGoneAfterFileReload verifies that a reload resets the directory to
+// the content of the file, also on a connection that stays open across the reload.
+func (suite *LdapReloadSuite) TestEntryAddedByClientIsGoneAfterFileReload() {
+	client := suite.dial(suite.reloadPort)
+	suite.waitForEntry(client, "bob", true)
+
+	res, err := client.Add(&ldap.AddRequest{
+		Dn: "cn=alice,dc=mokapi,dc=io",
+		Attributes: []ldap.Attribute{
+			{Type: "cn", Values: []string{"alice"}},
+			{Type: "objectClass", Values: []string{"person"}},
+		},
+	})
+	suite.Require().NoError(err)
+	suite.Require().Equal(uint8(ldap.Success), res.ResultCode)
+	suite.Require().True(suite.hasEntry(client, "alice"))
+
+	suite.writeFile("reload.yml", suite.directory("Reload", fmt.Sprintf("127.0.0.1:%d", suite.reloadPort), "changed", "cn=bob,dc=mokapi,dc=io"))
+
+	suite.waitForEntry(client, "alice", false)
+	suite.True(suite.hasEntry(client, "bob"))
+}
+
+// TestEntriesOfRemovedFileAreGone verifies that removing one of two files with the same
+// title removes its entries and keeps the entries of the other file.
+func (suite *LdapReloadSuite) TestEntriesOfRemovedFileAreGone() {
+	client := suite.dial(suite.mergedPort)
+	suite.waitForEntry(client, "amy", true)
+	suite.waitForEntry(client, "leela", true)
+
+	suite.Require().NoError(os.Remove(filepath.Join(suite.dir, "merged-b.yml")))
+
+	suite.waitForEntry(client, "leela", false)
+	suite.True(suite.hasEntry(client, "amy"))
 }

@@ -178,12 +178,16 @@ func (m *mokapi) getApis() []ApiSummary {
 		})
 	}
 	for _, api := range m.app.Ldap.List() {
-		if api.Info.Name == "" {
-			log.Warnf("mcp tool mokapi_execute_code: skip empty Mail API name")
+		cfg := api.Config()
+		if cfg == nil {
+			continue
+		}
+		if cfg.Info.Name == "" {
+			log.Warnf("mcp tool mokapi_execute_code: skip empty LDAP API name")
 			continue
 		}
 		result = append(result, ApiSummary{
-			Name: api.Info.Name,
+			Name: cfg.Info.Name,
 			Type: "ldap",
 		})
 	}

@@ -8,7 +8,6 @@ import (
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
 	"mokapi/runtime/events/eventstest"
-	"mokapi/sortedmap"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -788,8 +787,8 @@ func hasResult(results []ldap.SearchResult, dn string) bool {
 	return false
 }
 
-func convertArray(entries []directory.Entry) *sortedmap.LinkedHashMap[string, directory.Entry] {
-	r := &sortedmap.LinkedHashMap[string, directory.Entry]{}
+func convertArray(entries []directory.Entry) *directory.EntryStore {
+	r := directory.NewEntryStore()
 	for _, entry := range entries {
 		r.Set(entry.Dn, entry)
 	}

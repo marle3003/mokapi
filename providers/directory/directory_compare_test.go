@@ -7,7 +7,6 @@ import (
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
 	"mokapi/runtime/events/eventstest"
-	"mokapi/sortedmap"
 	"testing"
 )
 
@@ -15,7 +14,7 @@ func TestDirectory_ServeCompare(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *directory.Config
-		fn     func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry])
+		fn     func(t *testing.T, h ldap.Handler, entries *directory.EntryStore)
 	}{
 		{
 			name: "attribute and value exists",
@@ -25,7 +24,7 @@ func TestDirectory_ServeCompare(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo", Attributes: map[string][]string{"foo": {"bar"}}},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.CompareRequest{
 					Dn:        "cn=foo",
@@ -44,7 +43,7 @@ func TestDirectory_ServeCompare(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo", Attributes: map[string][]string{"foo": {"bar"}}},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.CompareRequest{
 					Dn:        "cn=foo",
@@ -63,7 +62,7 @@ func TestDirectory_ServeCompare(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo", Attributes: map[string][]string{"foo": {"bar"}}},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.CompareRequest{
 					Dn:        "cn=foo",
@@ -80,7 +79,7 @@ func TestDirectory_ServeCompare(t *testing.T) {
 				Info:    directory.Info{Name: "foo"},
 				Entries: convert(map[string]directory.Entry{}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.CompareRequest{
 					Dn:        "cn=foo",

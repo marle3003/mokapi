@@ -107,67 +107,65 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		return
 	}
 	status := ldap.Success
-	if d.config.Entries != nil {
-		for it := d.config.Entries.Iter(); it.Next(); {
-			e := it.Value()
-			if !predicate(e) {
-				continue
-			}
-
-			switch msg.Scope {
-			case ldap.ScopeBaseObject:
-				// handle Active Directory extended DN (see MS-ADTS for details)
-				if strings.HasPrefix(msg.BaseDN, "<GUID=") {
-					updateBaseDnForGuidIfNeeded(msg, &e)
-				}
-				if e.Dn != msg.BaseDN {
-					continue
-				}
-			case ldap.ScopeSingleLevel:
-				parts := strings.Split(e.Dn, ",")
-				if len(parts) < 2 && e.Dn != msg.BaseDN {
-					continue
-				}
-				if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
-					continue
-				}
-			case ldap.ScopeWholeSubtree:
-				if !strings.HasSuffix(strings.ToLower(e.Dn), strings.ToLower(msg.BaseDN)) {
-					continue
-				}
-			}
-			if d.skip(&e, msg.BaseDN) {
-				continue
-			}
-
-			if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
-				skipPageIndex++
-				continue
-			}
-			if sizeLimit != 0 && n >= sizeLimit {
-				break
-			}
-			if pageLimit > 0 && n >= pageLimit {
-				setPageCookie(msg.Controls, n, r.Context)
-				break
-			}
-			if maxSizeLimit > 0 && n >= maxSizeLimit {
-				log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
-				status = ldap.SizeLimitExceeded
-				break
-			}
-			n++
-
-			res := ldap.NewSearchResult(e.Dn)
-			res.Attributes = getAttributes(msg.Attributes, &e)
-
-			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
-			results = append(results, res)
-			event.AddResult(SearchResult{
-				Dn:         res.Dn,
-				Attributes: res.Attributes,
-			})
+	subschemaDN := d.subschemaDN()
+	for _, e := range d.config.Entries.Entries() {
+		if !predicate(e) {
+			continue
 		}
+
+		switch msg.Scope {
+		case ldap.ScopeBaseObject:
+			// handle Active Directory extended DN (see MS-ADTS for details)
+			if strings.HasPrefix(msg.BaseDN, "<GUID=") {
+				updateBaseDnForGuidIfNeeded(msg, &e)
+			}
+			if e.Dn != msg.BaseDN {
+				continue
+			}
+		case ldap.ScopeSingleLevel:
+			parts := strings.Split(e.Dn, ",")
+			if len(parts) < 2 && e.Dn != msg.BaseDN {
+				continue
+			}
+			if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
+				continue
+			}
+		case ldap.ScopeWholeSubtree:
+			if !strings.HasSuffix(strings.ToLower(e.Dn), strings.ToLower(msg.BaseDN)) {
+				continue
+			}
+		}
+		if skip(&e, msg.BaseDN, subschemaDN) {
+			continue
+		}
+
+		if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
+			skipPageIndex++
+			continue
+		}
+		if sizeLimit != 0 && n >= sizeLimit {
+			break
+		}
+		if pageLimit > 0 && n >= pageLimit {
+			setPageCookie(msg.Controls, n, r.Context)
+			break
+		}
+		if maxSizeLimit > 0 && n >= maxSizeLimit {
+			log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
+			status = ldap.SizeLimitExceeded
+			break
+		}
+		n++
+
+		res := ldap.NewSearchResult(e.Dn)
+		res.Attributes = getAttributes(msg.Attributes, &e)
+
+		log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
+		results = append(results, res)
+		event.AddResult(SearchResult{
+			Dn:         res.Dn,
+			Attributes: res.Attributes,
+		})
 	}
 
 	res := &ldap.SearchResponse{

@@ -10,7 +10,6 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
-	"mokapi/sortedmap"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -30,7 +29,7 @@ func (e *statusEmitter) EmitLdap(_ *ldap.SearchRequest, res *ldap.SearchResponse
 }
 
 // userEntries returns two entries that match the filter (cn=user*)
-func userEntries() *sortedmap.LinkedHashMap[string, directory.Entry] {
+func userEntries() *directory.EntryStore {
 	return convertArray([]directory.Entry{
 		{Dn: "cn=user1,dc=foo,dc=com", Attributes: map[string][]string{"cn": {"user1"}}},
 		{Dn: "cn=user2,dc=foo,dc=com", Attributes: map[string][]string{"cn": {"user2"}}},
