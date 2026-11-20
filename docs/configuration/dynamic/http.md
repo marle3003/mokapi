@@ -105,7 +105,8 @@ For a complete setup with an internal certificate authority, see
 
 ### CA (Certificate Authority)
 Path to the certificate authority used for secure connection. By default, the system 
-certification pool is used.
+certification pool is used. The certificate can be PEM or DER encoded. A PEM file can contain
+several certificates, for example a bundle with intermediate and root CA.
 
 ``` box=warning
 This switch is only intended to be used against known hosts using self-signed certificate.

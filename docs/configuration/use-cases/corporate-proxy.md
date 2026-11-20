@@ -64,24 +64,21 @@ providers:
   http:
     urls: [https://specs.example.com/petstore.yaml]
     proxy: http://proxy.example.com:3128
-    ca: /etc/ssl/corp-ca.der
+    ca: /etc/ssl/corp-ca.pem
 ```
 ```bash tab=CLI
 --providers-http-url https://specs.example.com/petstore.yaml \
 --providers-http-proxy http://proxy.example.com:3128 \
---providers-http-ca /etc/ssl/corp-ca.der
+--providers-http-ca /etc/ssl/corp-ca.pem
 ```
 ```bash tab=Env
 MOKAPI_PROVIDERS_HTTP_URL=https://specs.example.com/petstore.yaml
 MOKAPI_PROVIDERS_HTTP_PROXY=http://proxy.example.com:3128
-MOKAPI_PROVIDERS_HTTP_CA=/etc/ssl/corp-ca.der
+MOKAPI_PROVIDERS_HTTP_CA=/etc/ssl/corp-ca.pem
 ```
 
-``` box=warning
-Mokapi reads a single certificate in DER format, not PEM. A PEM file fails with
-`failed to parse CA cert: x509: malformed certificate`. Convert it first:
-`openssl x509 -in corp-ca.pem -outform DER -out corp-ca.der`
-```
+The file can be PEM or DER. A PEM file may contain several certificates, so you can pass a bundle with the
+intermediate and root CA of your proxy.
 
 If the CA can't be read or parsed, Mokapi logs `failed to use CA certification for http provider` and continues
 with the system pool only.
