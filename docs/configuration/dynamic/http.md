@@ -100,6 +100,9 @@ providers:
 MOKAPI_PROVIDERS_HTTP_PROXY=http://localhost:3128
 ```
 
+For a complete setup with an internal certificate authority, see
+[Running Mokapi Behind a Corporate Proxy](/docs/configuration/use-cases/corporate-proxy.md).
+
 ### CA (Certificate Authority)
 Path to the certificate authority used for secure connection. By default, the system 
 certification pool is used.

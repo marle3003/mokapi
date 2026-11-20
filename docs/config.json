@@ -247,6 +247,16 @@
             "label": "Health Check",
             "source": "configuration/healthcheck.md",
             "path": "/docs/configuration/health-check"
+          },
+          {
+            "label": "Use Cases",
+            "items": [
+              {
+                "label": "Corporate Proxy",
+                "source": "configuration/use-cases/corporate-proxy.md",
+                "path": "/docs/configuration/use-cases/corporate-proxy"
+              }
+            ]
           }
         ]
       },
