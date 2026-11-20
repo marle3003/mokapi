@@ -19,7 +19,7 @@ You need a CA certificate and its private key, both PEM encoded. The following c
 for ten years.
 
 ```bash
-openssl genrsa -traditional -out ca-key.pem 2048
+openssl genrsa -out ca-key.pem 2048
 openssl req -x509 -new -key ca-key.pem -sha256 -days 3650 \
   -subj "/CN=My Mokapi Test CA" \
   -addext "basicConstraints=critical,CA:TRUE" \
@@ -27,12 +27,8 @@ openssl req -x509 -new -key ca-key.pem -sha256 -days 3650 \
   -out ca.pem
 ```
 
-Mokapi reads the key as an RSA key in PKCS#1 format. The file must start with
-`-----BEGIN RSA PRIVATE KEY-----`. Since OpenSSL 3, `openssl genrsa` writes PKCS#8
-(`BEGIN PRIVATE KEY`) unless you pass `-traditional`. EC keys are not supported for the root CA. If you already
-have an RSA key in PKCS#8 format, convert it with `openssl rsa -in key.pem -traditional -out ca-key.pem`.
-The `-traditional` option needs OpenSSL 3. LibreSSL, which macOS ships, doesn't know it but writes PKCS#1 by
-default, so omit the option there.
+Mokapi accepts RSA keys in PKCS#1 or PKCS#8 format and EC keys in SEC1 or PKCS#8 format, so the key file can
+start with `BEGIN RSA PRIVATE KEY`, `BEGIN EC PRIVATE KEY` or `BEGIN PRIVATE KEY`.
 
 If your company already provides a root or intermediate CA for development, use that certificate and key instead.
 

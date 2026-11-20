@@ -39,8 +39,8 @@ to your trust store.
 If you want to use your own CA for signing, set the `rootCaCert` and `rootCaKey` options.
 You can pass them as environment variables, CLI flags or in the static configuration file.
 Each value can be a file path or the PEM content itself. Both options must be set, otherwise
-Mokapi uses the built-in CA. The key must be an RSA key in PKCS#1 format
-(`-----BEGIN RSA PRIVATE KEY-----`).
+Mokapi uses the built-in CA. The key can be an RSA key (PKCS#1 or PKCS#8)
+or an EC key (SEC1 or PKCS#8).
 
 ```bash
 export MOKAPI_ROOT_CA_CERT=/path/to/caCert.pem

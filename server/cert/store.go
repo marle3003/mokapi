@@ -1,7 +1,7 @@
 package cert
 
 import (
-	"crypto/rsa"
+	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -13,7 +13,7 @@ import (
 type Store struct {
 	Certificates map[string]*tls.Certificate
 	CaCert       *x509.Certificate
-	CaKey        *rsa.PrivateKey
+	CaKey        crypto.Signer
 }
 
 func NewStore(config *static.Config) (*Store, error) {
@@ -48,7 +48,7 @@ func NewStore(config *static.Config) (*Store, error) {
 	if block == nil {
 		return nil, fmt.Errorf("failed to parse key PEM")
 	}
-	store.CaKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	store.CaKey, err = parsePrivateKey(block)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) 
 
 func decodePem(data []byte) (*tls.Certificate, error) {
 	var cert *x509.Certificate
-	var key interface{}
+	var key crypto.Signer
 
 	rest := data
 	for {
@@ -118,24 +118,10 @@ func decodePem(data []byte) (*tls.Certificate, error) {
 			}
 			cert = parsedCert
 
-		case "RSA PRIVATE KEY":
-			parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		case "RSA PRIVATE KEY", "EC PRIVATE KEY", "PRIVATE KEY":
+			parsedKey, err := parsePrivateKey(block)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse RSA private key: %v", err)
-			}
-			key = parsedKey
-
-		case "EC PRIVATE KEY":
-			parsedKey, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse EC private key: %v", err)
-			}
-			key = parsedKey
-
-		case "PRIVATE KEY": // PKCS#8
-			parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse PKCS#8 private key: %v", err)
+				return nil, err
 			}
 			key = parsedKey
 		}
@@ -149,6 +135,34 @@ func decodePem(data []byte) (*tls.Certificate, error) {
 		Certificate: [][]byte{cert.Raw},
 		PrivateKey:  key,
 	}, nil
+}
+
+func parsePrivateKey(block *pem.Block) (crypto.Signer, error) {
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RSA private key: %v", err)
+		}
+		return key, nil
+	case "EC PRIVATE KEY":
+		key, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse EC private key: %v", err)
+		}
+		return key, nil
+	case "PRIVATE KEY": // PKCS#8
+		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse PKCS#8 private key: %v", err)
+		}
+		signer, ok := key.(crypto.Signer)
+		if !ok {
+			return nil, fmt.Errorf("unsupported PKCS#8 private key type %T", key)
+		}
+		return signer, nil
+	}
+	return nil, fmt.Errorf("unsupported private key PEM type %q", block.Type)
 }
 
 func DefaultRootCert() *x509.Certificate {
