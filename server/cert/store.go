@@ -38,7 +38,7 @@ func NewStore(config *static.Config) (*Store, error) {
 
 	block, _ := pem.Decode(caCert)
 	if block == nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse root CA certificate PEM")
 	}
 	store.CaCert, err = x509.ParseCertificate(block.Bytes)
 	if err != nil {
@@ -53,35 +53,16 @@ func NewStore(config *static.Config) (*Store, error) {
 		return nil, err
 	}
 
-	for _, ci := range config.Certificates.Static {
-		bCert, err := ci.Cert.Read(path.Dir(config.ConfigFile))
+	for i, ci := range config.Certificates.Static {
+		c, err := loadStaticCertificate(ci, path.Dir(config.ConfigFile))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("static certificate %d: %w", i, err)
 		}
 
-		var c *tls.Certificate
-		// key is in the PEM file
-		if ci.Key == "" {
-			c, err = decodePem(bCert)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			var bKey []byte
-			bKey, err = ci.Key.Read(path.Dir(config.ConfigFile))
-			if err != nil {
-				return nil, err
-			}
-			var p tls.Certificate
-			p, err = tls.X509KeyPair(bCert, bKey)
-			c = &p
+		cer, err := x509.ParseCertificate(c.Certificate[0])
+		if err != nil {
+			return nil, fmt.Errorf("static certificate %d: %w", i, err)
 		}
-
-		if c == nil {
-			continue
-		}
-
-		cer, _ := x509.ParseCertificate(c.Certificate[0])
 		store.AddCertificate(cer.Subject.CommonName, c)
 		for _, n := range cer.DNSNames {
 			store.AddCertificate(n, c)
@@ -89,6 +70,28 @@ func NewStore(config *static.Config) (*Store, error) {
 	}
 
 	return store, nil
+}
+
+func loadStaticCertificate(ci static.Certificate, currentDir string) (*tls.Certificate, error) {
+	bCert, err := ci.Cert.Read(currentDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// key is in the PEM file
+	if ci.Key == "" {
+		return decodePem(bCert)
+	}
+
+	bKey, err := ci.Key.Read(currentDir)
+	if err != nil {
+		return nil, err
+	}
+	c, err := tls.X509KeyPair(bCert, bKey)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) {

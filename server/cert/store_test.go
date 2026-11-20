@@ -284,3 +284,56 @@ func generateCertPEM() (certPEM, keyPEM string) {
 
 	return string(certPEMBytes), string(keyPEMBytes)
 }
+
+func TestNewStore_InvalidRootCa(t *testing.T) {
+	_, rootKey := generateCertPEM()
+
+	testcases := []struct {
+		name string
+		cert string
+	}{
+		{name: "file does not exist", cert: "./does-not-exist/root-ca.pem"},
+		{name: "no PEM content", cert: "garbage"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := cert.NewStore(&static.Config{
+				RootCaCert: tls.FileOrContent(tc.cert),
+				RootCaKey:  tls.FileOrContent(rootKey),
+			})
+			require.EqualError(t, err, "failed to parse root CA certificate PEM")
+			require.Nil(t, s)
+		})
+	}
+}
+
+func TestNewStore_InvalidStaticCertificate(t *testing.T) {
+	serverCert, serverKey := generateCertPEM()
+	_, otherKey := generateCertPEM()
+
+	testcases := []struct {
+		name string
+		cert string
+		key  string
+		err  string
+	}{
+		{name: "key does not match certificate", cert: serverCert, key: otherKey, err: "static certificate 0: tls: private key does not match public key"},
+		{name: "no PEM content with key", cert: "garbage", key: serverKey, err: "static certificate 0: tls: failed to find any PEM data in certificate input"},
+		{name: "no PEM content without key", cert: "garbage", err: "static certificate 0: certificate or private key not found in PEM"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := cert.NewStore(&static.Config{
+				Certificates: static.CertificateStore{
+					Static: []static.Certificate{
+						{Cert: tls.FileOrContent(tc.cert), Key: tls.FileOrContent(tc.key)},
+					},
+				},
+			})
+			require.EqualError(t, err, tc.err)
+			require.Nil(t, s)
+		})
+	}
+}

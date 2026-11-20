@@ -30,10 +30,17 @@ In this example:
 
 ## Certificate Authority (CA)
 By default, Mokapi uses its own built-in Certificate Authority to sign any certificates it
-generates. The Root CA certificate and key are stored in the [Mokapi GitHub repository](https://github.com/marle3003/mokapi/tree/master/assets).
+generates. The CA is compiled into Mokapi, so you don't need any files to get started. If you
+want your browser or clients to trust the generated certificates without setting up your own
+CA, download the root certificate `mokapiCert.pem` from the
+[Mokapi GitHub repository](https://github.com/marle3003/mokapi/tree/master/assets) and add it
+to your trust store.
 
 If you want to use your own CA for signing, set the `rootCaCert` and `rootCaKey` options.
 You can pass them as environment variables, CLI flags or in the static configuration file.
+Each value can be a file path or the PEM content itself. Both options must be set, otherwise
+Mokapi uses the built-in CA. The key must be an RSA key in PKCS#1 format
+(`-----BEGIN RSA PRIVATE KEY-----`).
 
 ```bash
 export MOKAPI_ROOT_CA_CERT=/path/to/caCert.pem
@@ -52,19 +59,23 @@ rootCaKey: /path/to/caKey.pem
 Why use your own CA?
 - To avoid browser or client certificate warnings (if your CA is trusted by the OS or application). 
 - To align with an existing internal PKI (Public Key Infrastructure). 
-- To test certificate chains with your organization’s security policies.
+- To test certificate chains with your organization's security policies.
+
+For a step-by-step setup including the client side, see
+[Use Your Own Root CA for HTTPS](/docs/configuration/use-cases/custom-root-ca.md).
 
 ## Server Certificates
 
 Mokapi supports two ways of providing server certificates:
 
-### Option A — Let Mokapi Generate Certificates
+### Option A: Let Mokapi Generate Certificates
 
 If you do not supply a certificate for a hostname, Mokapi will generate one dynamically the first
-time that hostname is requested. The certificate will be valid for the requested hostname and 
-signed by the configured CA (Mokapi’s default or your custom CA).
+time that hostname is requested. The certificate will be valid for the requested hostname and
+the IP addresses of the host, and it is signed by the configured CA (Mokapi's default or your
+custom CA). Generated certificates are kept in memory, so restart Mokapi after changing the CA.
 
-### Option B — Provide Your Own Certificates
+### Option B: Provide Your Own Certificates
 
 If you already have certificates, you can configure Mokapi to use them instead of generating new ones.
 Add them to the static configuration:
@@ -82,13 +93,13 @@ You can list multiple certificate/key pairs to support multiple hostnames.
 
 ## Tips for Working with Certificates
 
-- **Trust the CA** — If you use Mokapi’s default CA, importing its root certificate into your OS or browser’s trust store will prevent certificate warnings. 
-- **Match Hostnames** — The certificate’s Common Name (CN) or Subject Alternative Name (SAN) must match the hostname in your API definition (servers list). 
-- **Use Custom Domains** — For local testing, you can map custom domains in your /etc/hosts file or Windows hosts file to 127.0.0.1 so the hostname matches the certificate.
+- **Trust the CA**: If you use Mokapi's default CA, importing its root certificate (`mokapiCert.pem`) into your OS or browser's trust store will prevent certificate warnings.
+- **Match Hostnames**: The certificate's Common Name (CN) or Subject Alternative Name (SAN) must match the hostname in your API definition (servers list). 
+- **Use Custom Domains**: For local testing, you can map custom domains in your /etc/hosts file or Windows hosts file to 127.0.0.1 so the hostname matches the certificate.
 
 ## Summary
 
 - Mokapi can generate certificates dynamically or use certificates you provide. 
-- Certificates are signed by Mokapi’s default CA unless you specify a custom one. 
+- Certificates are signed by Mokapi's default CA unless you specify a custom one. 
 - You can configure both the CA and the server certificates via environment variables or the static configuration. 
 - Trusting the CA in your OS avoids browser or client security warnings.

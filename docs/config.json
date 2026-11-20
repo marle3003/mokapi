@@ -265,6 +265,11 @@
                 "label": "Private GitHub Repository",
                 "source": "configuration/use-cases/private-github-repository.md",
                 "path": "/docs/configuration/use-cases/private-github-repository"
+              },
+              {
+                "label": "Own Root CA for HTTPS",
+                "source": "configuration/use-cases/custom-root-ca.md",
+                "path": "/docs/configuration/use-cases/custom-root-ca"
               }
             ]
           }
