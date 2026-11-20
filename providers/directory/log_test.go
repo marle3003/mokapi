@@ -120,11 +120,10 @@ func TestLog_MarshalJSON(t *testing.T) {
 	}
 }
 
-func TestSearchLog_AddResultAndSetStatus(t *testing.T) {
+func TestSearchLog_SetResponse(t *testing.T) {
 	l := directory.NewSearchLogEvent(&ldap.SearchRequest{BaseDN: "dc=foo"}, &eventstest.Handler{}, events.NewTraits())
 
-	l.AddResult(directory.SearchResult{Dn: "cn=foo"})
-	l.SetStatus("Success")
+	l.SetResponse(&ldap.SearchResponse{Status: ldap.Success, Results: []ldap.SearchResult{{Dn: "cn=foo"}}})
 
 	b, err := json.Marshal(l)
 	require.NoError(t, err)
@@ -133,14 +132,13 @@ func TestSearchLog_AddResultAndSetStatus(t *testing.T) {
 
 func TestSearchLog_IndexFieldsDoesNotAliasResults(t *testing.T) {
 	l := directory.NewSearchLogEvent(&ldap.SearchRequest{}, &eventstest.Handler{}, events.NewTraits())
-	l.AddResult(directory.SearchResult{Dn: "cn=foo"})
+	l.SetResponse(&ldap.SearchResponse{Status: ldap.SizeLimitExceeded, Results: []ldap.SearchResult{{Dn: "cn=foo"}}})
 
 	fields := l.IndexFields()
-	l.AddResult(directory.SearchResult{Dn: "cn=bar"})
-	l.SetStatus("Success")
+	l.SetResponse(&ldap.SearchResponse{Status: ldap.Success, Results: []ldap.SearchResult{{Dn: "cn=bar"}, {Dn: "cn=baz"}}})
 
 	response := fields["response"].(*directory.SearchResponse)
-	require.Equal(t, "", response.Status)
+	require.Equal(t, ldap.StatusText[ldap.SizeLimitExceeded], response.Status)
 	require.Len(t, response.Results, 1)
 	require.Equal(t, "cn=foo", response.Results[0].Dn)
 }

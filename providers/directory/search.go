@@ -172,10 +172,6 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 		log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 		results = append(results, res)
-		event.AddResult(SearchResult{
-			Dn:         res.Dn,
-			Attributes: res.Attributes,
-		})
 	}
 
 	res := &ldap.SearchResponse{
@@ -186,8 +182,8 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	}
 
 	event.SetActions(d.emitter.EmitLdap(msg, res))
-	// a JavaScript handler may have changed the status, so log and count it after emitting
-	event.SetStatus(ldap.StatusText[res.Status])
+	// a JavaScript handler may have changed status and results, so log and count them after emitting
+	event.SetResponse(res)
 	if res.Status != ldap.Success {
 		countError()
 	}

@@ -257,3 +257,57 @@ func TestSearch_LogShowsStatusSentToClient(t *testing.T) {
 		})
 	}
 }
+
+// resultsEmitter simulates a JavaScript ldap event handler that replaces response.results.
+type resultsEmitter struct {
+	results []ldap.SearchResult
+}
+
+func (e *resultsEmitter) EmitLdap(_ *ldap.SearchRequest, res *ldap.SearchResponse) []*common.Action {
+	if e.results != nil {
+		res.Results = e.results
+	}
+	return nil
+}
+
+// TestSearch_LogShowsResultsSentToClient checks that the search log event shows the results
+// the client gets, also when a JavaScript handler replaced them.
+func TestSearch_LogShowsResultsSentToClient(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	bob := ldap.SearchResult{Dn: "cn=bob,dc=foo,dc=com", Attributes: map[string][]string{"mail": {"bob@foo.com"}}}
+	testcases := []struct {
+		name    string
+		emitter *resultsEmitter
+		count   int
+	}{
+		{name: "handler keeps results", emitter: &resultsEmitter{}, count: 2},
+		{name: "handler replaces results", emitter: &resultsEmitter{results: []ldap.SearchResult{bob}}, count: 1},
+		{name: "handler removes all results", emitter: &resultsEmitter{results: []ldap.SearchResult{}}, count: 0},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, tc.emitter, eh)
+			rec := ldaptest.NewRecorder()
+			h.ServeLDAP(rec, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: "(cn=user*)",
+			}, context.Background()))
+
+			sent := rec.Message.(*ldap.SearchResponse).Results
+			require.Len(t, sent, tc.count)
+			require.Len(t, eh.Events, 1)
+			logged := eh.Events[0].Data.(*directory.SearchLog).Response.Results
+
+			require.Len(t, logged, len(sent))
+			for i, r := range sent {
+				require.Equal(t, r.Dn, logged[i].Dn)
+				require.Equal(t, r.Attributes, logged[i].Attributes)
+			}
+		})
+	}
+}
