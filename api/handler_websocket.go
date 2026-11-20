@@ -208,7 +208,7 @@ func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []web
 			data.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
 				return strings.Compare(a, b)
 			})
-			for _, c := range wi.Store.Channels {
+			for _, c := range wi.Store.Channels() {
 				if err := ch.Value.IsNameValid(c.Name); err == nil {
 					params, _ := ch.Value.ExtractParams(c.Name)
 					inst := websocketChannelInstance{

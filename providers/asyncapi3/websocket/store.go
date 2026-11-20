@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 	engine "mokapi/engine/common"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
@@ -11,6 +12,7 @@ import (
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -20,7 +22,7 @@ import (
 )
 
 type Store struct {
-	Channels map[string]*Channel
+	channels map[string]*Channel
 
 	cfg     *asyncapi3.Config
 	emitter engine.WebsocketEventEmitter
@@ -52,7 +54,17 @@ func New(cfg *asyncapi3.Config, emitter engine.WebsocketEventEmitter, eh events.
 	return s
 }
 
+// Channels returns a snapshot of the channels created so far.
+func (s *Store) Channels() []*Channel {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return slices.Collect(maps.Values(s.channels))
+}
+
 func (s *Store) Update(cfg *asyncapi3.Config) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.cfg = cfg
 	for path, ref := range cfg.Channels {
 		if ref.Value == nil {
@@ -73,10 +85,10 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 		}
 
 		if len(c.Parameters) == 0 {
-			if s.Channels == nil {
-				s.Channels = make(map[string]*Channel)
+			if s.channels == nil {
+				s.channels = make(map[string]*Channel)
 			}
-			ch, ok := s.Channels[path]
+			ch, ok := s.channels[path]
 			if !ok {
 				ch = &Channel{
 					Name:    path,
@@ -86,7 +98,7 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 					log:     s.log,
 					monitor: s.monitor,
 				}
-				s.Channels[path] = ch
+				s.channels[path] = ch
 			}
 		}
 	}
@@ -216,8 +228,12 @@ func toWebSocketType(msgType MessageType) websocket.MessageType {
 }
 
 func (s *Store) log(log events.EventData, traits events.Traits) {
+	s.m.RLock()
+	name := s.cfg.Info.Name
+	s.m.RUnlock()
+
 	t := traits.WithNamespace("websocket").
-		WithName(s.cfg.Info.Name)
+		WithName(name)
 	_ = s.eh.Push(log, t)
 }
 

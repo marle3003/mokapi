@@ -149,11 +149,8 @@ func TestHandler_Websocket(t *testing.T) {
 				err := ws.Parse(cfg, &dynamictest.Reader{})
 				require.NoError(t, err)
 
-				mi, err := app.Websocket.Add(cfg, enginetest.NewEngine())
+				_, err = app.Websocket.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Store.Channels = map[string]*websocket.Channel{
-					"chats/1234z": {Name: "chats/1234z"},
-				}
 
 				return app
 			},
@@ -179,9 +176,8 @@ func TestHandler_Websocket(t *testing.T) {
 
 				mi, err := app.Websocket.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Store.Channels = map[string]*websocket.Channel{
-					"chats/1234z": {Name: "chats/1234z"},
-				}
+				_, ok := mi.Store.Channel("chats/1234z")
+				require.True(t, ok)
 
 				app.Monitor.Websocket.Messages.WithLabel("foo", "chats/{chatId}", "chats/1234z").Add(1)
 				app.Monitor.Websocket.LastMessage.WithLabel("foo", "chats/{chatId}", "chats/1234z").Set(1234)

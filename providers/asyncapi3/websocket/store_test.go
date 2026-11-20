@@ -3,6 +3,7 @@ package websocket_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
@@ -754,5 +755,75 @@ func TestStore_Channel_ConcurrentFirstRequestsShareChannel(t *testing.T) {
 		for j := 1; j < clients; j++ {
 			require.Same(t, got[0], got[j], "iteration %d: client %d got a different channel", i, j)
 		}
+	}
+}
+
+func TestStore_Clients_ConcurrentWithFirstChannelRequests(t *testing.T) {
+	const iterations = 100
+	const requests = 8
+
+	for i := 0; i < iterations; i++ {
+		ch := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+		)
+		cfg := asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", ch))
+		s := websocket.New(cfg, nil, nil, nil)
+
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		for j := 0; j < requests; j++ {
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				<-start
+				_, _ = s.Channel(fmt.Sprintf("/chats/%d", j))
+			}()
+			go func() {
+				defer wg.Done()
+				<-start
+				_ = s.Clients()
+			}()
+		}
+		close(start)
+		wg.Wait()
+	}
+}
+
+func TestStore_Update_ConcurrentWithChannel(t *testing.T) {
+	const iterations = 100
+	const requests = 8
+
+	newCfg := func() *asyncapi3.Config {
+		ch := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+		)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.AddChannel("/chats/{roomId}", ch),
+			asyncapi3test.WithChannel("/static"),
+		)
+	}
+
+	for i := 0; i < iterations; i++ {
+		s := websocket.New(newCfg(), nil, nil, nil)
+		reloaded := newCfg()
+
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		for j := 0; j < requests; j++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				<-start
+				_, _ = s.Channel(fmt.Sprintf("/chats/%d", j))
+			}()
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			s.Update(reloaded)
+		}()
+		close(start)
+		wg.Wait()
 	}
 }

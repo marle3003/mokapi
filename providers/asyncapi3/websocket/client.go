@@ -91,7 +91,7 @@ func (c *Client) sendMessage(message any, scriptFile string) error {
 
 func (s *Store) Clients() []Client {
 	var clients []Client
-	for _, ch := range s.Channels {
+	for _, ch := range s.Channels() {
 		for _, c := range ch.connectedClients() {
 			clients = append(clients, *c)
 		}

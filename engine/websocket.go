@@ -3,11 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"mokapi/engine/common"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -162,7 +160,7 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 				err = newAmbiguousError("ambiguous websocket API: specify the cluster")
 				return
 			}
-			channels := slices.Collect(maps.Values(apis[0].Store.Channels))
+			channels := apis[0].Store.Channels()
 			if len(channels) > 1 {
 				err = newAmbiguousError("ambiguous channel %v. Specify the API", channelName)
 				return
