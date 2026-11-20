@@ -275,6 +275,11 @@
                 "label": "Docker and Docker Compose",
                 "source": "configuration/use-cases/docker.md",
                 "path": "/docs/configuration/use-cases/docker"
+              },
+              {
+                "label": "Start Mokapi in CI and Wait for /health",
+                "source": "configuration/use-cases/ci-health-check.md",
+                "path": "/docs/configuration/use-cases/ci-health-check"
               }
             ]
           }
