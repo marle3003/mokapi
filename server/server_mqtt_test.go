@@ -205,3 +205,14 @@ func requirePortClosed(t *testing.T, port int) {
 	}
 	require.Error(t, err, "port must be closed after delete")
 }
+
+func TestMqttManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e := mqttConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}

@@ -117,11 +117,19 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 }
 
 func (s *HttpStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := c.Data.(*openapi.Config)
 	name := cfg.Info.Name
 	hc := s.infos[name]
+	if hc == nil {
+		return
+	}
+
+	// lock order: s.m, then hc.m
+	hc.m.Lock()
+	defer hc.m.Unlock()
 
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(hc.Config)
@@ -134,13 +142,8 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 
 	if len(hc.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 

@@ -105,11 +105,15 @@ func (s *MailStore) Set(name string, mi *MailInfo) {
 }
 
 func (s *MailStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := c.Data.(*mail.Config)
 	name := cfg.Info.Name
 	mi := s.infos[name]
+	if mi == nil {
+		return
+	}
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(mi.Config)
 	}
@@ -118,13 +122,8 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 	mi.update()
 
 	if len(mi.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.sm.ResetStores(events.NewTraits().WithNamespace("mail").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 

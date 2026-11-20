@@ -85,3 +85,41 @@ func TestMqttStore_MergedConfigs(t *testing.T) {
 		})
 	}
 }
+
+func TestMqttStore_Remove(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	t.Run("unknown config does not panic and keeps the store usable", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		unknown := getConfig("https://mokapi.io/unknown.yml", asyncapi3test.NewConfig(asyncapi3test.WithTitle("unknown")))
+		known := getConfig("https://mokapi.io/a.yml", asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo")))
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Mqtt.Remove(unknown) },
+			func() { _, _ = app.Mqtt.Add(known, enginetest.NewEngine()) },
+		)
+	})
+
+	t.Run("config that cannot be converted does not keep the lock", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		known := getConfig("https://mokapi.io/a.yml", asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo")))
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Mqtt.Remove(asyncApi2FileThatCannotBeConverted("foo")) },
+			func() { _, _ = app.Mqtt.Add(known, enginetest.NewEngine()) },
+		)
+	})
+
+	t.Run("two files removed at the same time", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a, b := twoFilesWithSameTitle("mqtt")
+		_, err := app.Mqtt.Add(a, enginetest.NewEngine())
+		require.NoError(t, err)
+		_, err = app.Mqtt.Add(b, enginetest.NewEngine())
+		require.NoError(t, err)
+
+		removeConcurrently(app.Mqtt.Remove, a, b)
+
+		require.Equal(t, 0, app.Mqtt.Len())
+	})
+}

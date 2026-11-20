@@ -13,6 +13,7 @@ import (
 	"mokapi/sortedmap"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,9 +28,12 @@ type WebsocketStore struct {
 	reader  dynamic.Reader
 }
 
+// WebsocketInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type WebsocketInfo struct {
-	*asyncapi3.Config
 	*websocket.Store
+	config                atomic.Pointer[asyncapi3.Config]
+	m                     sync.RWMutex // guards configs, which are only written under the store lock
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *WebsocketInfo)
@@ -48,6 +52,14 @@ func newWebsocketInfo(store *websocket.Store, updateEventAndMetrics func(info *W
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	return hc
+}
+
+// NewWebsocketInfo returns an info that publishes cfg as is, without merging files and
+// without the implicit default server of Add. It is meant for tests of readers.
+func NewWebsocketInfo(cfg *asyncapi3.Config, store *websocket.Store) *WebsocketInfo {
+	wi := newWebsocketInfo(store, nil)
+	wi.config.Store(cfg)
+	return wi
 }
 
 func (s *WebsocketStore) Get(name string) *WebsocketInfo {
@@ -102,7 +114,7 @@ func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.WebsocketEventEmi
 	wi.addConfig(c, s.reader)
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(wi.Config)
+		s.addToIndex(wi.Config())
 	}
 
 	return wi, nil
@@ -120,7 +132,8 @@ func (s *WebsocketStore) Set(name string, wi *WebsocketInfo) {
 }
 
 func (s *WebsocketStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg, err := getWebsocketConfig(c)
 	if err != nil {
@@ -128,35 +141,45 @@ func (s *WebsocketStore) Remove(c *dynamic.Config) {
 	}
 	name := cfg.Info.Name
 	mi := s.infos[name]
-
-	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(mi.Config)
+	if mi == nil {
+		return
 	}
 
-	delete(mi.configs, c.Info.Url.String())
-	mi.update(s.reader)
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(mi.Config())
+	}
+
+	mi.removeConfig(c, s.reader)
 
 	if len(mi.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 
 func (c *WebsocketInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	key := config.Info.Url.String()
-	c.configs[key] = config
+	c.m.Lock()
+	c.configs[config.Info.Url.String()] = config
+	c.m.Unlock()
 	c.update(reader)
+}
+
+func (c *WebsocketInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
+	c.m.Lock()
+	delete(c.configs, config.Info.Url.String())
+	c.m.Unlock()
+	c.update(reader)
+}
+
+// Config returns the current merged config, or nil after the last file was removed.
+// The result must not be modified.
+func (c *WebsocketInfo) Config() *asyncapi3.Config {
+	return c.config.Load()
 }
 
 func (c *WebsocketInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
-		c.Config = nil
-		c.Store = nil
+		c.config.Store(nil)
 		return
 	}
 
@@ -179,7 +202,7 @@ func (c *WebsocketInfo) update(reader dynamic.Reader) {
 		})
 	}
 
-	c.Config = cfg
+	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
@@ -189,6 +212,9 @@ func (c *WebsocketInfo) Handler(ws *monitor.Websocket) http.Handler {
 }
 
 func (c *WebsocketInfo) Configs() []*dynamic.Config {
+	c.m.RLock()
+	defer c.m.RUnlock()
+
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
@@ -212,12 +238,13 @@ func getWebsocketConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 }
 
 func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
-	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
+	cfg := k.Config()
+	eventStore, hasStoreConfig := s.cfg.Event.Store[cfg.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for channelName, topic := range k.Config.Channels {
+	for channelName, topic := range cfg.Channels {
 		if topic.Value == nil {
 			continue
 		}
@@ -227,9 +254,9 @@ func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
 		if _, ok := k.seenTopics[channelName]; ok {
 			continue
 		}
-		s.monitor.Websocket.Messages.WithLabel(k.Config.Info.Name, channelName)
-		s.monitor.Websocket.LastMessage.WithLabel(k.Config.Info.Name, channelName)
-		traits := events.NewTraits().WithNamespace("websocket").WithName(k.Config.Info.Name).With("channel", channelName)
+		s.monitor.Websocket.Messages.WithLabel(cfg.Info.Name, channelName)
+		s.monitor.Websocket.LastMessage.WithLabel(cfg.Info.Name, channelName)
+		traits := events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name).With("channel", channelName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[channelName] = true
 	}

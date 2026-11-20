@@ -104,11 +104,15 @@ func (s *LdapStore) Set(name string, li *LdapInfo) {
 }
 
 func (s *LdapStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := c.Data.(*directory.Config)
 	name := cfg.Info.Name
 	li := s.infos[name]
+	if li == nil {
+		return
+	}
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(li.Config)
 	}
@@ -117,13 +121,8 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 	li.update()
 
 	if len(li.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 

@@ -183,3 +183,14 @@ func TestWebsocketManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.
 	require.Nil(t, app.Websocket.Get("foo"), "config must be removed from the Websocket store")
 	requirePortClosed(t, port)
 }
+
+func TestWebsocketManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewWebsocketManager(nil, app)
+	defer m.Stop()
+
+	e := websocketConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}

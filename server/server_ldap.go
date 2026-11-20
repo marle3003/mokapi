@@ -56,6 +56,9 @@ func (m *LdapDirectoryManager) UpdateConfig(e dynamic.ConfigEvent) {
 	name := cfg.Info.Name
 	info := m.app.Ldap.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Ldap.Remove(e.Config)
 		if info.Config == nil {
 			log.Infof("removing LDAP host '%v' on binding %v", name, m.servers[name].Addr)

@@ -220,7 +220,7 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 	}{
 		{
 			name:         "service list with metric",
-			app:          runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
+			app:          runtimetest.NewApp(runtimetest.WithWebsocket(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo")))),
 			requestUrl:   "http://foo.api/api/services",
 			responseBody: `[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":1,"message_timestamp":12345678}}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
@@ -268,10 +268,7 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 }
 
 func getWebsocketInfo(config *asyncapi3.Config) *runtime.WebsocketInfo {
-	return &runtime.WebsocketInfo{
-		Config: config,
-		Store:  websocket.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket()),
-	}
+	return runtime.NewWebsocketInfo(config, websocket.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket()))
 }
 
 func TestHandler_Websocket_ServiceItems(t *testing.T) {
@@ -323,7 +320,7 @@ func TestHandler_Websocket_ServiceItems(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			h := api.New(runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(tc.config))), static.Api{})
+			h := api.New(runtimetest.NewApp(runtimetest.WithWebsocket(tc.config)), static.Api{})
 
 			try.Handler(t,
 				http.MethodGet,
@@ -335,4 +332,26 @@ func TestHandler_Websocket_ServiceItems(t *testing.T) {
 				try.HasBody(`[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
 		})
 	}
+}
+
+func TestHandler_Websocket_InfoWithoutConfig(t *testing.T) {
+	// a reload can remove the last file between Get and reading the config
+	newHandler := func() http.Handler {
+		app := runtimetest.NewApp()
+		app.Websocket.Set("foo", &runtime.WebsocketInfo{})
+		return api.New(app, static.Api{})
+	}
+
+	t.Run("is skipped in the service list", func(t *testing.T) {
+		try.Handler(t, http.MethodGet, "http://foo.api/api/services/websocket", nil, "", newHandler(),
+			try.HasStatusCode(200),
+			try.HasBody(`[]`))
+	})
+
+	t.Run("is not found", func(t *testing.T) {
+		for _, path := range []string{"/foo", "/foo/channels"} {
+			try.Handler(t, http.MethodGet, "http://foo.api/api/services/websocket"+path, nil, "", newHandler(),
+				try.HasStatusCode(404))
+		}
+	})
 }

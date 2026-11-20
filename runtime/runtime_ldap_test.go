@@ -156,3 +156,32 @@ func newLdapConfig(name string, config *directory.Config) *dynamic.Config {
 	c.Info.Url = u
 	return c
 }
+
+func TestLdapStore_Remove(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(url, name string) *dynamic.Config {
+		return newLdapConfig(url, &directory.Config{Info: directory.Info{Name: name}})
+	}
+
+	t.Run("unknown config does not panic and keeps the store usable", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Ldap.Remove(newFile("https://mokapi.io/unknown.yml", "unknown")) },
+			func() { app.Ldap.Add(newFile("https://mokapi.io/a.yml", "foo"), enginetest.NewEngine()) },
+		)
+	})
+
+	t.Run("two files removed at the same time", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("https://mokapi.io/a.yml", "foo")
+		b := newFile("https://mokapi.io/b.yml", "foo")
+		app.Ldap.Add(a, enginetest.NewEngine())
+		app.Ldap.Add(b, enginetest.NewEngine())
+
+		removeConcurrently(app.Ldap.Remove, a, b)
+
+		require.Equal(t, 0, app.Ldap.Len())
+	})
+}

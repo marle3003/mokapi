@@ -510,3 +510,14 @@ func TestKafkaManager_DeleteFileStopsBrokerOnlyItDefined(t *testing.T) {
 	requirePortClosed(t, f.portA)
 	requirePortOpen(t, f.portB)
 }
+
+func TestKafkaManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewKafkaManager(nil, app)
+	defer m.Stop()
+
+	e := kafkaConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}

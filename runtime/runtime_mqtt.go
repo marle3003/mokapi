@@ -120,7 +120,8 @@ func (s *MqttStore) Set(name string, ki *MqttInfo) {
 }
 
 func (s *MqttStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg, err := getMqttConfig(c)
 	if err != nil {
@@ -128,6 +129,9 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	}
 	name := cfg.Info.Name
 	mi := s.infos[name]
+	if mi == nil {
+		return
+	}
 
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(mi.Config)
@@ -137,13 +141,8 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	mi.update(s.reader)
 
 	if len(mi.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 

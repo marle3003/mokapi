@@ -188,3 +188,32 @@ func TestApp_AddMail_EventStore(t *testing.T) {
 		require.Empty(t, app.Events.GetEvents(mailTraits("foo")))
 	})
 }
+
+func TestMailStore_Remove(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(url, name string) *dynamic.Config {
+		return newSmtpConfig(url, &mail.Config{Info: mail.Info{Name: name}})
+	}
+
+	t.Run("unknown config does not panic and keeps the store usable", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Mail.Remove(newFile("https://mokapi.io/unknown.yml", "unknown")) },
+			func() { app.Mail.Add(newFile("https://mokapi.io/a.yml", "foo")) },
+		)
+	})
+
+	t.Run("two files removed at the same time", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("https://mokapi.io/a.yml", "foo")
+		b := newFile("https://mokapi.io/b.yml", "foo")
+		app.Mail.Add(a)
+		app.Mail.Add(b)
+
+		removeConcurrently(app.Mail.Remove, a, b)
+
+		require.Equal(t, 0, app.Mail.Len())
+	})
+}

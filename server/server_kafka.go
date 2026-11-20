@@ -62,6 +62,9 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)

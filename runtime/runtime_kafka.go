@@ -128,11 +128,15 @@ func (s *KafkaStore) Set(name string, ki *KafkaInfo) {
 }
 
 func (s *KafkaStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki := s.infos[name]
+	if ki == nil {
+		return
+	}
 
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(ki.Config)
@@ -141,13 +145,8 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 	ki.update(s.reader)
 
 	if len(ki.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 

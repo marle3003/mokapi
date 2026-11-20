@@ -14,9 +14,12 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"os"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -206,4 +209,52 @@ func TestAsyncApiStores_FileWithEmptyEntries(t *testing.T) {
 			})
 		}
 	}
+}
+
+// requireStoreUsableAfterRemoveOfUnknownConfig removes a config that was never added.
+// That must neither panic nor keep the lock of the store: add must still return.
+func requireStoreUsableAfterRemoveOfUnknownConfig(t *testing.T, remove, add func()) {
+	t.Helper()
+	assert.NotPanics(t, remove)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		add()
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("add of a config blocks: remove did not release the lock of the store")
+	}
+}
+
+// removeConcurrently removes all files at the same time. Run with -race.
+func removeConcurrently(remove func(*dynamic.Config), files ...*dynamic.Config) {
+	var wg sync.WaitGroup
+	for _, c := range files {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			remove(c)
+		}()
+	}
+	wg.Wait()
+}
+
+// asyncApi2FileThatCannotBeConverted is an AsyncAPI 2.x file that fails to convert to
+// AsyncAPI 3 because a parameter has a non-string enum value.
+func asyncApi2FileThatCannotBeConverted(name string) *dynamic.Config {
+	c := getConfig("https://mokapi.io/invalid.yml", nil)
+	c.Data = &asyncApi.Config{
+		Info: asyncApi.Info{Name: name},
+		Channels: map[string]*asyncApi.ChannelRef{
+			"foo": {Value: &asyncApi.Channel{
+				Parameters: map[string]*asyncApi.ParameterRef{
+					"id": {Value: &asyncApi.Parameter{Schema: &schema.Schema{Enum: []any{1}}}},
+				},
+			}},
+		},
+	}
+	return c
 }

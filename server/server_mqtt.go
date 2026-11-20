@@ -46,6 +46,9 @@ func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Mqtt.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Mqtt.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)

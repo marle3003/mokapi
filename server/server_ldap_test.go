@@ -209,3 +209,14 @@ func requireOldPortIsFree(t *testing.T, release func(m *server.LdapDirectoryMana
 		require.NoError(t, err, "iteration %d", i)
 	}
 }
+
+func TestLdapManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewLdapDirectoryManager(enginetest.NewEngine(), nil, app)
+	defer m.Stop()
+
+	e := ldapConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}

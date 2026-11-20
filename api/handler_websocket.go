@@ -68,16 +68,20 @@ func getWebsocketServices(store *runtime.WebsocketStore, m *monitor.Monitor) []s
 	list := store.List()
 	result := make([]service, 0, len(list))
 	for _, mi := range list {
+		cfg := mi.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        mi.Info.Name,
-			Description: mi.Info.Description,
-			Version:     mi.Info.Version,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
+			Version:     cfg.Info.Version,
 			Type:        ServiceWebsocket,
-			Items:       getChannelItems(mi.Config, "ws"),
+			Items:       getChannelItems(cfg, "ws"),
 		}
 
-		if mi.Info.Contact != nil {
-			c := mi.Info.Contact
+		if cfg.Info.Contact != nil {
+			c := cfg.Info.Contact
 			s.Contact = &contact{
 				Name:  c.Name,
 				Url:   c.Url,
@@ -86,8 +90,8 @@ func getWebsocketServices(store *runtime.WebsocketStore, m *monitor.Monitor) []s
 		}
 
 		s.Metrics = websocketChannelMetrics{
-			NumMessages:     m.Websocket.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
-			LastMessageTime: m.Websocket.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			NumMessages:     m.Websocket.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastMessageTime: m.Websocket.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
 		result = append(result, s)
@@ -117,22 +121,27 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	m := websocketInfo{
-		Name:        wi.Config.Info.Name,
-		Description: wi.Config.Info.Description,
-		Version:     wi.Config.Info.Version,
+	cfg := wi.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	if wi.Config.Info.Contact != nil {
+	m := websocketInfo{
+		Name:        cfg.Info.Name,
+		Description: cfg.Info.Description,
+		Version:     cfg.Info.Version,
+	}
+
+	if cfg.Info.Contact != nil {
 		m.Contact = &contact{
-			Name:  wi.Config.Info.Contact.Name,
-			Url:   wi.Config.Info.Contact.Url,
-			Email: wi.Config.Info.Contact.Email,
+			Name:  cfg.Info.Contact.Name,
+			Url:   cfg.Info.Contact.Url,
+			Email: cfg.Info.Contact.Email,
 		}
 	}
 
-	for it := wi.Servers.Iter(); it.Next(); {
+	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
 		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "ws" {
@@ -164,7 +173,7 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 		return strings.Compare(m.Servers[i].Name, m.Servers[j].Name) < 0
 	})
 
-	m.Channels = getWebsocketChannels(wi, h.app.Monitor.Websocket)
+	m.Channels = getWebsocketChannels(wi, cfg, h.app.Monitor.Websocket)
 
 	for _, client := range wi.Store.Clients() {
 		c := websocketClient{
@@ -189,12 +198,18 @@ func (h *handler) getWebsocketChannels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	write(w, getWebsocketChannels(wi, h.app.Monitor.Websocket))
+	cfg := wi.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	write(w, getWebsocketChannels(wi, cfg, h.app.Monitor.Websocket))
 }
 
-func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []websocketChannel {
-	channels := make([]websocketChannel, 0, len(wi.Config.Channels))
-	for _, ch := range wi.Config.Channels {
+func getWebsocketChannels(wi *runtime.WebsocketInfo, cfg *asyncapi3.Config, m *monitor.Websocket) []websocketChannel {
+	channels := make([]websocketChannel, 0, len(cfg.Channels))
+	for _, ch := range cfg.Channels {
 		if ch.Value == nil {
 			continue
 		}
@@ -203,7 +218,7 @@ func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []web
 		}
 		addr := ch.Value.ResolveAddress()
 
-		data := newWebsocketChannel(addr, ch.Value, wi.Config)
+		data := newWebsocketChannel(addr, ch.Value, cfg)
 		if len(ch.Value.Parameters) > 0 {
 			data.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
 				return strings.Compare(a, b)
@@ -216,8 +231,8 @@ func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []web
 						Parameters: params,
 					}
 					inst.Metrics = websocketChannelMetrics{
-						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("instance", c.Name))),
-						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("instance", c.Name))),
+						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", c.Name))),
+						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", c.Name))),
 					}
 					data.Instances = append(data.Instances, inst)
 				}
@@ -225,8 +240,8 @@ func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []web
 		}
 
 		data.Metrics = websocketChannelMetrics{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("channel", addr))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("channel", addr))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("channel", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("channel", addr))),
 		}
 
 		channels = append(channels, data)
