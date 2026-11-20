@@ -6,11 +6,16 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
@@ -520,4 +525,19 @@ func TestKafkaManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
 	e.Event = dynamic.Delete
 
 	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}
+
+func TestKafkaManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
+	e := kafkaConfigEvent(try.GetFreePort())
+	cfg := e.Config.Data.(*asyncapi3.Config)
+	st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+	defer st.Close()
+	app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, st)))
+	m := server.NewKafkaManager(nil, app)
+	defer m.Stop()
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Kafka.Get("foo"))
 }

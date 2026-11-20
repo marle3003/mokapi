@@ -124,7 +124,12 @@ func (h *handler) getExampleByQuery(w http.ResponseWriter, r *http.Request) {
 	case *runtime.HttpInfo:
 		getOpenApiExample(w, r, v.Config)
 	case *runtime.KafkaInfo:
-		getAsyncApiExample(w, r, v.Config)
+		cfg := v.Config()
+		if cfg == nil {
+			http.Error(w, "No result found", http.StatusBadRequest)
+			return
+		}
+		getAsyncApiExample(w, r, cfg)
 	default:
 		http.Error(w, fmt.Sprintf("No result found"), http.StatusBadRequest)
 	}

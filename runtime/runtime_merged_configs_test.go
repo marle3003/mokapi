@@ -159,7 +159,7 @@ func TestKafkaStore_MergeFilesWithIncompleteEntries(t *testing.T) {
 				info, err = app.Kafka.Add(asyncApiFile(t, "https://mokapi.io/b.yml", tc.b), enginetest.NewEngine())
 			})
 			require.NoError(t, err)
-			tc.check(t, info.Config)
+			tc.check(t, info.Config())
 		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
@@ -160,6 +161,20 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasBody(`"byx"`))
+			},
+		},
+		{
+			name: "asyncapi config removed while the request is running",
+			app:  runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, &store.Store{}))),
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?spec=asyncapi&name=foo&channel=foo&message=foo",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(400),
+					try.HasBody("No result found\n"))
 			},
 		},
 	}

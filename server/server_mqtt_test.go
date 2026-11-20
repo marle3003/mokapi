@@ -199,7 +199,7 @@ func TestMqttManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
 	require.NotPanics(t, func() { m.UpdateConfig(e) })
 
 	require.NotNil(t, app.Kafka.Get("foo"))
-	require.NotNil(t, app.Kafka.Get("foo").Config, "kafka config must survive a MQTT delete")
+	require.NotNil(t, app.Kafka.Get("foo").Config(), "kafka config must survive a MQTT delete")
 	require.Nil(t, app.Mqtt.Get("foo"), "config must be removed from the MQTT store")
 	requirePortClosed(t, port)
 }
