@@ -20,6 +20,7 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(LdapSuite))
 	suite.Run(t, new(LdapReloadSuite))
 	suite.Run(t, new(MqttSuite))
+	suite.Run(t, new(MqttReloadSuite))
 	suite.Run(t, new(WebsocketSuite))
 	suite.Run(t, new(HttpSuite))
 	suite.Run(t, new(DelaySuite))

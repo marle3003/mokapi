@@ -4,6 +4,7 @@ import (
 	"fmt"
 	engine "mokapi/engine/common"
 	"mokapi/mqtt"
+	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"time"
 
@@ -146,7 +147,24 @@ func (s *Store) topic(name string) (*Topic, bool) {
 		return t, ok
 	}
 
-	for _, ch := range s.cfg.Channels {
+	ch := parameterizedChannel(s.cfg, name)
+	if ch == nil {
+		return nil, false
+	}
+
+	if s.topics == nil {
+		s.topics = make(map[string]*Topic)
+	}
+
+	t := &Topic{Name: name, cfg: ch}
+	s.topics[name] = t
+	return t, true
+}
+
+// parameterizedChannel returns the available MQTT channel with parameters
+// whose address matches the topic name.
+func parameterizedChannel(cfg *asyncapi3.Config, name string) *asyncapi3.Channel {
+	for _, ch := range cfg.Channels {
 		if ch == nil || ch.Value == nil {
 			continue
 		}
@@ -156,22 +174,12 @@ func (s *Store) topic(name string) (*Topic, bool) {
 		if len(ch.Value.Parameters) == 0 {
 			continue
 		}
-
-		err := ch.Value.IsNameValid(name)
-		if err != nil {
+		if err := ch.Value.IsNameValid(name); err != nil {
 			continue
 		}
-
-		if s.topics == nil {
-			s.topics = make(map[string]*Topic)
-		}
-
-		t := &Topic{Name: name, cfg: ch.Value}
-		s.topics[name] = t
-		return t, true
+		return ch.Value
 	}
-
-	return nil, false
+	return nil
 }
 
 func (s *Store) logMessage(apiName string, messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {

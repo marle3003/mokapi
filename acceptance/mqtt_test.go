@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"mokapi/config/static"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -208,4 +210,100 @@ func (suite *MqttSuite) TestPublishEmptyRetainedValueRemovesRetainedMessage() {
 	data = suite.simulatePublish("sensors/events", `{"value":null}`, try.HasStatusCode(http.StatusNoContent))
 
 	require.Nil(suite.T(), data, "retained message must be removed, not replaced by an empty payload")
+}
+
+// MqttReloadSuite checks what happens to the broker state when the AsyncAPI file is reloaded.
+type MqttReloadSuite struct {
+	BaseSuite
+	dir  string
+	port int
+}
+
+func (suite *MqttReloadSuite) SetupSuite() {
+	suite.port = try.GetFreePort()
+	suite.dir = suite.T().TempDir()
+	suite.writeSpec("")
+
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
+	suite.initCmd(cfg)
+}
+
+func (suite *MqttReloadSuite) writeSpec(description string) {
+	spec := fmt.Sprintf(`asyncapi: 3.0.0
+info:
+  title: Reload Service
+  version: 1.0.0
+  description: %q
+servers:
+  mokapi:
+    host: 'localhost:%d'
+    protocol: mqtt
+channels:
+  status:
+    address: 'devices/status'
+    messages:
+      StatusEvent:
+        contentType: text/plain
+        payload:
+          type: string
+`, description, suite.port)
+	suite.Require().NoError(os.WriteFile(filepath.Join(suite.dir, "reload.yml"), []byte(spec), 0o600))
+}
+
+func (suite *MqttReloadSuite) connect(clientId string) *mqtttest.Client {
+	c := mqtttest.NewClient(fmt.Sprintf("localhost:%d", suite.port))
+	suite.T().Cleanup(c.Close)
+	_, err := c.Send(&mqtt.Message{
+		Header: &mqtt.Header{Type: mqtt.CONNECT},
+		Payload: &mqtt.ConnectRequest{
+			Protocol:     "MQTT",
+			Version:      5,
+			CleanSession: true,
+			KeepAlive:    60,
+			ClientId:     clientId,
+		},
+	})
+	suite.Require().NoError(err)
+	return c
+}
+
+// TestRetainedMessageSurvivesFileReload verifies that the retained message of a topic is still
+// delivered to a new subscriber after the AsyncAPI file was reloaded.
+func (suite *MqttReloadSuite) TestRetainedMessageSurvivesFileReload() {
+	t := suite.T()
+	try.WaitFor(t, func() bool { return suite.cmd.App.Mqtt.Get("Reload Service") != nil })
+
+	publisher := suite.connect("reload-publisher")
+	res, err := publisher.Send(&mqtt.Message{
+		Header: &mqtt.Header{Type: mqtt.PUBLISH, QoS: 1, Retain: true},
+		Payload: &mqtt.PublishRequest{
+			Topic:     "devices/status",
+			MessageId: 1,
+			Data:      []byte("online"),
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, mqtt.PublishSuccess, res.Payload.(*mqtt.PublishResponse).ReasonCode)
+
+	suite.writeSpec("changed")
+	try.WaitFor(t, func() bool {
+		cfg := suite.cmd.App.Mqtt.Get("Reload Service").Config()
+		return cfg != nil && cfg.Info.Description == "changed"
+	})
+
+	subscriber := suite.connect("reload-subscriber")
+	_, err = subscriber.Send(&mqtt.Message{
+		Header: &mqtt.Header{Type: mqtt.SUBSCRIBE},
+		Payload: &mqtt.SubscribeRequest{
+			MessageId: 2,
+			Topics:    []mqtt.SubscribeTopic{{Name: "devices/status", QoS: 0}},
+		},
+	})
+	require.NoError(t, err)
+
+	msg, err := subscriber.Recv()
+	require.NoError(t, err, "retained message must be delivered to the new subscriber after reload")
+	require.Equal(t, "online", string(msg.Payload.(*mqtt.PublishRequest).Data))
 }

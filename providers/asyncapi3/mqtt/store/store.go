@@ -57,11 +57,21 @@ func (s *Store) Topics() []*Topic {
 	return slices.Collect(maps.Values(s.topics))
 }
 
+// Update makes the topics follow the new config and keeps their retained
+// messages. Topics are replaced, never changed, because Topic.cfg is read
+// without holding s.m.
 func (s *Store) Update(cfg *asyncapi3.Config) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	s.cfg = cfg
+
+	topics := make(map[string]*Topic)
+	for name, old := range s.topics {
+		if old.cfg == nil {
+			topics[name] = old
+		}
+	}
 
 	for address, ch := range cfg.Channels {
 		if ch == nil || ch.Value == nil {
@@ -74,17 +84,33 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 			continue
 		}
 
-		if s.topics == nil {
-			s.topics = make(map[string]*Topic)
-		}
-
 		if ch.Value.Address != "" {
 			address = ch.Value.Address
 		}
 
-		s.topics[address] = &Topic{Name: address, cfg: ch.Value}
-
+		topics[address] = s.reconfiguredTopic(address, ch.Value)
 	}
+
+	for name, old := range s.topics {
+		if _, ok := topics[name]; ok || old.cfg == nil {
+			continue
+		}
+		if ch := parameterizedChannel(cfg, name); ch != nil {
+			topics[name] = s.reconfiguredTopic(name, ch)
+		}
+	}
+
+	s.topics = topics
+}
+
+// reconfiguredTopic returns a new topic for the channel that takes over the
+// retained message of the current topic with that name. The caller must hold s.m.
+func (s *Store) reconfiguredTopic(name string, ch *asyncapi3.Channel) *Topic {
+	t := &Topic{Name: name, cfg: ch}
+	if old, ok := s.topics[name]; ok {
+		t.Retained = old.Retained
+	}
+	return t
 }
 
 func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
