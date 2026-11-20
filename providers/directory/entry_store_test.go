@@ -108,6 +108,71 @@ func TestEntryStore_Read(t *testing.T) {
 	})
 }
 
+func TestEntryStore_Find(t *testing.T) {
+	byDn := func(dn string) func(directory.Entry) bool {
+		return func(e directory.Entry) bool { return e.Dn == dn }
+	}
+
+	testcases := []struct {
+		name  string
+		store *directory.EntryStore
+		match func(directory.Entry) bool
+		found bool
+		dn    string
+	}{
+		{
+			name:  "nil store",
+			store: nil,
+			match: byDn("cn=foo"),
+		},
+		{
+			name:  "empty store",
+			store: directory.NewEntryStore(),
+			match: byDn("cn=foo"),
+		},
+		{
+			name:  "no entry matches",
+			store: newStore(person("cn=foo", nil), person("cn=bar", nil)),
+			match: byDn("cn=other"),
+		},
+		{
+			name:  "entry matches",
+			store: newStore(person("cn=foo", nil), person("cn=bar", nil)),
+			match: byDn("cn=bar"),
+			found: true,
+			dn:    "cn=bar",
+		},
+		{
+			name:  "first match in insertion order",
+			store: newStore(person("cn=foo", map[string][]string{"a": {"1"}}), person("cn=bar", map[string][]string{"a": {"1"}})),
+			match: func(e directory.Entry) bool { return len(e.Attributes["a"]) > 0 },
+			found: true,
+			dn:    "cn=foo",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			e, ok := tc.store.Find(tc.match)
+
+			require.Equal(t, tc.found, ok)
+			require.Equal(t, tc.dn, e.Dn)
+		})
+	}
+
+	t.Run("result is independent of the store", func(t *testing.T) {
+		s := newStore(person("cn=foo", map[string][]string{"mail": {"a@foo.bar"}}))
+
+		e, ok := s.Find(byDn("cn=foo"))
+		require.True(t, ok)
+		e.Attributes["mail"][0] = "changed"
+		e.Attributes["mail"] = append(e.Attributes["mail"], "more")
+		e.Attributes["new"] = []string{"x"}
+
+		require.Equal(t, person("cn=foo", map[string][]string{"mail": {"a@foo.bar"}}), lookup(s, "cn=foo"))
+	})
+}
+
 func TestEntryStore_Apply(t *testing.T) {
 	t.Run("add", func(t *testing.T) {
 		s := directory.NewEntryStore()

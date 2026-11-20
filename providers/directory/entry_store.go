@@ -10,7 +10,7 @@ import (
 // EntryStore holds the entries of a directory. LDAP clients write to it while other clients
 // search, so the entries are only reachable under the store's lock: reads return deep copies and
 // Apply is the only way for clients to write. The key of an entry is its normalized DN.
-// Readers can call Get, Len and Entries on a nil store.
+// Readers can call Get, Find, Len and Entries on a nil store.
 type EntryStore struct {
 	m       sync.RWMutex
 	entries *sortedmap.LinkedHashMap[string, Entry]
@@ -70,6 +70,23 @@ func (s *EntryStore) Entries() []Entry {
 		r = append(r, e.copy())
 	}
 	return r
+}
+
+// Find returns a copy of the first entry, in insertion order, for which match is true. Only the
+// hit is copied. match runs under the read lock of the store and must not call back into it.
+func (s *EntryStore) Find(match func(Entry) bool) (Entry, bool) {
+	if s == nil {
+		return Entry{}, false
+	}
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	for it := s.entries.Iter(); it.Next(); {
+		if e := it.Value(); match(e) {
+			return e.copy(), true
+		}
+	}
+	return Entry{}, false
 }
 
 // Apply applies a write operation. The store keeps memberOf in sync with the member attributes,

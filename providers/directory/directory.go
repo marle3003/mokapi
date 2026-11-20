@@ -129,12 +129,11 @@ func (d *Directory) subschemaDN() string {
 }
 
 func (d *Directory) getEntry(dn string) *Entry {
-	for _, e := range d.config.Entries.Entries() {
-		if e.Dn == dn {
-			return &e
-		}
+	e, ok := d.config.Entries.Find(func(e Entry) bool { return e.Dn == dn })
+	if !ok {
+		return nil
 	}
-	return nil
+	return &e
 }
 
 func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, ctx context.Context) {
