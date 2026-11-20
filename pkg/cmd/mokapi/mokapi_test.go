@@ -61,6 +61,13 @@ func TestMain_Flags(t *testing.T) {
 			},
 		},
 		{
+			name: "--mcp-server-enabled false",
+			args: []string{"--mcp-server-enabled", "false"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.False(t, cfg.Mcp.Server.Enabled)
+			},
+		},
+		{
 			name: "--event-store-default-size 500",
 			args: []string{"--event-store-default-size", "500"},
 			test: func(t *testing.T, cfg *static.Config) {

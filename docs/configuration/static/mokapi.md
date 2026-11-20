@@ -359,18 +359,18 @@ When enabled, Mokapi exposes an MCP-compatible endpoint that allows external too
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
-| --mcp-server-enabled | MOKAPI_MCP_SERVER_ENABLED | mcp.server.enabled | bool | false |
+| --mcp-server-enabled | MOKAPI_MCP_SERVER_ENABLED | mcp.server.enabled | bool | true |
 
 ```bash tab=CLI
---mcp-server-enabled
+--mcp-server-enabled false
 ```
 ```bash tab=Env
-MOKAPI_MCP_SERVER_ENABLED=true
+MOKAPI_MCP_SERVER_ENABLED=false
 ```
 ```yaml tab=File
 mcp:
   server:
-    enabled: true
+    enabled: false
 ```
 
 ## <a id="mcp-server-port" name="mcp-server-port"></a>mcp-server-port

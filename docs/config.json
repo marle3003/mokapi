@@ -280,6 +280,16 @@
                 "label": "Mokapi in CI",
                 "source": "configuration/use-cases/ci-health-check.md",
                 "path": "/docs/configuration/use-cases/ci-health-check"
+              },
+              {
+                "label": "MCP Server",
+                "source": "configuration/use-cases/mcp-server.md",
+                "path": "/docs/configuration/use-cases/mcp-server"
+              },
+              {
+                "label": "Sample Data",
+                "source": "configuration/use-cases/sample-data.md",
+                "path": "/docs/configuration/use-cases/sample-data"
               }
             ]
           }
