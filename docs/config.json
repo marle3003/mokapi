@@ -255,6 +255,11 @@
                 "label": "Corporate Proxy",
                 "source": "configuration/use-cases/corporate-proxy.md",
                 "path": "/docs/configuration/use-cases/corporate-proxy"
+              },
+              {
+                "label": "Reverse Proxy",
+                "source": "configuration/use-cases/reverse-proxy.md",
+                "path": "/docs/configuration/use-cases/reverse-proxy"
               }
             ]
           }

@@ -218,6 +218,7 @@ api:
 
 Defines a path prefix under which the API and web dashboard are served.
 This is useful when Mokapi is hosted behind a reverse proxy and needs to be accessible under a specific URL path.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for how it differs from [api-base](#api-base).
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
@@ -236,8 +237,10 @@ api:
 
 ## <a id="api-base" name="api-base"></a>api-base
 
-Specifies the external base path used to access the API when Mokapi is running behind a reverse proxy.
-This value is used to generate correct URLs in responses and in the web dashboard, and may differ from the internal api-path.
+Specifies the external path under which the browser reaches the web dashboard when Mokapi runs behind a reverse proxy.
+Mokapi sets this value as the base URL of the dashboard page, so the dashboard loads its assets and calls the API under this path.
+It doesn't change the paths Mokapi itself serves (that's api-path). If api-base isn't set, the dashboard uses api-path instead.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for when you need it.
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|

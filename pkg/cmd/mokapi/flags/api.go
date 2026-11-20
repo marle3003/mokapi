@@ -31,7 +31,8 @@ The API server is the central entry point where developers can access all mocked
 var apiPath = cli.FlagDoc{
 	Short: "Path prefix for the API and dashboard",
 	Long: `Defines a path prefix under which the API and web dashboard are served.
-This is useful when Mokapi is hosted behind a reverse proxy and needs to be accessible under a specific URL path.`,
+This is useful when Mokapi is hosted behind a reverse proxy and needs to be accessible under a specific URL path.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for how it differs from [api-base](#api-base).`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -45,8 +46,10 @@ This is useful when Mokapi is hosted behind a reverse proxy and needs to be acce
 
 var apiBase = cli.FlagDoc{
 	Short: "Base path used when the API is behind a reverse proxy",
-	Long: `Specifies the external base path used to access the API when Mokapi is running behind a reverse proxy.
-This value is used to generate correct URLs in responses and in the web dashboard, and may differ from the internal api-path.`,
+	Long: `Specifies the external path under which the browser reaches the web dashboard when Mokapi runs behind a reverse proxy.
+Mokapi sets this value as the base URL of the dashboard page, so the dashboard loads its assets and calls the API under this path.
+It doesn't change the paths Mokapi itself serves (that's api-path). If api-base isn't set, the dashboard uses api-path instead.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for when you need it.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
