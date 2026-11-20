@@ -425,3 +425,58 @@ func TestMain_SampleData_Url(t *testing.T) {
 		require.Regexp(t, `^-?\d+$`, out)
 	})
 }
+
+func TestMain_SampleData_YamlOutput(t *testing.T) {
+	writeSchema := func(t *testing.T, content string) string {
+		t.Helper()
+		file := filepath.Join(t.TempDir(), "schema.json")
+		require.NoError(t, os.WriteFile(file, []byte(content), 0o600))
+		return file
+	}
+
+	objectSchema := `{"type":"object","properties":{"id":{"type":"integer"},"name":{"type":"string"}},"required":["id","name"],"additionalProperties":false}`
+
+	t.Run("object", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, out)
+	})
+
+	t.Run("array", func(t *testing.T) {
+		file := writeSchema(t, `{"type":"array","items":{"type":"integer"},"minItems":2,"maxItems":2}`)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", file)
+
+		require.Regexp(t, `^- -?\d+\n- -?\d+\n?$`, out)
+	})
+
+	t.Run("openapi object", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "--input-type", "openapi", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, out)
+	})
+
+	t.Run("avro record", func(t *testing.T) {
+		file := writeSchema(t, `{"type":"record","name":"User","fields":[{"name":"id","type":"int"}]}`)
+
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\n?$`, out)
+	})
+
+	t.Run("count separates documents with ---", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", "-n", "2", file)
+
+		docs := strings.Split(out, "\n---\n")
+		require.Len(t, docs, 2)
+		for _, doc := range docs {
+			require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, doc)
+		}
+	})
+}

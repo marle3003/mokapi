@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/media"
 	"mokapi/schema/json/schema"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -49,6 +50,55 @@ func TestEncode(t *testing.T) {
 			test: func(t *testing.T, b []byte, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `123`, string(b))
+			},
+		},
+		{
+			name: "yaml object keeps key order",
+			data: map[string]any{"name": "Alice", "id": 1},
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithProperty("id", schematest.New("integer")),
+			),
+			ct: media.ParseContentType("application/yaml"),
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "name: Alice\nid: 1\n", string(b))
+			},
+		},
+		{
+			name: "yaml array",
+			data: []any{1, 2},
+			ct:   media.ParseContentType("application/yaml"),
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "- 1\n- 2\n", string(b))
+			},
+		},
+		{
+			name: "problem+yaml",
+			data: map[string]any{"title": "Not found"},
+			ct:   media.ParseContentType("application/problem+yaml"),
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "title: Not found\n", string(b))
+			},
+		},
+		{
+			name: "yaml string",
+			data: "hello",
+			ct:   media.ParseContentType("application/yaml"),
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "hello\n", string(b))
+			},
+		},
+		{
+			name: "yaml integer",
+			data: 123,
+			ct:   media.ParseContentType("application/yaml"),
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "123\n", string(b))
 			},
 		},
 	}

@@ -1,6 +1,6 @@
 ---
 title: Generate Test Data with mokapi sample-data
-description: Use the mokapi sample-data command to generate random JSON, XML or Avro data from a JSON Schema, OpenAPI schema or Avro schema, for test fixtures, seed data and CI pipelines.
+description: Use the mokapi sample-data command to generate random JSON, XML, YAML or Avro data from a JSON Schema, OpenAPI schema or Avro schema, for test fixtures, seed data and CI pipelines.
 ---
 # Generate Test Data with mokapi sample-data
 
@@ -137,11 +137,18 @@ schema, as in OpenAPI.
 `binary` is meant for Avro: with `--input-type avro --output binary` the command writes the Avro binary encoding of
 the value.
 
-``` box=warning title="YAML output"
-In the current implementation, `--output yaml` only works for simple values such as a number or a string. For
-objects and arrays, the command exits with `failed to marshal data: not supported encoding of content types
-'application/yaml', except simple data types`. Use `json` and convert the result with a tool such as `yq` if you need
-YAML.
+With `yaml`, each sample is a YAML document. Several samples are separated by a `---` line, so the output is a
+multi-document YAML stream.
+
+```bash
+mokapi sample-data -o yaml -n 2 --input-type openapi './openapi.yaml#/components/schemas/Order'
+```
+
+```yaml
+id: 30840
+---
+id: 19840
+status: open
 ```
 
 ## Examples
