@@ -120,9 +120,11 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 
 	li.remove(c, mergeLdapConfigs)
 
-	if li.Config() == nil {
+	if remaining := li.Config(); remaining == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
+	} else if s.cfg.Api.Search.Enabled {
+		s.addToIndex(remaining)
 	}
 }
 

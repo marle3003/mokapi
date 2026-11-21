@@ -82,11 +82,41 @@ func TestIndex_Ldap(t *testing.T) {
 
 				app.Ldap.Remove(toConfig(cfg))
 				waitSearchIndex(t, func() bool {
-					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					r, err = app.Search(search.Request{Limit: 10})
 					require.NoError(t, err)
 					return len(r.Results) == 0
 				})
 				require.Len(t, r.Results, 0)
+			},
+		},
+		{
+			name: "entry should be removed from index",
+			test: func(t *testing.T, app *runtime.App) {
+				entries := directory.NewEntryStore()
+				entries.Set("foo", directory.Entry{
+					Dn:         "cn=alice,dc=foo,dc=com",
+					Attributes: map[string][]string{"objectclass": {"user"}},
+				})
+				cfg := &directory.Config{
+					Info:    directory.Info{Name: "foo"},
+					Entries: entries,
+				}
+				app.Ldap.Add(toConfig(cfg), enginetest.NewEngine())
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "alice", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
+
+				app.Ldap.Remove(toConfig(cfg))
+
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "alice", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 			},
 		},
 		{
@@ -225,4 +255,41 @@ func TestIndex_Ldap_Event(t *testing.T) {
 			tc.test(t, h, app)
 		})
 	}
+}
+
+func TestIndex_Ldap_MergedFiles(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	ldapFile := func(url, dn string) *dynamic.Config {
+		entries := directory.NewEntryStore()
+		entries.Set(dn, directory.Entry{
+			Dn:         dn,
+			Attributes: map[string][]string{"objectclass": {"user"}},
+		})
+		return &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)),
+			Data: &directory.Config{Info: directory.Info{Name: "foo"}, Entries: entries},
+		}
+	}
+	found := func(t *testing.T, app *runtime.App, text string) bool {
+		r, err := app.Search(search.Request{QueryText: text, Limit: 10})
+		require.NoError(t, err)
+		return len(r.Results) > 0
+	}
+
+	app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, InMemory: true}}}, &dynamictest.Reader{})
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
+
+	app.Ldap.Add(ldapFile("https://mokapi.io/a.yml", "cn=alice,dc=foo,dc=com"), enginetest.NewEngine())
+	b := ldapFile("https://mokapi.io/b.yml", "cn=bob,dc=foo,dc=com")
+	app.Ldap.Add(b, enginetest.NewEngine())
+	waitSearchIndex(t, func() bool { return found(t, app, "bob") && found(t, app, "alice") })
+
+	app.Ldap.Remove(b)
+
+	waitSearchIndex(t, func() bool {
+		return found(t, app, "alice") && !found(t, app, "bob")
+	})
 }

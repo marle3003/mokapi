@@ -108,6 +108,6 @@ func (s *LdapStore) removeFromIndex(cfg *directory.Config) {
 	s.index.Delete(fmt.Sprintf("ldap_%s", cfg.Info.Name))
 
 	for _, e := range cfg.Entries.Entries() {
-		s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn))
+		s.index.Delete(fmt.Sprintf("ldap_%s_%s", cfg.Info.Name, e.Dn))
 	}
 }
