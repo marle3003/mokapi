@@ -480,3 +480,29 @@ func TestMain_SampleData_YamlOutput(t *testing.T) {
 		}
 	})
 }
+
+func TestMain_SampleData_AvroRecord(t *testing.T) {
+	// Avro has no optional record fields, so every sample must contain all of them
+	schema := `{"type":"record","name":"User","fields":[{"name":"id","type":"int"},{"name":"name","type":"string"}]}`
+	file := filepath.Join(t.TempDir(), "user.avsc")
+	require.NoError(t, os.WriteFile(file, []byte(schema), 0o600))
+
+	t.Run("binary output succeeds for many samples", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "binary", "-n", "50", file)
+
+		require.NotEmpty(t, out)
+	})
+
+	t.Run("json output contains every field in each sample", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "json", "-n", "50", file)
+
+		lines := strings.Split(strings.TrimSpace(out), "\n")
+		require.Len(t, lines, 50)
+		for _, line := range lines {
+			var record map[string]any
+			require.NoError(t, json.Unmarshal([]byte(line), &record))
+			require.Contains(t, record, "id")
+			require.Contains(t, record, "name")
+		}
+	})
+}
