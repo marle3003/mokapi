@@ -1200,6 +1200,16 @@ func TestKafkaClient_Produce_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
 		})
 	})
 
+	t.Run("no cluster and no topic returns not found", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			app := runtimetest.NewApp(removed())
+
+			_, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{})
+
+			require.EqualError(t, err, "kafka topic '' not found")
+		})
+	})
+
 	t.Run("cluster searched by topic is not ambiguous with a removed cluster", func(t *testing.T) {
 		app := runtimetest.NewApp(removed(), runtimetest.WithKafka(newConfig("bar")))
 
@@ -1210,5 +1220,113 @@ func TestKafkaClient_Produce_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, "bar", result.Api)
+	})
+}
+
+func TestKafkaClient_Produce_NoApiOrTopic(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name string
+		app  func() *runtime.App
+	}{
+		{
+			name: "no API loaded",
+			app:  func() *runtime.App { return runtimetest.NewApp() },
+		},
+		{
+			name: "API without topics",
+			app: func() *runtime.App {
+				return runtimetest.NewApp(runtimetest.WithKafka(asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := engine.NewKafkaClient(tc.app()).Produce(&common.KafkaProduceArgs{})
+
+				require.EqualError(t, err, "kafka topic '' not found")
+			})
+		})
+	}
+
+	t.Run("not found is retried", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		// set after the app is created, adding an API changes the log level
+		logrus.SetLevel(logrus.DebugLevel)
+		hook := test.NewGlobal()
+
+		_, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{
+			Retry: common.RetryArgs{Retries: 2, InitialRetryTime: time.Millisecond, MaxRetryTime: time.Second, Factor: 2},
+		})
+
+		require.EqualError(t, err, "kafka topic '' not found")
+		require.Contains(t, getMessages(hook), "kafka topic '' not found. Retry in 1ms")
+	})
+}
+
+func TestKafkaClient_Produce_Api(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(runtimetest.WithKafka(asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel("sensors", asyncapi3test.WithMessage("msg", asyncapi3test.WithPayload(schematest.New("string")))),
+			asyncapi3test.AddChannel("readings.{id}", asyncapi3test.NewChannel(
+				asyncapi3test.WithParameter("id", &asyncapi3.Parameter{}),
+				asyncapi3test.WithMessage("msg", asyncapi3test.WithPayload(schematest.New("string"))),
+			)),
+		)))
+	}
+	message := common.KafkaMessage{Value: common.Optional[[]byte]{Value: []byte("hello"), IsSet: true}}
+
+	testcases := []struct {
+		name string
+		args common.KafkaProduceArgs
+		// topic is the topic of the result
+		topic string
+		err   string
+	}{
+		{name: "topic only", args: common.KafkaProduceArgs{Topic: "sensors"}, topic: "sensors"},
+		{name: "cluster given", args: common.KafkaProduceArgs{Cluster: "foo", Topic: "sensors"}, topic: "sensors"},
+		{
+			name:  "topic matching a channel address with parameters",
+			args:  common.KafkaProduceArgs{Topic: "readings.1", AllowAutoTopicCreation: true},
+			topic: "readings.1",
+		},
+		{name: "unknown cluster", args: common.KafkaProduceArgs{Cluster: "bar", Topic: "sensors"}, err: "kafka cluster 'bar' not found"},
+		{name: "unknown topic with cluster", args: common.KafkaProduceArgs{Cluster: "foo", Topic: "x"}, err: "kafka topic 'x' not found"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := tc.args
+			args.Messages = []common.KafkaMessage{message}
+
+			result, err := engine.NewKafkaClient(newApp()).Produce(&args)
+
+			if tc.err != "" {
+				require.EqualError(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "foo", result.Api)
+			require.Equal(t, tc.topic, result.Topic)
+		})
+	}
+
+	t.Run("neither cluster nor topic", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithKafka(asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel("sensors", asyncapi3test.WithMessage("msg", asyncapi3test.WithPayload(schematest.New("string")))),
+		)))
+
+		result, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{Messages: []common.KafkaMessage{message}})
+
+		require.NoError(t, err)
+		require.Equal(t, "foo", result.Api)
+		require.Equal(t, "sensors", result.Topic)
 	})
 }
