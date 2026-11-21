@@ -122,7 +122,12 @@ func (h *handler) getExampleByQuery(w http.ResponseWriter, r *http.Request) {
 
 	switch v := specs[0].(type) {
 	case *runtime.HttpInfo:
-		getOpenApiExample(w, r, v.Config)
+		cfg := v.Config()
+		if cfg == nil {
+			http.Error(w, "No result found", http.StatusBadRequest)
+			return
+		}
+		getOpenApiExample(w, r, cfg)
 	case *runtime.KafkaInfo:
 		cfg := v.Config()
 		if cfg == nil {

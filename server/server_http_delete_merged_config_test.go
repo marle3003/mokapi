@@ -64,7 +64,7 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 	r, err = c.Get(fmt.Sprintf("http://127.0.0.1:%d/fromB", portA))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNotFound, r.StatusCode)
-	requireMergedConfigIsFileA(t, info.Config)
+	requireMergedConfigIsFileA(t, info.Config())
 }
 
 func requireMergedConfigIsFileA(t *testing.T, merged *openapi.Config) {

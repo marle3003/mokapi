@@ -3,7 +3,7 @@ package api
 import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/mail"
-	"mokapi/runtime"
+	"mokapi/providers/openapi"
 	"slices"
 	"strings"
 )
@@ -61,12 +61,12 @@ func methodRank(method string) int {
 	return len(httpMethodOrder)
 }
 
-func getHttpItems(hi *runtime.HttpInfo) []serviceItem {
+func getHttpItems(cfg *openapi.Config) []serviceItem {
 	var items []serviceItem
-	if hi.Paths == nil {
+	if cfg.Paths == nil {
 		return items
 	}
-	for it := hi.Paths.Iter(); it.Next(); {
+	for it := cfg.Paths.Iter(); it.Next(); {
 		p := it.Value()
 		if p.Value == nil {
 			continue

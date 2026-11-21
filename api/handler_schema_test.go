@@ -164,6 +164,22 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 			},
 		},
 		{
+			name: "openapi config removed while the request is running",
+			app: runtimetest.NewApp(func(app *runtime.App) {
+				app.Http.Set("foo", runtime.NewHttpInfo(nil))
+			}),
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?spec=openapi&name=foo&path=/foo&method=get",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(400),
+					try.HasBody("No result found\n"))
+			},
+		},
+		{
 			name: "asyncapi config removed while the request is running",
 			app:  runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, &store.Store{}))),
 			fn: func(t *testing.T, h http.Handler, app *runtime.App) {

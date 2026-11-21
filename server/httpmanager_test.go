@@ -70,7 +70,7 @@ func TestHttpManager_Update(t *testing.T) {
 
 				list := app.Http.List()
 				require.Len(t, list, 1)
-				require.Equal(t, "foo", list[0].Info.Name)
+				require.Equal(t, "foo", list[0].Config().Info.Name)
 			},
 		},
 		{
@@ -364,4 +364,19 @@ func TestHttpManager_RemovingLastApiStopsServer(t *testing.T) {
 	m.Update(newApiEvent("a", port, "", dynamic.Delete))
 
 	try.WaitFor(t, func() bool { return !isPortOpen(port) })
+}
+
+func TestHttpManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	store, err := cert.NewStore(&static.Config{})
+	require.NoError(t, err)
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	app.Http.Set("foo", runtime.NewHttpInfo(nil))
+	m := server.NewHttpManager(&engine.Engine{}, store, app)
+	defer m.Stop()
+
+	e := newApiEvent("foo", try.GetFreePort(), "", dynamic.Delete)
+	require.NotPanics(t, func() { m.Update(e) })
+
+	require.Nil(t, app.Http.Get("foo"))
 }

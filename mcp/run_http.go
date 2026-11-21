@@ -78,15 +78,16 @@ type Response struct {
 
 func (m *mokapi) getHttpApi(name string) *OpenAPI {
 	for _, api := range m.app.Http.List() {
-		if api.Info.Name == name {
+		cfg := api.Config()
+		if cfg != nil && cfg.Info.Name == name {
 			result := &OpenAPI{
 				Name:        name,
-				Description: api.Info.Description,
+				Description: cfg.Info.Description,
 				Type:        "http",
 				info:        api,
-				handler:     api.Handler(m.app.Monitor.Http, m.app.Engine, m.app.Events),
+				handler:     api.Handler(cfg, m.app.Monitor.Http, m.app.Engine, m.app.Events),
 			}
-			for _, server := range api.Servers {
+			for _, server := range cfg.Servers {
 				result.Servers = append(result.Servers, OpenAPIServer{
 					Url:         server.Url,
 					Description: server.Description,
@@ -98,13 +99,24 @@ func (m *mokapi) getHttpApi(name string) *OpenAPI {
 	}
 	return nil
 }
-func (o *OpenAPI) GetOperations() []OperationSummary {
-	result := []OperationSummary{}
-	if o.info.Paths == nil {
-		return result
+
+// notFound is the error for an API whose last file was removed after the object was created.
+func (o *OpenAPI) notFound() error {
+	return fmt.Errorf("http API '%s' not found", o.Name)
+}
+
+func (o *OpenAPI) GetOperations() ([]OperationSummary, error) {
+	cfg := o.info.Config()
+	if cfg == nil {
+		return nil, o.notFound()
 	}
 
-	for it := o.info.Paths.Iter(); it.Next(); {
+	result := []OperationSummary{}
+	if cfg.Paths == nil {
+		return result, nil
+	}
+
+	for it := cfg.Paths.Iter(); it.Next(); {
 		p := it.Value()
 		if p.Value == nil {
 			continue
@@ -144,12 +156,17 @@ func (o *OpenAPI) GetOperations() []OperationSummary {
 		return strings.Compare(a.Method, b.Method)
 	})
 
-	return result
+	return result, nil
 }
 
 func (o *OpenAPI) GetOperation(id string) (*Operation, error) {
-	if o.info.Paths != nil {
-		for it := o.info.Paths.Iter(); it.Next(); {
+	cfg := o.info.Config()
+	if cfg == nil {
+		return nil, o.notFound()
+	}
+
+	if cfg.Paths != nil {
+		for it := cfg.Paths.Iter(); it.Next(); {
 			p := it.Value()
 			if p.Value == nil {
 				continue

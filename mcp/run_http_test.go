@@ -2,6 +2,9 @@ package mcp_test
 
 import (
 	"context"
+	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/mcp"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
@@ -12,6 +15,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -436,4 +440,55 @@ op.invoke({ header: { foo: ['val1'] }})`,
 			tc.test(t, s)
 		})
 	}
+}
+
+func TestService_Run_Http_ConfigRemoved(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// an info whose last file was removed has no config snapshot (nil)
+	t.Run("info without config is not found by getApi", func(t *testing.T) {
+		app := runtimetest.NewApp(func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) })
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+
+		require.NoError(t, err)
+		require.Nil(t, r.Result)
+	})
+
+	t.Run("info without config is skipped by getApis", func(t *testing.T) {
+		app := runtimetest.NewApp(
+			func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) },
+			runtimetest.WithHttp(openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))),
+		)
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApis()`})
+
+		require.NoError(t, err)
+		require.Equal(t, []mcp.ApiSummary{{Name: "bar", Type: "http"}}, r.Result)
+	})
+
+	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		file := &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Data: openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				openapitest.WithPath("/bar", openapitest.WithOperation(http.MethodGet, openapitest.WithResponse(http.StatusOK)))),
+		}
+		app.Http.Add(file)
+		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+		require.NoError(t, err)
+		api := r.Result.(*mcp.OpenAPI)
+
+		app.Http.Remove(file)
+
+		require.NotPanics(t, func() {
+			_, err = api.GetOperations()
+			require.EqualError(t, err, "http API 'foo' not found")
+
+			_, err = api.GetOperation("getBar")
+			require.EqualError(t, err, "http API 'foo' not found")
+		})
+	})
 }

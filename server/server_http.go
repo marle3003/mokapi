@@ -84,7 +84,9 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 	info := m.app.Http.Get(cfg.Info.Name)
 	var servers []*openapi.Server
 	if info != nil {
-		servers = info.Servers
+		if old := info.Config(); old != nil {
+			servers = old.Servers
+		}
 	}
 
 	if e.Event == dynamic.Delete {
@@ -92,7 +94,7 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 			return
 		}
 		m.app.Http.Remove(e.Config)
-		if info.Config == nil {
+		if info.Config() == nil {
 			m.removeService(cfg.Info.Name)
 			m.stopEmptyServers()
 			return
@@ -101,26 +103,33 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 		info = m.app.Http.Add(e.Config)
 	}
 
-	m.cleanupRemovedServers(info, servers)
-	m.addServices(info, e.Config.Info.Url)
+	m.addServices(info, servers, e.Config.Info.Url)
 
 	m.stopEmptyServers()
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
-// addServices registers the handler of the (merged) config on every server URL of the config.
-// file is the config file that triggered the update and only used for log messages.
-func (m *HttpManager) addServices(info *runtime.HttpInfo, file *url.URL) {
-	for _, s := range info.Servers {
+// addServices registers the handler of the (merged) config on every server URL of the config
+// and removes the URLs that are no longer part of it. The handlers of one update are all created
+// from one snapshot. file is the config file that triggered the update and only used for log messages.
+func (m *HttpManager) addServices(info *runtime.HttpInfo, old []*openapi.Server, file *url.URL) {
+	cfg := info.Config()
+	if cfg == nil {
+		return
+	}
+
+	m.cleanupRemovedServers(cfg.Info.Name, old, cfg.Servers)
+
+	for _, s := range cfg.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", file, err.Error())
 			continue
 		}
 
-		err = m.AddService(info.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events))
+		err = m.AddService(cfg.Info.Name, u, info.Handler(cfg, m.app.Monitor.Http, m.eventEmitter, m.app.Events))
 		if err != nil {
-			log.Warnf("unable to add '%v' on %v: %v", info.Info.Name, s.Url, err.Error())
+			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
 			continue
 		}
 	}
@@ -175,12 +184,12 @@ func parseUrl(s string) (u *url.URL, err error) {
 	return
 }
 
-func (m *HttpManager) cleanupRemovedServers(cfg *runtime.HttpInfo, old []*openapi.Server) {
+func (m *HttpManager) cleanupRemovedServers(name string, old, current []*openapi.Server) {
 	m.m.Lock()
 	defer m.m.Unlock()
 
 	for _, server := range old {
-		if !slices.ContainsFunc(cfg.Servers, func(s *openapi.Server) bool {
+		if !slices.ContainsFunc(current, func(s *openapi.Server) bool {
 			return s.Url == server.Url
 		}) {
 			u, err := parseUrl(server.Url)
@@ -195,7 +204,7 @@ func (m *HttpManager) cleanupRemovedServers(cfg *runtime.HttpInfo, old []*openap
 			if path == "" {
 				path = "/"
 			}
-			log.Infof("removing '%v' on binding %v on path %v", cfg.Info.Name, u.Port(), path)
+			log.Infof("removing '%v' on binding %v on path %v", name, u.Port(), path)
 			s.RemoveUrl(u)
 		}
 	}

@@ -807,3 +807,53 @@ func TestHandler_Http_List_ExcludesOtherServiceTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestHandler_Http_ConfigRemoved(t *testing.T) {
+	// an info whose last file was removed has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(
+			runtimetest.WithHttp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("bar", "1.0", ""))),
+			func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) },
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`))
+	})
+
+	t.Run("http service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/http",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`))
+	})
+
+	for _, url := range []string{
+		"http://foo.api/api/services/http/foo",
+		"http://foo.api/api/services/http/foo/operations",
+		"http://foo.api/api/services/http/foo/openapi.json",
+		"http://foo.api/api/services/http/foo/openapi.yaml",
+		"http://foo.api/api/services/http/foo/bruno.yaml",
+	} {
+		t.Run(url+" returns 404", func(t *testing.T) {
+			try.Handler(t,
+				http.MethodGet,
+				url,
+				nil,
+				"",
+				New(newApp(), static.Api{}),
+				try.HasStatusCode(404))
+		})
+	}
+}

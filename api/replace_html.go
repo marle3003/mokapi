@@ -60,7 +60,11 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 		return
 	}
 
-	c := app.Http.Get(name)
+	info := app.Http.Get(name)
+	if info == nil {
+		return
+	}
+	c := info.Config()
 	if c == nil {
 		return
 	}
@@ -106,7 +110,7 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 	return
 }
 
-func getPath(segments []string, c *runtime.HttpInfo) (pathName string, n int, path *openapi.PathRef, err error) {
+func getPath(segments []string, c *openapi.Config) (pathName string, n int, path *openapi.PathRef, err error) {
 	currentPath := ""
 	for i := 5; i < len(segments); i++ {
 		var seg string
