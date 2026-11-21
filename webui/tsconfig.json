@@ -5,7 +5,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "#docs-images": ["./src/composables/docs-images.website.ts"]
+      "#docs-images": ["./src/composables/docs-images.website.ts"],
+      "mokapi": ["./src/test-support/mokapi-stub.ts"]
     },
     "typeRoots": ["./src/types"],
     "ignoreDeprecations": "5.0",

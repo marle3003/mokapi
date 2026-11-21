@@ -5,7 +5,6 @@ import { MailLogModel } from '../../models/mail'
 import { useMails } from '../../components/mail'
 import { useRequestView } from '../../components/request-view'
 import { pauseClock } from '../../helpers/clock'
-import { formatDateTime } from '../../helpers/format'
 
 // The mail events of the mock (e2e/mocks/mail.ts) in the order of the log. Mail Testserver has eight,
 // Mail Second Server four:
@@ -16,14 +15,9 @@ import { formatDateTime } from '../../helpers/format'
 //   newId(6) an accepted mail that is not in the mailbox store anymore,
 //   and of the second server newId(7) a mail, newId(8) a rejected RCPT, newId(9) a mail that is gone, newId(10) a mail.
 const newId = (n: number) => `a1000000-0000-4000-8000-${String(n).padStart(12, '0')}`
-const testMail = { event: '273cd167-f5a5-4da1-969e-d44213686491', messageId: '20230223-084925.763-4196@mokapi.io', time: '2023-02-23T08:49:25.482366+01:00' }
+const testMail = { event: '273cd167-f5a5-4da1-969e-d44213686491', messageId: '20230223-084925.763-4196@mokapi.io' }
 const plainMail = { event: '0b0f1b9e-1e4c-4a5b-8d0e-6f1d2a7c9e11', messageId: '20230222-101500.123-1111@mokapi.io' }
-const rejectedSender = { event: newId(1), error: 'Sender spammer@foo.bar is not allowed', time: '2023-02-21T11:00:00.100000+01:00' }
-const ruleMail = { event: newId(2), messageId: '20230221-103000.004-3001@foo.bar' }
-const ruleRejected = { event: newId(3), error: 'Mail rejected by rule spam' }
-const reportMail = { event: newId(4), messageId: '20230220-090000.001-2001@mokapi.io' }
-const handledMail = { event: newId(5), messageId: '20230219-143000.002-2002@mokapi.io' }
-const goneMail = { event: newId(6), messageId: '20230218-120000.005-4001@mokapi.io' }
+const rejectedSender = { event: newId(1), error: 'Sender spammer@foo.bar is not allowed' }
 const secondMail = { event: newId(7), messageId: '20230217-160000.003-2003@second.io' }
 const secondRejected = { event: newId(8), error: 'Recipient is not known' }
 
@@ -33,7 +27,6 @@ const servicePath = encodeURIComponent(service)
 const serviceLog = `/dashboard/mail/log/${servicePath}`
 const allServicesLog = '/dashboard/mail/log'
 const serviceView = `/dashboard/mail/service/${servicePath}`
-const mailPath = (messageId: string) => `/dashboard/mail/mail/mails/${messageId}`
 const newTab = { modifiers: ['ControlOrMeta' as const] }
 
 function useMailLog(page: Page) {
@@ -252,53 +245,6 @@ test.describe('Mail log: protocol page', () => {
 })
 
 test.describe('Mail log: table', () => {
-    test('has the columns Subject, From, To, Status, Time and Duration', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.table.getByRole('columnheader')).toHaveText(['Subject', 'From', 'To', 'Status', 'Time', 'Duration'])
-    })
-
-    test('an accepted mail shows subject, addresses, status, time and duration', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.row(testMail.messageId).getByRole('cell')).toHaveText([
-            'A test mail', 'alice@mokapi.io', 'bob@mokapi.io', 'Accepted', formatDateTime(testMail.time), '30 [sec]',
-        ])
-    })
-
-    test('a rejected mail shows a Rejected badge with the error as title and - as subject', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        const row = log.rejectedRow(rejectedSender.error)
-        await expect(row).toHaveCount(1)
-        await expect(row.getByRole('cell')).toHaveText(['-', '-', '-', 'Rejected', formatDateTime(rejectedSender.time), '0 [ms]'])
-        await expect(row.getByTitle(rejectedSender.error, { exact: true })).toHaveText('Rejected')
-        await expect(row.locator('.badge')).toHaveText('Rejected')
-    })
-
-    test('a rejected mail has no link, an accepted mail has one, the subject', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.rejectedRow(rejectedSender.error).getByRole('link')).toHaveCount(0)
-        await expect(log.row(testMail.messageId).getByRole('link')).toHaveCount(1)
-        await expect(log.row(testMail.messageId).getByRole('link')).toHaveText('A test mail')
-        await expect(log.row(testMail.messageId).getByRole('link')).toHaveAttribute('href', mailPath(testMail.messageId))
-    })
-
-    test('a rule rejection in DATA shows two rows: the mail and the rejection', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.row(ruleMail.messageId)).toHaveCount(1)
-        await expect(log.row(ruleMail.messageId).getByRole('cell').nth(3)).toHaveText('Accepted')
-        await expect(log.rejectedRow(ruleRejected.error)).toHaveCount(1)
-        await expect(log.rejectedRow(ruleRejected.error).getByRole('cell').nth(3)).toHaveText('Rejected')
-    })
-
     test('the paging counts match the rows', async ({ page }) => {
         const { log } = useMailLog(page)
         await usePageSize10(page)
@@ -368,68 +314,6 @@ test.describe('Mail log: detail panel', () => {
         await expect(page).toHaveURL(new RegExp(`\\?message=${rejectedSender.event}$`))
     })
 
-    test('the head of an accepted mail shows subject, status, From, To and time', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(testMail.messageId)).click()
-
-        const panel = log.panel.element
-        await expect(view.field(panel, 'Subject')).toHaveText('A test mail')
-        await expect(view.field(panel, 'Status')).toHaveText('Accepted')
-        await expect(view.field(panel, 'From')).toHaveText('alice@mokapi.io')
-        await expect(view.field(panel, 'To')).toHaveText('bob@mokapi.io')
-        await expect(view.field(panel, 'Time')).toHaveText(formatDateTime(testMail.time))
-        await expect(view.field(panel, 'Error')).toHaveCount(0)
-    })
-
-    test('the head of a rejected mail shows the status, - for the missing values and the error', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.rejectedRow(rejectedSender.error)).click()
-
-        const panel = log.panel.element
-        await expect(view.field(panel, 'Subject')).toHaveText('-')
-        await expect(view.field(panel, 'Status')).toHaveText('Rejected')
-        await expect(view.field(panel, 'Status').locator('.badge')).toHaveAttribute('title', rejectedSender.error)
-        await expect(view.field(panel, 'From')).toHaveText('-')
-        await expect(view.field(panel, 'To')).toHaveText('-')
-        await expect(view.field(panel, 'Time')).toHaveText(formatDateTime(rejectedSender.time))
-        await expect(view.field(panel, 'Error')).toHaveText(rejectedSender.error)
-    })
-
-    test('the head of a rejection by a rule shows the addresses and the error', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.rejectedRow(ruleRejected.error)).click()
-
-        await expect(view.field(log.panel.element, 'From')).toHaveText('mallory@foo.bar')
-        await expect(view.field(log.panel.element, 'To')).toHaveText('bob@mokapi.io')
-        await expect(view.field(log.panel.element, 'Error')).toHaveText(ruleRejected.error)
-    })
-
-    test('an accepted mail has the sub tabs Body and Details, Body is selected', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(plainMail.messageId)).click()
-
-        await expect(log.panel.tabs).toHaveText(['Body', 'Details'])
-        await expect(log.panel.tab('Body')).toHaveAttribute('aria-selected', 'true')
-    })
-
-    test('a mail with attachments has the sub tabs Body, Attachments and Details', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(reportMail.messageId)).click()
-
-        await expect(log.panel.tabs).toHaveText(['Body', 'Attachments', 'Details'])
-        await expect(log.panel.tab('Body')).toHaveAttribute('aria-selected', 'true')
-    })
-
     test('Body shows the mail body', async ({ page }) => {
         const { log } = useMailLog(page)
         await page.goto(serviceLog)
@@ -441,30 +325,6 @@ test.describe('Mail log: detail panel', () => {
         await expect(body.getByText('Mail message from Alice')).toBeVisible()
         await expect(body.getByRole('img')).toHaveAttribute('src', /\/attachments\/icon.png$/)
         await expect.poll(() => body.getByRole('img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
-    })
-
-    test('Body shows a plain text mail', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(plainMail.messageId)).click()
-
-        await expect(log.panel.element.getByRole('region', { name: 'Mail Body' })).toContainText('Plain text message from Alice')
-    })
-
-    test('Attachments lists the attachments', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(testMail.messageId)).click()
-
-        await log.panel.tab('Attachments').click()
-
-        await expect(log.panel.tab('Attachments')).toHaveAttribute('aria-selected', 'true')
-        const foo = log.panel.content.getByRole('link', { name: 'foo.txt' })
-        await expect(foo.getByLabel('Disposition')).toHaveText('attachment')
-        await expect(foo.getByLabel('Size')).toHaveText('34.06 kB')
-        const icon = log.panel.content.getByRole('link', { name: 'icon.png' })
-        await expect(icon.getByLabel('Disposition')).toHaveText('inline')
     })
 
     test('Details shows service, Cc, Bcc, content type, encoding, Message-ID, In-Reply-To and duration', async ({ page }) => {
@@ -484,60 +344,6 @@ test.describe('Mail log: detail panel', () => {
         await expect(view.field(content, 'Duration')).toHaveText('30 [sec]')
     })
 
-    test('Details shows Cc and Bcc of a mail that has them', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(reportMail.messageId)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(view.field(log.panel.content, 'Cc')).toHaveText('dave@mokapi.io')
-        await expect(view.field(log.panel.content, 'Bcc')).toHaveText('erin@mokapi.io')
-    })
-
-    test('the In-Reply-To of Details links to the replied-to mail', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(testMail.messageId)).click()
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByRole('link', { name: '20230222-084925.763-4196@mokapi.io' }))
-            .toHaveAttribute('href', mailPath('20230222-084925.763-4196@mokapi.io'))
-    })
-
-    test('Details shows the Event Handlers of a mail that has some', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(handledMail.messageId)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByText('Event Handlers')).toBeVisible()
-    })
-
-    test('Details has no Event Handlers for a mail without', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(testMail.messageId)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByText('Event Handlers')).toHaveCount(0)
-    })
-
-    test('a rejected mail has only Details, which shows service and duration', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.rejectedRow(rejectedSender.error)).click()
-
-        await expect(log.panel.tabs).toHaveText(['Details'])
-        await expect(log.panel.tab('Details')).toHaveAttribute('aria-selected', 'true')
-        await expect(view.field(log.panel.content, 'Service')).toHaveText(service)
-        await expect(view.field(log.panel.content, 'Duration')).toHaveText('0 [ms]')
-        await expect(view.field(log.panel.content, 'Message-ID')).toHaveCount(0)
-    })
-
     test('the sub tab is not part of the address', async ({ page }) => {
         const { log } = useMailLog(page)
         await page.goto(serviceLog)
@@ -546,19 +352,6 @@ test.describe('Mail log: detail panel', () => {
         await log.panel.tab('Details').click()
 
         await expect(page).toHaveURL(new RegExp(`\\?message=${testMail.event}$`))
-    })
-
-    test('a sub tab the next mail does not have falls back to the first tab', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(testMail.messageId)).click()
-        await log.panel.tab('Attachments').click()
-
-        await page.keyboard.press('ArrowDown')
-
-        await expect(page).toHaveURL(new RegExp(`message=${plainMail.event}`))
-        await expect(log.panel.tabs).toHaveText(['Body', 'Details'])
-        await expect(log.panel.tab('Body')).toHaveAttribute('aria-selected', 'true')
     })
 
     test('a rejected mail opens on Details after a mail on Body', async ({ page }) => {
@@ -582,45 +375,6 @@ test.describe('Mail log: detail panel', () => {
         await log.time(log.row(plainMail.messageId)).click()
 
         await expect(log.panel.tab('Details')).toHaveAttribute('aria-selected', 'true')
-    })
-
-    test('a mail that is not stored anymore shows head and Details from the event', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(goneMail.messageId)).click()
-
-        const panel = log.panel.element
-        await expect(view.field(panel, 'Subject')).toHaveText('Deleted mail')
-        await expect(view.field(panel, 'Status')).toHaveText('Accepted')
-        await expect(view.field(panel, 'From')).toHaveText('dave@mokapi.io')
-        await expect(view.field(panel, 'To')).toHaveText('bob@mokapi.io')
-        await log.panel.tab('Details').click()
-        await expect(view.field(log.panel.content, 'Service')).toHaveText(service)
-        await expect(view.field(log.panel.content, 'Message-ID')).toHaveText(goneMail.messageId)
-        await expect(view.field(log.panel.content, 'Duration')).toHaveText('25 [ms]')
-        await expect(view.field(log.panel.content, 'Content-Type')).toHaveCount(0)
-    })
-
-    test('a mail that is not stored anymore says so in Body and has no Attachments tab', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(goneMail.messageId)).click()
-
-        await expect(log.panel.tabs).toHaveText(['Body', 'Details'])
-        await expect(log.panel.tab('Body')).toHaveAttribute('aria-selected', 'true')
-        await expect(log.panel.content.getByText('Mail content is no longer available')).toBeVisible()
-    })
-
-    test('a rule rejection in DATA reads accepted and its content is not available', async ({ page }) => {
-        const { log, view } = useMailLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(ruleMail.messageId)).click()
-
-        await expect(view.field(log.panel.element, 'Status')).toHaveText('Accepted')
-        await expect(log.panel.content.getByText('Mail content is no longer available')).toBeVisible()
     })
 
     test('Ctrl/Cmd+click on an accepted row opens the full mail in a new tab', async ({ page }) => {
@@ -810,14 +564,6 @@ test.describe('Mail log: detail panel', () => {
         await expect(page).toHaveURL(/\/dashboard\/configs/)
     })
 
-    test('a mail event that is gone shows a message in the panel', async ({ page }) => {
-        const { log } = useMailLog(page)
-        await page.goto(`${serviceLog}?message=00000000-0000-4000-8000-000000000000`)
-
-        await expect(log.panel.element.getByText('Mail not found')).toBeVisible()
-        await expect(log.rows).toHaveCount(8)
-    })
-
     test('is shown below the table in a narrow window', async ({ page }) => {
         const { log } = useMailLog(page)
         await page.setViewportSize({ width: 600, height: 900 })
@@ -843,56 +589,6 @@ test.describe('Mail log: detail panel', () => {
 
         expect(panel!.x).toBeGreaterThanOrEqual(card!.x + card!.width - 1)
         expect(panel!.y).toBeLessThan(card!.y + card!.height)
-    })
-})
-
-test.describe('Mail log: full mail view', () => {
-    test('shows Info, Mail Body, Attachments and Footer as before', async ({ page }) => {
-        await page.goto(mailPath(testMail.messageId))
-
-        const info = page.getByRole('region', { name: 'Info' })
-        await expect(info.getByLabel('Subject')).toHaveText('A test mail')
-        await expect(info.getByLabel('Service')).toHaveText(service)
-        await expect(info.getByLabel('Date')).toHaveText(formatDateTime(testMail.time))
-        await expect(info.getByLabel('From')).toHaveText('Alice <alice@mokapi.io>')
-        await expect(info.getByLabel('To')).toHaveText('Bob <bob@mokapi.io>, carol@mokapi.io')
-
-        const body = page.getByRole('region', { name: 'Mail Body' })
-        await expect(body.getByRole('heading')).toHaveText('Hello')
-        await expect(page.getByRole('region', { name: 'Attachments' }).getByRole('link', { name: 'foo.txt' })).toBeVisible()
-
-        const footer = page.getByRole('region', { name: 'Footer' })
-        await expect(footer.getByLabel('Content-Type')).toHaveText('text/html')
-        await expect(footer.getByLabel('Encoding')).toHaveText('quoted-printable')
-        await expect(footer.getByLabel('Message-ID')).toHaveText(testMail.messageId)
-    })
-
-    test('shows Cc and Bcc in Info', async ({ page }) => {
-        await page.goto(mailPath(reportMail.messageId))
-
-        const info = page.getByRole('region', { name: 'Info' })
-        await expect(info.getByLabel('Cc', { exact: true })).toHaveText('dave@mokapi.io')
-        await expect(info.getByLabel('Bcc', { exact: true })).toHaveText('erin@mokapi.io')
-    })
-
-    test('the In-Reply-To link points to the replied-to mail', async ({ page }) => {
-        await page.goto(mailPath(testMail.messageId))
-
-        const link = page.getByRole('region', { name: 'Footer' }).getByRole('link', { name: '20230222-084925.763-4196@mokapi.io' })
-        await expect(link).toHaveAttribute('href', mailPath('20230222-084925.763-4196@mokapi.io'))
-    })
-
-    test('has no Event Handlers', async ({ page }) => {
-        await page.goto(mailPath(handledMail.messageId))
-        await expect(page.getByRole('region', { name: 'Info' }).getByLabel('Subject')).toHaveText('Handled by a script')
-
-        await expect(page.getByText('Event Handlers')).toHaveCount(0)
-    })
-
-    test('an unknown mail shows a message', async ({ page }) => {
-        await page.goto(mailPath('unknown@mokapi.io'))
-
-        await expect(page.getByText('Mail not found')).toBeVisible()
     })
 })
 

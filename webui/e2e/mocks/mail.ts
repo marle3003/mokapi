@@ -92,7 +92,7 @@ export const mails = [
                 disposition: 'inline',
                 contentId: 'icon.png',
                 size: 372,
-                data: open('icon.png', {as: 'binary'})
+                data: (open as unknown as (path: string, args: { as: 'binary' }) => string)('icon.png', {as: 'binary'})
             }
         ],
         duration: 30016,
@@ -383,7 +383,7 @@ export function getAttachment(messageId: string, attachmentName: string) {
     }
 
     for (const a of mail.attachments ?? []) {
-        if (a.name === attachmentName || a.contentId === attachmentName) {
+        if (a.name === attachmentName || (a as { contentId?: string }).contentId === attachmentName) {
             return a
         }
     }

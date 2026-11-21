@@ -26,12 +26,14 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       APP_VERSION: JSON.stringify(process.env.npm_package_version),
     },
     resolve: {
-      alias: {
+      alias: [
         // unit tests (CI) run without src/assets/docs, see src/test-support/image-stub.ts; must precede '@'
-        ...(process.env.VITEST ? { '@/assets/docs/get-started/dashboard-overview-mock-api.png': fileURLToPath(new URL('./src/test-support/image-stub.ts', import.meta.url)) } : {}),
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '#docs-images': fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url))
-      }
+        ...(process.env.VITEST ? [{ find: '@/assets/docs/get-started/dashboard-overview-mock-api.png', replacement: fileURLToPath(new URL('./src/test-support/image-stub.ts', import.meta.url)) }] : []),
+        // the mock scripts in e2e/mocks import 'mokapi', which only exists in the Mokapi runtime; a regex, so 'mokapi/...' imports stay untouched
+        ...(process.env.VITEST ? [{ find: /^mokapi$/, replacement: fileURLToPath(new URL('./src/test-support/mokapi-stub.ts', import.meta.url)) }] : []),
+        { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+        { find: '#docs-images', replacement: fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url)) }
+      ]
     },
     base: '', // required for relative urls for base-tag
     // The server bundle (pre-rendering, see ssg/prerender.js) contains its dependencies, so it runs
