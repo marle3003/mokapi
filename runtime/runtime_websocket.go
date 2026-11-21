@@ -144,9 +144,11 @@ func (s *WebsocketStore) Remove(c *dynamic.Config) {
 
 	mi.afterPublish(mi.remove(c, mergeWebsocketConfigs(s.reader)))
 
-	if mi.Config() == nil {
+	if remaining := mi.Config(); remaining == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("websocket").WithName(name))
+	} else if s.cfg.Api.Search.Enabled {
+		s.addToIndex(remaining)
 	}
 }
 

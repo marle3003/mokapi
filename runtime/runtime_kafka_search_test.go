@@ -314,3 +314,40 @@ func TestIndex_Kafka_Event(t *testing.T) {
 		})
 	}
 }
+
+func TestIndex_Kafka_MergedFiles(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	file := func(url, channel string) *dynamic.Config {
+		return &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)),
+			Data: asyncapi3test.NewConfig(
+				asyncapi3test.WithInfo("foo", "", ""),
+				asyncapi3test.WithChannel(channel),
+			),
+		}
+	}
+	found := func(t *testing.T, app *runtime.App, text string) bool {
+		r, err := app.Search(search.Request{QueryText: text, Limit: 10})
+		require.NoError(t, err)
+		return len(r.Results) > 0
+	}
+
+	app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, InMemory: true}}}, &dynamictest.Reader{})
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
+
+	_, err := app.Kafka.Add(file("https://mokapi.io/a.yml", "alpha"), enginetest.NewEngine())
+	require.NoError(t, err)
+	b := file("https://mokapi.io/b.yml", "beta")
+	_, err = app.Kafka.Add(b, enginetest.NewEngine())
+	require.NoError(t, err)
+	waitSearchIndex(t, func() bool { return found(t, app, "alpha") && found(t, app, "beta") })
+
+	app.Kafka.Remove(b)
+
+	waitSearchIndex(t, func() bool {
+		return found(t, app, "foo") && found(t, app, "alpha") && !found(t, app, "beta")
+	})
+}

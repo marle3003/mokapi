@@ -146,9 +146,11 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 	}
 	ki.afterPublish(ki.remove(c, mergeKafkaConfigs(s.reader)))
 
-	if ki.Config() == nil {
+	if remaining := ki.Config(); remaining == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
+	} else if s.cfg.Api.Search.Enabled {
+		s.addToIndex(remaining)
 	}
 }
 
