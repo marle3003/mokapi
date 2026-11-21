@@ -31,6 +31,8 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         ...(process.env.VITEST ? [{ find: '@/assets/docs/get-started/dashboard-overview-mock-api.png', replacement: fileURLToPath(new URL('./src/test-support/image-stub.ts', import.meta.url)) }] : []),
         // the mock scripts in e2e/mocks import 'mokapi', which only exists in the Mokapi runtime; a regex, so 'mokapi/...' imports stay untouched
         ...(process.env.VITEST ? [{ find: /^mokapi$/, replacement: fileURLToPath(new URL('./src/test-support/mokapi-stub.ts', import.meta.url)) }] : []),
+        // 'mokapi/encoding' needs its own exact entry for the same reason
+        ...(process.env.VITEST ? [{ find: /^mokapi\/encoding$/, replacement: fileURLToPath(new URL('./src/test-support/mokapi-encoding-stub.ts', import.meta.url)) }] : []),
         { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
         { find: '#docs-images', replacement: fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url)) }
       ]

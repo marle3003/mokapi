@@ -39,7 +39,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         }
     })
 
-    await useKafkaMessages(page).test(page.getByRole('table', { name: 'Recent Messages' }), false)
+    await useKafkaMessages(page).expectColumns(page.getByRole('table', { name: 'Recent Messages' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
     

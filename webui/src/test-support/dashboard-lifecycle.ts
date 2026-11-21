@@ -29,3 +29,7 @@ export function loadMailDashboard() {
 export function loadLdapDashboard() {
   return loadDashboard(() => import('./ldap-dashboard-api'))
 }
+
+export function loadKafkaDashboard() {
+  return loadDashboard(() => import('./kafka-dashboard-api'))
+}

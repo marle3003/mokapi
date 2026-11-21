@@ -1,5 +1,23 @@
-export function getInfo(config: Config, type: string) {
-    const info: Info = {
+// Structural types: helpers.ts is also loaded by Vitest under the webui tsconfig, where the globals
+// `Config` and `Info` of e2e/mocks/types.d.ts don't exist (src/types has a different `Config`).
+interface Contact {
+    name?: string
+    email?: string
+    url?: string
+}
+
+interface ConfigInfo {
+    name: string
+    description?: string
+    version?: string
+    contact?: Contact
+    status?: string
+}
+
+type ServiceInfo = ConfigInfo & { type: string }
+
+export function getInfo(config: ConfigInfo, type: string) {
+    const info: ServiceInfo = {
         name: config.name,
         description: config.description,
         version: config.version,
@@ -18,7 +36,7 @@ export function getInfo(config: Config, type: string) {
     return info
 }
 
-export function matchTraits(e: ServiceEvent, traits: Traits) {
+export function matchTraits(e: { traits: Record<string, string | undefined> }, traits: Record<string, string | undefined>) {
     for (const t in traits) {
         if (e.traits[t] !== traits[t]) {
             return false

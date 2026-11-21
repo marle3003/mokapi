@@ -6,7 +6,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "#docs-images": ["./src/composables/docs-images.website.ts"],
-      "mokapi": ["./src/test-support/mokapi-stub.ts"]
+      "mokapi": ["./src/test-support/mokapi-stub.ts"],
+      "mokapi/encoding": ["./src/test-support/mokapi-encoding-stub.ts"]
     },
     "typeRoots": ["./src/types"],
     "ignoreDeprecations": "5.0",

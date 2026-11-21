@@ -5,7 +5,6 @@ import { KafkaMessageLogModel, KafkaRequestLogModel } from '../../models/kafka'
 import { useKafkaRequests } from '../../components/kafka'
 import { useRequestView } from '../../components/request-view'
 import { pauseClock } from '../../helpers/clock'
-import { formatDateTime } from '../../helpers/format'
 
 // The request events of client 'consumer' in the Kafka mock (e2e/mocks/kafka.ts), in the order of the
 // log, plus one request of consumer-1, a client that has messages too.
@@ -43,8 +42,6 @@ test.describe('Kafka request log', () => {
             await expect(log.selectedRow.locator(`a[href$="/requests/${joinGroup.id}"]`)).toHaveCount(1)
             await expect(page).toHaveURL(new RegExp(`/clients/consumer\\?request=${joinGroup.id}$`))
             await expect(view.field(panel, 'API Key')).toHaveText('JoinGroup (11)')
-            await expect(view.field(panel, 'Version')).toHaveText('7')
-            await expect(view.field(panel, 'Time')).toHaveText(formatDateTime(joinGroup.time))
         })
 
         test('a click on the API key of a row selects it instead of leaving the client', async ({ page }) => {
@@ -55,39 +52,6 @@ test.describe('Kafka request log', () => {
 
             await expect(log.panel.element).toBeVisible()
             await expect(page).toHaveURL(new RegExp(`\\?request=${syncGroup.id}$`))
-        })
-
-        test('the row link keeps the address of the full request view', async ({ page }) => {
-            const { log } = useRequestLog(page)
-            await page.goto(client)
-
-            await expect(log.row(joinGroup.id).getByRole('link').first()).toHaveAttribute('href', `/dashboard/kafka/service/Kafka%20World/requests/${joinGroup.id}`)
-        })
-
-        test('has the sub tabs Request and Response, Request is selected', async ({ page }) => {
-            const { log, view } = useRequestLog(page)
-            await page.goto(client)
-            await log.time(log.row(findCoordinator.id)).click()
-
-            await expect(log.panel.tabs).toHaveText(['Request', 'Response'])
-            await expect(log.panel.tab('Request')).toHaveAttribute('aria-selected', 'true')
-            await expect(view.field(log.panel.content, 'Key Type')).toHaveText('group')
-            await expect(view.field(log.panel.content, 'Key')).toHaveText('mokapi.shop.products')
-
-            await log.panel.tab('Response').click()
-            await expect(log.panel.tab('Response')).toHaveAttribute('aria-selected', 'true')
-            await expect(view.field(log.panel.content, 'Host')).toHaveText('localhost:9092')
-        })
-
-        test('shows the error of a response', async ({ page }) => {
-            const { log, view } = useRequestLog(page)
-            await page.goto(client)
-            await log.time(log.row(initProducerId.id)).click()
-
-            await log.panel.tab('Response').click()
-
-            await expect(view.field(log.panel.content, 'Error Code')).toHaveText('COORDINATOR_NOT_AVAILABLE')
-            await expect(view.field(log.panel.content, 'Error Message')).toHaveText('The coordinator is not available.')
         })
 
         test('the sub tab is not part of the address', async ({ page }) => {
@@ -252,14 +216,6 @@ test.describe('Kafka request log', () => {
             await page.goBack()
 
             await expect(page).toHaveURL(/\/dashboard\/configs/)
-        })
-
-        test('a request that is gone shows a message in the panel', async ({ page }) => {
-            const { log } = useRequestLog(page)
-            await page.goto(`${client}?request=00000000-0000-4000-8000-000000000000`)
-
-            await expect(log.panel.element.getByText('Kafka Request not found')).toBeVisible()
-            await expect(log.rows).toHaveCount(5)
         })
 
         test('is shown below the table in a narrow window', async ({ page }) => {

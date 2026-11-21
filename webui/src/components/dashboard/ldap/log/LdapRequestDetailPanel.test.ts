@@ -3,7 +3,7 @@ import { flushPromises } from '@vue/test-utils'
 import { formatDateTime } from '../../../../../e2e/tests/helpers/format'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { loadLdapDashboard, resetDashboard } from '@/test-support/dashboard-lifecycle'
-import { content, field, openTab, selectedTab, tableRows, tabNames, text } from '@/test-support/dom-queries'
+import { content, field, hasElementWithText, openTab, selectedTab, tableRows, tabNames, text } from '@/test-support/dom-queries'
 
 vi.mock('@/router', async () => (await import('@/test-support/router-mock')).routerMock())
 // the Event Handlers label is part of the panel, the list below it needs source view and ace
@@ -33,11 +33,6 @@ async function mountPanel(requestId: string) {
     await flushPromises()
   }
   return { panel: wrapper, show }
-}
-
-// like getByText(label, { exact: true }): an element whose whole text is `label`
-function hasElementWithText(parent: Element, label: string) {
-  return [...parent.querySelectorAll('*')].some(el => text(el) === label)
 }
 
 describe('LdapRequestDetailPanel', () => {

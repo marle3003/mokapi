@@ -48,7 +48,11 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await page.getByRole('tab', { name: 'Messages', exact: true }).click()
-    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
+    const messages = page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' })
+    await useKafkaMessages(page).expectColumns(messages)
+    await useKafkaMessages(page).openFullView(messages.getByRole('row').nth(1))
+    await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0827')
+    await page.goBack()
 
     await test.step('Check groups section', async () => {
         await page.getByRole('tab', { name: 'Groups' }).click();

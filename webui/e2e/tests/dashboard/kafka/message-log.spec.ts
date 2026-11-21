@@ -3,7 +3,6 @@ import { test, expect } from '../../models/fixture-dashboard'
 import { layoutLocators } from '../../models/layout'
 import { KafkaMessageLogModel } from '../../models/kafka'
 import { pauseClock } from '../../helpers/clock'
-import { formatDateTime } from '../../helpers/format'
 
 test.use({ layout: 'new' })
 
@@ -260,11 +259,6 @@ test.describe('Kafka message log: detail panel', () => {
         await expect(log.selectedRow.locator(`a[href$="/messages/${newId(1)}"]`)).toHaveCount(1)
         await expect(page).toHaveURL(new RegExp(`/dashboard/kafka/log/Kafka%20World\\?message=${newId(1)}`))
         await expect(panel.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0829')
-        await expect(panel.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
-        await expect(panel.getByLabel('Kafka Topic', { exact: true })).toHaveAttribute('href', /\/dashboard\/kafka\/service\/Kafka%20World\/topics\/mokapi.shop.products$/)
-        await expect(panel.getByLabel('Offset', { exact: true })).toHaveText('2')
-        await expect(panel.getByLabel('Partition', { exact: true })).toHaveText('0')
-        await expect(panel.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2025-03-01T10:00:00+01:00'))
     })
 
     test('a click on the topic of a row selects it instead of leaving the log', async ({ page }) => {
@@ -275,60 +269,6 @@ test.describe('Kafka message log: detail panel', () => {
 
         await expect(log.panel.element).toBeVisible()
         await expect(page).toHaveURL(new RegExp(`/dashboard/kafka/log/Kafka%20World\\?message=${newId(2)}`))
-    })
-
-    test('the row link keeps the address of the full message view', async ({ page }) => {
-        const { log } = useMessageLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.row(newId(1)).getByRole('link')).toHaveAttribute('href', `/dashboard/kafka/messages/${newId(1)}`)
-    })
-
-    test('has the sub tabs Value, Headers and Details', async ({ page }) => {
-        const { log } = useMessageLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(products0827)).click()
-
-        await expect(log.panel.tabs).toHaveText(['Value', 'Headers', 'Details'])
-        await expect(log.panel.tab('Value')).toHaveAttribute('aria-selected', 'true')
-        await expect(log.panel.content).toContainText("Waze Women's Short Sleeve Tee")
-
-        await log.panel.tab('Headers').click()
-        await expect(log.panel.tab('Headers')).toHaveAttribute('aria-selected', 'true')
-        await expect(log.panel.content).toContainText('foo')
-        await expect(log.panel.content).toContainText('bar')
-
-        await log.panel.tab('Details').click()
-        await expect(log.panel.tab('Details')).toHaveAttribute('aria-selected', 'true')
-        await expect(log.panel.content.getByLabel('Key Type', { exact: true })).toHaveText('string')
-        await expect(log.panel.content.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
-    })
-
-    test('Details shows the client and the Event Handlers of the message', async ({ page }) => {
-        const { log } = useMessageLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(newId(1))).click()
-
-        await log.panel.tab('Details').click()
-
-        const client = log.panel.content.getByLabel('Client', { exact: true })
-        await expect(client).toHaveText('consumer-1')
-        await expect(client.getByRole('link')).toHaveAttribute('href', /\/dashboard\/kafka\/service\/Kafka%20World\/clients\/consumer-1$/)
-        await expect(log.panel.content.getByText('Event Handlers')).toBeVisible()
-        await expect(log.panel.content.getByLabel('Producer Id', { exact: true })).toHaveCount(0)
-    })
-
-    test('Details shows the producer of the message', async ({ page }) => {
-        const { log } = useMessageLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(products0828)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByLabel('Producer Id', { exact: true })).toHaveText('3')
-        await expect(log.panel.content.getByLabel('Producer Epoch', { exact: true })).toHaveText('1')
-        await expect(log.panel.content.getByLabel('Sequence Number', { exact: true })).toHaveText('1')
-        await expect(log.panel.content.getByText('Event Handlers')).toHaveCount(0)
     })
 
     test('the sub tab is not part of the address', async ({ page }) => {
@@ -508,14 +448,6 @@ test.describe('Kafka message log: detail panel', () => {
         await page.goBack()
 
         await expect(page).toHaveURL(/\/dashboard\/configs/)
-    })
-
-    test('a message that is gone shows a message in the panel', async ({ page }) => {
-        const { log } = useMessageLog(page)
-        await page.goto(`${serviceLog}?message=00000000-0000-4000-8000-000000000000`)
-
-        await expect(log.panel.element.getByText('Kafka Message not found')).toBeVisible()
-        await expect(log.rows).toHaveCount(12)
     })
 
     test('is shown below the table in a narrow window', async ({ page }) => {

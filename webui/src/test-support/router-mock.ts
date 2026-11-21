@@ -18,5 +18,7 @@ export function routerMock() {
         service: (name: string, type: string) => ({ name: `${type}Service`, params: { service: name } }),
       }
     },
+    // JoinGroup and SyncGroup views link with the app's router
+    useRouter: () => getCurrentInstance()!.appContext.config.globalProperties.$router,
   }
 }

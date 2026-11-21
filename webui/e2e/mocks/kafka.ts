@@ -602,7 +602,9 @@ const actions = [
     }
 ]
 
-export const events = [
+// event data differs per type (message, request), handlers read the fields of the type they filter for
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const events: { id: string, traits: Record<string, string>, time: string, data: any }[] = [
     {
         id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
         traits: {

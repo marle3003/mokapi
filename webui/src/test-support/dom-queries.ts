@@ -26,6 +26,11 @@ export function region(parent: ParentNode, name: string): Element {
   return found
 }
 
+// `getByText(label, { exact: true })`: an element whose whole text is `label`, for absence checks.
+export function hasElementWithText(parent: Element, label: string): boolean {
+  return [...parent.querySelectorAll('*')].some(el => text(el) === label)
+}
+
 // The value below a `p.label`, like useRequestView().field in the Playwright tests.
 export function field(parent: ParentNode, label: string): Element | undefined {
   return [...parent.querySelectorAll('p.label')].find(l => text(l) === label)?.nextElementSibling ?? undefined
