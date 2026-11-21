@@ -1253,6 +1253,48 @@ func TestImapHandler(t *testing.T) {
 				require.Len(t, r.Messages, 2)
 			},
 		},
+		{
+			name: "Subscribe twice adds flag once",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders:  map[string]*mail.FolderConfig{"INBOX": {}, "Archive": {}},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				require.NoError(t, h.Login("alice", "foo", ctx))
+
+				require.NoError(t, h.Subscribe("Archive", ctx))
+				require.NoError(t, h.Subscribe("Archive", ctx))
+
+				mb, _ := s.Mailbox("alice@mokapi.io")
+				require.Equal(t, []imap.MailboxFlags{imap.Subscribed}, mb.Folders["Archive"].Flags)
+			},
+		},
+		{
+			name: "Unsubscribe removes flag",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders:  map[string]*mail.FolderConfig{"INBOX": {}, "Archive": {}},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				require.NoError(t, h.Login("alice", "foo", ctx))
+				require.NoError(t, h.Subscribe("Archive", ctx))
+
+				require.NoError(t, h.Unsubscribe("Archive", ctx))
+
+				mb, _ := s.Mailbox("alice@mokapi.io")
+				require.Empty(t, mb.Folders["Archive"].Flags)
+			},
+		},
 	}
 
 	t.Parallel()

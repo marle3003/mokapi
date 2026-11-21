@@ -310,7 +310,7 @@ func (h *Handler) Subscribe(mailbox string, ctx context.Context) error {
 	if f == nil {
 		return fmt.Errorf("folder not found")
 	}
-	f.Flags = append(f.Flags, imap.Subscribed)
+	f.AddFlag(imap.Subscribed)
 	return nil
 }
 

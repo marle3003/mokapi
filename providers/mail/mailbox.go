@@ -133,6 +133,7 @@ func (mb *Mailbox) mergeFolders(folders map[string]*Folder, cfg map[string]*Fold
 		}
 
 		f, ok := folders[name]
+		subscribed := ok && f.HasFlags(imap.Subscribed)
 		if !ok {
 			f = &Folder{
 				Name:        name,
@@ -146,6 +147,10 @@ func (mb *Mailbox) mergeFolders(folders map[string]*Folder, cfg map[string]*Fold
 			folders[name] = f
 		}
 		f.Flags = toMailboxFlags(sub.Flags)
+		// \Subscribed is client state, a reload must not drop it
+		if subscribed {
+			f.AddFlag(imap.Subscribed)
+		}
 		if f.Folders == nil {
 			f.Folders = map[string]*Folder{}
 		}
@@ -558,6 +563,12 @@ func (f *Folder) List(pattern string, flags []imap.MailboxFlags) []imap.ListEntr
 	}
 
 	return result
+}
+
+func (f *Folder) AddFlag(flag imap.MailboxFlags) {
+	if !slices.Contains(f.Flags, flag) {
+		f.Flags = append(f.Flags, flag)
+	}
 }
 
 func (f *Folder) RemoveFlag(flag imap.MailboxFlags) {

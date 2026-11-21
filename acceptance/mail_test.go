@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/static"
+	"mokapi/imap"
 	"mokapi/providers/mail"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
@@ -342,6 +343,7 @@ type MailReloadSuite struct {
 	mailsPort   int
 	mergedPortA int
 	mergedPortB int
+	imapPort    int
 }
 
 // mailFile describes a mail file written by the suite. servers and body are YAML blocks.
@@ -357,6 +359,7 @@ func (suite *MailReloadSuite) SetupSuite() {
 	suite.mailsPort = try.GetFreePort()
 	suite.mergedPortA = try.GetFreePort()
 	suite.mergedPortB = try.GetFreePort()
+	suite.imapPort = try.GetFreePort()
 	suite.dir = suite.T().TempDir()
 
 	suite.writeMail("rules.yml", mailFile{title: "ReloadRules", servers: suite.smtpServer("smtp", suite.rulesPort)})
@@ -373,10 +376,31 @@ func (suite *MailReloadSuite) SetupSuite() {
 	suite.writeMail("merged-a.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("a", suite.mergedPortA)})
 	suite.writeMail("merged-b.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("b", suite.mergedPortB)})
 
+	suite.writeMail("subscriptions.yml", suite.subscriptionsFile("initial"))
+
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
 	suite.initCmd(cfg)
+}
+
+// subscriptionsFile is a mailbox with an IMAP server and two folders, one of them with a flag.
+func (suite *MailReloadSuite) subscriptionsFile(description string) mailFile {
+	return mailFile{
+		title:       "ReloadSubscriptions",
+		description: description,
+		servers:     fmt.Sprintf("servers:\n  imap:\n    host: '127.0.0.1:%d'\n    protocol: imap\n", suite.imapPort),
+		body: `mailboxes:
+  alice@mokapi.io:
+    username: alice
+    password: secret
+    folders:
+      INBOX: {}
+      Archive: {}
+      Trash:
+        flags: ['\Trash']
+`,
+	}
 }
 
 // smtpServer returns the servers block of a file. Servers with the same name in two files of a
@@ -506,4 +530,39 @@ func (suite *MailReloadSuite) TestServerOfMergedFileStartsAndStopsWithFile() {
 
 	try.WaitFor(t, func() bool { return !isListening(suite.mergedPortB) })
 	require.True(t, isListening(suite.mergedPortA))
+}
+
+// TestSubscriptionsSurviveReload verifies that a folder a client subscribed to is still subscribed
+// after the file was reloaded and that the flag defined in the file is kept.
+func (suite *MailReloadSuite) TestSubscriptionsSurviveReload() {
+	t := suite.T()
+	suite.waitForConfig("ReloadSubscriptions", func(*mail.Config) bool { return true })
+	try.WaitFor(t, func() bool { return isListening(suite.imapPort) })
+
+	c := imap.NewClient(fmt.Sprintf("127.0.0.1:%d", suite.imapPort))
+	defer c.Close()
+	_, err := c.Dial()
+	require.NoError(t, err)
+	require.NoError(t, c.PlainAuth("", "alice", "secret"))
+	_, err = c.Send("SUBSCRIBE Archive")
+	require.NoError(t, err)
+	_, err = c.Send("SUBSCRIBE Trash")
+	require.NoError(t, err)
+
+	before, err := c.LSub("", "*")
+	require.NoError(t, err)
+	require.Len(t, before, 2)
+
+	suite.writeMail("subscriptions.yml", suite.subscriptionsFile("changed"))
+	suite.waitForConfig("ReloadSubscriptions", func(cfg *mail.Config) bool { return cfg.Info.Description == "changed" })
+
+	subscribed, err := c.LSub("", "*")
+	require.NoError(t, err)
+	flags := map[string][]imap.MailboxFlags{}
+	for _, e := range subscribed {
+		flags[e.Name] = e.Flags
+	}
+	require.Contains(t, flags, "Archive")
+	require.Contains(t, flags, "Trash")
+	require.Contains(t, flags["Trash"], imap.MailboxFlags("\\Trash"))
 }

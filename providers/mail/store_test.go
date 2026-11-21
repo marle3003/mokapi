@@ -132,6 +132,54 @@ func TestStore_Update_KeepsMailsAndFolders(t *testing.T) {
 	require.Contains(t, same.Folders, "Trash")
 }
 
+func TestStore_Update_Subscriptions(t *testing.T) {
+	newSubscribedStore := func(t *testing.T) (*Store, *Folder) {
+		s := NewStore(&Config{Mailboxes: map[string]*MailboxConfig{
+			"alice@foo.bar": {Folders: map[string]*FolderConfig{"Archive": {Flags: []string{"old"}}}},
+		}})
+		f := mustMailbox(t, s, "alice@foo.bar").Folders["Archive"]
+		f.AddFlag(imap.Subscribed)
+		return s, f
+	}
+
+	t.Run("keeps subscription and replaces other flags", func(t *testing.T) {
+		s, f := newSubscribedStore(t)
+
+		s.Update(&Config{Mailboxes: map[string]*MailboxConfig{
+			"alice@foo.bar": {Folders: map[string]*FolderConfig{"Archive": {Flags: []string{"new"}}}},
+		}})
+
+		require.ElementsMatch(t, []imap.MailboxFlags{"new", imap.Subscribed}, f.Flags)
+	})
+
+	t.Run("subscribed flag in file is not duplicated", func(t *testing.T) {
+		s, f := newSubscribedStore(t)
+
+		s.Update(&Config{Mailboxes: map[string]*MailboxConfig{
+			"alice@foo.bar": {Folders: map[string]*FolderConfig{"Archive": {Flags: []string{`\Subscribed`}}}},
+		}})
+
+		require.Equal(t, []imap.MailboxFlags{imap.Subscribed}, f.Flags)
+	})
+
+	t.Run("keeps subscription of nested folder", func(t *testing.T) {
+		cfg := func() *Config {
+			return &Config{Mailboxes: map[string]*MailboxConfig{
+				"alice@foo.bar": {Folders: map[string]*FolderConfig{
+					"Archive": {Folders: map[string]*FolderConfig{"2025": {}}},
+				}},
+			}}
+		}
+		s := NewStore(cfg())
+		f := mustMailbox(t, s, "alice@foo.bar").Folders["Archive"].Folders["2025"]
+		f.AddFlag(imap.Subscribed)
+
+		s.Update(cfg())
+
+		require.Equal(t, []imap.MailboxFlags{imap.Subscribed}, f.Flags)
+	})
+}
+
 func TestStore_Update_FolderNotInConfigStays(t *testing.T) {
 	s := NewStore(&Config{Mailboxes: map[string]*MailboxConfig{
 		"alice@foo.bar": {Folders: map[string]*FolderConfig{"INBOX": {}, "Archive": {}}},
