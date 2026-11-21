@@ -1,3 +1,6 @@
+import { flushPromises, type mount } from '@vue/test-utils'
+import { expect } from 'vitest'
+
 // Queries for the DOM of a mounted component, named like the Playwright locators they stand in for.
 // They take `wrapper.element` (or a shadow root) and return what a user reads, trimmed.
 
@@ -35,4 +38,40 @@ export function shadowRootOf(parent: ParentNode): ShadowRoot {
     throw new Error('no element with a shadow root')
   }
   return host.shadowRoot
+}
+
+// The sub tabs of a detail panel (a mounted wrapper, not a DOM element: `openTab` clicks).
+type Panel = ReturnType<typeof mount>
+
+function tabs(panel: Panel) {
+  return panel.findAll('[role="tab"]')
+}
+
+export function tabNames(panel: Panel) {
+  return tabs(panel).map(t => t.text())
+}
+
+export function selectedTab(panel: Panel) {
+  return tabs(panel).filter(t => t.attributes('aria-selected') === 'true').map(t => t.text())
+}
+
+export async function openTab(panel: Panel, name: string) {
+  await tabs(panel).find(t => t.text() === name)!.trigger('click')
+  await flushPromises()
+}
+
+// the content of the selected sub tab
+export function content(panel: Panel) {
+  return panel.get('[role="tabpanel"]').element
+}
+
+// The cell texts of each body row, instead of Playwright's expectRows.
+export function tableRows(table: Element): string[][] {
+  return [...table.querySelectorAll('tbody tr')].map(row => [...row.querySelectorAll('td')].map(td => text(td) ?? ''))
+}
+
+// `toHaveCount(1)` of Playwright: a missing or duplicated element fails the test. `what` names it in the failure.
+export function single(elements: Element[], what: string): Element {
+  expect(elements, what).toHaveLength(1)
+  return elements[0]
 }

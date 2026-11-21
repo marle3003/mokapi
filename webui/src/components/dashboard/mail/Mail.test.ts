@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { formatDateTime } from '../../../../e2e/tests/helpers/format'
-import { loadMailDashboard, resetMailDashboard } from '@/test-support/mail-dashboard-lifecycle'
+import { loadMailDashboard, resetDashboard } from '@/test-support/dashboard-lifecycle'
 import { labelled, region, shadowRootOf, text } from '@/test-support/dom-queries'
 
 vi.mock('@/router', async () => (await import('@/test-support/router-mock')).routerMock())
@@ -24,7 +24,7 @@ describe('Mail', () => {
     Mail = (await import('./Mail.vue')).default
   })
 
-  afterEach(resetMailDashboard)
+  afterEach(resetDashboard)
 
   it('shows Info, Mail Body, Attachments and Footer', async () => {
     const { mail } = await mountMail(testMail.messageId)

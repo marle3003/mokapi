@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { formatDateTime } from '../../../../e2e/tests/helpers/format'
-import { loadMailDashboard, resetMailDashboard } from '@/test-support/mail-dashboard-lifecycle'
-import { text } from '@/test-support/dom-queries'
+import { loadMailDashboard, resetDashboard } from '@/test-support/dashboard-lifecycle'
+import { single, text } from '@/test-support/dom-queries'
 
 vi.mock('@/router', async () => (await import('@/test-support/router-mock')).routerMock())
 // the detail panel of a selected row needs source view and ace for its Event Handlers
@@ -21,17 +21,12 @@ async function mountMails(query = '') {
 
   const rows = () => [...mails.element.querySelectorAll('tbody tr')]
   const cells = (row: Element) => [...row.querySelectorAll('td')].map(td => text(td))
-  // like toHaveCount(1) in Playwright: a missing or duplicated row fails the test
-  const single = (selector: string) => {
-    const found = rows().filter(r => r.querySelector(selector))
-    expect(found, selector).toHaveLength(1)
-    return found[0]
-  }
+  const singleRow = (selector: string) => single(rows().filter(r => r.querySelector(selector)), selector)
   // the row of an accepted mail is found by the link to its full view
   const row = (messageId: string) =>
-    single(`a[href="${router.resolve({ name: 'smtpMail', params: { id: messageId } }).href}"]`)
+    singleRow(`a[href="${router.resolve({ name: 'smtpMail', params: { id: messageId } }).href}"]`)
   // the row of a rejected mail has no link: it is found by the error, which is the title of its status
-  const rejectedRow = (error: string) => single(`[title="${error}"]`)
+  const rejectedRow = (error: string) => singleRow(`[title="${error}"]`)
   return { mails, router, rows, cells, row, rejectedRow }
 }
 
@@ -41,7 +36,7 @@ describe('Mails', () => {
     Mails = (await import('./Mails.vue')).default
   })
 
-  afterEach(resetMailDashboard)
+  afterEach(resetDashboard)
 
   it('has the columns Subject, From, To, Status, Time and Duration', async () => {
     const { mails } = await mountMails()

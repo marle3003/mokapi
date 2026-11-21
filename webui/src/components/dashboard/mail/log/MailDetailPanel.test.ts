@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
 import { formatDateTime } from '../../../../../e2e/tests/helpers/format'
-import { loadMailDashboard, resetMailDashboard } from '@/test-support/mail-dashboard-lifecycle'
-import { field, labelled, region, text } from '@/test-support/dom-queries'
+import { loadMailDashboard, resetDashboard } from '@/test-support/dashboard-lifecycle'
+import { content, field, labelled, openTab, region, selectedTab, tabNames, text } from '@/test-support/dom-queries'
 
 vi.mock('@/router', async () => (await import('@/test-support/router-mock')).routerMock())
 // the Event Handlers label is part of the panel, the list below it needs source view and ace
@@ -29,35 +29,13 @@ async function mountPanel(eventId: string) {
   return { panel: wrapper, router }
 }
 
-function tabs(panel: ReturnType<typeof mount>) {
-  return panel.findAll('[role="tab"]')
-}
-
-function tabNames(panel: ReturnType<typeof mount>) {
-  return tabs(panel).map(t => t.text())
-}
-
-function selectedTab(panel: ReturnType<typeof mount>) {
-  return tabs(panel).filter(t => t.attributes('aria-selected') === 'true').map(t => t.text())
-}
-
-async function openTab(panel: ReturnType<typeof mount>, name: string) {
-  await tabs(panel).find(t => t.text() === name)!.trigger('click')
-  await flushPromises()
-}
-
-// the content of the selected sub tab
-function content(panel: ReturnType<typeof mount>) {
-  return panel.get('[role="tabpanel"]').element
-}
-
 describe('MailDetailPanel', () => {
   beforeEach(async () => {
     api = await loadMailDashboard()
     MailDetailPanel = (await import('./MailDetailPanel.vue')).default
   })
 
-  afterEach(resetMailDashboard)
+  afterEach(resetDashboard)
 
   describe('head', () => {
     it('shows subject, status, From, To and time of an accepted mail', async () => {

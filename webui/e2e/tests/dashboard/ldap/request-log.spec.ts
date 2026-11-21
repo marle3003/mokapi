@@ -5,7 +5,6 @@ import { LdapRequestLogModel } from '../../models/ldap'
 import { useLdapRequests } from '../../components/ldap'
 import { useRequestView } from '../../components/request-view'
 import { pauseClock } from '../../helpers/clock'
-import { formatDateTime } from '../../helpers/format'
 
 // The request events of the LDAP mock (e2e/mocks/ldap.ts) in the order of the log. LDAP Testserver has
 // twelve, LDAP Second Server three:
@@ -19,13 +18,10 @@ const modify = 'fbe9ade9-2adc-451b-a86b-a900c06c0058'
 const add = '762b4a9e-7f26-4314-8ffd-7ae1922ab330'
 const remove = '23636b50-e19b-4acc-afc0-f5918a7d2e64'
 const modifyDn = '2fa8df80-9b15-427b-9c6d-0503aec06ed3'
-const compare = '34cbe69d-948c-43e3-aa19-df83c09116c4'
 const bind = newId(1)
 const unbind = newId(2)
 const searchWithAttributes = newId(3)
 const searchWithHandlers = newId(4)
-const addFailed = newId(5)
-const searchEmpty = newId(6)
 
 const service = 'LDAP Testserver'
 const secondService = 'LDAP Second Server'
@@ -247,15 +243,6 @@ test.describe('LDAP request log: detail panel', () => {
         await expect(page).toHaveURL(new RegExp(`/dashboard/ldap/log/${servicePath}\\?request=${search}$`))
     })
 
-    test('the row has one link, the operation, to the full request view', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
-
-        await expect(log.row(search).getByRole('link')).toHaveCount(1)
-        await expect(log.row(search).getByRole('link')).toHaveText('Search')
-        await expect(log.row(search).getByRole('link')).toHaveAttribute('href', requestPath(search))
-    })
-
     test('a click on the operation of a row selects it instead of leaving the log', async ({ page }) => {
         const { log } = useRequestLog(page)
         await page.goto(serviceLog)
@@ -264,71 +251,6 @@ test.describe('LDAP request log: detail panel', () => {
 
         await expect(log.panel.element).toBeVisible()
         await expect(page).toHaveURL(new RegExp(`\\?request=${modify}$`))
-    })
-
-    // [name, id, operation, head text, status, time]
-    const heads: [string, string, string, string | undefined, string, string][] = [
-        ['Search', search, 'Search', '(objectClass=user)', 'Success', '2025-02-27T11:52:25.482366+01:00'],
-        ['Add', add, 'Add', 'cn=alice,cn=users,dc=mokapi,dc=io', 'Success', '2025-02-27T11:50:25.482366+01:00'],
-        ['Modify', modify, 'Modify', 'cn=turangal,cn=users,dc=mokapi,dc=io', 'Success', '2025-02-27T11:50:50.482366+01:00'],
-        ['Delete', remove, 'Delete', 'cn=turangal,cn=users,dc=mokapi,dc=io', 'NoSuchObject', '2025-02-27T11:50:10.482366+01:00'],
-        ['ModifyDN', modifyDn, 'ModifyDN', 'cn=turangal,cn=users,dc=mokapi,dc=io', 'Success', '2025-02-27T11:49:25.482366+01:00'],
-        ['Compare', compare, 'Compare', 'cn=turangal,cn=users,dc=mokapi,dc=io', 'CompareTrue', '2025-02-27T11:49:10.482366+01:00'],
-        ['Bind', bind, 'Bind', 'cn=admin,dc=mokapi,dc=io', 'Success', '2025-02-27T11:48:50.482366+01:00'],
-        ['Unbind', unbind, 'Unbind', undefined, '-', '2025-02-27T11:48:40.482366+01:00'],
-    ]
-    for (const [name, id, operation, text, status, time] of heads) {
-        test(`the head of a ${name} request shows the operation, ${text ? 'the DN or filter' : 'no text'}, the status and the time`, async ({ page }) => {
-            const { log, view } = useRequestLog(page)
-            await page.goto(serviceLog)
-
-            await log.time(log.row(id)).click()
-
-            const panel = log.panel.element
-            const head = view.field(panel, 'Operation')
-            await expect(head.locator('.badge')).toHaveText(operation)
-            if (text) {
-                await expect(head).toContainText(text)
-            } else {
-                await expect(head).toHaveText(operation)
-            }
-            await expect(view.field(panel, 'Status')).toHaveText(status)
-            await expect(view.field(panel, 'Time')).toHaveText(formatDateTime(time))
-        })
-    }
-
-    // [name, id, sub tabs]
-    const tabsOfOperation: [string, string, string[]][] = [
-        ['Bind', bind, ['Request', 'Details']],
-        ['Search', search, ['Request', 'Response', 'Details']],
-        ['Add', add, ['Request', 'Details']],
-        ['Modify', modify, ['Request', 'Details']],
-        ['ModifyDN', modifyDn, ['Request', 'Details']],
-        ['Compare', compare, ['Request', 'Details']],
-        ['Delete', remove, ['Details']],
-        ['Unbind', unbind, ['Details']],
-    ]
-    for (const [name, id, tabs] of tabsOfOperation) {
-        test(`a ${name} request has the sub tabs ${tabs.join(', ')}, the first is selected`, async ({ page }) => {
-            const { log } = useRequestLog(page)
-            await page.goto(serviceLog)
-
-            await log.time(log.row(id)).click()
-
-            await expect(log.panel.tabs).toHaveText(tabs)
-            await expect(log.panel.tab(tabs[0])).toHaveAttribute('aria-selected', 'true')
-        })
-    }
-
-    test('Request shows the fields of a Bind: name, auth and password', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(bind)).click()
-
-        await expect(view.field(log.panel.content, 'Name')).toHaveText('cn=admin,dc=mokapi,dc=io')
-        await expect(view.field(log.panel.content, 'Auth')).toHaveText('simple')
-        await expect(view.field(log.panel.content, 'Password')).toHaveText('secret')
     })
 
     test('Request shows the fields of a Search', async ({ page }) => {
@@ -345,88 +267,6 @@ test.describe('LDAP request log: detail panel', () => {
         await expect(view.field(content, 'Attributes')).toHaveText('memberOf, thumbnailphoto')
     })
 
-    test('Request shows the changes of a Modify and the attributes of an Add', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(modify)).click()
-        await view.expectRows(log.panel.content.getByRole('table'), [['Add', 'foo', 'bar']])
-
-        await log.time(log.row(add)).click()
-        await view.expectRows(log.panel.content.getByRole('table'), [['cn', 'alice'], ['objectClass', 'topperson'], ['sn', 'Smith']])
-    })
-
-    test('Request shows the fields of a ModifyDN and a Compare', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-
-        await log.time(log.row(modifyDn)).click()
-        await expect(view.field(log.panel.content, 'New RDN')).toHaveText('cn=foo')
-        await expect(view.field(log.panel.content, 'New Superior DN')).toHaveText('cn=bar,dc=mokapi,dc=io')
-
-        await log.time(log.row(compare)).click()
-        await expect(view.field(log.panel.content, 'Attribute')).toHaveText('foo')
-        await expect(view.field(log.panel.content, 'Value')).toHaveText('bar')
-    })
-
-    test('Response lists the results of a Search', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(search)).click()
-
-        await log.panel.tab('Response').click()
-
-        await expect(log.panel.tab('Response')).toHaveAttribute('aria-selected', 'true')
-        await view.expectRows(log.panel.content.getByRole('table'), [
-            ['cn=farnsworthh,cn=users,dc=mokapi,dc=io', '0'],
-            ['cn=fryp,cn=users,dc=mokapi,dc=io', '0'],
-            ['cn=turangal,cn=users,dc=mokapi,dc=io', '0'],
-            ['cn=wonga,cn=users,dc=mokapi,dc=io', '0'],
-        ])
-    })
-
-    test('Response of a Search without results is an empty table', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(searchEmpty)).click()
-
-        await log.panel.tab('Response').click()
-
-        await expect(log.panel.content.getByRole('table')).toBeVisible()
-        await expect(log.panel.content.getByRole('table').locator('tbody tr')).toHaveCount(0)
-    })
-
-    test('Details shows the duration', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(search)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.tab('Details')).toHaveAttribute('aria-selected', 'true')
-        await expect(view.field(log.panel.content, 'Duration')).toBeVisible()
-    })
-
-    test('Details shows the Event Handlers of a request that has some', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(searchWithHandlers)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByText('Event Handlers')).toBeVisible()
-    })
-
-    test('Details has no Event Handlers for a request without', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(search)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(log.panel.content.getByText('Event Handlers')).toHaveCount(0)
-    })
-
     test('Details shows the message and the matched DN of a failed Delete', async ({ page }) => {
         const { log, view } = useRequestLog(page)
         await page.goto(serviceLog)
@@ -437,30 +277,6 @@ test.describe('LDAP request log: detail panel', () => {
         await expect(view.field(log.panel.content, 'Matched DN')).toHaveText('cn=users,dc=mokapi,dc=io')
     })
 
-    test('Details shows the message and the matched DN of a failed Add', async ({ page }) => {
-        const { log, view } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(addFailed)).click()
-
-        await log.panel.tab('Details').click()
-
-        await expect(view.field(log.panel.content, 'Message')).toContainText('entry already exists')
-        await expect(view.field(log.panel.content, 'Matched DN')).toHaveText('cn=users,dc=mokapi,dc=io')
-    })
-
-    for (const [name, id, tab] of [['Bind', bind, 'Details'], ['Unbind', unbind, 'Details']]) {
-        test(`Details of a ${name} without message and matched DN shows neither`, async ({ page }) => {
-            const { log } = useRequestLog(page)
-            await page.goto(serviceLog)
-            await log.time(log.row(id)).click()
-
-            await log.panel.tab(tab).click()
-
-            await expect(log.panel.content.getByText('Message', { exact: true })).toHaveCount(0)
-            await expect(log.panel.content.getByText('Matched DN', { exact: true })).toHaveCount(0)
-        })
-    }
-
     test('the sub tab is not part of the address', async ({ page }) => {
         const { log } = useRequestLog(page)
         await page.goto(serviceLog)
@@ -469,19 +285,6 @@ test.describe('LDAP request log: detail panel', () => {
         await log.panel.tab('Response').click()
 
         await expect(page).toHaveURL(new RegExp(`\\?request=${search}$`))
-    })
-
-    test('a sub tab the next request does not have falls back to the first tab', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(serviceLog)
-        await log.time(log.row(search)).click()
-        await log.panel.tab('Response').click()
-
-        await page.keyboard.press('ArrowDown')
-
-        await expect(page).toHaveURL(new RegExp(`request=${modify}`))
-        await expect(log.panel.tabs).toHaveText(['Request', 'Details'])
-        await expect(log.panel.tab('Request')).toHaveAttribute('aria-selected', 'true')
     })
 
     test('a request without Request tab opens on Details', async ({ page }) => {
@@ -661,14 +464,6 @@ test.describe('LDAP request log: detail panel', () => {
         await expect(page).toHaveURL(/\/dashboard\/configs/)
     })
 
-    test('a request that is gone shows a message in the panel', async ({ page }) => {
-        const { log } = useRequestLog(page)
-        await page.goto(`${serviceLog}?request=00000000-0000-4000-8000-000000000000`)
-
-        await expect(log.panel.element.getByText('LDAP Request not found')).toBeVisible()
-        await expect(log.rows).toHaveCount(12)
-    })
-
     test('is shown below the table in a narrow window', async ({ page }) => {
         const { log } = useRequestLog(page)
         await page.setViewportSize({ width: 600, height: 900 })
@@ -740,55 +535,6 @@ test.describe('LDAP request log: Search result dialog', () => {
 })
 
 test.describe('LDAP request log: full request view', () => {
-    const handler = {
-        duration: 1500000,
-        tags: { name: 'dashboard', file: 'examples/mokapi/ldap_handler.js', fileKey: 'c7d6b1a2-5f0e-4c4a-9d0a-1b3c8e7f2a10', event: 'ldap' },
-        logs: [{ level: 'info', message: 'a custom log message from the ldap handler' }],
-        parameters: [JSON.stringify({ operation: 'Bind' }), JSON.stringify({ status: 'Success' })],
-    }
-
-    // The mock has Event Handlers for one request only. The others get one on their way to the dashboard.
-    async function serveWithHandler(page: Page, id: string) {
-        await page.route(`**/api/events/${id}`, async route => {
-            const response = await route.fetch()
-            const body = await response.json()
-            return route.fulfill({ response, json: { ...body, data: { ...body.data, actions: [handler] } } })
-        })
-    }
-
-    test('the head shows the operation, status, time and duration', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(search))
-
-        await expect(view.field(view.head, 'Operation').locator('.badge')).toHaveText('Search')
-        await expect(view.field(view.head, 'Operation')).toContainText('(objectClass=user)')
-        await expect(view.field(view.head, 'Status')).toHaveText('Success')
-        await expect(view.field(view.head, 'Time')).toHaveText(formatDateTime('2025-02-27T11:52:25.482366+01:00'))
-        await expect(view.field(view.head, 'Duration')).toBeVisible()
-    })
-
-    test('a Bind shows the name in the head and name, auth and password', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(bind))
-
-        await expect(view.field(view.head, 'Operation')).toContainText('cn=admin,dc=mokapi,dc=io')
-        await expect(view.field(view.request, 'Name')).toHaveText('cn=admin,dc=mokapi,dc=io')
-        await expect(view.field(view.request, 'Auth')).toHaveText('simple')
-        await expect(view.field(view.request, 'Password')).toHaveText('secret')
-    })
-
-    test('a Search shows Request, Event Handlers and Response in this order', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(searchWithHandlers))
-        const handlers = page.getByRole('region', { name: 'Event Handlers' })
-        await expect(handlers).toBeVisible()
-
-        await expect(view.field(view.request, 'Base DN')).toHaveText('dc=mokapi,dc=io')
-        const [request, event, response] = await Promise.all([view.request, handlers, view.response].map(x => x.boundingBox()))
-        expect(request!.y).toBeLessThan(event!.y)
-        expect(event!.y).toBeLessThan(response!.y)
-    })
-
     test('a Search lists its results and opens the attributes dialog', async ({ page }) => {
         const { view } = useRequestLog(page)
         await page.goto(requestPath(searchWithAttributes))
@@ -799,64 +545,6 @@ test.describe('LDAP request log: full request view', () => {
         ])
         await view.response.getByRole('row', { name: /cn=alice2/ }).click()
         await expect(page.getByRole('dialog')).toContainText('DN: cn=alice2,cn=users,dc=mokapi,dc=io')
-    })
-
-    test('a Modify, an Add, a ModifyDN and a Compare show their fields', async ({ page }) => {
-        const { view } = useRequestLog(page)
-
-        await page.goto(requestPath(modify))
-        await view.expectRows(view.request.getByRole('table'), [['Add', 'foo', 'bar']])
-
-        await page.goto(requestPath(add))
-        await view.expectRows(view.request.getByRole('table'), [['cn', 'alice'], ['objectClass', 'topperson'], ['sn', 'Smith']])
-
-        await page.goto(requestPath(modifyDn))
-        await expect(view.field(view.request, 'New RDN')).toHaveText('cn=foo')
-
-        await page.goto(requestPath(compare))
-        await expect(view.field(view.request, 'Attribute')).toHaveText('foo')
-    })
-
-    test('a Delete has no Request, its head shows the DN', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(remove))
-
-        await expect(view.field(view.head, 'Operation')).toContainText('cn=turangal,cn=users,dc=mokapi,dc=io')
-        await expect(view.request).toHaveCount(0)
-    })
-
-    test('the head of a failed Delete shows the message and the matched DN', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(remove))
-
-        await expect(view.field(view.head, 'Message')).toHaveText('delete operation failed: the specified entry does not exist: cn=turangal,cn=users,dc=mokapi,dc=io')
-        await expect(view.field(view.head, 'Matched DN')).toHaveText('cn=users,dc=mokapi,dc=io')
-    })
-
-    test('the head of a request without message and matched DN shows neither', async ({ page }) => {
-        const { view } = useRequestLog(page)
-        await page.goto(requestPath(bind))
-        await expect(view.field(view.head, 'Status')).toHaveText('Success')
-
-        await expect(view.field(view.head, 'Message')).toHaveCount(0)
-        await expect(view.field(view.head, 'Matched DN')).toHaveCount(0)
-    })
-
-    const operations: [string, string][] = [['Bind', bind], ['Modify', modify], ['Add', add], ['Delete', remove], ['ModifyDN', modifyDn], ['Compare', compare]]
-    for (const [name, id] of operations) {
-        test(`the Event Handlers of a ${name} are headed "Event Handlers"`, async ({ page }) => {
-            await serveWithHandler(page, id)
-            await page.goto(requestPath(id))
-
-            await expect(page.getByRole('region', { name: 'Event Handlers' })).toBeVisible()
-            await expect(page.getByRole('heading', { name: 'Actions' })).toHaveCount(0)
-        })
-    }
-
-    test('an unknown request shows a message', async ({ page }) => {
-        await page.goto(requestPath('00000000-0000-4000-8000-000000000000'))
-
-        await expect(page.getByText('LDAP Request not found')).toBeVisible()
     })
 })
 
