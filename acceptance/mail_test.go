@@ -343,6 +343,7 @@ type MailReloadSuite struct {
 	mailsPort   int
 	mergedPortA int
 	mergedPortB int
+	patchPort   int
 	imapPort    int
 }
 
@@ -359,6 +360,7 @@ func (suite *MailReloadSuite) SetupSuite() {
 	suite.mailsPort = try.GetFreePort()
 	suite.mergedPortA = try.GetFreePort()
 	suite.mergedPortB = try.GetFreePort()
+	suite.patchPort = try.GetFreePort()
 	suite.imapPort = try.GetFreePort()
 	suite.dir = suite.T().TempDir()
 
@@ -375,6 +377,22 @@ func (suite *MailReloadSuite) SetupSuite() {
 	suite.writeMail("mailboxes.yml", mailFile{title: "ReloadMailboxes", body: suite.mailboxes("alice@mokapi.io", "bob@mokapi.io")})
 	suite.writeMail("merged-a.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("a", suite.mergedPortA)})
 	suite.writeMail("merged-b.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("b", suite.mergedPortB)})
+	suite.writeMail("rule-patch-a.yml", mailFile{
+		title:   "ReloadRulePatch",
+		servers: suite.smtpServer("smtp", suite.patchPort),
+		body: `rules:
+  spam:
+    subject: .*spam.*
+    action: allow
+`,
+	})
+	suite.writeMail("rule-patch-b.yml", mailFile{
+		title: "ReloadRulePatch",
+		body: `rules:
+  spam:
+    action: deny
+`,
+	})
 
 	suite.writeMail("subscriptions.yml", suite.subscriptionsFile("initial"))
 
@@ -474,6 +492,18 @@ func (suite *MailReloadSuite) TestRuleAddedToFileAppliesToRunningServer() {
 		return suite.sendMail(suite.rulesPort, "alice@mokapi.io", "spam offer") != nil
 	})
 	require.NoError(t, suite.sendMail(suite.rulesPort, "alice@mokapi.io", "hello"))
+}
+
+// TestSecondFileChangesActionOfRule verifies that the second file of a service can turn an allow
+// rule of the first file into a deny rule.
+func (suite *MailReloadSuite) TestSecondFileChangesActionOfRule() {
+	t := suite.T()
+	try.WaitFor(t, func() bool { return isListening(suite.patchPort) })
+
+	try.WaitFor(t, func() bool {
+		return suite.sendMail(suite.patchPort, "alice@mokapi.io", "spam offer") != nil
+	})
+	require.NoError(t, suite.sendMail(suite.patchPort, "alice@mokapi.io", "hello"))
 }
 
 // TestMailsSurviveReload verifies that the mail in a configured INBOX and an auto-created

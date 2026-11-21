@@ -339,6 +339,37 @@ func TestConfig_Patch_Fields(t *testing.T) {
 			},
 		},
 		{
+			name: "rule action",
+			configs: []*mail.Config{
+				{Rules: map[string]*mail.Rule{"r": {Action: mail.Allow}}},
+				{Rules: map[string]*mail.Rule{"r": {Action: mail.Deny}}},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.Equal(t, mail.Deny, result.Rules["r"].Action)
+			},
+		},
+		{
+			name: "rule description",
+			configs: []*mail.Config{
+				{Rules: map[string]*mail.Rule{"r": {Description: "foo"}}},
+				{Rules: map[string]*mail.Rule{"r": {Description: "bar"}}},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.Equal(t, "bar", result.Rules["r"].Description)
+			},
+		},
+		{
+			name: "rule without action and description keeps original",
+			configs: []*mail.Config{
+				{Rules: map[string]*mail.Rule{"r": {Action: mail.Deny, Description: "foo"}}},
+				{Rules: map[string]*mail.Rule{"r": {Sender: mail.NewRuleExpr(".*")}}},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.Equal(t, mail.Deny, result.Rules["r"].Action)
+				require.Equal(t, "foo", result.Rules["r"].Description)
+			},
+		},
+		{
 			name: "nil entries are skipped",
 			configs: []*mail.Config{
 				{

@@ -149,6 +149,12 @@ func (r *Rule) patch(patch *Rule) {
 	if patch.RejectResponse != nil {
 		r.RejectResponse = patch.RejectResponse
 	}
+	if patch.Action != "" {
+		r.Action = patch.Action
+	}
+	if patch.Description != "" {
+		r.Description = patch.Description
+	}
 }
 
 func (f *FolderConfig) patch(patch *FolderConfig) {
