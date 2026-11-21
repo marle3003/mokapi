@@ -176,7 +176,7 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	cfg := s.Config()
+	cfg, files := s.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(404)
 		return
@@ -204,7 +204,7 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		Name:        cfg.Info.Name,
 		Description: cfg.Info.Description,
 		Version:     cfg.Info.Version,
-		Configs:     getConfigs(s.Configs()),
+		Configs:     getConfigs(files),
 	}
 
 	if cfg.Info.Contact != nil {

@@ -27,6 +27,14 @@ func mergeNames(received *[][]*dynamic.Config) func(files []*dynamic.Config) *st
 	}
 }
 
+// filesOf returns the files of a snapshot holder (a configSnapshot or an Info that embeds it).
+func filesOf[T any](s interface {
+	Snapshot() (*T, []*dynamic.Config)
+}) []*dynamic.Config {
+	_, files := s.Snapshot()
+	return files
+}
+
 func TestConfigSnapshot_Add(t *testing.T) {
 	var s configSnapshot[string]
 	var calls [][]*dynamic.Config
@@ -57,7 +65,7 @@ func TestConfigSnapshot_AddSameUrlReplacesFile(t *testing.T) {
 	s.add(snapshotFile(t, "file:///a.yml"), mergeNames(&calls))
 	s.add(snapshotFile(t, "file:///a.yml"), mergeNames(&calls))
 
-	require.Len(t, s.Configs(), 1)
+	require.Len(t, filesOf(&s), 1)
 }
 
 func TestConfigSnapshot_Remove(t *testing.T) {
@@ -72,7 +80,7 @@ func TestConfigSnapshot_Remove(t *testing.T) {
 
 	require.Equal(t, "file:///b.yml;", *got)
 	require.Same(t, got, s.Config())
-	require.Equal(t, []*dynamic.Config{b}, s.Configs())
+	require.Equal(t, []*dynamic.Config{b}, filesOf(&s))
 }
 
 func TestConfigSnapshot_RemoveLastFilePublishesNilWithoutMerge(t *testing.T) {
@@ -85,29 +93,31 @@ func TestConfigSnapshot_RemoveLastFilePublishesNilWithoutMerge(t *testing.T) {
 	got := s.remove(a, mergeNames(&calls))
 
 	require.Nil(t, got)
-	require.Nil(t, s.Config())
-	require.Empty(t, s.Configs())
+	cfg, files := s.Snapshot()
+	require.Nil(t, cfg)
+	require.Empty(t, files)
 	require.Empty(t, calls)
 }
 
-func TestConfigSnapshot_ConfigsReturnsCopy(t *testing.T) {
+func TestConfigSnapshot_SnapshotReturnsCopyOfFiles(t *testing.T) {
 	var s configSnapshot[string]
 	var calls [][]*dynamic.Config
 	a := snapshotFile(t, "file:///a.yml")
 	s.add(a, mergeNames(&calls))
 
-	list := s.Configs()
+	_, list := s.Snapshot()
 	list[0] = nil
 	_ = append(list, snapshotFile(t, "file:///b.yml"))
 
-	require.Equal(t, []*dynamic.Config{a}, s.Configs())
+	require.Equal(t, []*dynamic.Config{a}, filesOf(&s))
 }
 
 func TestConfigSnapshot_ZeroValue(t *testing.T) {
 	var s configSnapshot[string]
 
-	require.Nil(t, s.Config())
-	require.Empty(t, s.Configs())
+	cfg, files := s.Snapshot()
+	require.Nil(t, cfg)
+	require.Empty(t, files)
 }
 
 func TestConfigSnapshot_Publish(t *testing.T) {
@@ -116,6 +126,79 @@ func TestConfigSnapshot_Publish(t *testing.T) {
 
 	s.publish(&v)
 
-	require.Same(t, &v, s.Config())
-	require.Empty(t, s.Configs())
+	cfg, files := s.Snapshot()
+	require.Same(t, &v, cfg)
+	require.Empty(t, files)
+}
+
+func TestConfigSnapshot_PublishDropsFilesOfEarlierMerge(t *testing.T) {
+	var s configSnapshot[string]
+	var calls [][]*dynamic.Config
+	s.add(snapshotFile(t, "file:///a.yml"), mergeNames(&calls))
+	v := "published"
+
+	s.publish(&v)
+
+	cfg, files := s.Snapshot()
+	require.Same(t, &v, cfg)
+	require.Empty(t, files)
+}
+
+// While a writer is inside merge (after changing the file map, before publishing the merged
+// config), a reader must still get the old config together with the old files.
+func TestConfigSnapshot_ConfigAndFilesAreReadTogether(t *testing.T) {
+	a := snapshotFile(t, "file:///a.yml")
+	b := snapshotFile(t, "file:///b.yml")
+
+	// readPair returns the merged config (a string listing its files) and the files from one Snapshot
+	readPair := func(s *configSnapshot[string]) (string, string) {
+		cfg, files := s.Snapshot()
+		var merged, listed string
+		if cfg != nil {
+			merged = *cfg
+		}
+		for _, f := range files {
+			listed += f.Info.Url.String() + ";"
+		}
+		return merged, listed
+	}
+
+	t.Run("add", func(t *testing.T) {
+		var s configSnapshot[string]
+		var calls [][]*dynamic.Config
+		s.add(a, mergeNames(&calls))
+
+		var gotConfig, gotFiles string
+		s.add(b, func(files []*dynamic.Config) *string {
+			gotConfig, gotFiles = readPair(&s)
+			return mergeNames(&calls)(files)
+		})
+
+		require.Equal(t, "file:///a.yml;", gotConfig)
+		require.Equal(t, gotConfig, gotFiles)
+		gotConfig, gotFiles = readPair(&s)
+		require.Equal(t, "file:///a.yml;file:///b.yml;", gotConfig)
+		require.Equal(t, gotConfig, gotFiles)
+	})
+
+	t.Run("remove", func(t *testing.T) {
+		var s configSnapshot[string]
+		var calls [][]*dynamic.Config
+		s.add(a, mergeNames(&calls))
+		s.add(b, mergeNames(&calls))
+		c := snapshotFile(t, "file:///c.yml")
+		s.add(c, mergeNames(&calls))
+
+		var gotConfig, gotFiles string
+		s.remove(c, func(files []*dynamic.Config) *string {
+			gotConfig, gotFiles = readPair(&s)
+			return mergeNames(&calls)(files)
+		})
+
+		require.Equal(t, "file:///a.yml;file:///b.yml;file:///c.yml;", gotConfig)
+		require.Equal(t, gotConfig, gotFiles)
+		gotConfig, gotFiles = readPair(&s)
+		require.Equal(t, "file:///a.yml;file:///b.yml;", gotConfig)
+		require.Equal(t, gotConfig, gotFiles)
+	})
 }

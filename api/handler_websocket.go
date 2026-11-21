@@ -121,7 +121,7 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	cfg := wi.Config()
+	cfg, files := wi.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -184,7 +184,7 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 		m.Clients = append(m.Clients, c)
 	}
 
-	m.Configs = getConfigs(wi.Configs())
+	m.Configs = getConfigs(files)
 
 	write(w, m)
 }

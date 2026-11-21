@@ -52,8 +52,9 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Http.Get("foo")
 	require.NotNil(t, info)
-	require.Len(t, info.Configs(), 1, "only file a.yml must remain in the store")
-	require.Equal(t, "a.yml", info.Configs()[0].Info.Url.String())
+	_, files := info.Snapshot()
+	require.Len(t, files, 1, "only file a.yml must remain in the store")
+	require.Equal(t, "a.yml", files[0].Info.Url.String())
 
 	requirePortClosed(t, portB)
 

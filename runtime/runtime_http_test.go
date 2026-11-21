@@ -81,7 +81,7 @@ func TestApp_AddHttp(t *testing.T) {
 				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar"))))
 
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 1)
 				require.Equal(t, "https://mokapi.io", configs[0].Info.Url.String())
 			},
@@ -227,7 +227,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
 				require.Equal(t, "bar", info.Config().Info.Description)
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 2)
 			},
 		},
@@ -419,7 +419,7 @@ func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Http.Get("foo")
 	require.NotNil(t, info)
-	configs := info.Configs()
+	configs := filesOf(info)
 	require.Len(t, configs, 1)
 	require.Equal(t, "file:///a.yml", configs[0].Info.Url.String())
 
@@ -651,7 +651,7 @@ func TestHttpStore_ConcurrentAccess(t *testing.T) {
 				info := app.Http.Get("foo")
 				_ = info.Config().Info.Name
 				_ = info.Config().Paths.Len()
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -678,7 +678,7 @@ func TestHttpStore_ConcurrentAccess(t *testing.T) {
 				if info.Config() != nil {
 					_ = info.Config().Info.Name
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -795,12 +795,12 @@ func TestHttpInfo_Snapshot(t *testing.T) {
 		app.Http.Add(newFile("https://mokapi.io/a.yml", "/a"))
 		info := app.Http.Add(newFile("https://mokapi.io/b.yml", "/b"))
 
-		configs := info.Configs()
+		configs := filesOf(info)
 		require.Len(t, configs, 2)
 		configs[0] = nil
 
-		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
-		require.Len(t, info.Configs(), 2)
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
 	})
 
 	t.Run("Configs does not race with Add", func(t *testing.T) {
@@ -819,7 +819,7 @@ func TestHttpInfo_Snapshot(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < 200; i++ {
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()

@@ -203,13 +203,13 @@ func (h *handler) getHttpApi(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	cfg := info.Config()
+	cfg, files := info.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	write(w, h.getHttpService(cfg, info.Configs()))
+	write(w, h.getHttpService(cfg, files))
 }
 
 func (h *handler) getHttpOperations(w http.ResponseWriter, r *http.Request) {

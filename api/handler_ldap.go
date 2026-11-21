@@ -55,7 +55,7 @@ func (h *handler) handleLdapService(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	cfg := s.Config()
+	cfg, files := s.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(404)
 		return
@@ -65,7 +65,7 @@ func (h *handler) handleLdapService(w http.ResponseWriter, r *http.Request) {
 		Description: cfg.Info.Description,
 		Version:     cfg.Info.Version,
 		Server:      cfg.Address,
-		Configs:     getConfigs(s.Configs()),
+		Configs:     getConfigs(files),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

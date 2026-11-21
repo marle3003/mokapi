@@ -36,7 +36,7 @@ func TestMqttStore_MergedConfigs(t *testing.T) {
 				app.Mqtt.Remove(b)
 
 				info = app.Mqtt.Get("foo")
-				require.Len(t, info.Configs(), 1)
+				require.Len(t, filesOf(info), 1)
 				requireOnlyFileA(t, "mqtt", info.Config())
 			},
 		},
@@ -162,7 +162,7 @@ func TestMqttStore_ConcurrentAccess(t *testing.T) {
 				_ = cfg.Info.Name
 				for range cfg.Channels {
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -192,7 +192,7 @@ func TestMqttStore_ConcurrentAccess(t *testing.T) {
 				if cfg := info.Config(); cfg != nil {
 					_ = cfg.Info.Name
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -258,12 +258,12 @@ func TestMqttInfo_Snapshot(t *testing.T) {
 		info, err := app.Mqtt.Add(b, enginetest.NewEngine())
 		require.NoError(t, err)
 
-		configs := info.Configs()
+		configs := filesOf(info)
 		require.Len(t, configs, 2)
 		configs[0] = nil
 
-		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
-		require.Len(t, info.Configs(), 2)
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
 	})
 
 	t.Run("Configs does not race with Add", func(t *testing.T) {
@@ -286,7 +286,7 @@ func TestMqttInfo_Snapshot(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < 200; i++ {
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()

@@ -124,7 +124,7 @@ func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	cfg := mi.Config()
+	cfg, files := mi.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -188,7 +188,7 @@ func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
 		m.Clients = append(m.Clients, c)
 	}
 
-	m.Configs = getConfigs(mi.Configs())
+	m.Configs = getConfigs(files)
 
 	write(w, m)
 }

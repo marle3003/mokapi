@@ -262,7 +262,7 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	cfg := ki.Config()
+	cfg, files := ki.Snapshot()
 	if cfg == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -319,7 +319,7 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 
 	k.Topics = getKafkaChannels(slices.Collect(maps.Values(cfg.Channels)), ki, cfg.Info.Name, h.app.Monitor.Kafka)
 	k.Groups = getGroupInfos(ki, cfg.Info.Name, "", h.app.Monitor.Kafka)
-	k.Configs = getConfigInfos(ki.Configs())
+	k.Configs = getConfigInfos(files)
 
 	for _, ctx := range ki.Store.Clients() {
 		c := kafkaClientInfo{

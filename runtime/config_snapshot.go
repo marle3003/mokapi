@@ -3,45 +3,53 @@ package runtime
 import (
 	"mokapi/config/dynamic"
 	"path/filepath"
+	"slices"
 	"sort"
 	"sync"
 	"sync/atomic"
 )
 
 // configSnapshot holds the files of one service (key: file URL) and the immutable config
-// merged from them. A reader takes one snapshot via Config and uses only that. The zero value
+// merged from them. Config and files are published together as one pair, so a reader that takes
+// one Snapshot always sees the config together with the files it was merged from. The zero value
 // is ready to use.
 //
 // Writers (add, remove) must be serialised by the caller, in practice by the store lock of the
-// protocol. The lock m only protects the file map for concurrent Configs calls. merge runs
-// outside of m, so a slow merge never blocks readers of Configs.
+// protocol. The lock m only guards the file map among writers; readers never take it, and merge
+// runs outside of m, so a slow merge never blocks readers.
 type configSnapshot[T any] struct {
-	config  atomic.Pointer[T]
-	m       sync.RWMutex               // guards configs
+	current atomic.Pointer[snapshot[T]]
+	m       sync.Mutex                 // guards configs
 	configs map[string]*dynamic.Config // key: Info.Url.String()
+}
+
+// snapshot is the immutable pair that is published atomically.
+type snapshot[T any] struct {
+	config *T
+	files  []*dynamic.Config
 }
 
 // Config returns the current merged config, or nil after the last file was removed.
 // The result must not be modified.
 func (s *configSnapshot[T]) Config() *T {
-	return s.config.Load()
+	cfg, _ := s.Snapshot()
+	return cfg
 }
 
-// Configs returns a copy of the current files.
-func (s *configSnapshot[T]) Configs() []*dynamic.Config {
-	s.m.RLock()
-	defer s.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range s.configs {
-		r = append(r, config)
+// Snapshot returns the current merged config and the files it was merged from, taken from one
+// consistent state. The config is nil after the last file was removed. The files are a copy;
+// the config must not be modified.
+func (s *configSnapshot[T]) Snapshot() (*T, []*dynamic.Config) {
+	cur := s.current.Load()
+	if cur == nil {
+		return nil, nil
 	}
-	return r
+	return cur.config, slices.Clone(cur.files)
 }
 
 // publish stores cfg as is, without merging files.
 func (s *configSnapshot[T]) publish(cfg *T) {
-	s.config.Store(cfg)
+	s.current.Store(&snapshot[T]{config: cfg})
 }
 
 // add adds or replaces the file and publishes the result of merge, which receives all files
@@ -86,6 +94,6 @@ func (s *configSnapshot[T]) publishMerged(files []*dynamic.Config, merge func(fi
 	if len(files) > 0 {
 		cfg = merge(files)
 	}
-	s.config.Store(cfg)
+	s.current.Store(&snapshot[T]{config: cfg, files: files})
 	return cfg
 }

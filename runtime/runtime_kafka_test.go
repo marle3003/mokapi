@@ -138,7 +138,7 @@ func TestApp_AddKafka(t *testing.T) {
 				info, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.bar", configs[0].Info.Url.String())
 			},
@@ -170,7 +170,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka.Get("foo")
 				require.Equal(t, "bar", info.Config().Info.Description)
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 2)
 			},
 		},
@@ -408,7 +408,7 @@ func TestKafkaStore_MergedConfigs(t *testing.T) {
 				app.Kafka.Remove(b)
 
 				info = app.Kafka.Get("foo")
-				require.Len(t, info.Configs(), 1)
+				require.Len(t, filesOf(info), 1)
 				requireOnlyFileA(t, "kafka", info.Config())
 			},
 		},
@@ -552,7 +552,7 @@ func TestKafkaStore_ConcurrentAccess(t *testing.T) {
 				_ = cfg.Info.Name
 				for range cfg.Channels {
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -582,7 +582,7 @@ func TestKafkaStore_ConcurrentAccess(t *testing.T) {
 				if cfg := info.Config(); cfg != nil {
 					_ = cfg.Info.Name
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -648,12 +648,12 @@ func TestKafkaInfo_Snapshot(t *testing.T) {
 		info, err := app.Kafka.Add(b, enginetest.NewEngine())
 		require.NoError(t, err)
 
-		configs := info.Configs()
+		configs := filesOf(info)
 		require.Len(t, configs, 2)
 		configs[0] = nil
 
-		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
-		require.Len(t, info.Configs(), 2)
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
 	})
 
 	t.Run("Configs does not race with Add", func(t *testing.T) {
@@ -676,7 +676,7 @@ func TestKafkaInfo_Snapshot(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < 200; i++ {
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()

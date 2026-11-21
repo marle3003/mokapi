@@ -58,7 +58,7 @@ func TestApp_AddLdap(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{}), enginetest.NewEngine())
 
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 1)
 				require.Equal(t, "https://mokapi.io", configs[0].Info.Url.String())
 			},
@@ -89,7 +89,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Get("foo")
 				require.Equal(t, "bar", info.Config().Info.Description)
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 2)
 			},
 		},
@@ -227,7 +227,7 @@ func TestLdapStore_ConcurrentAccess(t *testing.T) {
 				cfg := info.Config()
 				_ = cfg.Info.Name
 				_ = cfg.Entries.Entries()
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -261,7 +261,7 @@ func TestLdapStore_ConcurrentAccess(t *testing.T) {
 				if cfg := info.Config(); cfg != nil {
 					_ = cfg.Info.Name
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -338,12 +338,12 @@ func TestLdapInfo_Snapshot(t *testing.T) {
 		app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/a.yml", "foo", "", alice), enginetest.NewEngine())
 		info := app.Ldap.Add(ldapFileWithEntries("https://mokapi.io/b.yml", "foo", "", alice), enginetest.NewEngine())
 
-		configs := info.Configs()
+		configs := filesOf(info)
 		require.Len(t, configs, 2)
 		configs[0] = nil
 
-		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
-		require.Len(t, info.Configs(), 2)
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
 	})
 
 	t.Run("Configs does not race with Add", func(t *testing.T) {
@@ -370,7 +370,7 @@ func TestLdapInfo_Snapshot(t *testing.T) {
 					return
 				default:
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()

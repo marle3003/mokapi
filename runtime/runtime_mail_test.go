@@ -59,7 +59,7 @@ func TestApp_AddSmtp(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 1)
 				require.Equal(t, "https://mokapi.io", configs[0].Info.Url.String())
 			},
@@ -90,7 +90,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Mail.Get("foo")
 				require.Equal(t, "bar", info.Config().Info.Description)
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 2)
 			},
 		},
@@ -254,7 +254,7 @@ func TestMailStore_ConcurrentAccess(t *testing.T) {
 				for _, mb := range info.Mailboxes() {
 					_ = mb.NumMessages()
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -289,7 +289,7 @@ func TestMailStore_ConcurrentAccess(t *testing.T) {
 					_ = cfg.Info.Name
 				}
 				_ = info.Mailboxes()
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
@@ -425,12 +425,12 @@ func TestMailInfo_Snapshot(t *testing.T) {
 		app.Mail.Add(mailFile("https://mokapi.io/a.yml", ""))
 		info := app.Mail.Add(mailFile("https://mokapi.io/b.yml", ""))
 
-		configs := info.Configs()
+		configs := filesOf(info)
 		require.Len(t, configs, 2)
 		configs[0] = nil
 
-		require.NotContains(t, info.Configs(), (*dynamic.Config)(nil))
-		require.Len(t, info.Configs(), 2)
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
 	})
 
 	t.Run("Configs does not race with Add", func(t *testing.T) {
@@ -456,7 +456,7 @@ func TestMailInfo_Snapshot(t *testing.T) {
 					return
 				default:
 				}
-				_ = info.Configs()
+				_ = filesOf(info)
 			}
 		}()
 		wg.Wait()
