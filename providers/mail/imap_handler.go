@@ -12,9 +12,9 @@ import (
 
 func (h *Handler) Login(username, password string, ctx context.Context) error {
 	c := imap.ClientFromContext(ctx)
-	for _, m := range h.store.Mailboxes {
-		if m.Username == username && m.Password == password {
-			c.Session["mailbox"] = m
+	for _, mb := range h.store.Mailboxes() {
+		if u, p := mb.Credentials(); u == username && p == password {
+			c.Session["mailbox"] = mb
 			return nil
 		}
 	}

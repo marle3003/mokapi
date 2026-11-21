@@ -2,9 +2,11 @@ package mail
 
 import (
 	"fmt"
-	"mokapi/imap"
+	"maps"
 	"mokapi/smtp"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -12,114 +14,119 @@ import (
 
 const mailboxSize = 100
 
+// Store keeps the mailboxes of one mail service. It outlives config reloads: Update changes the
+// mailboxes to the new config without losing their mails. The mailboxes are only reachable
+// through the methods of the store, which guard the map with its own lock.
 type Store struct {
-	Name      string
-	Mailboxes map[string]*Mailbox
-	Settings  *Settings
+	Name string
+
+	m         sync.RWMutex
+	mailboxes map[string]*Mailbox
 }
 
 func NewStore(c *Config) *Store {
 	s := &Store{
 		Name:      c.Info.Name,
-		Mailboxes: map[string]*Mailbox{},
-		Settings:  c.Settings,
+		mailboxes: map[string]*Mailbox{},
 	}
-
-	for name, mb := range c.Mailboxes {
-		s.NewMailbox(name, mb, c.Settings)
-	}
-
+	s.Update(c)
 	return s
 }
 
+// Update brings the mailboxes in line with the config: new mailboxes are created, existing ones
+// keep their mails and folders, configured mailboxes that are no longer in the config are
+// removed. Mailboxes created at runtime by EnsureMailbox stay.
 func (s *Store) Update(c *Config) {
-	for name, mb := range c.Mailboxes {
-		if exist, ok := s.Mailboxes[name]; !ok {
-			s.NewMailbox(name, mb, c.Settings)
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	limit := maxInboxMails(c.Settings)
+	for name, cfg := range c.Mailboxes {
+		if cfg == nil {
+			cfg = &MailboxConfig{}
+		}
+		if mb, ok := s.mailboxes[name]; ok {
+			mb.update(cfg, limit)
 		} else {
-			exist.Username = mb.Username
-			exist.Password = mb.Password
-			folders := getFolders(mb.Folders)
-			for _, folder := range folders {
-				exist.Folders[folder.Name] = folder
-			}
+			s.mailboxes[name] = newMailbox(name, cfg, limit)
+		}
+	}
+
+	for name, mb := range s.mailboxes {
+		if _, ok := c.Mailboxes[name]; !ok && !mb.autoCreated {
+			delete(s.mailboxes, name)
 		}
 	}
 }
 
-func (s *Store) ExistsMailbox(name string) bool {
-	_, b := s.Mailboxes[name]
-	return b
+func (s *Store) Mailbox(name string) (*Mailbox, bool) {
+	if s == nil {
+		return nil, false
+	}
+	s.m.RLock()
+	defer s.m.RUnlock()
+	mb, ok := s.mailboxes[name]
+	return mb, ok
 }
 
-func (s *Store) NewMailbox(name string, cfg *MailboxConfig, settings *Settings) {
-	if _, found := s.Mailboxes[name]; found {
-		return
-	}
-
-	maxInboxMails := mailboxSize
-	if settings != nil {
-		maxInboxMails = settings.MaxInboxMails
-	}
-
-	mb := &Mailbox{
-		Name:            name,
-		Username:        cfg.Username,
-		Password:        cfg.Password,
-		Description:     cfg.Description,
-		MaxInboxMails:   maxInboxMails,
-		nextUidValidity: uint32(time.Now().Unix()),
-	}
-	mb.Folders = getFolders(cfg.Folders)
-
-	s.Mailboxes[name] = mb
-}
-
-func (s *Store) EnsureMailbox(name string) error {
-	if _, found := s.Mailboxes[name]; found {
+// Mailboxes returns a copy of the list, sorted by name.
+func (s *Store) Mailboxes() []*Mailbox {
+	if s == nil {
 		return nil
 	}
-	if s.Settings != nil && !s.Settings.AutoCreateMailbox {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	list := slices.Collect(maps.Values(s.mailboxes))
+	slices.SortFunc(list, func(a, b *Mailbox) int { return strings.Compare(a.Name, b.Name) })
+	return list
+}
+
+// EnsureMailbox creates the mailbox if it does not exist, unless the settings forbid it.
+func (s *Store) EnsureMailbox(name string, settings *Settings) error {
+	s.m.Lock()
+	if _, found := s.mailboxes[name]; found {
+		s.m.Unlock()
+		return nil
+	}
+	if settings != nil && !settings.AutoCreateMailbox {
+		s.m.Unlock()
 		return fmt.Errorf("mailbox can not be created")
 	}
-	s.NewMailbox(name, &MailboxConfig{}, s.Settings)
+	mb := newMailbox(name, &MailboxConfig{}, maxInboxMails(settings))
+	mb.autoCreated = true
+	s.mailboxes[name] = mb
+	s.m.Unlock()
+
 	log.Infof("adding new mailbox '%v' to '%v'", name, s.Name)
 	return nil
 }
 
 func (s *Store) GetMail(id string) *smtp.Message {
-	for _, b := range s.Mailboxes {
-		for _, f := range b.Folders {
-			for _, m := range f.Messages {
-				if m.MessageId == id {
-					return m.Message
-				}
-			}
+	for _, mb := range s.Mailboxes() {
+		if m := mb.message(id); m != nil {
+			return m
 		}
 	}
 	return nil
 }
 
-func getFolders(cfg map[string]*FolderConfig) map[string]*Folder {
-	result := make(map[string]*Folder)
-	for name, sub := range cfg {
-		if strings.ToUpper(name) == "INBOX" {
-			name = "INBOX"
-		}
-
-		f := &Folder{
-			Name:        name,
-			uidNext:     1,
-			uidValidity: uint32(time.Now().Unix()),
-		}
-
-		for _, flag := range sub.Flags {
-			f.Flags = append(f.Flags, imap.MailboxFlags(flag))
-		}
-
-		f.Folders = getFolders(sub.Folders)
-		result[name] = f
+func maxInboxMails(settings *Settings) int {
+	if settings == nil {
+		return mailboxSize
 	}
+	return settings.MaxInboxMails
+}
 
-	return result
+func newMailbox(name string, cfg *MailboxConfig, maxInboxMails int) *Mailbox {
+	mb := &Mailbox{
+		Name:            name,
+		Folders:         map[string]*Folder{},
+		username:        cfg.Username,
+		password:        cfg.Password,
+		description:     cfg.Description,
+		maxInboxMails:   maxInboxMails,
+		nextUidValidity: uint32(time.Now().Unix()),
+	}
+	mb.mergeFolders(mb.Folders, cfg.Folders, true)
+	return mb
 }

@@ -32,7 +32,7 @@ func TestImapHandler_Fetch(t *testing.T) {
 	}
 
 	addMail := func(s *mail.Store, m *mail.Mail) {
-		mb := s.Mailboxes["alice@mokapi.io"]
+		mb, _ := s.Mailbox("alice@mokapi.io")
 		inbox := mb.Folders["INBOX"]
 		inbox.Messages = append(inbox.Messages, m)
 	}

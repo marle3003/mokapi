@@ -15,6 +15,7 @@ import (
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
 	"net"
+	"sync"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -355,4 +356,96 @@ func TestMailManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
 			require.NotPanics(t, func() { m.UpdateConfig(e) })
 		})
 	}
+}
+
+func mailFileEvent(file, title string, servers map[string]*mail.Server, rules mail.Rules) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{Config: &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: try.MustUrl(file)},
+		Data: &mail.Config{
+			Info:     mail.Info{Name: title},
+			Servers:  servers,
+			Settings: &mail.Settings{AutoCreateMailbox: true},
+			Rules:    rules,
+		},
+	}}
+}
+
+func smtpServer(port int) *mail.Server {
+	return &mail.Server{Host: fmt.Sprintf("localhost:%d", port), Protocol: "smtp"}
+}
+
+var denySpam = mail.Rules{"denySpam": {Subject: mail.NewRuleExpr("spam"), Action: mail.Deny}}
+
+func sendTestMail(port int, subject string) error {
+	return smtptest.SendMail("from@foo.bar", "rcipient@foo.bar", fmt.Sprintf("smtp://localhost:%d", port), smtptest.WithSubject(subject))
+}
+
+// A reload of the file changes the rules of the SMTP server that is already running.
+func TestMailManager_ChangedRuleAppliesToRunningServer(t *testing.T) {
+	m := newMailManager(t)
+	port := try.GetFreePort()
+	servers := map[string]*mail.Server{"smtp": smtpServer(port)}
+
+	m.UpdateConfig(mailFileEvent("a.yml", "foo", servers, nil))
+	waitForPort(t, port)
+	require.NoError(t, sendTestMail(port, "spam"))
+
+	m.UpdateConfig(mailFileEvent("a.yml", "foo", servers, denySpam))
+	require.Error(t, sendTestMail(port, "spam"))
+	require.NoError(t, sendTestMail(port, "hello"))
+
+	m.UpdateConfig(mailFileEvent("a.yml", "foo", servers, nil))
+	require.NoError(t, sendTestMail(port, "spam"))
+}
+
+// The servers of all files of a service run, and the servers of a file stop when the file is
+// deleted.
+func TestMailManager_ServerOfMergedFileStartsAndStopsWithFile(t *testing.T) {
+	m := newMailManager(t)
+	portA, portB := try.GetFreePort(), try.GetFreePort()
+	a := mailFileEvent("a.yml", "foo", map[string]*mail.Server{"a": smtpServer(portA)}, nil)
+	b := mailFileEvent("b.yml", "foo", map[string]*mail.Server{"b": smtpServer(portB)}, nil)
+
+	m.UpdateConfig(a)
+	m.UpdateConfig(b)
+	waitForPort(t, portA)
+	waitForPort(t, portB)
+
+	deleted := b
+	deleted.Event = dynamic.Delete
+	m.UpdateConfig(deleted)
+
+	requirePortIsFree(t, portB)
+	requirePortOpen(t, portA)
+}
+
+// Requests keep being served while reloads swap the handler. Run with -race.
+func TestMailManager_HandlerSwapWhileServingRequests(t *testing.T) {
+	m := newMailManager(t)
+	port := try.GetFreePort()
+	servers := map[string]*mail.Server{"smtp": smtpServer(port)}
+	m.UpdateConfig(mailFileEvent("a.yml", "foo", servers, nil))
+	waitForPort(t, port)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 30; i++ {
+			rules := mail.Rules(nil)
+			if i%2 == 0 {
+				rules = denySpam
+			}
+			m.UpdateConfig(mailFileEvent("a.yml", "foo", servers, rules))
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 30; i++ {
+			_ = sendTestMail(port, "hello")
+		}
+	}()
+	wg.Wait()
+
+	require.NoError(t, sendTestMail(port, "spam"), "last reload removed the rule")
 }

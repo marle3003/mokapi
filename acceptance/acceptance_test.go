@@ -17,6 +17,7 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(KafkaSuite))
 	suite.Run(t, new(KafkaMessageIdSuite))
 	suite.Run(t, new(MailSuite))
+	suite.Run(t, new(MailReloadSuite))
 	suite.Run(t, new(LdapSuite))
 	suite.Run(t, new(LdapReloadSuite))
 	suite.Run(t, new(MqttSuite))

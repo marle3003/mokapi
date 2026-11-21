@@ -32,10 +32,10 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	switch req := r.(type) {
 	case *smtp.LoginRequest:
 		// todo disable Auth capability on server if no mailbox is defined
-		for _, acc := range h.store.Mailboxes {
-			if acc.Username == req.Username && acc.Password == req.Password {
+		for _, mb := range h.store.Mailboxes() {
+			if username, password := mb.Credentials(); username == req.Username && password == req.Password {
 				_ = rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
-				ctx.Auth = acc.Username
+				ctx.Auth = username
 				return
 			}
 		}
@@ -68,7 +68,12 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	}
 
 	for _, rcpt := range clientContext.To {
-		box := h.store.Mailboxes[rcpt]
+		box, ok := h.store.Mailbox(rcpt)
+		if !ok {
+			// removed by a reload between RCPT and DATA
+			log.Warnf("mailbox '%v' of '%v' no longer exists, mail not delivered to it", rcpt, h.config.Info.Name)
+			continue
+		}
 		box.Append(r.Message)
 	}
 
@@ -89,12 +94,12 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
 	if len(h.config.Mailboxes) > 0 {
 
-		if m, ok := h.store.Mailboxes[r.From]; !ok {
+		if mb, ok := h.store.Mailbox(r.From); !ok {
 			if !h.AllowUnknownSenders() {
 				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.From))
 				return
 			}
-		} else if len(m.Username) > 0 && len(ctx.Auth) == 0 {
+		} else if username, _ := mb.Credentials(); len(username) > 0 && len(ctx.Auth) == 0 {
 			h.writeErrorResponse(rw, r, smtp.AuthRequired, "")
 			return
 		}
@@ -110,7 +115,7 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 }
 
 func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *smtp.ClientContext) {
-	if err := h.store.EnsureMailbox(r.To); err != nil {
+	if err := h.store.EnsureMailbox(r.To, h.config.Settings); err != nil {
 		h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
 		return
 	}

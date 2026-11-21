@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/static"
+	"mokapi/providers/mail"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -328,4 +330,180 @@ func (suite *MailSuite) TestDynamicServerCertificate() {
 	c := state.PeerCertificates[0]
 
 	require.Equal(suite.T(), "imap.mokapi.local", c.Subject.CommonName)
+}
+
+// MailReloadSuite checks what a reload of the mail files changes on a running Mokapi: rules apply
+// to the running server, received mails stay and the mailboxes follow the files. Every scenario
+// has its own service and files, so they do not influence each other.
+type MailReloadSuite struct {
+	BaseSuite
+	dir         string
+	rulesPort   int
+	mailsPort   int
+	mergedPortA int
+	mergedPortB int
+}
+
+// mailFile describes a mail file written by the suite. servers and body are YAML blocks.
+type mailFile struct {
+	title       string
+	description string
+	servers     string
+	body        string
+}
+
+func (suite *MailReloadSuite) SetupSuite() {
+	suite.rulesPort = try.GetFreePort()
+	suite.mailsPort = try.GetFreePort()
+	suite.mergedPortA = try.GetFreePort()
+	suite.mergedPortB = try.GetFreePort()
+	suite.dir = suite.T().TempDir()
+
+	suite.writeMail("rules.yml", mailFile{title: "ReloadRules", servers: suite.smtpServer("smtp", suite.rulesPort)})
+	suite.writeMail("mails.yml", mailFile{
+		title:   "ReloadMails",
+		servers: suite.smtpServer("smtp", suite.mailsPort),
+		body: `mailboxes:
+  alice@mokapi.io:
+    folders:
+      INBOX: {}
+`,
+	})
+	suite.writeMail("mailboxes.yml", mailFile{title: "ReloadMailboxes", body: suite.mailboxes("alice@mokapi.io", "bob@mokapi.io")})
+	suite.writeMail("merged-a.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("a", suite.mergedPortA)})
+	suite.writeMail("merged-b.yml", mailFile{title: "ReloadMerged", servers: suite.smtpServer("b", suite.mergedPortB)})
+
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
+	suite.initCmd(cfg)
+}
+
+// smtpServer returns the servers block of a file. Servers with the same name in two files of a
+// service are merged into one, so a server that is meant to be added by a file needs its own name.
+func (suite *MailReloadSuite) smtpServer(name string, port int) string {
+	return fmt.Sprintf("servers:\n  %s:\n    host: '127.0.0.1:%d'\n    protocol: smtp\n", name, port)
+}
+
+func (suite *MailReloadSuite) mailboxes(names ...string) string {
+	s := "mailboxes:\n"
+	for _, name := range names {
+		s += fmt.Sprintf("  %s:\n    folders:\n      INBOX: {}\n", name)
+	}
+	return s
+}
+
+func (suite *MailReloadSuite) writeMail(file string, f mailFile) {
+	content := fmt.Sprintf("mail: 1.0\ninfo:\n  title: %s\n  description: %q\n%s%s", f.title, f.description, f.servers, f.body)
+	suite.Require().NoError(os.WriteFile(filepath.Join(suite.dir, file), []byte(content), 0o600))
+}
+
+func (suite *MailReloadSuite) waitForConfig(service string, ready func(cfg *mail.Config) bool) {
+	suite.T().Helper()
+	try.WaitFor(suite.T(), func() bool {
+		info := suite.cmd.App.Mail.Get(service)
+		if info == nil {
+			return false
+		}
+		cfg := info.Config()
+		return cfg != nil && ready(cfg)
+	})
+}
+
+func (suite *MailReloadSuite) sendMail(port int, to, subject string) error {
+	return smtptest.SendMail("sender@mokapi.io", to, fmt.Sprintf("smtp://127.0.0.1:%d", port), smtptest.WithSubject(subject))
+}
+
+func (suite *MailReloadSuite) serviceUrl(service, path string) string {
+	return fmt.Sprintf("http://127.0.0.1:%d/api/services/mail/%s%s", suite.cfg.Api.Port, service, path)
+}
+
+func isListening(port int) bool {
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), time.Second)
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	return true
+}
+
+// TestRuleAddedToFileAppliesToRunningServer verifies that a deny rule added to the file rejects
+// the next mail on the SMTP server that is already running.
+func (suite *MailReloadSuite) TestRuleAddedToFileAppliesToRunningServer() {
+	t := suite.T()
+	suite.waitForConfig("ReloadRules", func(*mail.Config) bool { return true })
+	try.WaitFor(t, func() bool { return isListening(suite.rulesPort) })
+	require.NoError(t, suite.sendMail(suite.rulesPort, "alice@mokapi.io", "spam offer"))
+
+	suite.writeMail("rules.yml", mailFile{
+		title:   "ReloadRules",
+		servers: suite.smtpServer("smtp", suite.rulesPort),
+		body: `rules:
+  denySpam:
+    subject: .*spam.*
+    action: deny
+`,
+	})
+	suite.waitForConfig("ReloadRules", func(cfg *mail.Config) bool { return len(cfg.Rules) == 1 })
+
+	try.WaitFor(t, func() bool {
+		return suite.sendMail(suite.rulesPort, "alice@mokapi.io", "spam offer") != nil
+	})
+	require.NoError(t, suite.sendMail(suite.rulesPort, "alice@mokapi.io", "hello"))
+}
+
+// TestMailsSurviveReload verifies that the mail in a configured INBOX and an auto-created
+// mailbox are still there after the file was reloaded.
+func (suite *MailReloadSuite) TestMailsSurviveReload() {
+	t := suite.T()
+	suite.waitForConfig("ReloadMails", func(*mail.Config) bool { return true })
+	try.WaitFor(t, func() bool { return isListening(suite.mailsPort) })
+	require.NoError(t, suite.sendMail(suite.mailsPort, "alice@mokapi.io", "to alice"))
+	require.NoError(t, suite.sendMail(suite.mailsPort, "carol@mokapi.io", "to carol"))
+
+	suite.writeMail("mails.yml", mailFile{
+		title:       "ReloadMails",
+		description: "changed",
+		servers:     suite.smtpServer("smtp", suite.mailsPort),
+		body:        suite.mailboxes("alice@mokapi.io"),
+	})
+	suite.waitForConfig("ReloadMails", func(cfg *mail.Config) bool { return cfg.Info.Description == "changed" })
+
+	try.GetRequest(t, suite.serviceUrl("ReloadMails", "/mailboxes/alice@mokapi.io"), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`{"name":"alice@mokapi.io","numMessages":1,"folders":["INBOX"]}`),
+	)
+	try.GetRequest(t, suite.serviceUrl("ReloadMails", "/mailboxes/carol@mokapi.io"), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`{"name":"carol@mokapi.io","numMessages":1,"folders":["INBOX"]}`),
+	)
+}
+
+// TestMailboxRemovedFromFileIsGone verifies that a mailbox that is no longer in the file
+// disappears from the list and returns 404.
+func (suite *MailReloadSuite) TestMailboxRemovedFromFileIsGone() {
+	t := suite.T()
+	suite.waitForConfig("ReloadMailboxes", func(cfg *mail.Config) bool { return len(cfg.Mailboxes) == 2 })
+
+	suite.writeMail("mailboxes.yml", mailFile{title: "ReloadMailboxes", body: suite.mailboxes("alice@mokapi.io")})
+	suite.waitForConfig("ReloadMailboxes", func(cfg *mail.Config) bool { return len(cfg.Mailboxes) == 1 })
+
+	try.GetRequest(t, suite.serviceUrl("ReloadMailboxes", "/mailboxes/bob@mokapi.io"), nil,
+		try.HasStatusCode(http.StatusNotFound))
+	try.GetRequest(t, suite.serviceUrl("ReloadMailboxes", "/mailboxes"), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`[{"name":"alice@mokapi.io","numMessages":0}]`),
+	)
+}
+
+// TestServerOfMergedFileStartsAndStopsWithFile verifies that a server only defined in the second
+// file of a merged service runs, and stops when that file is removed.
+func (suite *MailReloadSuite) TestServerOfMergedFileStartsAndStopsWithFile() {
+	t := suite.T()
+	try.WaitFor(t, func() bool { return isListening(suite.mergedPortA) && isListening(suite.mergedPortB) })
+
+	suite.Require().NoError(os.Remove(filepath.Join(suite.dir, "merged-b.yml")))
+
+	try.WaitFor(t, func() bool { return !isListening(suite.mergedPortB) })
+	require.True(t, isListening(suite.mergedPortA))
 }

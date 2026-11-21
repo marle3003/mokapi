@@ -84,9 +84,10 @@ func getHttpItems(hi *runtime.HttpInfo) []serviceItem {
 }
 
 func getMailboxItems(s *mail.Store) []serviceItem {
-	items := make([]serviceItem, 0, len(s.Mailboxes))
-	for name := range s.Mailboxes {
-		items = append(items, serviceItem{Name: name})
+	mailboxes := s.Mailboxes()
+	items := make([]serviceItem, 0, len(mailboxes))
+	for _, mb := range mailboxes {
+		items = append(items, serviceItem{Name: mb.Name})
 	}
 	sortServiceItems(items)
 	return items

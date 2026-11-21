@@ -2,6 +2,7 @@ package mail
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
@@ -12,14 +13,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Mailbox guards its fields, its folders and their mails with one lock (m). Callers that read or
+// change Folders directly hold it; the accessors and Append lock it themselves.
 type Mailbox struct {
-	Name        string
-	Username    string
-	Password    string
-	Description string
-	Folders     map[string]*Folder
+	Name    string
+	Folders map[string]*Folder
 
-	MaxInboxMails int
+	username      string
+	password      string
+	description   string
+	maxInboxMails int
+	// autoCreated is set by Store.EnsureMailbox and cleared when a config adopts the mailbox.
+	// It is only read and written with the lock of the store held.
+	autoCreated bool
 
 	nextUidValidity uint32
 	m               sync.Mutex
@@ -45,6 +51,114 @@ type Folder struct {
 	uidValidity uint32
 
 	recentUid uint32
+}
+
+func (mb *Mailbox) Credentials() (username, password string) {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	return mb.username, mb.password
+}
+
+func (mb *Mailbox) Description() string {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	return mb.description
+}
+
+// FolderNames returns the names of the top-level folders, sorted.
+func (mb *Mailbox) FolderNames() []string {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	return slices.Sorted(maps.Keys(mb.Folders))
+}
+
+// ReadFolders calls read with the folders while holding the lock of the mailbox. The folders must
+// not be used after read returned.
+func (mb *Mailbox) ReadFolders(read func(folders map[string]*Folder)) {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	read(mb.Folders)
+}
+
+// Messages returns the messages of all folders below ref, like List.
+func (mb *Mailbox) Messages(ref string) []*Mail {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	var result []*Mail
+	for _, f := range mb.List(ref) {
+		result = append(result, f.ListMessages()...)
+	}
+	return result
+}
+
+func (mb *Mailbox) message(id string) *smtp.Message {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	for _, f := range mb.Folders {
+		for _, m := range f.ListMessages() {
+			if m.MessageId == id {
+				return m.Message
+			}
+		}
+	}
+	return nil
+}
+
+// update takes over a changed file: credentials, description, limit and flags change, folders
+// that are new in the file are added. Existing folders keep their mails.
+func (mb *Mailbox) update(cfg *MailboxConfig, maxInboxMails int) {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	mb.username = cfg.Username
+	mb.password = cfg.Password
+	mb.description = cfg.Description
+	mb.maxInboxMails = maxInboxMails
+	mb.autoCreated = false
+	if inbox, ok := mb.Folders["INBOX"]; ok {
+		inbox.maxMails = maxInboxMails
+	}
+	mb.mergeFolders(mb.Folders, cfg.Folders, true)
+}
+
+// mergeFolders must be called with the lock of the mailbox held, unless the mailbox is not
+// shared yet.
+func (mb *Mailbox) mergeFolders(folders map[string]*Folder, cfg map[string]*FolderConfig, topLevel bool) {
+	for name, sub := range cfg {
+		if sub == nil {
+			sub = &FolderConfig{}
+		}
+		if strings.ToUpper(name) == "INBOX" {
+			name = "INBOX"
+		}
+
+		f, ok := folders[name]
+		if !ok {
+			f = &Folder{
+				Name:        name,
+				mb:          mb,
+				uidNext:     1,
+				uidValidity: uint32(time.Now().Unix()),
+			}
+			if topLevel && name == "INBOX" {
+				f.maxMails = mb.maxInboxMails
+			}
+			folders[name] = f
+		}
+		f.Flags = toMailboxFlags(sub.Flags)
+		if f.Folders == nil {
+			f.Folders = map[string]*Folder{}
+		}
+		mb.mergeFolders(f.Folders, sub.Folders, false)
+	}
+}
+
+func toMailboxFlags(flags []string) []imap.MailboxFlags {
+	var result []imap.MailboxFlags
+	for _, flag := range flags {
+		result = append(result, imap.MailboxFlags(flag))
+	}
+	return result
 }
 
 func (mb *Mailbox) Append(m *smtp.Message) {
@@ -221,7 +335,7 @@ func (mb *Mailbox) EnsureInbox() {
 	mb.m.Lock()
 	defer mb.m.Unlock()
 	if _, ok := mb.Folders["INBOX"]; !ok {
-		mb.AddFolder(&Folder{Name: "INBOX", maxMails: mb.MaxInboxMails})
+		mb.AddFolder(&Folder{Name: "INBOX", maxMails: mb.maxInboxMails})
 	}
 }
 
@@ -247,7 +361,8 @@ func (f *Folder) UidValidity() uint32 {
 }
 
 func (f *Folder) Append(msg *smtp.Message) *Mail {
-	if f.maxMails > 0 && len(f.Messages) == f.maxMails {
+	// a lowered limit trims on the next mail
+	for f.maxMails > 0 && len(f.Messages) >= f.maxMails {
 		f.Messages = f.Messages[0 : len(f.Messages)-1]
 	}
 	uid := f.uidNext

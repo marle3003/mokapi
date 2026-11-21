@@ -61,6 +61,27 @@ your base config clean and reusable.
 
 Learn more about how patching works and how to structure patch files in the [Patching Configuration Guide](/docs/configuration/patching.md).
 
+### Changing the Configuration at Runtime
+
+Mokapi applies a changed or reloaded mail configuration file while it is running. You don't need
+to restart it.
+
+Rules, settings, servers and the configured mailboxes (credentials, description, folder flags and
+`maxInboxMails`) change right away. If you lower `maxInboxMails`, the new limit takes effect with
+the next incoming mail, which trims the INBOX down to the new limit.
+
+Received mails are kept. So are mailboxes Mokapi created automatically when a mail arrived. If such
+a mailbox now appears in the file, it becomes a configured mailbox. Folders also stay with their
+mails, even if you remove them from the file. A mailbox you remove from the file is gone, and the
+API returns 404 for it. An IMAP session that is already logged in to that mailbox keeps working
+until it logs out.
+
+If several files define the same mail configuration, Mokapi merges them. A server defined only in
+a second file starts with that file and stops when you delete it. Servers with the same name in
+two files are merged into one, so give a server added by another file its own name.
+
+A folder named `inbox` in any letter case is treated as `INBOX`.
+
 ### Schema Reference
 
 #### Mail Object

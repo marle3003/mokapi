@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -125,24 +124,28 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
 	for _, mi := range list {
+		cfg := mi.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        mi.Info.Name,
-			Description: mi.Info.Description,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
 			Type:        ServiceMail,
-			Version:     mi.Info.Version,
+			Version:     cfg.Info.Version,
 			Items:       getMailboxItems(mi.Store),
 		}
-		if mi.Info.Contact != nil {
+		if cfg.Info.Contact != nil {
 			s.Contact = &contact{
-				Name:  mi.Info.Contact.Name,
-				Url:   mi.Info.Contact.Url,
-				Email: mi.Info.Contact.Email,
+				Name:  cfg.Info.Contact.Name,
+				Url:   cfg.Info.Contact.Url,
+				Email: cfg.Info.Contact.Email,
 			}
 		}
 
 		s.Metrics = mailMetrics{
-			NumMails: m.Mail.Mails.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
-			LastMail: m.Mail.LastMail.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			NumMails: m.Mail.Mails.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastMail: m.Mail.LastMail.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
 		result = append(result, s)
@@ -167,24 +170,30 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 
 	name := segments[4]
 
+	// a service without a config was removed while this request is running
 	s := h.app.Mail.Get(name)
 	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+	cfg := s.Config()
+	if cfg == nil {
 		w.WriteHeader(404)
 		return
 	}
 
 	if len(segments) > 7 && segments[7] == "messages" {
 		if len(segments) > 6 {
-			h.getMailboxMessages(w, r, name, segments[6])
+			h.getMailboxMessages(w, r, s.Store, segments[6])
 		}
 		return
 	}
 
 	if len(segments) > 5 && segments[5] == "mailboxes" {
 		if len(segments) == 7 {
-			h.getMailbox(w, r, name, segments[6])
+			h.getMailbox(w, s.Store, segments[6])
 		} else if len(segments) == 6 {
-			h.getMailboxes(w, r, name)
+			h.getMailboxes(w, s.Store)
 		} else {
 			w.WriteHeader(401)
 		}
@@ -192,21 +201,21 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &mailInfo{
-		Name:        s.Info.Name,
-		Description: s.Info.Description,
-		Version:     s.Info.Version,
+		Name:        cfg.Info.Name,
+		Description: cfg.Info.Description,
+		Version:     cfg.Info.Version,
 		Configs:     getConfigs(s.Configs()),
 	}
 
-	if s.Info.Contact != nil {
+	if cfg.Info.Contact != nil {
 		result.Contact = &contact{
-			Name:  s.Info.Contact.Name,
-			Url:   s.Info.Contact.Url,
-			Email: s.Info.Contact.Email,
+			Name:  cfg.Info.Contact.Name,
+			Url:   cfg.Info.Contact.Url,
+			Email: cfg.Info.Contact.Email,
 		}
 	}
 
-	for n, ser := range s.Servers {
+	for n, ser := range cfg.Servers {
 		result.Servers = append(result.Servers, mailServer{
 			Host:        ser.Host,
 			Protocol:    ser.Protocol,
@@ -215,23 +224,24 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if s.Store.Settings != nil {
-		result.Settings.MaxRecipients = s.Store.Settings.MaxRecipients
-		result.Settings.AutoCreateMailbox = s.Store.Settings.AutoCreateMailbox
+	if cfg.Settings != nil {
+		result.Settings.MaxRecipients = cfg.Settings.MaxRecipients
+		result.Settings.AutoCreateMailbox = cfg.Settings.AutoCreateMailbox
 	} else {
 		result.Settings.AutoCreateMailbox = true
 	}
 
-	for mName, m := range s.Store.Mailboxes {
+	for _, m := range s.Mailboxes() {
+		username, password := m.Credentials()
 		result.Mailboxes = append(result.Mailboxes, mailbox{
-			Name:        mName,
-			Username:    m.Username,
-			Password:    m.Password,
-			Description: m.Description,
+			Name:        m.Name,
+			Username:    username,
+			Password:    password,
+			Description: m.Description(),
 			NumMessages: m.NumMessages(),
 		})
 	}
-	for _, r := range s.Rules {
+	for _, r := range cfg.Rules {
 		result.Rules = append(result.Rules, rule{
 			Name:           r.Name,
 			Description:    r.Description,
@@ -305,23 +315,14 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 	_, _ = w.Write(att.Data)
 }
 
-func (h *handler) getMailboxes(w http.ResponseWriter, _ *http.Request, service string) {
-	s := h.app.Mail.Get(service)
+func (h *handler) getMailboxes(w http.ResponseWriter, store *mail.Store) {
 	var result []mailbox
-
-	var names []string
-	for name := range s.Store.Mailboxes {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		mb := s.Store.Mailboxes[name]
-
+	for _, mb := range store.Mailboxes() {
+		username, password := mb.Credentials()
 		result = append(result, mailbox{
-			Name:        name,
-			Username:    mb.Username,
-			Password:    mb.Password,
+			Name:        mb.Name,
+			Username:    username,
+			Password:    password,
 			NumMessages: mb.NumMessages(),
 		})
 	}
@@ -330,44 +331,34 @@ func (h *handler) getMailboxes(w http.ResponseWriter, _ *http.Request, service s
 	writeJsonBody(w, result)
 }
 
-func (h *handler) getMailbox(w http.ResponseWriter, _ *http.Request, service, name string) {
-	s := h.app.Mail.Get(service)
-	mb, ok := s.Store.Mailboxes[name]
+func (h *handler) getMailbox(w http.ResponseWriter, store *mail.Store, name string) {
+	mb, ok := store.Mailbox(name)
 	if !ok {
 		w.WriteHeader(404)
 		return
 	}
 
+	username, password := mb.Credentials()
 	result := mailboxDetails{
 		mailbox: mailbox{
 			Name:        name,
-			Username:    mb.Username,
-			Password:    mb.Password,
+			Username:    username,
+			Password:    password,
 			NumMessages: mb.NumMessages(),
 		},
+		Folders: mb.FolderNames(),
 	}
-
-	for folder := range mb.Folders {
-		result.Folders = append(result.Folders, folder)
-	}
-	sort.Strings(result.Folders)
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)
 }
 
-func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, service, name string) {
-	s := h.app.Mail.Get(service)
-	mb, ok := s.Store.Mailboxes[name]
+func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, store *mail.Store, name string) {
+	mb, ok := store.Mailbox(name)
 	if !ok {
 		w.WriteHeader(404)
 		return
 	}
-
-	var messages []*mail.Mail
-
-	path := getQueryParamInsensitive(r.URL.Query(), "folder")
-	folders := mb.List(path)
 
 	index, limit, err := getPageInfo(r)
 	if err != nil {
@@ -375,9 +366,8 @@ func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, ser
 		return
 	}
 
-	for _, f := range folders {
-		messages = append(messages, f.ListMessages()...)
-	}
+	path := getQueryParamInsensitive(r.URL.Query(), "folder")
+	messages := mb.Messages(path)
 
 	slices.SortFunc(messages, func(a, b *mail.Mail) int {
 		return a.Date.Compare(b.Date) * -1

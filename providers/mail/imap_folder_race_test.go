@@ -56,7 +56,7 @@ func TestFolder_IdleClientsComeAndGoWhileFolderIsModified(t *testing.T) {
 		require.NoError(t, err)
 		return ctx
 	}
-	mb := s.Mailboxes["alice@mokapi.io"]
+	mb, _ := s.Mailbox("alice@mokapi.io")
 	mb.Append(&smtp.Message{MessageId: "seed"})
 
 	const rounds = 200
@@ -156,7 +156,7 @@ func TestHandler_Idle_ClientIsNotWrittenToAfterDone(t *testing.T) {
 	require.NoError(t, h.Login("alice", "foo", ctx))
 	_, err := h.Select("INBOX", false, ctx)
 	require.NoError(t, err)
-	mb := s.Mailboxes["alice@mokapi.io"]
+	mb, _ := s.Mailbox("alice@mokapi.io")
 
 	w := &lockedUpdateWriter{}
 	done := make(chan struct{})
