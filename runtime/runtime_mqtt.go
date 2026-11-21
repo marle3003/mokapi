@@ -147,7 +147,7 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 
 	if mi.Config() == nil {
 		delete(s.infos, name)
-		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(name))
 	}
 }
 

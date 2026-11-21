@@ -98,8 +98,8 @@ func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.WebsocketEventEmi
 	}
 
 	if !ok {
-		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
-		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name))
+		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name))
 
 		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Websocket), s.updateEventStore)
 		s.infos[cfg.Info.Name] = wi
@@ -146,7 +146,7 @@ func (s *WebsocketStore) Remove(c *dynamic.Config) {
 
 	if mi.Config() == nil {
 		delete(s.infos, name)
-		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("websocket").WithName(name))
 	}
 }
 
