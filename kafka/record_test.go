@@ -266,7 +266,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 			var buf bytes.Buffer
 			n, err := pb.WriteTo(&buf)
 			require.NoError(t, err)
-			require.Greater(t, n, 0, "written should not be 0")
+			require.Greater(t, n, int64(0), "written should not be 0")
 
 			r := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 			d := NewDecoder(r, pb.Size())

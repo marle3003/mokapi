@@ -29,7 +29,7 @@ cloned over `http(s)`. It has no proxy option of its own.
 
 ## Set the proxy explicitly
 
-Use [`--providers-http-proxy`](/docs/configuration/static/mokapi.md#providers-http-proxy) if you don't want to
+Use [`--providers-http-proxy`](/docs/configuration/static/cli-flags#providers-http-proxy) if you don't want to
 change the environment. When it is set, it replaces the environment variables for the HTTP provider, so
 `NO_PROXY` no longer applies to it.
 
@@ -56,7 +56,7 @@ variables.
 A proxy that inspects HTTPS traffic presents certificates signed by your company's certificate authority.
 If that CA isn't in the system certificate pool, requests fail with a certificate error. The cleanest fix is to
 install the CA in the system pool. Otherwise pass it to Mokapi with
-[`--providers-http-ca`](/docs/configuration/static/mokapi.md#providers-http-ca). Mokapi adds it to the system
+[`--providers-http-ca`](/docs/configuration/static/cli-flags#providers-http-ca). Mokapi adds it to the system
 pool.
 
 ```yaml tab=File
@@ -64,24 +64,21 @@ providers:
   http:
     urls: [https://specs.example.com/petstore.yaml]
     proxy: http://proxy.example.com:3128
-    ca: /etc/ssl/corp-ca.der
+    ca: /etc/ssl/corp-ca.pem
 ```
 ```bash tab=CLI
 --providers-http-url https://specs.example.com/petstore.yaml \
 --providers-http-proxy http://proxy.example.com:3128 \
---providers-http-ca /etc/ssl/corp-ca.der
+--providers-http-ca /etc/ssl/corp-ca.pem
 ```
 ```bash tab=Env
 MOKAPI_PROVIDERS_HTTP_URL=https://specs.example.com/petstore.yaml
 MOKAPI_PROVIDERS_HTTP_PROXY=http://proxy.example.com:3128
-MOKAPI_PROVIDERS_HTTP_CA=/etc/ssl/corp-ca.der
+MOKAPI_PROVIDERS_HTTP_CA=/etc/ssl/corp-ca.pem
 ```
 
-``` box=warning
-Mokapi reads a single certificate in DER format, not PEM. A PEM file fails with
-`failed to parse CA cert: x509: malformed certificate`. Convert it first:
-`openssl x509 -in corp-ca.pem -outform DER -out corp-ca.der`
-```
+The file can be PEM or DER. A PEM file may contain several certificates, so you can pass a bundle with the
+intermediate and root CA of your proxy.
 
 If the CA can't be read or parsed, Mokapi logs `failed to use CA certification for http provider` and continues
 with the system pool only.
@@ -89,7 +86,7 @@ with the system pool only.
 ## Skip certificate verification
 
 For a quick test you can turn verification off with
-[`--providers-http-tls-skip-verify`](/docs/configuration/static/mokapi.md#providers-http-tls-skip-verify).
+[`--providers-http-tls-skip-verify`](/docs/configuration/static/cli-flags#providers-http-tls-skip-verify).
 
 ```yaml tab=File
 providers:
@@ -113,6 +110,6 @@ precedence over `providers-http-ca`. Use it only against hosts you know.
 
 ## Not related: root-ca-cert
 
-[`--root-ca-cert`](/docs/configuration/static/mokapi.md#root-ca-cert) and `--root-ca-key` configure the CA
+[`--root-ca-cert`](/docs/configuration/static/cli-flags#root-ca-cert) and `--root-ca-key` configure the CA
 that Mokapi uses to sign the certificates of its own mocked services. They have no effect on outgoing
 requests through a proxy.

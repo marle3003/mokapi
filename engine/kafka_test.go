@@ -14,10 +14,14 @@ import (
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	opSchema "mokapi/providers/openapi/schema"
 	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/metrics"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
@@ -1158,4 +1162,53 @@ func TestKafkaClient_Produce_MessageId(t *testing.T) {
 			tc.test(t, app)
 		})
 	}
+}
+
+func TestKafkaClient_Produce_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// a cluster whose last file was removed keeps its store but has no config snapshot (nil)
+	newConfig := func(name string) *asyncapi3.Config {
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo(name, "", ""),
+			asyncapi3test.WithChannel("sensors", asyncapi3test.WithMessage("msg", asyncapi3test.WithPayload(schematest.New("string")))),
+		)
+	}
+	removed := func() runtimetest.Options {
+		cfg := newConfig("foo")
+		st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+		return runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, st))
+	}
+
+	t.Run("cluster given returns not found", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			app := runtimetest.NewApp(removed())
+
+			_, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{Cluster: "foo", Topic: "sensors"})
+
+			require.EqualError(t, err, "kafka API 'foo' not found")
+		})
+	})
+
+	t.Run("cluster searched by topic skips it", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			app := runtimetest.NewApp(removed())
+
+			_, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{Topic: "sensors"})
+
+			require.EqualError(t, err, "kafka topic 'sensors' not found")
+		})
+	})
+
+	t.Run("cluster searched by topic is not ambiguous with a removed cluster", func(t *testing.T) {
+		app := runtimetest.NewApp(removed(), runtimetest.WithKafka(newConfig("bar")))
+
+		result, err := engine.NewKafkaClient(app).Produce(&common.KafkaProduceArgs{
+			Topic:    "sensors",
+			Messages: []common.KafkaMessage{{Value: common.Optional[[]byte]{Value: []byte("hello"), IsSet: true}}},
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, "bar", result.Api)
+	})
 }

@@ -27,7 +27,7 @@ func TestConfig(t *testing.T) {
 			input: `{"ldap": "1.0", "info": { "name": "foo", "description": "bar" } }`,
 			test: func(t *testing.T, cfg *Config, err error) {
 				require.NoError(t, err)
-				root := cfg.Entries.Lookup("")
+				root := lookup(cfg.Entries, "")
 				require.Equal(t, []string{"foo"}, root.Attributes["dsServiceName"])
 				require.Equal(t, []string{"bar"}, root.Attributes["description"])
 			},
@@ -48,4 +48,9 @@ func TestConfig(t *testing.T) {
 			tc.test(t, c, err)
 		})
 	}
+}
+
+func lookup(s *EntryStore, dn string) Entry {
+	e, _ := s.Get(dn)
+	return e
 }

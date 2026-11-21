@@ -344,3 +344,15 @@ func requirePortIsFree(t *testing.T, port int) {
 		return true
 	})
 }
+
+func TestMailManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	for _, protocol := range mailProtocols {
+		t.Run(protocol, func(t *testing.T) {
+			m := newMailManager(t)
+			e := mailConfigEvent(protocol, try.GetFreePort())
+			e.Event = dynamic.Delete
+
+			require.NotPanics(t, func() { m.UpdateConfig(e) })
+		})
+	}
+}

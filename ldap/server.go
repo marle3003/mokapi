@@ -142,58 +142,22 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			log.Debugf("ldap: handleConnection ber.ReadPacket ERROR: %v", err.Error())
 			return
 		}
-
-		if len(packet.Children) < 2 {
-			log.Infof("ldap: invalid packat length %v expected at least 2", len(packet.Children))
-			return
-		}
-		messageId, ok := packet.Children[0].Value.(int64)
-		if !ok {
-			log.Infof("ldap: malformed messageId %v", reflect.TypeOf(packet.Children[0].Value))
-			return
-		}
-		body := packet.Children[1]
-		if body.ClassType != ber.ClassApplication {
-			log.Infof("ldap: classType of packet is not ClassApplication was %v", body.ClassType)
+		messageId, err := decodeMessageId(packet)
+		if err != nil {
+			disconnectWithNotice(conn, err)
 			return
 		}
 
-		var controls []Control
-		if len(packet.Children) > 2 {
-			controls, err = decodeControls(packet.Children[2])
-			if err != nil {
-				log.Infof("parse controls failed: %v", err)
-			}
-		}
-
-		var msg Message
-		switch body.Tag {
-		case bindRequest:
-			msg, err = readBindRequest(body)
-		case unbindRequest:
+		if packet.Children[1].Tag == unbindRequest {
 			log.Debugf("ldap: received unbind request")
 			s.Handler.Unbind(ctx)
 			return
-		case searchRequest:
-			msg, err = decodeSearchRequest(body, controls)
-		case abandonRequest:
-			msg = &SearchResponse{Status: CannotCancel}
-		case modifyRequest:
-			msg, err = decodeModifyRequest(body)
-		case addRequest:
-			msg, err = decodeAddRequest(body)
-		case deleteRequest:
-			msg, err = decodeDeleteRequest(body)
-		case modifyDNRequest:
-			msg, err = decodeModifyDNRequest(body)
-		case compareRequest:
-			msg, err = decodeCompareRequest(body)
-		default:
-			log.Errorf("ldap: server does not support %v", body.Tag)
 		}
 
+		msg, err := decodeRequest(packet)
 		if err != nil {
-			log.Errorf("ldap error: %v", err)
+			disconnectWithNotice(conn, err)
+			return
 		}
 
 		s.Handler.ServeLDAP(&response{
@@ -204,6 +168,74 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			MessageId: messageId,
 			Message:   msg,
 		})
+	}
+}
+
+// decodeMessageId checks the LDAPMessage envelope: message ID and protocol operation.
+func decodeMessageId(packet *ber.Packet) (int64, error) {
+	if len(packet.Children) < 2 {
+		return 0, fmt.Errorf("invalid packet length %v, expected at least 2", len(packet.Children))
+	}
+	messageId, ok := packet.Children[0].Value.(int64)
+	if !ok {
+		return 0, fmt.Errorf("malformed messageId %v", reflect.TypeOf(packet.Children[0].Value))
+	}
+	if class := packet.Children[1].ClassType; class != ber.ClassApplication {
+		return 0, fmt.Errorf("classType of packet is not ClassApplication, was %v", class)
+	}
+	return messageId, nil
+}
+
+// decodeRequest decodes controls and the protocol operation of a checked envelope.
+// Some decoders index and type-assert unchecked, so a malformed request can panic;
+// that is reported as an error as well.
+func decodeRequest(packet *ber.Packet) (msg Message, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debugf("ldap: decoder panic: %v", string(debug.Stack()))
+			msg, err = nil, fmt.Errorf("malformed request: %v", r)
+		}
+	}()
+
+	var controls []Control
+	if len(packet.Children) > 2 {
+		controls, err = decodeControls(packet.Children[2])
+		if err != nil {
+			return nil, fmt.Errorf("parse controls failed: %w", err)
+		}
+	}
+
+	body := packet.Children[1]
+	switch body.Tag {
+	case bindRequest:
+		return readBindRequest(body)
+	case searchRequest:
+		return decodeSearchRequest(body, controls)
+	case abandonRequest:
+		return &SearchResponse{Status: CannotCancel}, nil
+	case modifyRequest:
+		return decodeModifyRequest(body)
+	case addRequest:
+		return decodeAddRequest(body)
+	case deleteRequest:
+		return decodeDeleteRequest(body)
+	case modifyDNRequest:
+		return decodeModifyDNRequest(body)
+	case compareRequest:
+		return decodeCompareRequest(body)
+	default:
+		return nil, fmt.Errorf("server does not support request tag %v", body.Tag)
+	}
+}
+
+// disconnectWithNotice reports a request that can't be processed as protocolError
+// with a Notice of Disconnection. The caller closes the connection (RFC 4511 4.1.1).
+func disconnectWithNotice(conn net.Conn, cause error) {
+	log.Infof("ldap: %v", cause)
+	notice := &noticeOfDisconnection{ResultCode: ProtocolError, Message: cause.Error()}
+	r := &response{messageId: 0, conn: conn}
+	if err := r.write(notice.toPacket()); err != nil {
+		log.Debugf("ldap: send notice of disconnection failed: %v", err)
 	}
 }
 

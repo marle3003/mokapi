@@ -5,6 +5,7 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/sortedmap"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -267,8 +268,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]any{
-						"I_8wE":  int64(-873413),
-						"S_l7QZ": "NLD",
+						"I_gIU":  int64(-873413),
+						"S_jHcT": "NLD",
 					},
 					v)
 			},
@@ -1065,6 +1066,24 @@ func TestObject_PatternPropertyIsGeneratedByItsName(t *testing.T) {
 		require.NoError(t, err)
 		for _, email := range v.(map[string]any) {
 			require.Contains(t, email, "@")
+			generated++
+		}
+	}
+	require.Greater(t, generated, 0)
+}
+
+func TestObject_UnanchoredPatternPropertyIsPaddedWithAlphanumerics(t *testing.T) {
+	Seed(1234567)
+	s := schematest.New("object", schematest.WithPatternProperty("S_", schematest.New("string")))
+	name := regexp.MustCompile(`^[a-zA-Z0-9]*S_[a-zA-Z0-9]*$`)
+
+	// the number of pattern properties is random and can be 0
+	generated := 0
+	for range 50 {
+		v, err := New(NewRequest(nil, s, nil))
+		require.NoError(t, err)
+		for propName := range v.(map[string]any) {
+			require.Regexp(t, name, propName)
 			generated++
 		}
 	}

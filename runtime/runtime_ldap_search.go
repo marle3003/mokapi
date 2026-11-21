@@ -52,23 +52,20 @@ func (s *LdapStore) addToIndex(cfg *directory.Config) {
 
 	s.index.Add(fmt.Sprintf("ldap_%s", cfg.Info.Name), c)
 
-	if cfg.Entries != nil {
-		for it := cfg.Entries.Iter(); it.Next(); {
-			e := it.Value()
-			se := ldapSearchIndexEntry{
-				Type:          "ldap",
-				Discriminator: "ldap_entry",
-				Api:           cfg.Info.Name,
-				Dn:            e.Dn,
-			}
-			for name, values := range e.Attributes {
-				se.Attributes = append(se.Attributes, ldapSearchIndexAttribute{
-					Name:   name,
-					Values: values,
-				})
-			}
-			s.index.Add(fmt.Sprintf("ldap_%s_%s", cfg.Info.Name, e.Dn), se)
+	for _, e := range cfg.Entries.Entries() {
+		se := ldapSearchIndexEntry{
+			Type:          "ldap",
+			Discriminator: "ldap_entry",
+			Api:           cfg.Info.Name,
+			Dn:            e.Dn,
 		}
+		for name, values := range e.Attributes {
+			se.Attributes = append(se.Attributes, ldapSearchIndexAttribute{
+				Name:   name,
+				Values: values,
+			})
+		}
+		s.index.Add(fmt.Sprintf("ldap_%s_%s", cfg.Info.Name, e.Dn), se)
 	}
 }
 
@@ -110,10 +107,7 @@ func getLdapSearchResult(fields map[string]string, discriminator []string) (sear
 func (s *LdapStore) removeFromIndex(cfg *directory.Config) {
 	s.index.Delete(fmt.Sprintf("ldap_%s", cfg.Info.Name))
 
-	if cfg.Entries != nil {
-		for it := cfg.Entries.Iter(); it.Next(); {
-			e := it.Value()
-			s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn))
-		}
+	for _, e := range cfg.Entries.Entries() {
+		s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn))
 	}
 }

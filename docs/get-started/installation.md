@@ -30,7 +30,7 @@ Choose your preferred installation method based on your platform and workflow.
 Test Mokapi instantly with npx (requires Node.js):
 
 ```bash style=simple
-npx go-mokapi serve https://petstore3.swagger.io/api/v3/openapi.json
+npx go-mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
 
@@ -108,6 +108,9 @@ Mokapi provides official Docker images on [Docker Hub](https://hub.docker.com/r/
 ```
 docker pull mokapi/mokapi
 ```
+
+To mount specs, publish ports and use Docker Compose, see
+[Running Mokapi in Docker and Docker Compose](/docs/configuration/use-cases/docker.md).
 
 :::
 

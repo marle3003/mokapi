@@ -4,7 +4,7 @@ import "mokapi/pkg/cli"
 
 func RegisterMcpFlags(cmd *cli.Command) {
 	cmd.Flags().Group("MCP Server")
-	cmd.Flags().Bool("mcp-server-enabled", false, mcpServerEnabled)
+	cmd.Flags().Bool("mcp-server-enabled", true, mcpServerEnabled)
 	cmd.Flags().Int("mcp-server-port", 8080, mcpServerPort)
 	cmd.Flags().String("mcp-server-path", "/mcp", mcpServerPath)
 }
@@ -16,9 +16,9 @@ When enabled, Mokapi exposes an MCP-compatible endpoint that allows external too
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "CLI", Source: "--mcp-server-enabled"},
-				{Title: "Env", Source: "MOKAPI_MCP_SERVER_ENABLED=true"},
-				{Title: "File", Source: "mcp:\n  server:\n    enabled: true", Language: "yaml"},
+				{Title: "CLI", Source: "--mcp-server-enabled false"},
+				{Title: "Env", Source: "MOKAPI_MCP_SERVER_ENABLED=false"},
+				{Title: "File", Source: "mcp:\n  server:\n    enabled: false", Language: "yaml"},
 			},
 		},
 	},

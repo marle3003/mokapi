@@ -66,17 +66,17 @@ func (s *Store) addSysTopic(name string, val string) {
 			Retain: true,
 		},
 	}
-	if s.Topics == nil {
-		s.Topics = map[string]*Topic{}
+	if s.topics == nil {
+		s.topics = map[string]*Topic{}
 	}
-	s.Topics[name] = t
+	s.topics[name] = t
 }
 
 func (s *Store) updateSysTopic(name string, val string) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	t, ok := s.Topics[name]
+	t, ok := s.topics[name]
 	if !ok {
 		panic(fmt.Sprintf("mqtt: sys topic '%s' not found", name))
 	}

@@ -14,6 +14,7 @@ import (
 	"mokapi/runtime/search"
 	"mokapi/sortedmap"
 	"sync"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -28,13 +29,15 @@ type KafkaStore struct {
 	reader  dynamic.Reader
 }
 
+// KafkaInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type KafkaInfo struct {
-	*asyncapi3.Config
 	*store.Store
+	config                atomic.Pointer[asyncapi3.Config]
+	m                     sync.RWMutex // guards configs for Configs; writers also hold KafkaStore.m, so update and Remove read configs without m
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *KafkaInfo)
-	m                     sync.Mutex
 }
 
 type KafkaHandler struct {
@@ -50,6 +53,15 @@ func newKafkaInfo(store *store.Store, updateEventAndMetrics func(info *KafkaInfo
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	return hc
+}
+
+// NewKafkaInfo returns an info that publishes cfg as is, without merging files and
+// without the implicit default broker of Add. It is meant for tests of readers: it has no
+// event updater, so adding a file to it through KafkaStore.Add panics.
+func NewKafkaInfo(cfg *asyncapi3.Config, store *store.Store) *KafkaInfo {
+	ki := newKafkaInfo(store, nil)
+	ki.config.Store(cfg)
+	return ki
 }
 
 func (s *KafkaStore) Get(name string) *KafkaInfo {
@@ -89,14 +101,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 	ki, ok := s.infos[name]
 	if !ok {
 		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
-		ki.Config = cfg
 		s.infos[cfg.Info.Name] = ki
 	}
 
 	defer s.m.Unlock()
-
-	ki.m.Lock()
-	defer ki.m.Unlock()
 
 	eventStore, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -110,7 +118,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 	ki.addConfig(c, s.reader)
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(ki.Config)
+		s.addToIndex(ki.Config())
 	}
 
 	return ki, nil
@@ -128,39 +136,50 @@ func (s *KafkaStore) Set(name string, ki *KafkaInfo) {
 }
 
 func (s *KafkaStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki := s.infos[name]
+	if ki == nil {
+		return
+	}
 
 	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(ki.Config)
+		s.removeFromIndex(ki.Config())
 	}
-	delete(ki.configs, c.Info.Url.String())
-	ki.update(s.reader)
+	ki.removeConfig(c, s.reader)
 
 	if len(ki.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 
 func (c *KafkaInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	key := config.Info.Url.String()
-	c.configs[key] = config
+	c.m.Lock()
+	c.configs[config.Info.Url.String()] = config
+	c.m.Unlock()
 	c.update(reader)
+}
+
+func (c *KafkaInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
+	c.m.Lock()
+	delete(c.configs, config.Info.Url.String())
+	c.m.Unlock()
+	c.update(reader)
+}
+
+// Config returns the current merged config, or nil after the last file was removed.
+// The result must not be modified.
+func (c *KafkaInfo) Config() *asyncapi3.Config {
+	return c.config.Load()
 }
 
 func (c *KafkaInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
-		c.Config = nil
-		c.Store = nil
+		c.config.Store(nil)
 		return
 	}
 
@@ -183,7 +202,7 @@ func (c *KafkaInfo) update(reader dynamic.Reader) {
 		})
 	}
 
-	c.Config = cfg
+	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
@@ -193,6 +212,9 @@ func (c *KafkaInfo) Handler(kafka *monitor.Kafka) kafka.Handler {
 }
 
 func (c *KafkaInfo) Configs() []*dynamic.Config {
+	c.m.RLock()
+	defer c.m.RUnlock()
+
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
@@ -232,12 +254,13 @@ func getKafkaConfig(c *dynamic.Config) *asyncapi3.Config {
 }
 
 func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
-	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
+	cfg := k.Config()
+	eventStore, hasStoreConfig := s.cfg.Event.Store[cfg.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for topicName, topic := range k.Config.Channels {
+	for topicName, topic := range cfg.Channels {
 		if topic.Value == nil {
 			continue
 		}
@@ -247,9 +270,9 @@ func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		s.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
-		s.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("kafka").WithName(k.Config.Info.Name).With("topic", topicName)
+		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, topicName)
+		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", topicName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}

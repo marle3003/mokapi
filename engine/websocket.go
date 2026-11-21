@@ -3,11 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"mokapi/engine/common"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -78,6 +76,10 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 	if err != nil {
 		return nil, err
 	}
+	snapshot := w.Config()
+	if snapshot == nil {
+		return nil, fmt.Errorf("websocket API '%v' not found", args.Api)
+	}
 	if args.ChannelName == "" {
 		args.ChannelName = cfg.ResolveAddress()
 	}
@@ -103,7 +105,7 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 	}
 
 	return &common.WebsocketSendResult{
-		Api:     w.Info.Name,
+		Api:     snapshot.Info.Name,
 		Channel: ch.Name,
 		Message: msg,
 	}, nil
@@ -162,7 +164,7 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 				err = newAmbiguousError("ambiguous websocket API: specify the cluster")
 				return
 			}
-			channels := slices.Collect(maps.Values(apis[0].Store.Channels))
+			channels := apis[0].Store.Channels()
 			if len(channels) > 1 {
 				err = newAmbiguousError("ambiguous channel %v. Specify the API", channelName)
 				return
@@ -172,14 +174,18 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 
 		var topics []*asyncapi3.Channel
 		for _, v := range c.app.Websocket.List() {
+			snapshot := v.Config()
+			if snapshot == nil {
+				continue
+			}
 			if t, ok := v.Channel(channelName); ok {
 				k = v
 				if len(api) == 0 {
-					api = v.Info.Name
+					api = snapshot.Info.Name
 				}
 				topics = append(topics, t.Config)
 			} else if channelName != "" {
-				for _, ref := range v.Config.Channels {
+				for _, ref := range snapshot.Channels {
 					if ref.Value == nil {
 						continue
 					}

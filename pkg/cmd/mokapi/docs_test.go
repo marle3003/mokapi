@@ -1,6 +1,7 @@
 package mokapi_test
 
 import (
+	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
 	"regexp"
@@ -310,5 +311,13 @@ func TestDocs_Consistency(t *testing.T) {
 		require.Contains(t, docs, `<a id="certificates" name="certificates"></a>certificates`)
 		require.Contains(t, docs, "```yaml tab=File (YAML)\njavascript:")
 		require.Contains(t, docs, "```json tab=File (JSON)\n{\n  \"certificates\"")
+	})
+
+	t.Run("mcp server flags document the config defaults", func(t *testing.T) {
+		cfg := static.NewConfig()
+		flags := mokapi.NewCmdMokapi().Flags()
+		require.Equal(t, cfg.Mcp.Server.Enabled, flags.Lookup("mcp-server-enabled").DefaultValue)
+		require.Equal(t, cfg.Mcp.Server.Port, flags.Lookup("mcp-server-port").DefaultValue)
+		require.Equal(t, cfg.Mcp.Server.Path, flags.Lookup("mcp-server-path").DefaultValue)
 	})
 }

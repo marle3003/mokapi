@@ -178,6 +178,10 @@ func sampleData(flags *cli.FlagSet, input string) error {
 
 	switch ct.Subtype {
 	case "yaml":
+		// yaml.Marshal ends each document with a newline
+		for i, item := range items {
+			items[i] = strings.TrimSuffix(item, "\n")
+		}
 		fmt.Printf("%s", strings.Join(items, "\n---\n"))
 	case "xml":
 		if n > 1 {

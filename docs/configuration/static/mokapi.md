@@ -218,6 +218,7 @@ api:
 
 Defines a path prefix under which the API and web dashboard are served.
 This is useful when Mokapi is hosted behind a reverse proxy and needs to be accessible under a specific URL path.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for how it differs from [api-base](#api-base).
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
@@ -236,8 +237,10 @@ api:
 
 ## <a id="api-base" name="api-base"></a>api-base
 
-Specifies the external base path used to access the API when Mokapi is running behind a reverse proxy.
-This value is used to generate correct URLs in responses and in the web dashboard, and may differ from the internal api-path.
+Specifies the external path under which the browser reaches the web dashboard when Mokapi runs behind a reverse proxy.
+Mokapi sets this value as the base URL of the dashboard page, so the dashboard loads its assets and calls the API under this path.
+It doesn't change the paths Mokapi itself serves (that's api-path). If api-base isn't set, the dashboard uses api-path instead.
+See [Running the Dashboard Behind a Reverse Proxy](/docs/configuration/use-cases/reverse-proxy.md) for when you need it.
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
@@ -356,18 +359,18 @@ When enabled, Mokapi exposes an MCP-compatible endpoint that allows external too
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
-| --mcp-server-enabled | MOKAPI_MCP_SERVER_ENABLED | mcp.server.enabled | bool | false |
+| --mcp-server-enabled | MOKAPI_MCP_SERVER_ENABLED | mcp.server.enabled | bool | true |
 
 ```bash tab=CLI
---mcp-server-enabled
+--mcp-server-enabled false
 ```
 ```bash tab=Env
-MOKAPI_MCP_SERVER_ENABLED=true
+MOKAPI_MCP_SERVER_ENABLED=false
 ```
 ```yaml tab=File
 mcp:
   server:
-    enabled: true
+    enabled: false
 ```
 
 ## <a id="mcp-server-port" name="mcp-server-port"></a>mcp-server-port
@@ -922,7 +925,8 @@ providers:
 ## <a id="providers-http-ca" name="providers-http-ca"></a>providers-http-ca
 
 Specifies a custom certificate authority (CA) file used to verify TLS connections.
-When set, the provided CA file is used in addition to, or instead of, the system certificate pool. This is useful when working with internal or self-signed certificates.
+The value can be a file path or the certificate content itself. PEM (including bundles with several certificates) and DER encoded certificates are accepted.
+The CA is added to the system certificate pool, so certificates signed by well-known authorities are still trusted. This is useful when working with internal or self-signed certificates.
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|
@@ -1207,7 +1211,7 @@ providers:
 #### `--providers-git-repositories[<index>]-auth-github`
 
 Enables authentication using GitHub credentials for the repository.
-This option allows accessing private repositories hosted on GitHub by using credentials provided via environment variables or the GitHub CLI configuration.
+It authenticates as a GitHub App, using the app ID, the installation ID and the app's private key (file path or key content).
 
 ```bash tab=CLI
 --providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem
@@ -1500,6 +1504,7 @@ rootCaCert: /path/to/caCert.pem
 
 Specifies the private key corresponding to the root CA certificate.
 The private key is required to sign generated TLS certificates. It must match the certificate provided via root-ca-cert.
+The key may be RSA (PKCS#1 or PKCS#8) or EC (SEC1 or PKCS#8).
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|

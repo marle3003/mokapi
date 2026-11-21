@@ -25,16 +25,20 @@ func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
 	for _, li := range list {
+		cfg := li.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        li.Info.Name,
-			Description: li.Info.Description,
-			Version:     li.Info.Version,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
+			Version:     cfg.Info.Version,
 			Type:        ServiceLdap,
 		}
 
 		s.Metrics = ldapMetrics{
-			NumRequests: m.Ldap.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
-			LastRequest: m.Ldap.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
+			NumRequests: m.Ldap.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastRequest: m.Ldap.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
 		result = append(result, s)
@@ -51,11 +55,16 @@ func (h *handler) handleLdapService(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+	cfg := s.Config()
+	if cfg == nil {
+		w.WriteHeader(404)
+		return
+	}
 	result := &ldapInfo{
-		Name:        s.Info.Name,
-		Description: s.Info.Description,
-		Version:     s.Info.Version,
-		Server:      s.Address,
+		Name:        cfg.Info.Name,
+		Description: cfg.Info.Description,
+		Version:     cfg.Info.Version,
+		Server:      cfg.Address,
 		Configs:     getConfigs(s.Configs()),
 	}
 

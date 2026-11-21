@@ -3,13 +3,11 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,6 +27,10 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 	m, t, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
+	}
+	snapshot := m.Config()
+	if snapshot == nil {
+		return nil, fmt.Errorf("mqtt API '%v' not found", args.Cluster)
 	}
 
 	pa := store.PublishArgs{
@@ -55,7 +57,7 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		return nil, err
 	}
 	return &common.MqttPublishResult{
-		Api:   m.Info.Name,
+		Api:   snapshot.Info.Name,
 		Topic: t.Name,
 		Value: string(payload),
 	}, nil
@@ -128,7 +130,7 @@ func (c *MqttClient) get(cluster string, topic string) (m *runtime.MqttInfo, t *
 				err = newAmbiguousError("ambiguous cluster: specify the cluster")
 				return
 			}
-			topics := clusters[0].Topics
+			topics := clusters[0].Topics()
 			if len(topics) > 1 {
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
@@ -136,17 +138,21 @@ func (c *MqttClient) get(cluster string, topic string) (m *runtime.MqttInfo, t *
 			if len(topics) == 0 {
 				return
 			}
-			t = slices.Collect(maps.Values(topics))[0]
+			t = topics[0]
 			return clusters[0], t, nil
 		}
 
 		var topics []*store.Topic
 		var ok bool
 		for _, v := range c.app.Mqtt.List() {
+			snapshot := v.Config()
+			if snapshot == nil {
+				continue
+			}
 			if t, ok = v.Topic(topic); ok {
 				m = v
 				if len(cluster) == 0 {
-					cluster = v.Info.Name
+					cluster = snapshot.Info.Name
 				}
 				topics = append(topics, t)
 			}

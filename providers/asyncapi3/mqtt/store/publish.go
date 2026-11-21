@@ -142,7 +142,7 @@ func (s *Store) Topic(name string) (*Topic, bool) {
 
 // topic creates topics lazily, the caller must hold s.m for writing.
 func (s *Store) topic(name string) (*Topic, bool) {
-	if t, ok := s.Topics[name]; ok {
+	if t, ok := s.topics[name]; ok {
 		return t, ok
 	}
 
@@ -162,12 +162,12 @@ func (s *Store) topic(name string) (*Topic, bool) {
 			continue
 		}
 
-		if s.Topics == nil {
-			s.Topics = make(map[string]*Topic)
+		if s.topics == nil {
+			s.topics = make(map[string]*Topic)
 		}
 
 		t := &Topic{Name: name, cfg: ch.Value}
-		s.Topics[name] = t
+		s.topics[name] = t
 		return t, true
 	}
 

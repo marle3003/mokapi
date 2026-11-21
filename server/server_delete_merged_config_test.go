@@ -83,7 +83,7 @@ func TestKafkaManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Kafka.Get("foo")
 	require.NotNil(t, info)
-	f.requireOnlyFileAIsLeft(t, info.Config, info.Configs())
+	f.requireOnlyFileAIsLeft(t, info.Config(), info.Configs())
 }
 
 func TestMqttManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
@@ -100,7 +100,7 @@ func TestMqttManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Mqtt.Get("foo")
 	require.NotNil(t, info)
-	f.requireOnlyFileAIsLeft(t, info.Config, info.Configs())
+	f.requireOnlyFileAIsLeft(t, info.Config(), info.Configs())
 }
 
 func TestWebsocketManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
@@ -117,5 +117,5 @@ func TestWebsocketManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Websocket.Get("foo")
 	require.NotNil(t, info)
-	f.requireOnlyFileAIsLeft(t, info.Config, info.Configs())
+	f.requireOnlyFileAIsLeft(t, info.Config(), info.Configs())
 }

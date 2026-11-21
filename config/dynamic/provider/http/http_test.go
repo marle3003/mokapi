@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
@@ -10,6 +11,8 @@ import (
 	"mokapi/safe"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -329,6 +332,107 @@ Loop:
 	}
 
 	require.Equal(t, []byte("foo"), configs[0].Raw)
+}
+
+func TestTlsWithPemCA(t *testing.T) {
+	t.Parallel()
+
+	server := newTlsServer(t)
+	caFile := filepath.Join(t.TempDir(), "ca.pem")
+	require.NoError(t, os.WriteFile(caFile, serverCertPem(server), 0600))
+
+	configs := fetchConfigs(t, static.HttpProvider{
+		Urls: []string{server.URL},
+		Ca:   tls.FileOrContent(caFile),
+	})
+
+	require.NotEmpty(t, configs, "config must be fetched with a PEM encoded CA file")
+	require.Equal(t, []byte("foo"), configs[0].Raw)
+}
+
+func TestTlsWithPemCABundle(t *testing.T) {
+	t.Parallel()
+
+	server := newTlsServer(t)
+	other := newTlsServer(t)
+	bundle := append(serverCertPem(other), serverCertPem(server)...)
+	caFile := filepath.Join(t.TempDir(), "bundle.pem")
+	require.NoError(t, os.WriteFile(caFile, bundle, 0600))
+
+	configs := fetchConfigs(t, static.HttpProvider{
+		Urls: []string{server.URL},
+		Ca:   tls.FileOrContent(caFile),
+	})
+
+	require.NotEmpty(t, configs, "server certificate must be trusted although it is not the first in the bundle")
+	require.Equal(t, []byte("foo"), configs[0].Raw)
+}
+
+func TestTlsWithInlinePemCA(t *testing.T) {
+	t.Parallel()
+
+	server := newTlsServer(t)
+
+	configs := fetchConfigs(t, static.HttpProvider{
+		Urls: []string{server.URL},
+		Ca:   tls.FileOrContent(serverCertPem(server)),
+	})
+
+	require.NotEmpty(t, configs, "config must be fetched with PEM content as CA")
+	require.Equal(t, []byte("foo"), configs[0].Raw)
+}
+
+func TestTlsWithInvalidCA(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	hook := test.NewGlobal()
+
+	server := newTlsServer(t)
+
+	configs := fetchConfigs(t, static.HttpProvider{
+		Urls: []string{server.URL},
+		Ca:   tls.FileOrContent("not a certificate"),
+	})
+
+	require.Empty(t, configs, "invalid CA must not be trusted")
+	var messages []string
+	for _, e := range hook.AllEntries() {
+		messages = append(messages, e.Message)
+	}
+	require.Contains(t, messages, "failed to use CA certification for http provider: failed to parse CA cert: x509: malformed certificate")
+}
+
+func newTlsServer(t *testing.T) *httptest.Server {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("foo"))
+	}))
+	t.Cleanup(server.Close)
+	return server
+}
+
+func serverCertPem(server *httptest.Server) []byte {
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.TLS.Certificates[0].Certificate[0]})
+}
+
+// fetchConfigs starts a provider and collects the configs it reads within a short time.
+func fetchConfigs(t *testing.T, config static.HttpProvider) []*dynamic.Config {
+	pool := safe.NewPool(context.Background())
+	defer pool.Stop()
+
+	ch := make(chan dynamic.ConfigEvent)
+	p := New(config)
+	require.NoError(t, p.Start(ch, pool))
+
+	timeout := time.After(500 * time.Millisecond)
+	var configs []*dynamic.Config
+	for {
+		select {
+		case e := <-ch:
+			configs = append(configs, e.Config)
+		case <-timeout:
+			return configs
+		}
+	}
 }
 
 func TestTlsWithSkipCertVerification(t *testing.T) {

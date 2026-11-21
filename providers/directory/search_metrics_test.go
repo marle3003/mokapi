@@ -10,7 +10,6 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
-	"mokapi/sortedmap"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -30,7 +29,7 @@ func (e *statusEmitter) EmitLdap(_ *ldap.SearchRequest, res *ldap.SearchResponse
 }
 
 // userEntries returns two entries that match the filter (cn=user*)
-func userEntries() *sortedmap.LinkedHashMap[string, directory.Entry] {
+func userEntries() *directory.EntryStore {
 	return convertArray([]directory.Entry{
 		{Dn: "cn=user1,dc=foo,dc=com", Attributes: map[string][]string{"cn": {"user1"}}},
 		{Dn: "cn=user2,dc=foo,dc=com", Attributes: map[string][]string{"cn": {"user2"}}},
@@ -72,6 +71,65 @@ func TestSearch_ErrorMetric(t *testing.T) {
 			}, ctx))
 
 			require.Equal(t, tc.errors, m.Errors.Sum(metrics.NewQuery()))
+		})
+	}
+}
+
+func TestSearch_UnknownScope(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	cfg := &directory.Config{Info: directory.Info{Name: "foo"}, Entries: userEntries()}
+	m := monitor.NewLdap()
+	ctx := monitor.NewLdapContext(context.Background(), m)
+	eh := &eventstest.Handler{}
+
+	h := directory.NewHandler(cfg, &statusEmitter{}, eh)
+	rr := ldaptest.NewRecorder()
+	h.ServeLDAP(rr, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+		Scope:  3,
+		Filter: "(cn=user*)",
+	}, ctx))
+
+	res := rr.Message.(*ldap.SearchResponse)
+	require.Equal(t, ldap.ProtocolError, res.Status)
+	require.Equal(t, "unsupported search scope", res.Message)
+	require.Equal(t, 1.0, m.Errors.Sum(metrics.NewQuery()))
+	require.Equal(t, 1.0, m.RequestCounter.Sum(metrics.NewQuery()))
+
+	logs := eh.Events
+	require.Len(t, logs, 1)
+	require.Equal(t, "ProtocolError", logs[0].Data.(*directory.SearchLog).Response.Status)
+}
+
+func TestSearch_FilterError(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name   string
+		filter string
+	}{
+		{name: "invalid filter", filter: "cn=user"},
+		{name: "unsupported filter", filter: "(cn=user))"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, &statusEmitter{}, eh)
+			rr := ldaptest.NewRecorder()
+			h.ServeLDAP(rr, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: tc.filter,
+			}, context.Background()))
+
+			res := rr.Message.(*ldap.SearchResponse)
+			require.Equal(t, uint8(ldap.OperationsError), res.Status)
+
+			logs := eh.Events
+			require.Len(t, logs, 1)
+			require.Equal(t, ldap.StatusText[ldap.OperationsError], logs[0].Data.(*directory.SearchLog).Response.Status)
 		})
 	}
 }
@@ -160,4 +218,96 @@ func TestSearch_ErrorMetric_WithoutMonitor(t *testing.T) {
 		}, context.Background()))
 	})
 	require.Equal(t, uint8(ldap.Success), rec.Message.(*ldap.SearchResponse).Status)
+}
+
+// TestSearch_LogShowsStatusSentToClient checks that the search log event shows the status
+// the client gets, also when a JavaScript handler changed it.
+func TestSearch_LogShowsStatusSentToClient(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	noSuchObject := uint8(ldap.NoSuchObject)
+	success := uint8(ldap.Success)
+	testcases := []struct {
+		name      string
+		sizeLimit int64
+		emitter   *statusEmitter
+		status    uint8
+	}{
+		{name: "handler keeps success", emitter: &statusEmitter{}, status: ldap.Success},
+		{name: "server size limit exceeded", sizeLimit: 1, emitter: &statusEmitter{}, status: ldap.SizeLimitExceeded},
+		{name: "js handler sets noSuchObject", emitter: &statusEmitter{status: &noSuchObject}, status: ldap.NoSuchObject},
+		{name: "js handler clears size limit error", sizeLimit: 1, emitter: &statusEmitter{status: &success}, status: ldap.Success},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, SizeLimit: tc.sizeLimit, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, tc.emitter, eh)
+			rec := ldaptest.NewRecorder()
+			h.ServeLDAP(rec, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: "(cn=user*)",
+			}, context.Background()))
+
+			require.Equal(t, tc.status, rec.Message.(*ldap.SearchResponse).Status)
+			require.Len(t, eh.Events, 1)
+			require.Equal(t, ldap.StatusText[tc.status], eh.Events[0].Data.(*directory.SearchLog).Response.Status)
+		})
+	}
+}
+
+// resultsEmitter simulates a JavaScript ldap event handler that replaces response.results.
+type resultsEmitter struct {
+	results []ldap.SearchResult
+}
+
+func (e *resultsEmitter) EmitLdap(_ *ldap.SearchRequest, res *ldap.SearchResponse) []*common.Action {
+	if e.results != nil {
+		res.Results = e.results
+	}
+	return nil
+}
+
+// TestSearch_LogShowsResultsSentToClient checks that the search log event shows the results
+// the client gets, also when a JavaScript handler replaced them.
+func TestSearch_LogShowsResultsSentToClient(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	bob := ldap.SearchResult{Dn: "cn=bob,dc=foo,dc=com", Attributes: map[string][]string{"mail": {"bob@foo.com"}}}
+	testcases := []struct {
+		name    string
+		emitter *resultsEmitter
+		count   int
+	}{
+		{name: "handler keeps results", emitter: &resultsEmitter{}, count: 2},
+		{name: "handler replaces results", emitter: &resultsEmitter{results: []ldap.SearchResult{bob}}, count: 1},
+		{name: "handler removes all results", emitter: &resultsEmitter{results: []ldap.SearchResult{}}, count: 0},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &directory.Config{Info: directory.Info{Name: "foo"}, Entries: userEntries()}
+			eh := &eventstest.Handler{}
+
+			h := directory.NewHandler(cfg, tc.emitter, eh)
+			rec := ldaptest.NewRecorder()
+			h.ServeLDAP(rec, ldaptest.NewRequestWithContext(1, &ldap.SearchRequest{
+				Scope:  ldap.ScopeWholeSubtree,
+				Filter: "(cn=user*)",
+			}, context.Background()))
+
+			sent := rec.Message.(*ldap.SearchResponse).Results
+			require.Len(t, sent, tc.count)
+			require.Len(t, eh.Events, 1)
+			logged := eh.Events[0].Data.(*directory.SearchLog).Response.Results
+
+			require.Len(t, logged, len(sent))
+			for i, r := range sent {
+				require.Equal(t, r.Dn, logged[i].Dn)
+				require.Equal(t, r.Attributes, logged[i].Attributes)
+			}
+		})
+	}
 }

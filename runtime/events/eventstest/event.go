@@ -32,6 +32,8 @@ func (h *Handler) Push(data events.EventData, traits events.Traits) error {
 	return nil
 }
 
+func (h *Handler) Update(events.EventData) {}
+
 func (h *Handler) GetEvents(traits events.Traits) []events.Event {
 	h.m.Lock()
 	defer h.m.Unlock()

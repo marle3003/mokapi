@@ -31,7 +31,7 @@ type Channel struct {
 
 func (s *Store) Channel(name string) (*Channel, bool) {
 	s.m.RLock()
-	if t, ok := s.Channels[name]; ok {
+	if t, ok := s.channels[name]; ok {
 		s.m.RUnlock()
 		return t, ok
 	}
@@ -39,6 +39,11 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 
 	s.m.Lock()
 	defer s.m.Unlock()
+
+	// another request may have created the channel while waiting for the lock
+	if t, ok := s.channels[name]; ok {
+		return t, true
+	}
 
 	for _, ref := range s.cfg.Channels {
 		if ref == nil || ref.Value == nil {
@@ -57,8 +62,8 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			continue
 		}
 
-		if s.Channels == nil {
-			s.Channels = make(map[string]*Channel)
+		if s.channels == nil {
+			s.channels = make(map[string]*Channel)
 		}
 
 		c := &Channel{
@@ -70,7 +75,7 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			monitor: s.monitor,
 			params:  params,
 		}
-		s.Channels[name] = c
+		s.channels[name] = c
 		return c, true
 	}
 

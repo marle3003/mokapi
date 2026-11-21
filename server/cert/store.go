@@ -1,7 +1,7 @@
 package cert
 
 import (
-	"crypto/rsa"
+	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -13,7 +13,7 @@ import (
 type Store struct {
 	Certificates map[string]*tls.Certificate
 	CaCert       *x509.Certificate
-	CaKey        *rsa.PrivateKey
+	CaKey        crypto.Signer
 }
 
 func NewStore(config *static.Config) (*Store, error) {
@@ -38,7 +38,7 @@ func NewStore(config *static.Config) (*Store, error) {
 
 	block, _ := pem.Decode(caCert)
 	if block == nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse root CA certificate PEM")
 	}
 	store.CaCert, err = x509.ParseCertificate(block.Bytes)
 	if err != nil {
@@ -48,40 +48,21 @@ func NewStore(config *static.Config) (*Store, error) {
 	if block == nil {
 		return nil, fmt.Errorf("failed to parse key PEM")
 	}
-	store.CaKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	store.CaKey, err = parsePrivateKey(block)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, ci := range config.Certificates.Static {
-		bCert, err := ci.Cert.Read(path.Dir(config.ConfigFile))
+	for i, ci := range config.Certificates.Static {
+		c, err := loadStaticCertificate(ci, path.Dir(config.ConfigFile))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("static certificate %d: %w", i, err)
 		}
 
-		var c *tls.Certificate
-		// key is in the PEM file
-		if ci.Key == "" {
-			c, err = decodePem(bCert)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			var bKey []byte
-			bKey, err = ci.Key.Read(path.Dir(config.ConfigFile))
-			if err != nil {
-				return nil, err
-			}
-			var p tls.Certificate
-			p, err = tls.X509KeyPair(bCert, bKey)
-			c = &p
+		cer, err := x509.ParseCertificate(c.Certificate[0])
+		if err != nil {
+			return nil, fmt.Errorf("static certificate %d: %w", i, err)
 		}
-
-		if c == nil {
-			continue
-		}
-
-		cer, _ := x509.ParseCertificate(c.Certificate[0])
 		store.AddCertificate(cer.Subject.CommonName, c)
 		for _, n := range cer.DNSNames {
 			store.AddCertificate(n, c)
@@ -91,13 +72,35 @@ func NewStore(config *static.Config) (*Store, error) {
 	return store, nil
 }
 
+func loadStaticCertificate(ci static.Certificate, currentDir string) (*tls.Certificate, error) {
+	bCert, err := ci.Cert.Read(currentDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// key is in the PEM file
+	if ci.Key == "" {
+		return decodePem(bCert)
+	}
+
+	bKey, err := ci.Key.Read(currentDir)
+	if err != nil {
+		return nil, err
+	}
+	c, err := tls.X509KeyPair(bCert, bKey)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
 func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) {
 	store.Certificates[domain] = certificate
 }
 
 func decodePem(data []byte) (*tls.Certificate, error) {
 	var cert *x509.Certificate
-	var key interface{}
+	var key crypto.Signer
 
 	rest := data
 	for {
@@ -115,24 +118,10 @@ func decodePem(data []byte) (*tls.Certificate, error) {
 			}
 			cert = parsedCert
 
-		case "RSA PRIVATE KEY":
-			parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		case "RSA PRIVATE KEY", "EC PRIVATE KEY", "PRIVATE KEY":
+			parsedKey, err := parsePrivateKey(block)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse RSA private key: %v", err)
-			}
-			key = parsedKey
-
-		case "EC PRIVATE KEY":
-			parsedKey, err := x509.ParseECPrivateKey(block.Bytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse EC private key: %v", err)
-			}
-			key = parsedKey
-
-		case "PRIVATE KEY": // PKCS#8
-			parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse PKCS#8 private key: %v", err)
+				return nil, err
 			}
 			key = parsedKey
 		}
@@ -146,6 +135,34 @@ func decodePem(data []byte) (*tls.Certificate, error) {
 		Certificate: [][]byte{cert.Raw},
 		PrivateKey:  key,
 	}, nil
+}
+
+func parsePrivateKey(block *pem.Block) (crypto.Signer, error) {
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse RSA private key: %v", err)
+		}
+		return key, nil
+	case "EC PRIVATE KEY":
+		key, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse EC private key: %v", err)
+		}
+		return key, nil
+	case "PRIVATE KEY": // PKCS#8
+		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse PKCS#8 private key: %v", err)
+		}
+		signer, ok := key.(crypto.Signer)
+		if !ok {
+			return nil, fmt.Errorf("unsupported PKCS#8 private key type %T", key)
+		}
+		return signer, nil
+	}
+	return nil, fmt.Errorf("unsupported private key PEM type %q", block.Type)
 }
 
 func DefaultRootCert() *x509.Certificate {
