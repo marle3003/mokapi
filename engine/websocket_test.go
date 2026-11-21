@@ -689,11 +689,7 @@ func TestWebsocketClient_Send_NoApiOrChannel(t *testing.T) {
 		})
 
 		require.EqualError(t, err, "websocket channel '' not found")
-		var messages []string
-		for _, e := range hook.Entries {
-			messages = append(messages, e.Message)
-		}
-		require.Contains(t, messages, "websocket channel '' not found. Retry in 1ms")
+		require.Contains(t, getMessages(hook), "websocket channel '' not found. Retry in 1ms")
 	})
 }
 

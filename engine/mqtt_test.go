@@ -329,9 +329,5 @@ func TestMqttClient_Publish_RetriesTopicNotFound(t *testing.T) {
 	})
 
 	require.EqualError(t, err, "mqtt topic 'x' not found")
-	var messages []string
-	for _, e := range hook.Entries {
-		messages = append(messages, e.Message)
-	}
-	require.Contains(t, messages, "mqtt topic 'x' not found. Retry in 1ms")
+	require.Contains(t, getMessages(hook), "mqtt topic 'x' not found. Retry in 1ms")
 }
