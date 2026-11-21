@@ -11,6 +11,7 @@ import (
 	"mokapi/schema/encoding"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coder/websocket"
@@ -22,11 +23,42 @@ type Channel struct {
 	api     string
 	clients map[string]*Client
 	m       sync.RWMutex
-	Config  *asyncapi3.Channel
+	// removed is set under m when the channel leaves the specification; clients that connect
+	// afterwards, with a channel looked up before the removal, are closed on arrival.
+	removed bool
+	// state is replaced as a whole by Store.Update and read lock-free.
+	state   atomic.Pointer[channelState]
 	emitter engine.WebsocketEventEmitter
 	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
-	params  map[string]string
+}
+
+// channelState is the part of a channel that changes with a reload. Config and params are
+// swapped together because a changed address pattern can change the parameter names.
+type channelState struct {
+	config *asyncapi3.Channel
+	params map[string]string
+}
+
+// Config returns the definition from the current specification.
+func (c *Channel) Config() *asyncapi3.Channel {
+	return c.state.Load().config
+}
+
+func (c *Channel) params() map[string]string {
+	return c.state.Load().params
+}
+
+func (s *Store) newChannel(name string, cfg *asyncapi3.Channel, params map[string]string) *Channel {
+	c := &Channel{
+		Name:    name,
+		api:     s.cfg.Info.Name,
+		emitter: s.emitter,
+		log:     s.log,
+		monitor: s.monitor,
+	}
+	c.state.Store(&channelState{config: cfg, params: params})
+	return c
 }
 
 func (s *Store) Channel(name string) (*Channel, bool) {
@@ -45,41 +77,16 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 		return t, true
 	}
 
-	for _, ref := range s.cfg.Channels {
-		if ref == nil || ref.Value == nil {
-			continue
-		}
-		ch := ref.Value
-		if !ch.IsChannelAvailable("ws") {
-			continue
-		}
-		if len(ch.Parameters) == 0 {
-			continue
-		}
-
-		params, err := ch.ExtractParams(name)
-		if err != nil {
-			continue
-		}
-
-		if s.channels == nil {
-			s.channels = make(map[string]*Channel)
-		}
-
-		c := &Channel{
-			Name:    name,
-			api:     s.cfg.Info.Name,
-			emitter: s.emitter,
-			Config:  ch,
-			log:     s.log,
-			monitor: s.monitor,
-			params:  params,
-		}
-		s.channels[name] = c
-		return c, true
+	definition, params, ok := s.matchLocked(name)
+	if !ok {
+		return nil, false
 	}
-
-	return nil, false
+	if s.channels == nil {
+		s.channels = make(map[string]*Channel)
+	}
+	ch := s.newChannel(name, definition, params)
+	s.channels[name] = ch
+	return ch, true
 }
 
 func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Client) error {
@@ -92,7 +99,8 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		var msg any
 		var messageId string
 		validationErrors := make(map[string]string)
-		for id, m := range c.Config.Messages {
+		cfg := c.Config()
+		for id, m := range cfg.Messages {
 			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 				continue
 			}
@@ -109,7 +117,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 			}
 			validationErrors[id] = err.Error()
 		}
-		channelName := c.Config.ResolveAddress()
+		channelName := cfg.ResolveAddress()
 
 		l := messageLog(c, data, messageId, client, Send)
 		if err != nil {
@@ -147,7 +155,11 @@ func (c *Channel) addClient(client *Client) {
 		c.clients = make(map[string]*Client)
 	}
 	c.clients[client.Id] = client
+	removed := c.removed
 	c.m.Unlock()
+	if removed {
+		client.close(websocket.StatusGoingAway, channelRemovedReason)
+	}
 }
 
 func (c *Channel) removeClient(client *Client) {
@@ -161,6 +173,21 @@ func (c *Channel) connectedClients() []*Client {
 	c.m.Lock()
 	defer c.m.Unlock()
 	return slices.Collect(maps.Values(c.clients))
+}
+
+// closeClients closes all connected clients because the channel no longer exists.
+func (c *Channel) closeClients() {
+	c.m.Lock()
+	c.removed = true
+	clients := slices.Collect(maps.Values(c.clients))
+	c.m.Unlock()
+	if len(clients) == 0 {
+		return
+	}
+	log.Infof("websocket: channel %s removed, closing %d clients", c.Name, len(clients))
+	for _, client := range clients {
+		client.close(websocket.StatusGoingAway, channelRemovedReason)
+	}
 }
 
 func (c *Channel) Broadcast(message any) error {

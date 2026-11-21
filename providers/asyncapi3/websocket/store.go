@@ -61,22 +61,44 @@ func (s *Store) Channels() []*Channel {
 	return slices.Collect(maps.Values(s.channels))
 }
 
-func (s *Store) Update(cfg *asyncapi3.Config) {
-	s.m.Lock()
-	defer s.m.Unlock()
+const channelRemovedReason = "channel removed"
 
+// Update applies a reloaded specification. Channels keep their identity because connected clients
+// and scripts hold them: a channel that still exists gets the new definition, one that is gone from
+// the specification is removed and its clients are closed.
+func (s *Store) Update(cfg *asyncapi3.Config) {
+	// Clients are closed after the lock is released: closing logs through Store.log, which needs s.m.
+	s.m.Lock()
+	afterUnlock := s.updateLocked(cfg)
+	s.m.Unlock()
+
+	for _, f := range afterUnlock {
+		f()
+	}
+}
+
+func (s *Store) updateLocked(cfg *asyncapi3.Config) (afterUnlock []func()) {
 	s.cfg = cfg
-	for path, ref := range cfg.Channels {
-		if ref.Value == nil {
+
+	for name, ch := range s.channels {
+		definition, params, ok := s.matchLocked(name)
+		if ok {
+			ch.state.Store(&channelState{config: definition, params: params})
+			continue
+		}
+		delete(s.channels, name)
+		afterUnlock = append(afterUnlock, func() { ch.closeClients() })
+	}
+
+	for key, ref := range cfg.Channels {
+		if ref == nil || ref.Value == nil {
 			continue
 		}
 		c := ref.Value
 		if !c.IsChannelAvailable("ws") {
 			continue
 		}
-		if c.Address != "" {
-			path = c.Address
-		}
+		path := staticPath(key, c)
 
 		if c.Bindings != nil && c.Bindings.Websocket.Method != "" {
 			if strings.ToUpper(c.Bindings.Websocket.Method) != "GET" {
@@ -88,20 +110,43 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 			if s.channels == nil {
 				s.channels = make(map[string]*Channel)
 			}
-			ch, ok := s.channels[path]
-			if !ok {
-				ch = &Channel{
-					Name:    path,
-					api:     s.cfg.Info.Name,
-					emitter: s.emitter,
-					Config:  c,
-					log:     s.log,
-					monitor: s.monitor,
-				}
-				s.channels[path] = ch
+			if _, ok := s.channels[path]; !ok {
+				s.channels[path] = s.newChannel(path, c, nil)
 			}
 		}
 	}
+	return afterUnlock
+}
+
+// staticPath returns the path a channel without parameters is served at.
+func staticPath(key string, c *asyncapi3.Channel) string {
+	if c.Address != "" {
+		return c.Address
+	}
+	return key
+}
+
+// matchLocked finds the channel definition that serves the path in the current specification:
+// a channel without parameters by its path, otherwise a parameterized channel whose address
+// pattern matches.
+func (s *Store) matchLocked(path string) (*asyncapi3.Channel, map[string]string, bool) {
+	var parameterized []*asyncapi3.Channel
+	for key, ref := range s.cfg.Channels {
+		if ref == nil || ref.Value == nil || !ref.Value.IsChannelAvailable("ws") {
+			continue
+		}
+		if len(ref.Value.Parameters) > 0 {
+			parameterized = append(parameterized, ref.Value)
+		} else if staticPath(key, ref.Value) == path {
+			return ref.Value, nil, true
+		}
+	}
+	for _, c := range parameterized {
+		if params, err := c.ExtractParams(path); err == nil {
+			return c, params, true
+		}
+	}
+	return nil, nil, false
 }
 
 func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +185,7 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		channel:    ch,
 		send:       make(chan Message, 16),
 		closeCh:    make(chan struct{}),
+		closing:    &closeRequest{},
 	}
 	// Register before Accept: the client's Dial returns with the handshake response, so a
 	// message sent right after it must already find the client. It is buffered in client.send
@@ -173,16 +219,17 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err = <-errCh; err != nil {
 		status, reason := closeStatus(err)
 		var closedBy string
+		serverReason, closedByServer := client.serverCloseReason()
 		switch {
+		case closedByServer:
+			// checked first: the peer answers our close frame, so the read loop may report the error first
+			reason = serverReason
+			closedBy = "server"
 		case status == websocket.StatusNormalClosure,
 			status == websocket.StatusGoingAway,
 			status == websocket.StatusNoStatusRcvd:
 			// client closed
 			closedBy = "client"
-		case errors.Is(err, context.Canceled):
-			// we canceled it ourselves (e.g. spec reload), nothing to log
-			reason = "connection closed"
-			closedBy = "server"
 		case errors.Is(err, io.EOF),
 			strings.Contains(err.Error(), "EOF"):
 			// client disconnected without sending a close frame
@@ -238,10 +285,11 @@ func (s *Store) log(log events.EventData, traits events.Traits) {
 }
 
 func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
-	if ch.Config.Bindings == nil {
+	cfg := ch.Config()
+	if cfg.Bindings == nil {
 		return map[string]any{}, nil
 	}
-	s := ch.Config.Bindings.Websocket.Query
+	s := cfg.Bindings.Websocket.Query
 	if s == nil {
 		return map[string]any{}, nil
 	}
@@ -268,10 +316,11 @@ func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
 }
 
 func parseHeader(r *http.Request, ch *Channel) (map[string]any, error) {
-	if ch.Config.Bindings == nil {
+	cfg := ch.Config()
+	if cfg.Bindings == nil {
 		return map[string]any{}, nil
 	}
-	s := ch.Config.Bindings.Websocket.Headers
+	s := cfg.Bindings.Websocket.Headers
 	if s == nil {
 		return map[string]any{}, nil
 	}

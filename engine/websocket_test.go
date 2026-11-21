@@ -574,6 +574,45 @@ func TestWebsocketClient_Send_ScriptFile(t *testing.T) {
 	require.Equal(t, "file:///scripts/sender.ts", evts[0].Data.(*websocket.MessageLog).Script)
 }
 
+func TestWebsocketClient_Send_UsesConfigAfterReload(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newCfg := func(messageId string) *asyncapi3.Config {
+		msg := asyncapi3test.NewMessage(
+			asyncapi3test.WithContentType("application/json"),
+			asyncapi3test.WithPayload(schematest.New("object")),
+		)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("/chat", asyncapi3test.NewChannel(
+				asyncapi3test.UseMessage(messageId, &asyncapi3.MessageRef{Value: msg}),
+			)),
+		)
+	}
+	em := runtimetest.NewApp()
+	st := websocket.New(newCfg("old"), enginetest.NewEngine(), em.Events, monitor.NewWebsocket())
+	app := runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", runtime.NewWebsocketInfo(newCfg("new"), st)))
+	st.Update(newCfg("new"))
+	serv := httptest.NewServer(st)
+	defer serv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, _, err := ws.Dial(ctx, serv.URL+"/chat", &ws.DialOptions{})
+	require.NoError(t, err)
+	defer func() { _ = c.CloseNow() }()
+
+	_, err = engine.NewWebsocketClient(app).Send(common.WebsocketSendArgs{
+		ChannelName: "/chat",
+		Message:     map[string]any{"text": "hi"},
+	})
+	require.NoError(t, err)
+
+	evts := em.Events.GetEvents(events.NewTraits().WithNamespace("websocket").With("type", "message"))
+	require.Len(t, evts, 1)
+	require.Equal(t, "new", evts[0].Data.(*websocket.MessageLog).MessageId)
+}
+
 func TestWebsocketClient_Send_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 

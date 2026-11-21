@@ -3,6 +3,7 @@ package websocket_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
@@ -826,4 +827,359 @@ func TestStore_Update_ConcurrentWithChannel(t *testing.T) {
 		close(start)
 		wg.Wait()
 	}
+}
+
+func TestStore_Update_ConcurrentWithConfigRead(t *testing.T) {
+	const iterations = 50
+
+	newCfg := func() *asyncapi3.Config {
+		room := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+			asyncapi3test.WithMessage("room"),
+		)
+		chat := asyncapi3test.NewChannel(asyncapi3test.WithMessage("chat"))
+		return asyncapi3test.NewConfig(
+			asyncapi3test.AddChannel("/rooms/{roomId}", room),
+			asyncapi3test.AddChannel("/chat", chat),
+		)
+	}
+
+	for i := 0; i < iterations; i++ {
+		s := websocket.New(newCfg(), nil, nil, nil)
+		ch, ok := s.Channel("/chat")
+		require.True(t, ok)
+
+		stop := make(chan struct{})
+		var wg sync.WaitGroup
+		for _, path := range []string{"/chat", "/rooms/1"} {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					select {
+					case <-stop:
+						return
+					default:
+					}
+					if c, ok := s.Channel(path); ok {
+						_ = c.Config().ResolveAddress()
+					}
+					rr := httptest.NewRecorder()
+					s.ServeHTTP(rr, httptest.NewRequest("GET", path+"?a=b", nil))
+				}
+			}()
+		}
+
+		for j := 0; j < 20; j++ {
+			s.Update(newCfg())
+			_ = ch.Config()
+		}
+		close(stop)
+		wg.Wait()
+	}
+}
+
+func TestStore_Update_Reload(t *testing.T) {
+	t.Run("changed channel uses new config", func(t *testing.T) {
+		oldCh := asyncapi3test.NewChannel(asyncapi3test.WithMessage("old"))
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chat", oldCh)), nil, nil, nil)
+
+		newCh := asyncapi3test.NewChannel(asyncapi3test.WithMessage("new"))
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chat", newCh)))
+
+		ch, ok := s.Channel("/chat")
+		require.True(t, ok)
+		require.Same(t, newCh, ch.Config())
+	})
+
+	t.Run("removed channel is not served", func(t *testing.T) {
+		s := websocket.New(asyncapi3test.NewConfig(
+			asyncapi3test.WithChannel("/chat"),
+			asyncapi3test.WithChannel("/other"),
+		), nil, nil, nil)
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		_, ok := s.Channel("/chat")
+		require.False(t, ok)
+		rr := httptest.NewRecorder()
+		s.ServeHTTP(rr, httptest.NewRequest("GET", "/chat", nil))
+		require.Equal(t, http.StatusNotFound, rr.Code)
+		require.Len(t, s.Channels(), 1)
+	})
+
+	t.Run("parameterized channel uses new config", func(t *testing.T) {
+		oldCh := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+			asyncapi3test.WithMessage("old"))
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", oldCh)), nil, nil, nil)
+		_, ok := s.Channel("/chats/general")
+		require.True(t, ok)
+
+		newCh := asyncapi3test.NewChannel(
+			asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+			asyncapi3test.WithMessage("new"))
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", newCh)))
+
+		ch, ok := s.Channel("/chats/general")
+		require.True(t, ok)
+		require.Same(t, newCh, ch.Config())
+	})
+
+	t.Run("removed parameterized channel is not served", func(t *testing.T) {
+		ch := asyncapi3test.NewChannel(asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}))
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", ch)), nil, nil, nil)
+		_, ok := s.Channel("/chats/general")
+		require.True(t, ok)
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		_, ok = s.Channel("/chats/general")
+		require.False(t, ok)
+	})
+
+	t.Run("channel with address different from its key uses new config", func(t *testing.T) {
+		oldCh := asyncapi3test.NewChannel(asyncapi3test.WithChannelAddress("/chat"), asyncapi3test.WithMessage("old"))
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("chat", oldCh)), nil, nil, nil)
+
+		newCh := asyncapi3test.NewChannel(asyncapi3test.WithChannelAddress("/chat"), asyncapi3test.WithMessage("new"))
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.AddChannel("chat", newCh)))
+
+		ch, ok := s.Channel("/chat")
+		require.True(t, ok)
+		require.Same(t, newCh, ch.Config())
+	})
+
+	t.Run("channel keeps its identity", func(t *testing.T) {
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")), nil, nil, nil)
+		before, _ := s.Channel("/chat")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")))
+
+		after, ok := s.Channel("/chat")
+		require.True(t, ok)
+		require.Same(t, before, after)
+	})
+
+	t.Run("parameterized channel gets the new parameter names", func(t *testing.T) {
+		oldCh := asyncapi3test.NewChannel(asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}))
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chats/{roomId}", oldCh)), nil, nil, nil)
+		_, ok := s.Channel("/chats/general")
+		require.True(t, ok)
+
+		newCh := asyncapi3test.NewChannel(
+			asyncapi3test.WithChannelAddress("/chats/{room}"),
+			asyncapi3test.WithParameter("room", &asyncapi3.Parameter{}))
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.AddChannel("chats", newCh)))
+
+		ch, ok := s.Channel("/chats/general")
+		require.True(t, ok)
+		require.Same(t, newCh, ch.Config())
+		require.Equal(t, map[string]string{"room": "general"}, websocket.ChannelParams(ch))
+	})
+
+	t.Run("removed and re-added channel is a new channel without the old clients", func(t *testing.T) {
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")), nil, nil, nil)
+		before, _ := s.Channel("/chat")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")))
+
+		after, ok := s.Channel("/chat")
+		require.True(t, ok)
+		require.NotSame(t, before, after)
+	})
+
+	t.Run("channel no longer available for ws is removed", func(t *testing.T) {
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")), nil, nil, nil)
+
+		kafkaOnly := asyncapi3test.NewChannel()
+		kafkaOnly.Servers = []*asyncapi3.ServerRef{{Value: &asyncapi3.Server{Protocol: "kafka"}}}
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.AddChannel("/chat", kafkaOnly)))
+
+		_, ok := s.Channel("/chat")
+		require.False(t, ok)
+	})
+
+	t.Run("nil channel reference removes the channel", func(t *testing.T) {
+		s := websocket.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/chat")), nil, nil, nil)
+
+		cfg := asyncapi3test.NewConfig()
+		cfg.Channels = map[string]*asyncapi3.ChannelRef{"/chat": nil}
+		s.Update(cfg)
+
+		_, ok := s.Channel("/chat")
+		require.False(t, ok)
+	})
+}
+
+func TestStore_Update_ClosesClientsOfRemovedChannels(t *testing.T) {
+	log.SetOutput(io.Discard)
+
+	start := func(t *testing.T, cfg *asyncapi3.Config, js string) (*websocket.Store, string, *runtime.App) {
+		app := runtimetest.NewApp()
+		e := enginetest.NewEngine()
+		app.Engine = e
+		t.Cleanup(e.Close)
+
+		if js != "" {
+			err := e.AddScript(dynamic.ConfigEvent{
+				Config: &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("./script.ts")},
+					Raw:  []byte(js),
+					Data: js,
+				},
+				Event: dynamic.Create,
+			})
+			require.NoError(t, err)
+		}
+
+		s := websocket.New(cfg, app.Engine, app.Events, app.Monitor.Websocket)
+		serv := httptest.NewServer(s)
+		t.Cleanup(serv.Close)
+		return s, serv.URL, app
+	}
+
+	dial := func(t *testing.T, url string) *ws.Conn {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		c, _, err := ws.Dial(ctx, url, nil)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = c.CloseNow() })
+		return c
+	}
+
+	twoChannels := func() *asyncapi3.Config {
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithChannel("/chat"),
+			asyncapi3test.WithChannel("/other"),
+		)
+	}
+
+	t.Run("client of removed channel gets close status going away", func(t *testing.T) {
+		s, url, _ := start(t, twoChannels(), "")
+		c := dial(t, url+"/chat")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, _, err := c.Read(ctx)
+		closeErr, ok := errors.AsType[ws.CloseError](err)
+		require.True(t, ok, "expected close error, got %v", err)
+		require.Equal(t, ws.StatusGoingAway, closeErr.Code)
+		require.Equal(t, "channel removed", closeErr.Reason)
+	})
+
+	t.Run("client of parameterized channel instance is closed", func(t *testing.T) {
+		ch := asyncapi3test.NewChannel(asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}))
+		s, url, _ := start(t, asyncapi3test.NewConfig(asyncapi3test.AddChannel("/rooms/{roomId}", ch)), "")
+		c := dial(t, url+"/rooms/1")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, _, err := c.Read(ctx)
+		require.Equal(t, ws.StatusGoingAway, ws.CloseStatus(err))
+	})
+
+	t.Run("close is logged once as closed by server and runs close event", func(t *testing.T) {
+		js := `import { on } from 'mokapi'
+export default function() {
+  on('websocket', function(event) {
+    if (event.type === 'close') {
+      console.log(event.reason, event.closedBy)
+    }
+  })
+}
+`
+		s, url, app := start(t, twoChannels(), js)
+		c := dial(t, url+"/chat")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, _, _ = c.Read(ctx)
+
+		closeLogs := func() []*websocket.CloseLog {
+			var logs []*websocket.CloseLog
+			for _, evt := range app.Events.GetEvents(events.NewTraits().WithNamespace("websocket")) {
+				if cl, ok := evt.Data.(*websocket.CloseLog); ok {
+					logs = append(logs, cl)
+				}
+			}
+			return logs
+		}
+		try.WaitFor(t, func() bool { return len(closeLogs()) > 0 })
+		time.Sleep(100 * time.Millisecond)
+
+		logs := closeLogs()
+		require.Len(t, logs, 1)
+		require.Equal(t, "server", logs[0].ClosedBy)
+		require.Equal(t, "channel removed", logs[0].Reason)
+		require.Len(t, logs[0].Actions, 1)
+		require.Equal(t, "channel removed server", logs[0].Actions[0].Logs[0].Message)
+	})
+
+	t.Run("client of kept channel stays connected", func(t *testing.T) {
+		s, url, _ := start(t, twoChannels(), "")
+		c := dial(t, url+"/other")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		// a read timeout closes the connection, so check the client first
+		require.Len(t, s.Clients(), 1)
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		defer cancel()
+		_, _, err := c.Read(ctx)
+		require.ErrorIs(t, err, context.DeadlineExceeded, "connection must stay open")
+	})
+
+	t.Run("closing by client and by server at the same time", func(t *testing.T) {
+		for i := 0; i < 20; i++ {
+			s, url, _ := start(t, twoChannels(), "")
+			c := dial(t, url+"/chat")
+
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				_ = c.Close(ws.StatusNormalClosure, "bye")
+			}()
+			s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+			<-done
+
+			try.WaitFor(t, func() bool { return len(s.Clients()) == 0 })
+		}
+	})
+
+	t.Run("client added after the channel was removed is closed", func(t *testing.T) {
+		s, _, _ := start(t, twoChannels(), "")
+		ch, ok := s.Channel("/chat")
+		require.True(t, ok)
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		reason, closedByServer := websocket.NewClientOnChannel(ch)
+		require.True(t, closedByServer)
+		require.Equal(t, "channel removed", reason)
+	})
+
+	t.Run("client added to a kept channel is not closed", func(t *testing.T) {
+		s, _, _ := start(t, twoChannels(), "")
+		ch, _ := s.Channel("/other")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		_, closedByServer := websocket.NewClientOnChannel(ch)
+		require.False(t, closedByServer)
+	})
+
+	t.Run("update without clients", func(t *testing.T) {
+		s, _, _ := start(t, twoChannels(), "")
+
+		s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/other")))
+
+		require.Len(t, s.Channels(), 1)
+	})
 }

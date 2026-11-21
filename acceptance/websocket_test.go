@@ -8,6 +8,8 @@ import (
 	"mokapi/config/static"
 	"mokapi/try"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -439,4 +441,147 @@ func (suite *WebsocketSuite) TestMessageSentByHandlerHasNoScriptFile() {
 
 	require.Len(suite.T(), received, 1)
 	require.NotContains(suite.T(), received[0], "script")
+}
+
+// WebsocketReloadSuite checks what a mock developer sees when the AsyncAPI file is edited while
+// Mokapi runs.
+type WebsocketReloadSuite struct {
+	BaseSuite
+	dir  string
+	port int
+}
+
+const (
+	reloadChatChannel = `
+  chat:
+    address: /chat
+`
+	reloadChatChannelWithRequiredToken = `
+  chat:
+    address: /chat
+    bindings:
+      ws:
+        query:
+          type: object
+          properties:
+            token:
+              type: string
+          required: [token]
+`
+	reloadRoomsChannel = `
+  rooms:
+    address: /rooms/{roomId}
+    parameters:
+      roomId: {}
+`
+)
+
+func (suite *WebsocketReloadSuite) SetupSuite() {
+	suite.port = try.GetFreePort()
+	suite.dir = suite.T().TempDir()
+	suite.writeSpec(reloadChatChannel + reloadRoomsChannel)
+
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
+	suite.initCmd(cfg)
+}
+
+func (suite *WebsocketReloadSuite) writeSpec(channels string) {
+	spec := fmt.Sprintf(`asyncapi: 3.0.0
+info:
+  title: Reload Chat
+  version: 1.0.0
+servers:
+  mokapi:
+    host: 'localhost:%d'
+    protocol: ws
+channels:%s`, suite.port, channels)
+	suite.Require().NoError(os.WriteFile(filepath.Join(suite.dir, "reload.yml"), []byte(spec), 0o600))
+}
+
+// dial returns the connection (nil if the handshake failed) and the status code of the handshake.
+func (suite *WebsocketReloadSuite) dial(path string) (*websocket.Conn, int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, resp, err := websocket.Dial(ctx, fmt.Sprintf("http://localhost:%d%s", suite.port, path), nil)
+	if err != nil {
+		if resp != nil {
+			return nil, resp.StatusCode
+		}
+		return nil, 0
+	}
+	return c, resp.StatusCode
+}
+
+func (suite *WebsocketReloadSuite) waitForStatus(path string, status int) {
+	suite.T().Helper()
+	try.WaitFor(suite.T(), func() bool {
+		c, code := suite.dial(path)
+		if c != nil {
+			_ = c.CloseNow()
+		}
+		return code == status
+	})
+}
+
+// reset serves the initial spec again and waits until both channels accept connections.
+func (suite *WebsocketReloadSuite) reset() {
+	suite.writeSpec(reloadChatChannel + reloadRoomsChannel)
+	suite.waitForStatus("/chat", http.StatusSwitchingProtocols)
+	suite.waitForStatus("/rooms/1", http.StatusSwitchingProtocols)
+}
+
+// connect opens a connection that stays open until the end of the test.
+func (suite *WebsocketReloadSuite) connect(path string) *websocket.Conn {
+	c, code := suite.dial(path)
+	suite.Require().Equal(http.StatusSwitchingProtocols, code)
+	suite.T().Cleanup(func() { _ = c.CloseNow() })
+	return c
+}
+
+// TestChangedQueryBindingAppliesToNewConnections verifies that a query parameter made required
+// in the file is enforced for the next connection.
+func (suite *WebsocketReloadSuite) TestChangedQueryBindingAppliesToNewConnections() {
+	suite.reset()
+
+	suite.writeSpec(reloadChatChannelWithRequiredToken + reloadRoomsChannel)
+
+	suite.waitForStatus("/chat", http.StatusBadRequest)
+}
+
+// TestRemovedChannelReturnsNotFound verifies that a channel removed from the file is not served.
+func (suite *WebsocketReloadSuite) TestRemovedChannelReturnsNotFound() {
+	suite.reset()
+
+	suite.writeSpec(reloadRoomsChannel)
+
+	suite.waitForStatus("/chat", http.StatusNotFound)
+}
+
+// TestRemovedParameterizedChannelReturnsNotFound verifies that an instance of a parameterized
+// channel that was used before the reload is not served after the channel was removed.
+func (suite *WebsocketReloadSuite) TestRemovedParameterizedChannelReturnsNotFound() {
+	suite.reset()
+
+	suite.writeSpec(reloadChatChannel)
+
+	suite.waitForStatus("/rooms/1", http.StatusNotFound)
+}
+
+// TestOpenConnectionOfRemovedChannelIsClosed verifies that a client connected to a channel
+// that is removed from the file is told that the channel is gone.
+func (suite *WebsocketReloadSuite) TestOpenConnectionOfRemovedChannelIsClosed() {
+	suite.reset()
+	c := suite.connect("/chat")
+
+	suite.writeSpec(reloadRoomsChannel)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	_, _, err := c.Read(ctx)
+	suite.Equal(websocket.StatusGoingAway, websocket.CloseStatus(err), "read error: %v", err)
+	var closeErr websocket.CloseError
+	suite.Require().ErrorAs(err, &closeErr)
+	suite.Equal("channel removed", closeErr.Reason)
 }

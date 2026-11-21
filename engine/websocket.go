@@ -169,7 +169,7 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 					return
 				}
 				if snapshot := apis[0].Config(); snapshot != nil && len(channels) == 1 {
-					return apis[0], snapshot.Info.Name, channels[0].Config, nil
+					return apis[0], snapshot.Info.Name, channels[0].Config(), nil
 				}
 			}
 		} else {
@@ -182,7 +182,7 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 				if t, ok := v.Channel(channelName); ok {
 					k = v
 					name = snapshot.Info.Name
-					channels = append(channels, t.Config)
+					channels = append(channels, t.Config())
 				} else {
 					for _, ref := range snapshot.Channels {
 						if ref.Value == nil {
@@ -214,7 +214,7 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 		}
 		name = snapshot.Info.Name
 		if ch, ok := k.Store.Channel(channelName); ok {
-			cfg = ch.Config
+			cfg = ch.Config()
 		}
 	}
 
