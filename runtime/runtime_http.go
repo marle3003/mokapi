@@ -10,10 +10,7 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"net/http"
-	"path/filepath"
-	"sort"
 	"sync"
-	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -30,9 +27,7 @@ type HttpStore struct {
 // HttpInfo publishes the merged config as an immutable snapshot. A reload replaces the
 // whole config, so a reader takes one snapshot via Config and uses only that.
 type HttpInfo struct {
-	config    atomic.Pointer[openapi.Config]
-	m         sync.RWMutex // guards configs for Configs; writers also hold HttpStore.m, so update and Remove read configs without m
-	configs   map[string]*dynamic.Config
+	configSnapshot[openapi.Config]
 	seenPaths map[string]bool
 }
 
@@ -68,10 +63,9 @@ func (s *HttpStore) List() []*HttpInfo {
 // HttpStore.Add is not supported.
 func NewHttpInfo(cfg *openapi.Config) *HttpInfo {
 	hi := &HttpInfo{
-		configs:   map[string]*dynamic.Config{},
 		seenPaths: map[string]bool{},
 	}
-	hi.config.Store(cfg)
+	hi.publish(cfg)
 	return hi
 }
 
@@ -102,7 +96,7 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(cfg)
 	}
-	hc.addConfig(c, s.reader)
+	hc.add(c, mergeHttpConfigs(s.reader))
 
 	if cfg.Paths != nil {
 		for it := cfg.Paths.Iter(); it.Next(); {
@@ -147,7 +141,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	if old := hc.Config(); old != nil && s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(old)
 	}
-	hc.removeConfig(c, s.reader)
+	hc.remove(c, mergeHttpConfigs(s.reader))
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(hc.Config())
 	}
@@ -164,74 +158,30 @@ func (c *HttpInfo) Handler(cfg *openapi.Config, http *monitor.Http, emitter comm
 	return &httpHandler{http: http, next: h}
 }
 
-func (c *HttpInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update(reader)
-}
-
-func (c *HttpInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update(reader)
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified.
-func (c *HttpInfo) Config() *openapi.Config {
-	return c.config.Load()
-}
-
-func (c *HttpInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.config.Store(nil)
-		return
-	}
-
-	var keys []string
-	for k := range c.configs {
-		keys = append(keys, k)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		x := keys[i]
-		y := keys[j]
-		return filepath.Base(x) < filepath.Base(y)
-	})
-
-	r := &openapi.Config{}
-	for i, k := range keys {
-		if i > 0 {
-			log.Infof("applying patch for %s: %s", r.Info.Name, k)
+// mergeHttpConfigs patches the OpenAPI files, ordered by file name, into a new config and adds
+// the default server "/" if the spec defines none.
+func mergeHttpConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *openapi.Config {
+	return func(files []*dynamic.Config) *openapi.Config {
+		r := &openapi.Config{}
+		for i, f := range files {
+			if i > 0 {
+				log.Infof("applying patch for %s: %s", r.Info.Name, f.Info.Url)
+			}
+			r.Patch(getHttpConfig(f))
 		}
-		r.Patch(getHttpConfig(c.configs[k]))
-	}
 
-	if len(c.configs) > 1 {
-		err := r.Parse(&dynamic.Config{Data: r}, reader)
-		if err != nil {
-			log.Errorf("failed to parse config: %s", err)
+		if len(files) > 1 {
+			err := r.Parse(&dynamic.Config{Data: r}, reader)
+			if err != nil {
+				log.Errorf("failed to parse config: %s", err)
+			}
 		}
+
+		if len(r.Servers) == 0 {
+			r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
+		}
+		return r
 	}
-
-	if len(r.Servers) == 0 {
-		r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
-	}
-
-	c.config.Store(r)
-}
-
-func (c *HttpInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {

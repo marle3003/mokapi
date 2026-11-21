@@ -10,12 +10,8 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"mokapi/sortedmap"
 	"net/http"
 	"sync"
-	"sync/atomic"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type WebsocketStore struct {
@@ -32,9 +28,7 @@ type WebsocketStore struct {
 // whole config, so a reader takes one snapshot via Config and uses only that.
 type WebsocketInfo struct {
 	*websocket.Store
-	config                atomic.Pointer[asyncapi3.Config]
-	m                     sync.RWMutex // guards configs, which are only written under the store lock
-	configs               map[string]*dynamic.Config
+	configSnapshot[asyncapi3.Config]
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *WebsocketInfo)
 }
@@ -46,7 +40,6 @@ type WebsocketHandler struct {
 
 func newWebsocketInfo(store *websocket.Store, updateEventAndMetrics func(info *WebsocketInfo)) *WebsocketInfo {
 	hc := &WebsocketInfo{
-		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
@@ -58,7 +51,7 @@ func newWebsocketInfo(store *websocket.Store, updateEventAndMetrics func(info *W
 // without the implicit default server of Add. It is meant for tests of readers.
 func NewWebsocketInfo(cfg *asyncapi3.Config, store *websocket.Store) *WebsocketInfo {
 	wi := newWebsocketInfo(store, nil)
-	wi.config.Store(cfg)
+	wi.publish(cfg)
 	return wi
 }
 
@@ -111,7 +104,7 @@ func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.WebsocketEventEmi
 		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Websocket), s.updateEventStore)
 		s.infos[cfg.Info.Name] = wi
 	}
-	wi.addConfig(c, s.reader)
+	wi.afterPublish(wi.add(c, mergeWebsocketConfigs(s.reader)))
 
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(wi.Config())
@@ -149,77 +142,39 @@ func (s *WebsocketStore) Remove(c *dynamic.Config) {
 		s.removeFromIndex(mi.Config())
 	}
 
-	mi.removeConfig(c, s.reader)
+	mi.afterPublish(mi.remove(c, mergeWebsocketConfigs(s.reader)))
 
-	if len(mi.configs) == 0 {
+	if mi.Config() == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
 	}
 }
 
-func (c *WebsocketInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update(reader)
+// mergeWebsocketConfigs merges the files of a service and adds the default server if the spec
+// defines none.
+func mergeWebsocketConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *asyncapi3.Config {
+	return func(files []*dynamic.Config) *asyncapi3.Config {
+		cfg := mergeAsyncApiConfigs(files, reader)
+		defaultAsyncApiServer(cfg, "ws", "websocket: using implicit default server", &asyncapi3.Server{
+			Host:     ":80",
+			Protocol: "ws",
+			Title:    "Mokapi Default Server",
+			Summary:  "Automatically added server because no servers are defined in the AsyncAPI spec",
+		})
+		return cfg
+	}
 }
 
-func (c *WebsocketInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update(reader)
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified.
-func (c *WebsocketInfo) Config() *asyncapi3.Config {
-	return c.config.Load()
-}
-
-func (c *WebsocketInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.config.Store(nil)
+func (c *WebsocketInfo) afterPublish(cfg *asyncapi3.Config) {
+	if cfg == nil {
 		return
 	}
-
-	cfg := mergeAsyncApiConfigs(c.configs, reader)
-
-	a := cfg.Analyze()
-	k := a.Usage("ws")
-	if len(k.Servers) == 0 {
-		log.Infof("websocket: using implicit default server for '%s' (inferred from bindings)", cfg.Info.Name)
-		if cfg.Servers == nil {
-			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
-		}
-		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
-			Value: &asyncapi3.Server{
-				Host:     ":80",
-				Protocol: "ws",
-				Title:    "Mokapi Default Server",
-				Summary:  "Automatically added server because no servers are defined in the AsyncAPI spec",
-			},
-		})
-	}
-
-	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
 func (c *WebsocketInfo) Handler(ws *monitor.Websocket) http.Handler {
 	return &WebsocketHandler{Websocket: ws, next: c.Store}
-}
-
-func (c *WebsocketInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {

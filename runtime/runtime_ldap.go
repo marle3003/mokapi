@@ -10,10 +10,7 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"path/filepath"
-	"sort"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -29,11 +26,10 @@ type LdapStore struct {
 
 // LdapInfo publishes the merged config as an immutable snapshot. A reload replaces the whole
 // config including the directory entries, so a reader takes one snapshot via Config and uses only
-// that.
+// that. The result of Config must not be modified, except for the entries, which have their own
+// lock.
 type LdapInfo struct {
-	config       atomic.Pointer[directory.Config]
-	m            sync.RWMutex // guards configs
-	configs      map[string]*dynamic.Config
+	configSnapshot[directory.Config]
 	eventEmitter common.EventEmitter
 }
 
@@ -87,7 +83,7 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 		s.events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 	} else {
-		li.addConfig(c)
+		li.add(c, mergeLdapConfigs)
 	}
 
 	if s.cfg.Api.Search.Enabled {
@@ -122,7 +118,7 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 		s.removeFromIndex(cfg)
 	}
 
-	li.removeConfig(c)
+	li.remove(c, mergeLdapConfigs)
 
 	if li.Config() == nil {
 		delete(s.infos, name)
@@ -132,68 +128,25 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 
 func NewLdapInfo(c *dynamic.Config, emitter common.EventEmitter) *LdapInfo {
 	li := &LdapInfo{
-		configs:      map[string]*dynamic.Config{},
 		eventEmitter: emitter,
 	}
-	li.addConfig(c)
+	li.add(c, mergeLdapConfigs)
 	return li
 }
 
-func (c *LdapInfo) addConfig(config *dynamic.Config) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update()
-}
-
-func (c *LdapInfo) removeConfig(config *dynamic.Config) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update()
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified, except for the entries, which have their own lock.
-func (c *LdapInfo) Config() *directory.Config {
-	return c.config.Load()
-}
-
-// update publishes a new snapshot: the first file (ordered by file name) patched with the others.
+// mergeLdapConfigs builds a new snapshot: the first file (ordered by file name) patched with the others.
 // The merge works on a clone, so the parsed files are never changed.
-func (c *LdapInfo) update() {
-	files := c.Configs()
-	if len(files) == 0 {
-		c.config.Store(nil)
-		return
-	}
-
-	sort.Slice(files, func(i, j int) bool {
-		return filepath.Base(files[i].Info.Url.String()) < filepath.Base(files[j].Info.Url.String())
-	})
-
+func mergeLdapConfigs(files []*dynamic.Config) *directory.Config {
 	r := getLdapConfig(files[0]).Clone()
 	for _, f := range files[1:] {
 		log.Infof("applying patch for %s: %s", r.Info.Name, f.Info.Url)
 		r.Patch(getLdapConfig(f))
 	}
-
-	c.config.Store(r)
+	return r
 }
 
 func (c *LdapInfo) Handler(ldap *monitor.Ldap, eh events.Handler) ldap.Handler {
 	return &ldapHandler{ldap: ldap, next: directory.NewHandler(c.Config(), c.eventEmitter, eh)}
-}
-
-func (c *LdapInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {

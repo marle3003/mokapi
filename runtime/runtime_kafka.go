@@ -12,9 +12,7 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"mokapi/sortedmap"
 	"sync"
-	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -33,9 +31,7 @@ type KafkaStore struct {
 // whole config, so a reader takes one snapshot via Config and uses only that.
 type KafkaInfo struct {
 	*store.Store
-	config                atomic.Pointer[asyncapi3.Config]
-	m                     sync.RWMutex // guards configs for Configs; writers also hold KafkaStore.m, so update and Remove read configs without m
-	configs               map[string]*dynamic.Config
+	configSnapshot[asyncapi3.Config]
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *KafkaInfo)
 }
@@ -47,7 +43,6 @@ type KafkaHandler struct {
 
 func newKafkaInfo(store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
 	hc := &KafkaInfo{
-		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
@@ -60,7 +55,7 @@ func newKafkaInfo(store *store.Store, updateEventAndMetrics func(info *KafkaInfo
 // event updater, so adding a file to it through KafkaStore.Add panics.
 func NewKafkaInfo(cfg *asyncapi3.Config, store *store.Store) *KafkaInfo {
 	ki := newKafkaInfo(store, nil)
-	ki.config.Store(cfg)
+	ki.publish(cfg)
 	return ki
 }
 
@@ -115,7 +110,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 	}
-	ki.addConfig(c, s.reader)
+	ki.afterPublish(ki.add(c, mergeKafkaConfigs(s.reader)))
 
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(ki.Config())
@@ -149,77 +144,39 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(ki.Config())
 	}
-	ki.removeConfig(c, s.reader)
+	ki.afterPublish(ki.remove(c, mergeKafkaConfigs(s.reader)))
 
-	if len(ki.configs) == 0 {
+	if ki.Config() == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
 	}
 }
 
-func (c *KafkaInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update(reader)
+// mergeKafkaConfigs merges the files of a service and adds the default server if the spec
+// defines none.
+func mergeKafkaConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *asyncapi3.Config {
+	return func(files []*dynamic.Config) *asyncapi3.Config {
+		cfg := mergeAsyncApiConfigs(files, reader)
+		defaultAsyncApiServer(cfg, "kafka", "kafka: using implicit default broker", &asyncapi3.Server{
+			Host:     ":9092",
+			Protocol: "kafka",
+			Title:    "Mokapi Default Broker",
+			Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
+		})
+		return cfg
+	}
 }
 
-func (c *KafkaInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update(reader)
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified.
-func (c *KafkaInfo) Config() *asyncapi3.Config {
-	return c.config.Load()
-}
-
-func (c *KafkaInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.config.Store(nil)
+func (c *KafkaInfo) afterPublish(cfg *asyncapi3.Config) {
+	if cfg == nil {
 		return
 	}
-
-	cfg := mergeAsyncApiConfigs(c.configs, reader)
-
-	a := cfg.Analyze()
-	k := a.Usage("kafka")
-	if len(k.Servers) == 0 {
-		log.Infof("kafka: using implicit default broker for '%s' (inferred from bindings)", cfg.Info.Name)
-		if cfg.Servers == nil {
-			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
-		}
-		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
-			Value: &asyncapi3.Server{
-				Host:     ":9092",
-				Protocol: "kafka",
-				Title:    "Mokapi Default Broker",
-				Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
-			},
-		})
-	}
-
-	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
 func (c *KafkaInfo) Handler(kafka *monitor.Kafka) kafka.Handler {
 	return &KafkaHandler{kafka: kafka, next: c.Store}
-}
-
-func (c *KafkaInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {

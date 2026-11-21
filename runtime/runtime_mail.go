@@ -11,8 +11,6 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"mokapi/smtp"
-	"path/filepath"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -45,9 +43,7 @@ type MailStore struct {
 // once and follows each reload through Store.Update, so received mails survive.
 type MailInfo struct {
 	*mail.Store
-	config  atomic.Pointer[mail.Config]
-	m       sync.RWMutex // guards configs
-	configs map[string]*dynamic.Config
+	configSnapshot[mail.Config]
 }
 
 func (s *MailStore) Get(name string) *MailInfo {
@@ -95,7 +91,7 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 		s.sm.ResetStores(events.NewTraits().WithNamespace("mail").WithName(cfg.Info.Name))
 		s.sm.SetStore(int(store.Size), events.NewTraits().WithNamespace("mail").WithName(cfg.Info.Name))
 	} else {
-		mi.addConfig(c)
+		mi.afterPublish(mi.add(c, mergeMailConfigs))
 	}
 
 	if s.cfg.Api.Search.Enabled {
@@ -130,7 +126,7 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 		s.removeFromIndex(cfg)
 	}
 
-	mi.removeConfig(c)
+	mi.afterPublish(mi.remove(c, mergeMailConfigs))
 
 	if remaining := mi.Config(); remaining == nil {
 		delete(s.infos, name)
@@ -142,55 +138,30 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 
 func NewMailInfo(c *dynamic.Config) *MailInfo {
 	mi := &MailInfo{
-		Store:   mail.NewStore(&mail.Config{Info: getSmtpConfig(c).Info}),
-		configs: map[string]*dynamic.Config{},
+		Store: mail.NewStore(&mail.Config{Info: getSmtpConfig(c).Info}),
 	}
-	mi.addConfig(c)
+	mi.afterPublish(mi.add(c, mergeMailConfigs))
 	return mi
 }
 
-func (c *MailInfo) addConfig(config *dynamic.Config) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update()
-}
-
-func (c *MailInfo) removeConfig(config *dynamic.Config) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update()
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified.
-func (c *MailInfo) Config() *mail.Config {
-	return c.config.Load()
-}
-
-// update publishes a new snapshot: the first file (ordered by file name) patched with the others.
-// The merge works on a clone, so the parsed files are never changed. The store follows the new
-// snapshot, but stays after the last file is removed.
-func (c *MailInfo) update() {
-	files := c.Configs()
-	if len(files) == 0 {
-		c.config.Store(nil)
-		return
-	}
-
-	sort.Slice(files, func(i, j int) bool {
-		return filepath.Base(files[i].Info.Url.String()) < filepath.Base(files[j].Info.Url.String())
-	})
-
+// mergeMailConfigs builds a new snapshot: the first file (ordered by file name) patched with the
+// others. The merge works on a clone, so the parsed files are never changed.
+func mergeMailConfigs(files []*dynamic.Config) *mail.Config {
 	r := getSmtpConfig(files[0]).Clone()
 	for _, f := range files[1:] {
 		log.Infof("applying patch for %s: %s", r.Info.Name, f.Info.Url)
 		r.Patch(getSmtpConfig(f))
 	}
+	return r
+}
 
-	c.config.Store(r)
-	c.Store.Update(r)
+// afterPublish lets the store follow the new snapshot. The store stays after the last file is
+// removed.
+func (c *MailInfo) afterPublish(cfg *mail.Config) {
+	if cfg == nil {
+		return
+	}
+	c.Store.Update(cfg)
 }
 
 // Handler returns a handler for the current snapshot. A running server keeps it, a reload calls
@@ -204,17 +175,6 @@ func (c *MailInfo) Handler(smtp *monitor.Mail, emitter engine.MailEventEmitter, 
 	}
 	h.Reload()
 	return h
-}
-
-func (c *MailInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 type mailHandler struct {

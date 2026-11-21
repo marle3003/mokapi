@@ -11,11 +11,7 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"mokapi/sortedmap"
 	"sync"
-	"sync/atomic"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type MqttStore struct {
@@ -32,9 +28,7 @@ type MqttStore struct {
 // whole config, so a reader takes one snapshot via Config and uses only that.
 type MqttInfo struct {
 	*store.Store
-	config                atomic.Pointer[asyncapi3.Config]
-	m                     sync.RWMutex // guards configs for Configs; writers also hold MqttStore.m, so update and Remove read configs without m
-	configs               map[string]*dynamic.Config
+	configSnapshot[asyncapi3.Config]
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *MqttInfo)
 }
@@ -46,7 +40,6 @@ type MqttHandler struct {
 
 func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
 	hc := &MqttInfo{
-		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
@@ -59,7 +52,7 @@ func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo))
 // event updater, so adding a file to it through MqttStore.Add panics.
 func NewMqttInfo(cfg *asyncapi3.Config, store *store.Store) *MqttInfo {
 	mi := newMqttInfo(store, nil)
-	mi.config.Store(cfg)
+	mi.publish(cfg)
 	return mi
 }
 
@@ -112,7 +105,7 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 		ki = newMqttInfo(store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	}
-	ki.addConfig(c, s.reader)
+	ki.afterPublish(ki.add(c, mergeMqttConfigs(s.reader)))
 
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(ki.Config())
@@ -150,77 +143,39 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 		s.removeFromIndex(mi.Config())
 	}
 
-	mi.removeConfig(c, s.reader)
+	mi.afterPublish(mi.remove(c, mergeMqttConfigs(s.reader)))
 
-	if len(mi.configs) == 0 {
+	if mi.Config() == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
 	}
 }
 
-func (c *MqttInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	c.configs[config.Info.Url.String()] = config
-	c.m.Unlock()
-	c.update(reader)
+// mergeMqttConfigs merges the files of a service and adds the default server if the spec
+// defines none.
+func mergeMqttConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *asyncapi3.Config {
+	return func(files []*dynamic.Config) *asyncapi3.Config {
+		cfg := mergeAsyncApiConfigs(files, reader)
+		defaultAsyncApiServer(cfg, "mqtt", "mqtt: using implicit default broker", &asyncapi3.Server{
+			Host:     ":1883",
+			Protocol: "mqtt",
+			Title:    "Mokapi Default Broker",
+			Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+		})
+		return cfg
+	}
 }
 
-func (c *MqttInfo) removeConfig(config *dynamic.Config, reader dynamic.Reader) {
-	c.m.Lock()
-	delete(c.configs, config.Info.Url.String())
-	c.m.Unlock()
-	c.update(reader)
-}
-
-// Config returns the current merged config, or nil after the last file was removed.
-// The result must not be modified.
-func (c *MqttInfo) Config() *asyncapi3.Config {
-	return c.config.Load()
-}
-
-func (c *MqttInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.config.Store(nil)
+func (c *MqttInfo) afterPublish(cfg *asyncapi3.Config) {
+	if cfg == nil {
 		return
 	}
-
-	cfg := mergeAsyncApiConfigs(c.configs, reader)
-
-	a := cfg.Analyze()
-	k := a.Usage("mqtt")
-	if len(k.Servers) == 0 {
-		log.Infof("mqtt: using implicit default broker for '%s' (inferred from bindings)", cfg.Info.Name)
-		if cfg.Servers == nil {
-			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
-		}
-		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
-			Value: &asyncapi3.Server{
-				Host:     ":1883",
-				Protocol: "mqtt",
-				Title:    "Mokapi Default Broker",
-				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
-			},
-		})
-	}
-
-	c.config.Store(cfg)
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
 func (c *MqttInfo) Handler(Mqtt *monitor.Mqtt) mqtt.Handler {
 	return &MqttHandler{Mqtt: Mqtt, next: c.Store}
-}
-
-func (c *MqttInfo) Configs() []*dynamic.Config {
-	c.m.RLock()
-	defer c.m.RUnlock()
-
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
