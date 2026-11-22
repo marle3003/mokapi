@@ -1,23 +1,31 @@
 ---
 title: Analyze your mocked HTTP API in Dashboard
-description: The dashboard helps you analyze your mocked APIs, how they are used and what data is transferred.
+description: See the endpoints of your mocked HTTP APIs in the dashboard, inspect the requests Mokapi handled and filter them by method, URL, status code or header.
 ---
 # Analyze your mocked HTTP API in Dashboard
 
-The dashboard helps you analyze your mocked APIs, how they are used and what data is transferred.
+Every HTTP API that Mokapi mocks gets its own view in the dashboard: its endpoints, the requests
+Mokapi handled for it and the files it was loaded from.
 
 ## Overview of your mocked HTTP API
 
 Mocked HTTP APIs are listed in the HTTP group of the sidebar, with their number of requests. A
-red dot marks an API that handled requests with errors. Click the entry to open the detailed
-view in a tab. In this detailed view you can see:
-- a summary about this API
-- server and base URLs where this API is available
-- all API endpoints with the corresponding metrics.
-- all configurations that affect this API
-- the Requests tab with the log of recent HTTP requests (see [Request log](#request-log))
+red dot marks an API that handled requests with errors. Click the entry to open the view of the
+API in a tab.
 
-Click the **HTTP** heading to see the metrics and the log of all HTTP APIs (see [Metrics](#metrics)).
+The top card shows the name, version, description and contact of the API. If the specification
+has errors, a second card lists them. **Export** downloads the API as an OpenAPI specification or
+as a [Bruno collection](/docs/http/export-bruno.md). Below, the view has four sub tabs:
+
+| Sub tab  | Content                                                                          |
+|----------|----------------------------------------------------------------------------------|
+| Paths    | All paths with their operations, the time of the last request and the number of requests and errors |
+| Requests | The log of the requests for this API, see [Request log](#request-log)            |
+| Servers  | The server URLs from the specification, where the API is available              |
+| Configs  | The files Mokapi loaded for this API, for example the specification and patches  |
+
+Click the **HTTP** heading in the sidebar to open the HTTP page. It shows the
+[metrics](#metrics), the list of all HTTP APIs and the log of all their requests.
 
 The next image shows the Paths tab of a REST API. One path is deprecated and therefore marked with a
 warning icon. The last columns show the time of the last request and the number of requests and errors.
@@ -26,7 +34,31 @@ warning icon. The last columns show the time of the last request and the number 
 
 ## Metrics
 
-In the new layout, the HTTP page starts with three tiles: **Requests**, **Errors** and **Last Request**. **Errors** is red when it's greater than 0 and shows the error rate in percent below the value, or `-` if there were no requests. **Last Request** shows the time of the latest request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric cards.
+In the new layout, the HTTP page starts with three tiles: **Requests**, **Errors** and
+**Last Request**. **Errors** is red when it's greater than 0 and shows the error rate in percent
+below the value, or `-` if there were no requests. **Last Request** shows the time of the latest
+request as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if
+there was no activity yet.
+
+The values cover all HTTP APIs, and a value that doesn't exist yet shows `0`. They update with
+[auto refresh](/docs/get-started/dashboard.md#auto-refresh). The Classic view keeps the metric
+cards.
+
+## Endpoint view
+
+Click a path in the **Paths** sub tab to open it, or one of its method badges to open the
+operation directly. The path view shows the summary and description of the path and lists its
+operations. The operation view shows:
+
+- **Request** lists the parameters, the request body with its content types and the security
+  schemes of the operation.
+- **Response** lists the status codes with their body and headers.
+- Below, the log shows only the requests for this operation.
+
+Request and response bodies have an **Example & Validate** button. It generates an example from
+the schema and validates your own data, see
+[Generate sample data](/docs/get-started/dashboard.md#generate-sample-data-from-the-specification).
+A deprecated operation shows a warning.
 
 ## Request log
 
@@ -66,7 +98,8 @@ on a row does the same without selecting the row. In the Classic view, only the 
 opens a browser tab this way.
 
 Use the arrow keys up and down to select the previous or next request of the current page. Press
-`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or a dialog is open.
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or
+a dialog is open.
 
 The selected request is part of the address (`?request=<id>`). After a reload, the panel opens
 again, and you can copy the address to share the request with a colleague. Mokapi only keeps
@@ -112,14 +145,9 @@ after a reload.
 
 ### Pause the log
 
-While auto refresh is on, the log reloads by itself. Open the dashboard with `?refresh=<seconds>`,
-for example `/dashboard?refresh=20`, to turn it on. Click **Pause** to stop reloading the log, for example to read a
-request without new ones pushing it down the table. **Pause** is only shown while auto refresh is on, that is when the URL has `?refresh=<seconds>` with a number above 0. Without it, the log doesn't reload by itself and the button is hidden. The log shows "Paused" until you click
-**Resume**, which reloads it at once. Pause only affects this log, other views keep updating.
-
-Mokapi doesn't save the pause. A reload of the page or a switch to another tab runs the log
-again. If you change a filter or the page while paused, the log loads the new result and runs
-again. The demo dashboard has no Pause button, because it has no live requests.
+While [auto refresh](/docs/get-started/dashboard.md#auto-refresh) is on, click **Pause** to stop
+reloading the log, for example to read a request without new ones pushing it down the table.
+Click **Resume** to reload it at once.
 
 ## Find and open endpoints
 

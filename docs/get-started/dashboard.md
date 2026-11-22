@@ -194,9 +194,13 @@ parameter stays in the URL when you open other views. A value that isn't a numbe
 as `?refresh=0`, leaves auto refresh off.
 
 While auto refresh is on, the logs show a **Pause** button. It stops reloading that log, for
-example to read an entry without new ones pushing it down the table. Click **Resume** to reload
-it at once. See [Pause the log](/docs/mail/dashboard.md#pause-the-log) for the details. The demo
-dashboard has no auto refresh.
+example to read an entry without new ones pushing it down the table. The log shows "Paused"
+until you click **Resume**, which reloads it at once. Pause only affects this log, other views
+keep updating.
+
+Mokapi doesn't save the pause. A reload of the page or a switch to another tab runs the log
+again. If you change a filter or the page while paused, the log loads the new result and runs
+again. The demo dashboard has no auto refresh and no **Pause** button.
 
 ### Connection lost
 

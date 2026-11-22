@@ -282,7 +282,8 @@ api:
 ## <a id="api-search-enabled" name="api-search-enabled"></a>api-search-enabled
 
 Enables search functionality in the web dashboard.
-When enabled, users can search through mocked APIs, resources, and requests directly from the dashboard UI.
+When enabled, the dashboard shows the search panel (Search icon in the activity bar, or the / key). Users can search through mocked APIs, resources, configuration files and recorded events such as HTTP requests.
+When disabled, Mokapi doesn't index your APIs and the dashboard hides the Search icon and the panel.
 
 | Flag | Env | Config file | Type | Default |
 |------|------|-------------|:----:|:-------:|

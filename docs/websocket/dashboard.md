@@ -1,30 +1,65 @@
 ---
 title: Analyze your mocked WebSocket API in Dashboard
-description: The WebSocket message log of the Mokapi dashboard lists the messages of your mocked channels, shows a message next to the table, filters by service, path and client, and logs connection requests.
+description: See the channels of your mocked WebSocket APIs in the dashboard, inspect the messages and connection requests Mokapi handled and filter them by service, path or client.
 ---
 # Analyze your mocked WebSocket API in Dashboard
 
-The dashboard shows the messages that clients and Mokapi exchanged on your mocked WebSocket
-channels, with value, direction and the client involved. It also lists the connection requests
-(connect and close) of each client. Use it to check that a message arrived, to read its value, to
-see why a message was rejected and to find the messages of one path or client.
+Every WebSocket API that Mokapi mocks gets its own view in the dashboard: its channels, the
+messages that clients and Mokapi exchanged, the connected clients and the files it was loaded
+from. Use it to check that a message arrived, to read its value, to see why a message was rejected
+and to find the messages of one path or client.
+
+## Overview of your mocked WebSocket API
+
+Mocked WebSocket APIs are listed in the WebSocket group of the sidebar. Click the entry to open
+the view of the API in a tab.
+
+The top card shows the name, version and contact of the API. **Export** downloads the API as an
+AsyncAPI specification in JSON or YAML. Below, the view has five sub tabs:
+
+| Sub tab  | Content                                                                              |
+|----------|--------------------------------------------------------------------------------------|
+| Channels | All channels with summary, the time of the last message and the number of messages. A template path such as `/chats/{roomId}` shows how many paths it has seen. |
+| Messages | The message log for this API, see [Message log](#message-log)                        |
+| Servers  | The servers from the specification, with host, description and tags                  |
+| Clients  | The clients connected to this API, see [Connection request log](#connection-request-log) |
+| Configs  | The files Mokapi loaded for this API, for example the specification and patches      |
+
+Click the **WebSocket** heading in the sidebar to open the WebSocket page. It shows the
+[metrics](#metrics), the list of all WebSocket services and the log of all their messages.
 
 ## Metrics
 
-In the new layout, the WebSocket page starts with three tiles: **Messages**, **Errors** and **Last Message**. **Errors** counts the messages that ended with an error. **Last Message** shows the time of the latest message as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+In the new layout, the WebSocket page starts with three tiles: **Messages**, **Errors** and
+**Last Message**. **Errors** counts the messages that ended with an error. **Last Message** shows
+the time of the latest message as relative time (for example "2 minutes ago") with the absolute
+time below it, or `-` if there was no activity yet.
+
+The values cover all WebSocket services, and a value that doesn't exist yet shows `0`. They update
+with [auto refresh](/docs/get-started/dashboard.md#auto-refresh). The Classic view keeps the metric
+card.
+
+## Channel view
+
+Click a channel in the **Channels** sub tab to open it. The view shows the title, summary and
+description of the channel, then two sub tabs: **Messages** with the log of this channel and
+**Config** with the message definition and its schema. For a channel with a template path such as
+`/chats/{roomId}`, the view of the template also lists the paths Mokapi has seen. Click a path to
+open it.
 
 ## Message log
 
-The message log lists the messages of your channels, newest first, with path, value and time.
-The log shows the messages that Mokapi still keeps in memory. Messages that failed validation are
-listed too and marked red.
+The message log lists the messages of your channels, newest first, with path, source, destination,
+value and time. Source and destination are the addresses of the client and the server. The log
+shows the messages that Mokapi still keeps in memory. Messages that failed validation are listed
+too and marked with a red icon.
 
 You find the log in these places:
 
 - the **Messages** sub tab of a WebSocket service
 - the view of a channel, which shows only the messages of this channel. For a channel with a
   template path such as `/chats/{roomId}`, the view of the template shows the messages of all its
-  instances and the view of an instance shows only its own.
+  instances and the view of an instance shows only its own. The Path column is left out there.
 - the view of a client, which shows only the messages of this client. The log is hidden if the
   client has no messages and no filter is active.
 - the WebSocket page, which you open with the **WebSocket** heading of the sidebar. It shows the
@@ -38,8 +73,6 @@ tab. A click replaces the active tab or activates the tab if it's already open. 
 Cmd+click or middle click opens a new tab. Click the star in the tab to pin the log, so it's
 always in the **Pinned** section of the sidebar. The tab shows "Messages" for the log of all
 services and "`<service>` messages" for one service.
-
-The Channels sub tab lists the channels only.
 
 In the Classic view, the log has the same panel, filters and **Pause** button. Only the link in a
 row opens a browser tab with Ctrl+click, Cmd+click or middle click.
@@ -64,7 +97,7 @@ Below the head, the panel has these sub tabs:
 | Sub tab    | Content                                                                                      |
 |------------|----------------------------------------------------------------------------------------------|
 | Value      | The value of the message. This is the default.                                               |
-| Details    | Client, source, destination and content type. Also the event handlers that ran for the message. |
+| Details    | Client, source, destination and content type, plus the event handlers that ran for the message. |
 | Validation | The validation errors of the message. Only shown for invalid messages.                       |
 
 The Details sub tab also shows a **Script** field for messages that a script sent with
@@ -78,7 +111,8 @@ on a row does the same without selecting the row. In the Classic view, only the 
 opens a browser tab this way.
 
 Use the arrow keys up and down to select the previous or next message of the current page. Press
-`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or a dialog is open.
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or
+a dialog is open.
 
 The selected message is part of the address (`?message=<id>`). After a reload, the panel opens
 again, and you can copy the address to share the message with a colleague. Mokapi only keeps
@@ -93,7 +127,8 @@ In windows narrower than 768 px, the panel is shown below the table.
 ### Filter messages
 
 Active filters are shown as chips above the table. Click a chip to change its value in a popover,
-click the x of a chip to remove the filter. **+ Add filter** lists the filters that aren't active yet:
+click the x of a chip to remove the filter. **+ Add filter** lists the filters that aren't active
+yet:
 
 | Field   | Description                                                      |
 |---------|------------------------------------------------------------------|
@@ -117,19 +152,15 @@ them after a reload.
 
 ### Pause the log
 
-While auto refresh is on, the log reloads by itself. Open the dashboard with `?refresh=<seconds>`,
-for example `/dashboard?refresh=20`, to turn it on. Click **Pause** to stop reloading the log, for
-example to read a message without new ones pushing it down the table. **Pause** is only shown while auto refresh is on, that is when the URL has `?refresh=<seconds>` with a number above 0. Without it, the log doesn't reload by itself and the button is hidden. The log shows "Paused" until you click
-**Resume**, which reloads it at once. Pause only affects this log, other views keep updating.
-
-New messages appear on top while the log runs, and the selected message stays selected. Mokapi
-doesn't save the pause. A reload of the page or a switch to another tab runs the log again. If you
-change a filter or the page while paused, the log loads the new result and runs again. The demo
-dashboard has no Pause button, because it has no live messages.
+While [auto refresh](/docs/get-started/dashboard.md#auto-refresh) is on, click **Pause** to stop
+reloading the log, for example to read a message without new ones pushing it down the table.
+Click **Resume** to reload it at once. New messages appear on top while the log runs,
+and the selected message stays selected.
 
 ## Connection request log
 
-The view of a WebSocket client also lists the connection requests of this client in the
+Click a client in the **Clients** sub tab to open its view. The top card shows the client address,
+the service and the server address. Below, the view has the message log of this client and the
 "Connection Requests" table. A row is a `Connect` or a `Close` event with channel, reason, who
 closed the connection and time. Each row opens in a detail panel, in the same way as a message.
 

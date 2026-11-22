@@ -1,6 +1,6 @@
 ---
 title: Analyze your mocked Mail API in Dashboard
-description: The mail log of the Mokapi dashboard lists the mails sent to your mocked SMTP server, including rejected mails, shows a mail next to the table and filters by service.
+description: See the mailboxes of your mocked mail services in the dashboard, read the mails Mokapi received, including attachments, and find out why a mail was rejected.
 ---
 # Analyze your mocked Mail API in Dashboard
 
@@ -8,15 +8,63 @@ The dashboard shows the mails that clients sent to your mocked SMTP server, with
 recipients, status and duration. Use it to check that a mail arrived, to read its body and
 attachments, and to find out why a mail was rejected.
 
+## Overview of your mocked mail service
+
+Mocked mail services are listed in the Mail group of the sidebar, with their number of mails. Click
+the entry to open the view of the service in a tab.
+
+The top card shows the name, version, description and contact of the service. Below, the view has
+these sub tabs:
+
+| Sub tab   | Content                                                                              |
+|-----------|--------------------------------------------------------------------------------------|
+| Mailboxes | The mailboxes with username, password, description and number of mails. Default. |
+| Mails     | The log of the mails for this service, see [Mail log](#mail-log)                     |
+| Servers   | Name, host, protocol and description of the servers of the service                   |
+| Rules     | The [rules](/docs/mail/rules.md) of the service. Only shown if the service has rules. |
+| Settings  | The settings of the service                                                          |
+| Configs   | The files Mokapi loaded for this service                                             |
+
+Click the **Mail** heading in the sidebar to open the Mail page. It shows the [metrics](#metrics),
+the list of all mail services (name, description, last mail and number of messages) and the log of
+all their mails.
+
 ## Metrics
 
-In the new layout, the Mail page starts with three tiles: **Mails**, **Mailboxes** and **Last Mail**. **Mailboxes** is the number of mailboxes. **Last Mail** shows the time of the latest mail as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if there was no activity yet. The values cover all services of the protocol, and a value that doesn't exist yet shows `0`. The values update with the normal dashboard refresh. The Classic view keeps the metric card.
+In the new layout, the Mail page starts with three tiles: **Mails**, **Mailboxes** and
+**Last Mail**. **Mailboxes** is the number of mailboxes. **Last Mail** shows the time of the latest
+mail as relative time (for example "2 minutes ago") with the absolute time below it, or `-` if
+there was no activity yet.
+
+The values cover all mail services, and a value that doesn't exist yet shows `0`. They update with
+[auto refresh](/docs/get-started/dashboard.md#auto-refresh). The Classic view keeps the metric
+card.
+
+## Mailbox view
+
+Click a mailbox in the **Mailboxes** sub tab to open it. The view shows the name, username,
+password and description of the mailbox, its folders and its mails with subject, From, To and
+date. If the mailbox doesn't exist, the view shows "Mailbox `<name>` not found".
+
+Click a mail to open it in the [mail view](#mail-view). The mails of a mailbox don't include
+rejected mails, and the mailbox view has no detail panel.
+
+## Mail view
+
+The mail view shows the subject, the service, the date and the addresses (From, To, Cc and Bcc) of
+a mail, followed by its body, its attachments (if it has any) and technical details: content type,
+encoding, Message-ID and In-Reply-To. A click on the In-Reply-To value opens that mail.
+
+A mail with an HTML body is rendered as HTML. Use the sun or moon icon at the top right of the body
+to switch between a light and a dark background. Mokapi remembers your choice in the browser. Click
+an attachment to download it. If Mokapi doesn't have the mail, the view shows "Mail not found".
 
 ## Mail log
 
 The mail log lists the mails of your mail services, newest first, with subject, From, To, status,
 time and duration. The log shows the mails that Mokapi still keeps in memory. It is always shown,
-also when it's empty.
+also when it's empty. The count of a service in the sidebar and the **Mails** tile don't include
+rejected mails.
 
 You find the log in these places:
 
@@ -38,17 +86,14 @@ services and "`<service>` mails" for one service.
 In the Classic view, the log has the same panel, filters and **Pause** button. Only the link in a
 row opens a browser tab with Ctrl+click, Cmd+click or middle click.
 
-The Mailboxes sub tab and the view of a mailbox list the mails of a mailbox. They don't show the
-rejected mails and have no detail panel.
-
 <img src="/docs/mail/dashboard-mail-log.png" width="700" alt="The Mails sub tab of a mail service with the mail log, the chips and the Open as tab link" />
 
 ### Rejected mails
 
 The log also lists mails that the server rejected, for example an unknown mailbox, too many
-recipients, a failed authentication or a rule. The Status column shows **Accepted** or a red **Rejected**
-badge. Hover over **Rejected** to read the error message. A mail counts as rejected when its event
-has an error.
+recipients, a failed authentication or a rule. The Status column shows **Accepted** or a red
+**Rejected** badge. Hover over **Rejected** to read the error message. A mail counts as rejected
+when its event has an error.
 
 A rejected mail often has no subject, and sometimes no sender or recipients, because the server
 rejected it before it received them. The table shows `-` for a missing value. A rejected mail has
@@ -98,7 +143,8 @@ link. In the Classic view, only the link in a row opens a browser tab this way. 
 doesn't show the event handlers.
 
 Use the arrow keys up and down to select the previous or next mail of the current page. Press
-`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or a dialog is open.
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input or
+a dialog is open.
 
 The selected mail is part of the address (`?message=<id>`). After a reload, the panel opens
 again, and you can copy the address to share the mail with a colleague. Mokapi only keeps
@@ -113,11 +159,12 @@ In windows narrower than 768 px, the panel is shown below the table.
 ### Filter mails
 
 Active filters are shown as chips above the table. Click a chip to change its value in a popover,
-click the x of a chip to remove the filter. **+ Add filter** lists the filters that aren't active yet:
+click the x of a chip to remove the filter. **+ Add filter** lists the filters
+that aren't active yet:
 
-| Field   | Description                                                      |
-|---------|------------------------------------------------------------------|
-| Service | Only in the log of all services. Select one service.             |
+| Field   | Description                                          |
+|---------|------------------------------------------------------|
+| Service | Only in the log of all services. Select one service. |
 
 The filter takes a single value. The log of a service doesn't offer the Service filter, because
 it already fixes it. Subject, From, To and status aren't available as filters.
@@ -129,15 +176,10 @@ service. It restores it after a reload.
 
 ### Pause the log
 
-While auto refresh is on, the log reloads by itself. Open the dashboard with `?refresh=<seconds>`,
-for example `/dashboard?refresh=20`, to turn it on. Click **Pause** to stop reloading the log, for
-example to read a mail without new ones pushing it down the table. **Pause** is only shown while auto refresh is on, that is when the URL has `?refresh=<seconds>` with a number above 0. Without it, the log doesn't reload by itself and the button is hidden. The log shows "Paused" until you click
-**Resume**, which reloads it at once. Pause only affects this log, other views keep updating.
-
-New mails appear on top while the log runs, and the selected mail stays selected. Mokapi
-doesn't save the pause. A reload of the page or a switch to another tab runs the log again. If you
-change the filter or the page while paused, the log loads the new result and runs again. The demo
-dashboard has no Pause button, because it has no live mails.
+While [auto refresh](/docs/get-started/dashboard.md#auto-refresh) is on, click **Pause** to stop
+reloading the log, for example to read a mail without new ones pushing it down the table.
+Click **Resume** to reload it at once. New mails appear on top while the log runs,
+and the selected mail stays selected.
 
 See [Using Mokapi Dashboard](/docs/get-started/dashboard.md) for tabs, Pinned and the other
 parts of the layout.

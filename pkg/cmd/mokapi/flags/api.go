@@ -79,7 +79,8 @@ When disabled, the API server continues to run, but the dashboard UI is not expo
 var apiSearch = cli.FlagDoc{
 	Short: "Enable search functionality in the dashboard",
 	Long: `Enables search functionality in the web dashboard.
-When enabled, users can search through mocked APIs, resources, and requests directly from the dashboard UI.`,
+When enabled, the dashboard shows the search panel (Search icon in the activity bar, or the / key). Users can search through mocked APIs, resources, configuration files and recorded events such as HTTP requests.
+When disabled, Mokapi doesn't index your APIs and the dashboard hides the Search icon and the panel.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -97,6 +98,7 @@ var apiSearchIndexPath = cli.FlagDoc{
 
 By default, Mokapi stores the search index in a temporary directory on disk.
 This reduces memory usage and provides predictable memory behavior.
+Each Mokapi instance uses its own temporary directory, which is removed on shutdown.
 
 If a file system path is specified, the index will be stored at that location during Mokapi's runtime.
 The index is rebuilt at startup and does not block application startup.`,
