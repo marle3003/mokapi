@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"mokapi/config/static"
 	"mokapi/runtime/search"
 	"mokapi/safe"
@@ -78,4 +79,80 @@ func TestSearchIndex_SearchWhenDisabled(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Search blocks although search is disabled")
 	}
+}
+
+func startIndex(t *testing.T, cfg static.Search) (*SearchIndex, *safe.Pool) {
+	t.Helper()
+	s := newSearchIndex(cfg)
+	pool := safe.NewPool(context.Background())
+	t.Cleanup(pool.Stop)
+	s.start(pool)
+	return s, pool
+}
+
+func defaultIndexDirs(t *testing.T, tmp string) []string {
+	t.Helper()
+	dirs, err := filepath.Glob(filepath.Join(tmp, "mokapi-bleve-index-*"))
+	require.NoError(t, err)
+	return dirs
+}
+
+func TestSearchIndex_DefaultPath(t *testing.T) {
+	t.Run("each index gets its own directory", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("TMPDIR", tmp)
+
+		_, pool1 := startIndex(t, static.Search{Enabled: true})
+		_, pool2 := startIndex(t, static.Search{Enabled: true})
+		require.Len(t, defaultIndexDirs(t, tmp), 2)
+
+		pool1.Stop()
+		require.Len(t, defaultIndexDirs(t, tmp), 1)
+		pool2.Stop()
+		require.Empty(t, defaultIndexDirs(t, tmp))
+	})
+
+	t.Run("search is disabled when the temporary directory cannot be created", func(t *testing.T) {
+		tmp := t.TempDir()
+		t.Setenv("TMPDIR", filepath.Join(tmp, "missing"))
+
+		s, _ := startIndex(t, static.Search{Enabled: true})
+
+		_, err := s.Search(search.Request{})
+		require.ErrorIs(t, err, &search.ErrNotEnabled{})
+	})
+}
+
+func TestSearchIndex_ConfiguredPath(t *testing.T) {
+	indexPath := t.TempDir()
+	s, pool := startIndex(t, static.Search{Enabled: true, IndexPath: indexPath})
+	s.Add("a", map[string]any{"name": "item"})
+
+	pool.Stop()
+
+	require.DirExists(t, filepath.Join(indexPath, "mokapi-bleve-index"))
+}
+
+func TestSearchIndex_SearchWhileStopping(t *testing.T) {
+	s, pool := startIndex(t, static.Search{Enabled: true})
+	for i := 0; i < 20; i++ {
+		s.Add(fmt.Sprintf("a-%d", i), map[string]any{"name": "item"})
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 4; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				// an error after close is fine, a panic is not
+				_, _ = s.Search(search.Request{Limit: 10})
+			}
+		}()
+	}
+	pool.Stop()
+	wg.Wait()
+
+	_, err := s.Search(search.Request{Limit: 10})
+	require.Error(t, err)
 }

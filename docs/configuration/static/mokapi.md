@@ -308,6 +308,7 @@ Defines where Mokapi stores the search index used by the web dashboard.
 
 By default, Mokapi stores the search index in a temporary directory on disk.
 This reduces memory usage and provides predictable memory behavior.
+Each Mokapi instance uses its own temporary directory, which is removed on shutdown.
 
 If a file system path is specified, the index will be stored at that location during Mokapi's runtime.
 The index is rebuilt at startup and does not block application startup.

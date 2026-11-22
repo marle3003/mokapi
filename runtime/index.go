@@ -24,6 +24,7 @@ import (
 	_ "github.com/blevesearch/bleve/v2/analysis/token/ngram"
 	"github.com/blevesearch/bleve/v2/analysis/token/porter"
 	"github.com/blevesearch/bleve/v2/analysis/tokenizer/unicode"
+	"github.com/blevesearch/bleve/v2/mapping"
 	bleveSearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
@@ -115,14 +116,8 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 		panic(err)
 	}
 
-	if !s.cfg.InMemory {
-		indexPath := getSearchIndexPath(s.cfg)
-		_ = os.RemoveAll(indexPath)
-		s.idx, err = bleve.New(indexPath, mapping)
-	} else {
-		s.idx, err = bleve.NewMemOnly(mapping)
-	}
-
+	var removeIndexDir func()
+	s.idx, removeIndexDir, err = s.createIndex(mapping)
 	if err != nil {
 		log.Errorf("disabling search due to error: %s", err)
 		s.enabled.Store(false)
@@ -134,6 +129,10 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	for i := 0; i < 1; i++ {
 		pool.Go(s.runWorker)
 	}
+	pool.Go(func(ctx context.Context) {
+		<-ctx.Done()
+		s.closeIndex(removeIndexDir)
+	})
 
 	// never finishes if the pool is cancelled before the workers drain the queue (same as the old Wait)
 	for s.pending.Load() > 0 {
@@ -142,6 +141,45 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	// ensure last batch is flushed
 	time.Sleep(500 * time.Millisecond)
 	close(s.ready)
+}
+
+// createIndex returns the index and a function that removes the directory the
+// index owns. Without a configured IndexPath every index gets its own temporary
+// directory, because several Mokapi processes must not share (and delete) one.
+func (s *SearchIndex) createIndex(m mapping.IndexMapping) (bleve.Index, func(), error) {
+	if s.cfg.InMemory {
+		idx, err := bleve.NewMemOnly(m)
+		return idx, func() {}, err
+	}
+
+	if s.cfg.IndexPath != "" {
+		indexPath := filepath.Join(s.cfg.IndexPath, "mokapi-bleve-index")
+		_ = os.RemoveAll(indexPath)
+		idx, err := bleve.New(indexPath, m)
+		return idx, func() {}, err
+	}
+
+	dir, err := os.MkdirTemp("", "mokapi-bleve-index-*")
+	if err != nil {
+		return nil, nil, err
+	}
+	remove := func() { _ = os.RemoveAll(dir) }
+	// bleve.New requires that its path does not exist yet
+	idx, err := bleve.New(filepath.Join(dir, "index"), m)
+	if err != nil {
+		remove()
+		return nil, nil, err
+	}
+	return idx, remove, nil
+}
+
+// closeIndex runs when the pool stops. A search that is still running gets
+// bleve's "index closed" error instead of a panic.
+func (s *SearchIndex) closeIndex(removeIndexDir func()) {
+	if err := s.idx.Close(); err != nil {
+		log.Errorf("closing search index failed: %v", err)
+	}
+	removeIndexDir()
 }
 
 // drainQueue drops queued operations. The queue is not closed because a
@@ -460,12 +498,4 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = term.Term
 	}
 	return facet
-}
-
-func getSearchIndexPath(cfg static.Search) string {
-	indexPath := cfg.IndexPath
-	if indexPath == "" {
-		indexPath = os.TempDir()
-	}
-	return filepath.Join(indexPath, "mokapi-bleve-index")
 }
