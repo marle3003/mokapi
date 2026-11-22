@@ -181,9 +181,9 @@ test.describe('hydration', () => {
             await expectAppMounted(page)
 
             await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
-            await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+            await expect(page.getByRole('heading', { name: 'Mocking the Petstore REST API', level: 1 })).toBeVisible()
 
-            await expectOneHead(page, { title: 'HTTP Quick Start', canonical: 'https://mokapi.io/docs/http/quick-start' })
+            await expectOneHead(page, { title: 'HTTP API Mocking: Mock the Swagger Petstore', canonical: 'https://mokapi.io/docs/http/quick-start' })
         })
 
         test('on the home page after the GitHub release is known', async ({ page }) => {

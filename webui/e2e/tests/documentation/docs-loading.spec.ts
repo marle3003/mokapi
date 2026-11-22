@@ -47,7 +47,7 @@ test.describe('loading docs content per page', () => {
 
         await page.unroute(markdownOfOverview)
         await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
-        await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+        await expect(page.getByRole('heading', { name: 'Mocking the Petstore REST API', level: 1 })).toBeVisible()
         await page.locator('.sidebar a[href$="/docs/http/overview"]').click()
 
         await expect(page.getByRole('heading', { name: 'Mocking HTTP APIs' })).toBeVisible()
@@ -102,7 +102,7 @@ test.describe('loading docs content per page', () => {
         await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
 
         await expect(page).toHaveURL(/\/docs\/http\/quick-start$/)
-        await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+        await expect(page.getByRole('heading', { name: 'Mocking the Petstore REST API', level: 1 })).toBeVisible()
     })
 
     test('title and description are set after loading', async ({ page }) => {

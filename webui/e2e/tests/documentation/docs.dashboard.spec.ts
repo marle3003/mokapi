@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
 test.describe('docs in the dashboard', () => {
 
     test('images render', async ({ page }) => {
-        for (const path of ['/docs/get-started/running', '/docs/get-started/dashboard', '/docs/http/dashboard']) {
+        for (const path of ['/docs/http/quick-start', '/docs/get-started/dashboard', '/docs/http/dashboard']) {
             await test.step(path, async () => {
                 await page.goto(path)
                 const images = page.locator('.content img')
