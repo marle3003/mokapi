@@ -15,6 +15,7 @@ import (
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 
@@ -227,6 +228,9 @@ func TestMailManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 			requireBindErrorIsLoggedAndServerStaysRegistered(t,
 				func(port int) { m.UpdateConfig(mailConfigEvent(protocol, port)) },
 				func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+				func(port int) string {
+					return fmt.Sprintf("adding new %v host on :%d", strings.ToUpper(protocol), port)
+				},
 			)
 		})
 	}

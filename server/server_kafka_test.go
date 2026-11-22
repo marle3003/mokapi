@@ -479,6 +479,9 @@ func TestKafkaManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 	requireBindErrorIsLoggedAndServerStaysRegistered(t,
 		func(port int) { m.UpdateConfig(kafkaConfigEvent(port)) },
 		func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+		func(port int) string {
+			return fmt.Sprintf("adding new kafka broker 'kafka' on port %d to cluster 'foo'", port)
+		},
 	)
 }
 

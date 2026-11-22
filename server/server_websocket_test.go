@@ -129,6 +129,9 @@ func TestWebsocketManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T
 	requireBindErrorIsLoggedAndServerStaysRegistered(t,
 		func(port int) { m.UpdateConfig(websocketConfigEvent(port)) },
 		func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+		func(port int) string {
+			return fmt.Sprintf("adding new Websocket server 'ws' on port %d to 'foo'", port)
+		},
 	)
 }
 

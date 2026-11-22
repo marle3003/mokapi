@@ -161,6 +161,7 @@ func TestLdapManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 		func(port int) string {
 			return fmt.Sprintf("adding LDAP host 'x' on binding :%d failed: listen tcp :%d: bind: address already in use", port, port)
 		},
+		func(port int) string { return fmt.Sprintf("adding LDAP host 'x' on binding :%d", port) },
 	)
 }
 
