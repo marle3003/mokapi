@@ -10,7 +10,7 @@ import type { Modal } from 'bootstrap'
 import { loadModal } from '@/composables/bootstrap-modal'
 import { useFileResolver } from '@/composables/file-resolver';
 import DocNav from '@/components/docs/DocNav.vue';
-import { usePromo } from '@/composables/promo.ts';
+import { copyCode, selectCode } from '@/composables/code-block'
 
 // The footer (merch shop, landing pages) is not part of the dashboard build
 const Footer = import.meta.env.VITE_WEBSITE === 'true'
@@ -109,7 +109,7 @@ function getCanonicalUrl(entry: DocEntry) {
 }
 function onContentClick(event: MouseEvent) {
   showImage(event.target)
-  copyToClipboard(event)
+  copyCode(event)
 }
 function showImage(target: EventTarget | null) {
   if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
@@ -122,47 +122,6 @@ function showImage(target: EventTarget | null) {
 }
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-function selectCode(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  if (!target.closest('pre')) {
-    return
-  }
-  const range = document.createRange()
-  range.selectNodeContents(target)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-}
-async function copyToClipboard(event: MouseEvent) {
-  const target = event.target as HTMLElement
-  const button = target.closest('[data-copy]')
-  if (!button) {
-    return
-  }
-
-  const codeBlock = button.closest('.code')
-  if (!codeBlock) {
-    return
-  }
-  const activePane = codeBlock.querySelector('.tab-pane.active')
-  if (!activePane) {
-    return
-  }
-  const codeElement = activePane.querySelector('pre code')
-  if (!codeElement) {
-    return
-  }
-
-  const text = codeElement.textContent ?? ''
-
-  try {
-    await navigator.clipboard.writeText(text)
-    button.classList.add('copied')
-    setTimeout(() => button.classList.remove('copied'), 1500)
-  } catch (err) {
-    console.error('Failed to copy code:', err)
-  }
 }
 function isLast(breadcrumb: DocEntry[], index: number) {
   return breadcrumb.length - 1 === index
@@ -178,7 +137,7 @@ function isLast(breadcrumb: DocEntry[], index: number) {
       <!--Breadcrumbs should include only site pages, not logical categories in your IA. -->
       <nav aria-label="breadcrumb" v-if="route.name === 'resources' && route.params.level2" class="mb-3">
         <ol class="breadcrumb" v-if="breadcrumb">
-          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :class="isLast(breadcrumb, index) ? 'active' : ''">
+          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :key="item.label" :class="isLast(breadcrumb, index) ? 'active' : ''">
             <router-link v-if="item.path && !isLast(breadcrumb, index)" :to="{ path: item.path }">{{ item.label }}</router-link>
             <template v-else>{{ item.label }}</template>
           </li>
@@ -583,11 +542,17 @@ blockquote span {
 [data-bs-theme="light"] .carousel-control-next-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708'/%3e%3c/svg%3e") 
 }
-a[name] {
+a[name], a[id] {
   scroll-margin-top: calc(2 * var(--header-height));
 }
 .flags table tr th:nth-child(1){
   width: 40%;
+}
+.flags h3 {
+  margin-top: 1.5rem;
+}
+.flags table {
+  margin-bottom: 1rem;
 }
 
 .content p.subtitle {

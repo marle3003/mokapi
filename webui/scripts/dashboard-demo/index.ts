@@ -1,24 +1,16 @@
 import { collectDashboard } from './collect-dashboard.ts';
-import { driveHttp } from './drive-http.ts';
-import { driveKafka, closeKafka } from './drive-kafka.ts';
-import { driveMqtt } from './drive-mqtt.ts';
-import { driveWebsocket } from './drive-websocket.ts'
+import { closeKafka } from './drive-kafka.ts';
+import { driveAll } from './drive-all.ts';
 import { startMokapi, stopMokapi } from './mokapi.ts';
-import { driveMail } from './drive-mail.ts';
-import { driveLdap } from './drive-ldap.ts';
 import { collectBruno } from './bruno.ts';
 
 async function main() {
     try {
         console.log('🚀 Starting Mokapi...');
-        await startMokapi();
+        // at least 5 s to get a useful memory usage metric
+        await startMokapi({ warmUpMs: 5500 });
 
-        await driveHttp();
-        await driveKafka();
-        await driveMqtt();
-        await driveWebsocket();
-        await driveMail();
-        await driveLdap();
+        await driveAll();
 
         await collectDashboard();
         await collectBruno();

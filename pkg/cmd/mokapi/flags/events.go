@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterEventStoreFlags(cmd *cli.Command) {
+	cmd.Flags().Group("Events Store")
 	cmd.Flags().Int("event-store-default-size", 100, eventStoreDefaultSize)
 	cmd.Flags().String("event-store", "", eventStore)
 	cmd.Flags().DynamicInt("event-store-<name>-size", eventStoreName)
@@ -17,7 +18,7 @@ When the limit is reached, older events are discarded. This helps control memory
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--event-store-default-size 500"},
 				{Title: "Env", Source: "MOKAPI_EVENT_STORE_DEFAULT_SIZE=500"},
-				{Title: "File", Source: "event:\n  store:\n    default: 500", Language: "yaml"},
+				{Title: "File", Source: "event:\n  store:\n    default:\n      size: 500", Language: "yaml"},
 			},
 		},
 	},
@@ -32,7 +33,7 @@ The event store keeps track of events produced by mocked APIs, allowing them to 
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--event-store foo={\"size\":250}"},
 				{Title: "Env", Source: "MOKAPI_EVENT_STORE=foo={\"size\":250}"},
-				{Title: "File", Source: "event:\n  store:\n    foo: 250", Language: "yaml"},
+				{Title: "File", Source: "event:\n  store:\n    foo:\n      size: 250", Language: "yaml"},
 			},
 		},
 	},
@@ -46,8 +47,8 @@ The event store keeps track of events produced by mocked APIs, allowing them to 
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--event-store-foo-size 500"},
-				{Title: "Env", Source: "MOKAPI_EVENT_STORE_FOO=500"},
-				{Title: "File", Source: "event:\n  store:\n    foo: 250", Language: "yaml"},
+				{Title: "Env", Source: "MOKAPI_EVENT_STORE_FOO_SIZE=500"},
+				{Title: "File", Source: "event:\n  store:\n    foo:\n      size: 500", Language: "yaml"},
 			},
 		},
 	},

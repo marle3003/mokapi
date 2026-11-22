@@ -147,7 +147,7 @@ operations:
     channel:
       $ref: '#/channels/orders'
 `), &cfg))
-	c := &dynamic.Config{Data: cfg}
+	c := dynamictest.NewConfig(cfg)
 	require.NoError(t, cfg.Parse(c, &dynamictest.Reader{}))
 
 	m, err := cfg.Channels["orders"].Value.GetMessageByPayload(nil)

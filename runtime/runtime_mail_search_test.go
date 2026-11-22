@@ -26,10 +26,7 @@ func TestIndex_Mail(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c *mail.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -185,10 +182,7 @@ func TestIndex_Mail_Event(t *testing.T) {
 	api := &mail.Config{
 		Info: mail.Info{Name: "Test Mail Events"},
 	}
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: api,
-	}
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 
 	testcases := []struct {
 		name string
@@ -262,4 +256,51 @@ func sendMail(h runtime.MailHandler, from, to, subject, body string) {
 		Subject: subject,
 		Body:    body,
 	}, ctx))
+}
+
+func TestIndex_Mail_MergedFiles(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newApp := func(t *testing.T) *runtime.App {
+		app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, InMemory: true}}}, &dynamictest.Reader{})
+		pool := safe.NewPool(context.Background())
+		app.Start(pool)
+		t.Cleanup(pool.Stop)
+		return app
+	}
+	mailboxResults := func(t *testing.T, app *runtime.App) map[string]bool {
+		r, err := app.Search(search.Request{QueryText: "type:mail", Limit: 10})
+		require.NoError(t, err)
+		titles := map[string]bool{}
+		for _, item := range r.Results {
+			titles[item.Title] = true
+		}
+		return titles
+	}
+
+	t.Run("mailbox of the second file is indexed", func(t *testing.T) {
+		app := newApp(t)
+		app.Mail.Add(mailFile("https://mokapi.io/a.yml", "", "alice@mokapi.io"))
+		app.Mail.Add(mailFile("https://mokapi.io/b.yml", "", "bob@mokapi.io"))
+
+		waitSearchIndex(t, func() bool {
+			titles := mailboxResults(t, app)
+			return titles["alice@mokapi.io"] && titles["bob@mokapi.io"]
+		})
+	})
+
+	t.Run("removing one merged file removes only its mailbox from the index", func(t *testing.T) {
+		app := newApp(t)
+		app.Mail.Add(mailFile("https://mokapi.io/a.yml", "", "alice@mokapi.io"))
+		b := mailFile("https://mokapi.io/b.yml", "", "bob@mokapi.io")
+		app.Mail.Add(b)
+		waitSearchIndex(t, func() bool { return mailboxResults(t, app)["bob@mokapi.io"] })
+
+		app.Mail.Remove(b)
+
+		waitSearchIndex(t, func() bool {
+			titles := mailboxResults(t, app)
+			return titles["alice@mokapi.io"] && !titles["bob@mokapi.io"] && titles["foo"]
+		})
+	})
 }

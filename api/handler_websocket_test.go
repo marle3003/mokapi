@@ -59,20 +59,14 @@ func TestHandler_Websocket(t *testing.T) {
 			name: "get Websocket services",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Websocket.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("websocket.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "websocket", "1.0"),
-						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
-					),
-				}, enginetest.NewEngine())
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "kafka", "1.0"),
-						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
-					),
-				}, enginetest.NewEngine())
+				_, _ = app.Websocket.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "websocket", "1.0"),
+					asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("websocket.yaml")})), enginetest.NewEngine())
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "kafka", "1.0"),
+					asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/websocket",
@@ -82,12 +76,9 @@ func TestHandler_Websocket(t *testing.T) {
 			name: "get specific",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-					),
-				}
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				_, _ = app.Websocket.Add(cfg, enginetest.NewEngine())
@@ -101,15 +92,12 @@ func TestHandler_Websocket(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
-						asyncapi3test.WithChannel("channel1"),
-						asyncapi3test.WithChannel("channel2"),
-					),
-				}
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+					asyncapi3test.WithChannel("channel1"),
+					asyncapi3test.WithChannel("channel2"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				app.Monitor.Websocket.Messages.WithLabel("foo", "channel1").Add(1)
@@ -141,19 +129,13 @@ func TestHandler_Websocket(t *testing.T) {
 						asyncapi3test.AssignToServer("#/servers/bar"),
 					),
 				)
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: ws,
-				}
+				cfg := dynamictest.NewConfig(ws, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				err := ws.Parse(cfg, &dynamictest.Reader{})
 				require.NoError(t, err)
 
-				mi, err := app.Websocket.Add(cfg, enginetest.NewEngine())
+				_, err = app.Websocket.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Store.Channels = map[string]*websocket.Channel{
-					"chats/1234z": {Name: "chats/1234z"},
-				}
 
 				return app
 			},
@@ -165,23 +147,19 @@ func TestHandler_Websocket(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				addr := fmt.Sprintf(":%v", try.GetFreePort())
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("foo", "ws", addr),
-						asyncapi3test.WithChannel("chats/{chatId}",
-							asyncapi3test.WithParameter("chatId", &asyncapi3.Parameter{}),
-						),
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("foo", "ws", addr),
+					asyncapi3test.WithChannel("chats/{chatId}",
+						asyncapi3test.WithParameter("chatId", &asyncapi3.Parameter{}),
 					),
-				}
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				mi, err := app.Websocket.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Store.Channels = map[string]*websocket.Channel{
-					"chats/1234z": {Name: "chats/1234z"},
-				}
+				_, ok := mi.Store.Channel("chats/1234z")
+				require.True(t, ok)
 
 				app.Monitor.Websocket.Messages.WithLabel("foo", "chats/{chatId}", "chats/1234z").Add(1)
 				app.Monitor.Websocket.LastMessage.WithLabel("foo", "chats/{chatId}", "chats/1234z").Set(1234)
@@ -224,7 +202,7 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 	}{
 		{
 			name:         "service list with metric",
-			app:          runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
+			app:          runtimetest.NewApp(runtimetest.WithWebsocket(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo")))),
 			requestUrl:   "http://foo.api/api/services",
 			responseBody: `[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":1,"message_timestamp":12345678}}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
@@ -272,8 +250,90 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 }
 
 func getWebsocketInfo(config *asyncapi3.Config) *runtime.WebsocketInfo {
-	return &runtime.WebsocketInfo{
-		Config: config,
-		Store:  websocket.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket()),
+	return runtime.NewWebsocketInfo(config, websocket.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket()))
+}
+
+func TestHandler_Websocket_ServiceItems(t *testing.T) {
+	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
+		require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{}))
+		return cfg
 	}
+
+	testcases := []struct {
+		name   string
+		config *asyncapi3.Config
+		items  string
+	}{
+		{
+			name: "channels with tags sorted by name",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("/ticker"),
+				asyncapi3test.WithChannel("/chat",
+					asyncapi3test.WithChannelTag("chat", "Chat messages"),
+					asyncapi3test.WithChannelTag("public", ""),
+				),
+			),
+			items: `[{"name":"/chat","tags":["chat","public"]},{"name":"/ticker"}]`,
+		},
+		{
+			name: "parameterized address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1",
+					asyncapi3test.WithChannelAddress("/rooms/{roomId}"),
+					asyncapi3test.WithParameter("roomId", &asyncapi3.Parameter{}),
+				),
+			),
+			items: `[{"name":"/rooms/{roomId}"}]`,
+		},
+		{
+			name: "channel of another protocol is excluded",
+			config: parsed(asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithServer("socket", "ws", "foo.bar"),
+				asyncapi3test.WithServer("broker", "kafka", "foo.bar"),
+				asyncapi3test.WithChannel("/chat", asyncapi3test.AssignToServer("#/servers/socket")),
+				asyncapi3test.WithChannel("orders", asyncapi3test.AssignToServer("#/servers/broker")),
+			)),
+			items: `[{"name":"/chat"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := api.New(runtimetest.NewApp(runtimetest.WithWebsocket(tc.config)), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}
+
+func TestHandler_Websocket_InfoWithoutConfig(t *testing.T) {
+	// a reload can remove the last file between Get and reading the config
+	newHandler := func() http.Handler {
+		app := runtimetest.NewApp()
+		app.Websocket.Set("foo", &runtime.WebsocketInfo{})
+		return api.New(app, static.Api{})
+	}
+
+	t.Run("is skipped in the service list", func(t *testing.T) {
+		try.Handler(t, http.MethodGet, "http://foo.api/api/services/websocket", nil, "", newHandler(),
+			try.HasStatusCode(200),
+			try.HasBody(`[]`))
+	})
+
+	t.Run("is not found", func(t *testing.T) {
+		for _, path := range []string{"/foo", "/foo/channels"} {
+			try.Handler(t, http.MethodGet, "http://foo.api/api/services/websocket"+path, nil, "", newHandler(),
+				try.HasStatusCode(404))
+		}
+	})
 }

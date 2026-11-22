@@ -29,10 +29,10 @@ type JobContext struct {
 	EventLogger func(level, message string)
 }
 
-// ErrStopped is returned by RunAsync when the loop is stopped before the job's result is available.
+// ErrStopped is returned by RunSync and RunAsync when the loop is stopped before the job's result is available.
 var ErrStopped = errors.New("event loop stopped")
 
-// outcome is the result of a RunAsync job. It is written to the job's result channel exactly once.
+// outcome is the result of a RunSync or RunAsync job. It is written to the job's result channel exactly once.
 type outcome struct {
 	value goja.Value
 	err   error
@@ -98,21 +98,18 @@ func (loop *EventLoop) enqueue(job func()) {
 	}
 }
 
+// RunSync runs fn on the loop and waits for its result. Like Run, it calls fn directly
+// when the loop isn't running. It returns ErrStopped if the loop stops before the result is available.
 func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
-	if loop.onLoopGoroutine() {
+	if loop.onLoopGoroutine() || !loop.running.Load() {
 		return fn(loop.vm)
 	}
 
-	done := make(chan struct{})
-	var result goja.Value
-	var err error
-	loop.queueChan <- func() {
-		result, err = fn(loop.vm)
-		done <- struct{}{}
-	}
-
-	<-done
-	return result, err
+	result := make(chan outcome, 1)
+	return loop.submitAndWait(func() {
+		v, err := fn(loop.vm)
+		result <- outcome{value: v, err: err}
+	}, result)
 }
 
 func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error) {
@@ -136,8 +133,14 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 	}
 
 	result := make(chan outcome, 1)
+	return loop.submitAndWait(loop.newJob(fn, result), result)
+}
+
+// submitAndWait hands the job to the loop and waits for its outcome. The result channel
+// must be buffered, so a job that still runs after the caller gave up never blocks the loop.
+func (loop *EventLoop) submitAndWait(job func(), result <-chan outcome) (goja.Value, error) {
 	select {
-	case loop.queueChan <- loop.newJob(fn, result):
+	case loop.queueChan <- job:
 	case <-loop.stopped:
 		return nil, ErrStopped
 	}

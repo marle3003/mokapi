@@ -96,14 +96,6 @@ export function usePrettyLanguage() {
     return { formatLanguage, getLanguage, getContentType, formatSchema }
 }
 
-function toBinary(s: string) {
-    const codeUnits = new Uint16Array(s.length);
-    for (let i = 0; i < codeUnits.length; i++) {
-      codeUnits[i] = s.charCodeAt(i);
-    }
-    return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
-  }
-
   /**
  * Pretty-prints JSON without parsing it.
  * Works on truncated input (e.g. a body preview): the text is only

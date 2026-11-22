@@ -1,9 +1,10 @@
-import type { MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
+import type { Env, MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
 import { toWebsiteUrl } from "./website-url"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- docs metadata is free-form JSON per page
 export function MarkdownItCard(metadata: any): (md: MarkdownIt) => void {
     return function(md: MarkdownIt): void {
-        var defaultRender = md.renderer.rules.text!,
+        const defaultRender = md.renderer.rules.text!,
             card = /{{\s*card-grid\s.*}}/,
             kv = /([^\s=]+="[^"]*")/g
 
@@ -24,7 +25,7 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt) => void {
             return data
         }
 
-        function text(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
+        function text(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: Env | undefined, slf: Renderer): string {
             if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
             const card = getCard(tokens[idx])

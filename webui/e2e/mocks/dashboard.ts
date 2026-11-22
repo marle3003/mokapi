@@ -1,4 +1,4 @@
-import { app, sleep } from 'mokapi'
+import { app, sleep, type HttpResponse } from 'mokapi'
 import { get, post, fetch } from 'mokapi/http'
 import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './http'
@@ -8,7 +8,8 @@ import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
 import { services as websocketServices, events as websocketEvents } from './websocket'
 import { sum, max } from './metrics'
 import { getInfo } from './helpers'
-import { jobs, config as jobConfig } from './jobs'
+import { jobs, jobList, config as jobConfig } from './jobs'
+import { tree as fakerTree, explain, fakeOfNode } from './faker'
 import { match, type Query } from '../../lib/events'
 
 export default async function() {
@@ -71,6 +72,32 @@ export default async function() {
             res.body = resp.body
             res.data = null
         })
+        .operation('fakerTree', (_, res) => {
+            res.data = fakerTree
+        })
+        .operation('fakerFake', (req, res) => {
+            const result = explain(req.body?.path, req.body?.schema)
+            if (result.error) {
+                badRequest(res, result.error)
+                return
+            }
+            res.data = result
+        })
+        .operation('fakerNodeFake', (req, res) => {
+            const result = fakeOfNode(req.query['path'])
+            if (!result.found) {
+                res.rebuild(404)
+                return
+            }
+            if (result.error) {
+                badRequest(res, result.error)
+                return
+            }
+            res.data = result.value
+        })
+        .operation('jobs', (req, res) => {
+            res.data = jobList
+        })
         .operation('configs', (req, res) => {
             res.data = configs
         })
@@ -115,12 +142,20 @@ const configs = [
 const configData: Record<string, { data: string, headers: Record<string, string> }> = {}
 
 
+// The generator reports its errors as text.
+function badRequest(res: HttpResponse, message: string) {
+    res.statusCode = 400
+    res.headers['Content-Type'] = 'text/plain'
+    res.body = message
+}
+
 function getServices(type: string) {
     const services = []
     if (!type || type === 'http') {
         services.push(...httpServices.map(x => {
             return {
                 ...getInfo(x, 'http'),
+                items: getHttpItems(x),
                 metrics: {
                     requests_total: sum('http_requests_total', { name: 'service', value: x.name }),
                     requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: x.name }),
@@ -133,6 +168,7 @@ function getServices(type: string) {
         services.push(...kafkaClusters.map(x => {
             return {
                 ...getInfo(x, 'kafka'),
+                items: getChannelItems(x.topics),
                 metrics: {
                     messages_total: sum('kafka_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('kafka_message_timestamp', { name: 'service', value: x.name })
@@ -144,6 +180,7 @@ function getServices(type: string) {
         services.push(...mailServices.map(x => {
             return {
                 ...getInfo(x, 'mail'),
+                items: x.mailboxes.map(m => ({ name: m.name })),
                 metrics: {
                     mails_total: sum('mail_mails_total', { name: 'service', value: x.name }),
                     mail_timestamp: max('mail_mail_timestamp', { name: 'service', value: x.name })
@@ -166,6 +203,7 @@ function getServices(type: string) {
         services.push(...mqttClusters.map(x => {
             return {
                 ...getInfo(x, 'mqtt'),
+                items: getChannelItems(x.topics),
                 metrics: {
                     messages_total: sum('mqtt_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: x.name })
@@ -177,6 +215,7 @@ function getServices(type: string) {
         services.push(...websocketServices.map(x => {
             return {
                 ...getInfo(x, 'websocket'),
+                items: getChannelItems(x.channels),
                 metrics: {
                     messages_total: sum('websocket_messages_total', { name: 'service', value: x.name }),
                     message_timestamp: max('websocket_message_timestamp', { name: 'service', value: x.name })
@@ -186,6 +225,23 @@ function getServices(type: string) {
     }
 
     return services
+}
+
+// The real API sorts items by name; the mock keeps the order of the mock data
+// so that tests can prove sorting in the dashboard.
+function getHttpItems(service: (typeof httpServices)[number]) {
+    return service.paths.flatMap(p => p.operations.map(o => ({
+        name: p.path,
+        method: o.method,
+        ...('tags' in o && o.tags ? { tags: o.tags } : {})
+    })))
+}
+
+function getChannelItems(channels: { name: string, tags?: { name: string }[] }[]) {
+    return channels.map(c => ({
+        name: c.name,
+        ...(c.tags ? { tags: c.tags.map(t => t.name) } : {})
+    }))
 }
 
 const events = [
@@ -198,6 +254,7 @@ const events = [
     ...jobs
 ]
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- nested query parameters are free-form, shape depends on the request
 function query(q: Record<string, any>): Query {
     const result: Query = { labels: Object.keys(q.traits).map(x => ({ name: x, value: q.traits[x] })) }
 

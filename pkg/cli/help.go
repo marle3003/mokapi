@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -19,6 +20,11 @@ func (c *Command) printHelp() {
 	}
 	if c.Use != "" {
 		_, _ = fmt.Fprintf(w, "\nUsage:\n  %s\n", c.Use)
+	}
+
+	c.printCommands(w)
+	if c.Example != "" {
+		_, _ = fmt.Fprintf(w, "\nExamples:\n%s\n", strings.Trim(c.Example, "\n"))
 	}
 
 	flags := c.Flags()
@@ -52,6 +58,22 @@ func (c *Command) printHelp() {
 			_, _ = fmt.Fprintln(w)
 			return nil
 		})
+	}
+}
+
+func (c *Command) printCommands(w io.Writer) {
+	if len(c.Commands) == 0 {
+		return
+	}
+
+	maxNameLen := 0
+	for _, child := range c.Commands {
+		maxNameLen = max(maxNameLen, len(child.Name))
+	}
+
+	_, _ = fmt.Fprintf(w, "\nCommands:\n")
+	for _, child := range c.Commands {
+		_, _ = fmt.Fprintf(w, "  %-*s  %s\n", maxNameLen, child.Name, child.Short)
 	}
 }
 

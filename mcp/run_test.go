@@ -2,7 +2,6 @@ package mcp_test
 
 import (
 	"context"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/mcp"
@@ -120,17 +119,14 @@ func TestService_Run_Search(t *testing.T) {
 							},
 						},
 					}, &dynamictest.Reader{})
-				app.Http.Add(&dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: openapitest.NewConfig("3.1.0",
-						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/payment/bar",
-							openapitest.WithOperation(http.MethodPost,
-								openapitest.WithOperationSummary("Payment summary"),
-							),
+				app.Http.Add(dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithPath("/foo/payment/bar",
+						openapitest.WithOperation(http.MethodPost,
+							openapitest.WithOperationSummary("Payment summary"),
 						),
 					),
-				})
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo())))
 				return app
 			}(),
 			test: func(t *testing.T, s *mcp.Service, app *runtime.App) {
@@ -192,17 +188,14 @@ op`},
 							},
 						},
 					}, &dynamictest.Reader{})
-				app.Http.Add(&dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: openapitest.NewConfig("3.1.0",
-						openapitest.WithInfo("Petstore", "", ""),
-						openapitest.WithPath("/pets",
-							openapitest.WithOperation(http.MethodPost,
-								openapitest.WithOperationSummary("Payment summary"),
-							),
+				app.Http.Add(dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("Petstore", "", ""),
+					openapitest.WithPath("/pets",
+						openapitest.WithOperation(http.MethodPost,
+							openapitest.WithOperationSummary("Payment summary"),
 						),
 					),
-				})
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo())))
 				err := app.Events.Push(&openapi.HttpLog{
 					Request: &openapi.HttpRequestLog{
 						Method: http.MethodPost,

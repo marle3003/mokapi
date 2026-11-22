@@ -1,10 +1,9 @@
-import { computed, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
+import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from '@/router'
 
 export function useChannel<C extends BaseChannel, S extends BaseChannelService<C> | BaseTopicService<C>>(
-  service: MaybeRefOrGetter<S | undefined>,
-  type: 'kafka' | 'mqtt' | 'websocket'
+  service: MaybeRefOrGetter<S | undefined>
 ) {
   const route = useRoute()
   const channelName = computed(() => route.params.channel?.toString() ?? route.params.topic?.toString() )

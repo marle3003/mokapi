@@ -28,7 +28,7 @@ MOKAPI_PROVIDERS_GIT_URL=https://github.com//PATH-TO/REPOSITORY
 ## Provider Configuration
 
 A list of all options that can be used with the GIT provider, refer to
-the [reference page](/docs/configuration/reference.md).
+the [CLI Flags](/docs/configuration/static/cli-flags#providers-git) page.
 
 
 ### URL
@@ -67,12 +67,13 @@ MOKAPI_PROVIDERS_GIT_PULL-INTERVAL=3m30s
 
 ```yaml tab=File (YAML)
 providers:
-  repositories:
-    - url: https://github.com/PATH-TO/REPOSITORY
-      pullInterval: 5m
+  git:
+    repositories:
+      - url: https://github.com/PATH-TO/REPOSITORY
+        pullInterval: 5m
 ```
 ```bash tab=CLI
---providers-git-repositories[0]-url="https://github.com/PATH-TO/REPOSITORY" --providers.git.repositories[0].pullInterval="5m"
+--providers-git-repositories[0]-url="https://github.com/PATH-TO/REPOSITORY" --providers-git-repositories[0]-pull-interval="5m"
 ```
 ```bash tab=Env
 MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_URL=https://github.com/PATH-TO/REPOSITORY
@@ -131,13 +132,14 @@ providers:
 
 ```yaml tab=File (YAML)
 providers:
-  repositories:
-    - url: https://github.com/PATH-TO/REPOSITORY
-      auth:
-        github:
-          appId: 12345
-          installationId: 123456789
-          privateKey: 2024-2-25.private-key.pem
+  git:
+    repositories:
+      - url: https://github.com/PATH-TO/REPOSITORY
+        auth:
+          github:
+            appId: 12345
+            installationId: 123456789
+            privateKey: 2024-2-25.private-key.pem
 ```
 
 #### GitHub AppId

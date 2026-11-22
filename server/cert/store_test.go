@@ -1,6 +1,10 @@
 package cert_test
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	tls2 "crypto/tls"
@@ -283,4 +287,149 @@ func generateCertPEM() (certPEM, keyPEM string) {
 	keyPEMBytes := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 
 	return string(certPEMBytes), string(keyPEMBytes)
+}
+
+func TestNewStore_InvalidRootCa(t *testing.T) {
+	_, rootKey := generateCertPEM()
+
+	testcases := []struct {
+		name string
+		cert string
+	}{
+		{name: "file does not exist", cert: "./does-not-exist/root-ca.pem"},
+		{name: "no PEM content", cert: "garbage"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := cert.NewStore(&static.Config{
+				RootCaCert: tls.FileOrContent(tc.cert),
+				RootCaKey:  tls.FileOrContent(rootKey),
+			})
+			require.EqualError(t, err, "failed to parse root CA certificate PEM")
+			require.Nil(t, s)
+		})
+	}
+}
+
+func TestNewStore_InvalidStaticCertificate(t *testing.T) {
+	serverCert, serverKey := generateCertPEM()
+	_, otherKey := generateCertPEM()
+
+	testcases := []struct {
+		name string
+		cert string
+		key  string
+		err  string
+	}{
+		{name: "key does not match certificate", cert: serverCert, key: otherKey, err: "static certificate 0: tls: private key does not match public key"},
+		{name: "no PEM content with key", cert: "garbage", key: serverKey, err: "static certificate 0: tls: failed to find any PEM data in certificate input"},
+		{name: "no PEM content without key", cert: "garbage", err: "static certificate 0: certificate or private key not found in PEM"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := cert.NewStore(&static.Config{
+				Certificates: static.CertificateStore{
+					Static: []static.Certificate{
+						{Cert: tls.FileOrContent(tc.cert), Key: tls.FileOrContent(tc.key)},
+					},
+				},
+			})
+			require.EqualError(t, err, tc.err)
+			require.Nil(t, s)
+		})
+	}
+}
+
+func TestNewStore_RootCaKeyFormats(t *testing.T) {
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+	ecKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	pkcs8 := func(key crypto.PrivateKey) []byte {
+		b, err := x509.MarshalPKCS8PrivateKey(key)
+		require.NoError(t, err)
+		return b
+	}
+	_, edKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	sec1, err := x509.MarshalECPrivateKey(ecKey)
+	require.NoError(t, err)
+
+	testcases := []struct {
+		name     string
+		key      crypto.Signer
+		pemType  string
+		keyBytes []byte
+	}{
+		{name: "RSA PKCS#1", key: rsaKey, pemType: "RSA PRIVATE KEY", keyBytes: x509.MarshalPKCS1PrivateKey(rsaKey)},
+		{name: "RSA PKCS#8", key: rsaKey, pemType: "PRIVATE KEY", keyBytes: pkcs8(rsaKey)},
+		{name: "EC SEC1", key: ecKey, pemType: "EC PRIVATE KEY", keyBytes: sec1},
+		{name: "EC PKCS#8", key: ecKey, pemType: "PRIVATE KEY", keyBytes: pkcs8(ecKey)},
+		{name: "Ed25519 PKCS#8", key: edKey, pemType: "PRIVATE KEY", keyBytes: pkcs8(edKey)},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			template := &x509.Certificate{
+				SerialNumber:          big.NewInt(1),
+				Subject:               pkix.Name{CommonName: "Test Root CA"},
+				NotBefore:             time.Now().Add(-time.Hour),
+				NotAfter:              time.Now().Add(24 * time.Hour),
+				IsCA:                  true,
+				BasicConstraintsValid: true,
+				KeyUsage:              x509.KeyUsageCertSign,
+			}
+			der, err := x509.CreateCertificate(rand.Reader, template, template, tc.key.Public(), tc.key)
+			require.NoError(t, err)
+			caCert, err := x509.ParseCertificate(der)
+			require.NoError(t, err)
+
+			s, err := cert.NewStore(&static.Config{
+				RootCaCert: tls.FileOrContent(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})),
+				RootCaKey:  tls.FileOrContent(pem.EncodeToMemory(&pem.Block{Type: tc.pemType, Bytes: tc.keyBytes})),
+			})
+			require.NoError(t, err)
+
+			c, err := s.GetOrCreate(&tls2.ClientHelloInfo{ServerName: "example.com"})
+			require.NoError(t, err)
+			leaf, err := x509.ParseCertificate(c.Certificate[0])
+			require.NoError(t, err)
+			require.NoError(t, leaf.CheckSignatureFrom(caCert))
+		})
+	}
+}
+
+func TestNewStore_InvalidRootCaKey(t *testing.T) {
+	rootCert, _ := generateCertPEM()
+
+	testcases := []struct {
+		name string
+		key  string
+		err  string
+	}{
+		{
+			name: "unsupported PEM type",
+			key:  string(pem.EncodeToMemory(&pem.Block{Type: "ENCRYPTED PRIVATE KEY", Bytes: []byte("data")})),
+			err:  `unsupported private key PEM type "ENCRYPTED PRIVATE KEY"`,
+		},
+		{
+			name: "invalid PKCS#8 content",
+			key:  string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte("data")})),
+			err:  "failed to parse PKCS#8 private key: asn1:",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := cert.NewStore(&static.Config{
+				RootCaCert: tls.FileOrContent(rootCert),
+				RootCaKey:  tls.FileOrContent(tc.key),
+			})
+			require.ErrorContains(t, err, tc.err)
+			require.Nil(t, s)
+		})
+	}
 }

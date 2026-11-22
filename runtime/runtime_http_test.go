@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -64,7 +65,7 @@ func TestApp_AddHttp(t *testing.T) {
 						))),
 				))
 				m := monitor.NewHttp()
-				h := info.Handler(m, enginetest.NewEngine(), &events.StoreManager{})
+				h := info.Handler(info.Config(), m, enginetest.NewEngine(), &events.StoreManager{})
 
 				r := httptest.NewRequest(http.MethodGet, "https://mokapi.io/foo", nil)
 				rr := httptest.NewRecorder()
@@ -80,7 +81,7 @@ func TestApp_AddHttp(t *testing.T) {
 				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar"))))
 
-				configs := info.Configs()
+				configs := filesOf(info)
 				require.Len(t, configs, 1)
 				require.Equal(t, "https://mokapi.io", configs[0].Info.Url.String())
 			},
@@ -134,6 +135,43 @@ func TestApp_AddHttp(t *testing.T) {
 			},
 		},
 		{
+			name: "api removed with its last file",
+			test: func(t *testing.T, app *runtime.App) {
+				file := newConfig(openapitest.NewConfig("3.0",
+					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithWebhook("x"),
+				))
+				app.Http.Add(file)
+				app.Http.Remove(file)
+
+				w, err := app.Http.Webhook("x", common.WebhookArgs{Api: "foo"})
+				require.EqualError(t, err, "api not found: foo")
+				require.Nil(t, w)
+			},
+		},
+		{
+			name: "api without config snapshot is skipped",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Set("foo", runtime.NewHttpInfo(nil))
+
+				var w *openapi.Path
+				var err error
+				require.NotPanics(t, func() { w, err = app.Http.Webhook("x", common.WebhookArgs{}) })
+				require.EqualError(t, err, "webhook not found: x")
+				require.Nil(t, w)
+			},
+		},
+		{
+			name: "api without config snapshot is not found",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Set("foo", runtime.NewHttpInfo(nil))
+
+				w, err := app.Http.Webhook("x", common.WebhookArgs{Api: "foo"})
+				require.EqualError(t, err, "api not found: foo")
+				require.Nil(t, w)
+			},
+		},
+		{
 			name: "webhook with api",
 			test: func(t *testing.T, app *runtime.App) {
 				app.Http.Add(newConfig(
@@ -168,7 +206,7 @@ func TestApp_AddHttp(t *testing.T) {
 
 func TestApp_AddHttp_Patching(t *testing.T) {
 	newConfig := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		u, _ := url.Parse(name)
 		cfg.Info.Url = u
 		return cfg
@@ -188,8 +226,8 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				require.Equal(t, "bar", info.Info.Description)
-				configs := info.Configs()
+				require.Equal(t, "bar", info.Config().Info.Description)
+				configs := filesOf(info)
 				require.Len(t, configs, 2)
 			},
 		},
@@ -201,7 +239,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				require.Equal(t, "foo", info.Info.Description)
+				require.Equal(t, "foo", info.Config().Info.Description)
 			},
 		},
 		{
@@ -212,7 +250,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				require.Equal(t, "foo", info.Info.Description)
+				require.Equal(t, "foo", info.Config().Info.Description)
 			},
 		},
 		{
@@ -277,7 +315,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				p := info.Paths.Lookup("/foo")
+				p := info.Config().Paths.Lookup("/foo")
 				require.NotNil(t, p)
 				op := p.Value.Get
 				require.NotNil(t, op)
@@ -300,7 +338,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				require.Len(t, info.Webhooks, 2)
+				require.Len(t, info.Config().Webhooks, 2)
 			},
 		},
 		{
@@ -315,8 +353,8 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				require.Len(t, info.Webhooks, 1)
-				require.NotNil(t, info.Webhooks["foo"].Value.Get)
+				require.Len(t, info.Config().Webhooks, 1)
+				require.NotNil(t, info.Config().Webhooks["foo"].Value.Get)
 			},
 		},
 	}
@@ -366,7 +404,7 @@ func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 		)
 	}
 	file := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -381,19 +419,19 @@ func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Http.Get("foo")
 	require.NotNil(t, info)
-	configs := info.Configs()
+	configs := filesOf(info)
 	require.Len(t, configs, 1)
 	require.Equal(t, "file:///a.yml", configs[0].Info.Url.String())
 
-	require.Nil(t, info.Paths.Lookup("/fromB"), "path of deleted file must not be in merged config")
-	require.Len(t, info.Servers, 1)
-	require.Equal(t, "http://127.0.0.1:8001", info.Servers[0].Url)
-	require.Nil(t, info.Components.Schemas.Get("FromB"))
-	op := info.Paths.Lookup("/shared").Value.Get
+	require.Nil(t, info.Config().Paths.Lookup("/fromB"), "path of deleted file must not be in merged config")
+	require.Len(t, info.Config().Servers, 1)
+	require.Equal(t, "http://127.0.0.1:8001", info.Config().Servers[0].Url)
+	require.Nil(t, info.Config().Components.Schemas.Get("FromB"))
+	op := info.Config().Paths.Lookup("/shared").Value.Get
 	require.Equal(t, "from a", op.Summary)
 	require.NotContains(t, op.Responses.GetResponse(http.StatusOK).Headers, "X-From-B")
 
-	require.Equal(t, newA(), a.Data, "parsed config of a.yml must not be changed by merging")
+	require.Equal(t, newA(), a.Data(), "parsed config of a.yml must not be changed by merging")
 }
 
 func TestApp_AddHttp_SingleFile(t *testing.T) {
@@ -407,26 +445,26 @@ func TestApp_AddHttp_SingleFile(t *testing.T) {
 	}
 	parsed := newFoo()
 	// Parse sets Path and Method of the operations
-	require.NoError(t, parsed.Parse(&dynamic.Config{Data: parsed}, &dynamictest.Reader{}))
+	require.NoError(t, parsed.Parse(dynamictest.NewConfig(parsed), &dynamictest.Reader{}))
 	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 	info := app.Http.Add(newConfig(parsed))
 
 	t.Run("default server is added to the merged config only", func(t *testing.T) {
-		require.Len(t, info.Servers, 1)
-		require.Equal(t, "/", info.Servers[0].Url)
-		require.True(t, info.Servers[0].IsDefault)
+		require.Len(t, info.Config().Servers, 1)
+		require.Equal(t, "/", info.Config().Servers[0].Url)
+		require.True(t, info.Config().Servers[0].IsDefault)
 		require.Empty(t, parsed.Servers)
 	})
 
 	t.Run("input config is not changed", func(t *testing.T) {
 		expected := newFoo()
-		require.NoError(t, expected.Parse(&dynamic.Config{Data: expected}, &dynamictest.Reader{}))
+		require.NoError(t, expected.Parse(dynamictest.NewConfig(expected), &dynamictest.Reader{}))
 		require.Equal(t, expected, parsed)
 	})
 
 	t.Run("operations point into the merged config", func(t *testing.T) {
-		path := info.Paths.Lookup("/foo").Value
+		path := info.Config().Paths.Lookup("/foo").Value
 		require.NotSame(t, parsed.Paths.Lookup("/foo").Value, path)
 		require.Equal(t, "/foo", path.Path)
 		for method, op := range path.Operations() {
@@ -438,7 +476,7 @@ func TestApp_AddHttp_SingleFile(t *testing.T) {
 
 func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
 	newFile := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -469,17 +507,17 @@ func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
 		b := newFile("b.yml", newB())
 		app.Http.Add(a)
 		app.Http.Add(b)
-		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+		require.Equal(t, "from b", app.Http.Get("foo").Config().Paths.Lookup("/foo").Value.Get.Summary)
 
 		app.Http.Remove(b)
 
 		expected := runtime.New(&static.Config{}, &dynamictest.Reader{})
 		expected.Http.Add(newFile("a.yml", newA()))
-		require.Equal(t, expected.Http.Get("foo").Config, app.Http.Get("foo").Config)
-		op := app.Http.Get("foo").Paths.Lookup("/foo").Value.Get
+		require.Equal(t, expected.Http.Get("foo").Config(), app.Http.Get("foo").Config())
+		op := app.Http.Get("foo").Config().Paths.Lookup("/foo").Value.Get
 		require.Equal(t, "from a", op.Summary)
 		require.Equal(t, "from a", op.Responses.GetResponse(http.StatusOK).Description)
-		require.Equal(t, "from a", app.Http.Get("foo").Info.Description)
+		require.Equal(t, "from a", app.Http.Get("foo").Config().Info.Description)
 	})
 
 	t.Run("one file to zero removes the api", func(t *testing.T) {
@@ -499,23 +537,23 @@ func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
 		app.Http.Add(c)
 		app.Http.Add(newFile("b.yml", newB()))
 		app.Http.Add(newFile("a.yml", newA()))
-		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+		require.Equal(t, "from b", app.Http.Get("foo").Config().Paths.Lookup("/foo").Value.Get.Summary)
 
 		app.Http.Remove(c)
 
-		require.Equal(t, "from b", app.Http.Get("foo").Paths.Lookup("/foo").Value.Get.Summary)
+		require.Equal(t, "from b", app.Http.Get("foo").Config().Paths.Lookup("/foo").Value.Get.Summary)
 	})
 }
 
 func TestIsHttpConfig(t *testing.T) {
-	_, b := runtime.IsHttpConfig(&dynamic.Config{Data: openapitest.NewConfig("3.0")})
+	_, b := runtime.IsHttpConfig(dynamictest.NewConfig(openapitest.NewConfig("3.0")))
 	require.True(t, b)
-	_, b = runtime.IsHttpConfig(&dynamic.Config{Data: "foo"})
+	_, b = runtime.IsHttpConfig(dynamictest.NewConfig("foo"))
 	require.False(t, b)
 }
 
 func newConfig(config *openapi.Config) *dynamic.Config {
-	c := &dynamic.Config{Data: config}
+	c := dynamictest.NewConfig(config)
 	u, _ := url.Parse("https://mokapi.io")
 	c.Info.Url = u
 	return c
@@ -535,7 +573,7 @@ func TestApp_AddHttp_SameCyclicSchemaInTwoFiles(t *testing.T) {
 	file := func(name string) *dynamic.Config {
 		c := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 			openapitest.WithComponentSchema("Node", newNode()))
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -546,5 +584,275 @@ func TestApp_AddHttp_SameCyclicSchemaInTwoFiles(t *testing.T) {
 
 	info := app.Http.Get("foo")
 	require.NotNil(t, info)
-	require.NotNil(t, info.Components.Schemas.Get("Node"))
+	require.NotNil(t, info.Config().Components.Schemas.Get("Node"))
+}
+
+func TestHttpStore_Remove(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(fileUrl, path string) *dynamic.Config {
+		c := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath(path, openapitest.WithOperation(http.MethodGet)),
+		))
+		c.Info.Url, _ = url.Parse(fileUrl)
+		return c
+	}
+
+	t.Run("unknown config does not panic and keeps the store usable", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		unknown := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("unknown", "", "")))
+
+		requireStoreUsableAfterRemoveOfUnknownConfig(t,
+			func() { app.Http.Remove(unknown) },
+			func() { app.Http.Add(newFile("https://mokapi.io/a.yml", "/a")) },
+		)
+	})
+
+	t.Run("two files removed at the same time", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("https://mokapi.io/a.yml", "/a")
+		b := newFile("https://mokapi.io/b.yml", "/b")
+		app.Http.Add(a)
+		app.Http.Add(b)
+
+		removeConcurrently(app.Http.Remove, a, b)
+
+		require.Equal(t, 0, app.Http.Len())
+	})
+}
+
+func TestHttpStore_ConcurrentAccess(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(fileUrl, path string) *dynamic.Config {
+		c := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath(path, openapitest.WithOperation(http.MethodGet)),
+		))
+		c.Info.Url, _ = url.Parse(fileUrl)
+		return c
+	}
+
+	t.Run("reader of the info does not race with reload of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		app.Http.Add(newFile("https://mokapi.io/a.yml", "/first"))
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				app.Http.Add(newFile("https://mokapi.io/a.yml", "/second"))
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			// what the dashboard API handler does: get the info, then read the config
+			for i := 0; i < 200; i++ {
+				info := app.Http.Get("foo")
+				_ = info.Config().Info.Name
+				_ = info.Config().Paths.Len()
+				_ = filesOf(info)
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("reader does not race with remove", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		a := newFile("https://mokapi.io/a.yml", "/a")
+		b := newFile("https://mokapi.io/b.yml", "/b")
+		info := app.Http.Add(a)
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				app.Http.Add(b)
+				app.Http.Remove(b)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				if info.Config() != nil {
+					_ = info.Config().Info.Name
+				}
+				_ = filesOf(info)
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("Webhook does not race with Add and Remove", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		app.Http.Add(newFile("https://mokapi.io/a.yml", "/a"))
+		b := newFile("https://mokapi.io/b.yml", "/b")
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				app.Http.Add(b)
+				app.Http.Remove(b)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				_, _ = app.Http.Webhook("unknown", common.WebhookArgs{})
+				_, _ = app.Http.Webhook("unknown", common.WebhookArgs{Api: "foo"})
+			}
+		}()
+		wg.Wait()
+	})
+
+	t.Run("Add racing with Remove of the same file does not register an orphaned info", func(t *testing.T) {
+		// the red proof of this test was done with 100000 iterations
+		for i := 0; i < 5000; i++ {
+			app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+			a := newFile("https://mokapi.io/a.yml", "/a")
+			app.Http.Add(a)
+
+			var added *runtime.HttpInfo
+			var wg sync.WaitGroup
+			wg.Add(2)
+			go func() { defer wg.Done(); added = app.Http.Add(a) }()
+			go func() { defer wg.Done(); app.Http.Remove(a) }()
+			wg.Wait()
+
+			if added.Config() != nil {
+				require.Same(t, added, app.Http.Get("foo"), "file was added but the info is not registered (iteration %d)", i)
+			}
+		}
+	})
+}
+
+func TestHttpStore_RemoveLastFileWithSearchEnabled(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	cfg := &static.Config{}
+	cfg.Api.Search.Enabled = true
+	app := runtime.New(cfg, &dynamictest.Reader{})
+	file := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+		openapitest.WithPath("/a", openapitest.WithOperation(http.MethodGet))))
+	app.Http.Add(file)
+
+	require.NotPanics(t, func() { app.Http.Remove(file) })
+	require.Nil(t, app.Http.Get("foo"))
+}
+
+func TestHttpInfo_Snapshot(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newFile := func(fileUrl, path string) *dynamic.Config {
+		c := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath(path, openapitest.WithOperation(http.MethodGet)),
+		))
+		c.Info.Url, _ = url.Parse(fileUrl)
+		return c
+	}
+
+	t.Run("snapshot is not changed by a reload of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		info := app.Http.Add(newFile("https://mokapi.io/a.yml", "/first"))
+		snapshot := info.Config()
+
+		app.Http.Add(newFile("https://mokapi.io/a.yml", "/second"))
+
+		require.NotNil(t, snapshot.Paths.Lookup("/first"))
+		require.Nil(t, snapshot.Paths.Lookup("/second"))
+		require.NotSame(t, snapshot, info.Config())
+		require.NotNil(t, info.Config().Paths.Lookup("/second"))
+	})
+
+	t.Run("published config is not the config of the file", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		file := newFile("https://mokapi.io/a.yml", "/a")
+
+		info := app.Http.Add(file)
+
+		require.NotSame(t, file.Data(), info.Config())
+		require.Len(t, info.Config().Servers, 1, "default server is added to the published config")
+		require.Equal(t, "/", info.Config().Servers[0].Url)
+		require.Empty(t, file.Data().(*openapi.Config).Servers, "but not to the file")
+	})
+
+	t.Run("config is nil after the last file is removed", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		file := newFile("https://mokapi.io/a.yml", "/a")
+		info := app.Http.Add(file)
+
+		app.Http.Remove(file)
+
+		require.Nil(t, info.Config())
+		require.Nil(t, app.Http.Get("foo"))
+	})
+
+	t.Run("Configs returns a copy", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		app.Http.Add(newFile("https://mokapi.io/a.yml", "/a"))
+		info := app.Http.Add(newFile("https://mokapi.io/b.yml", "/b"))
+
+		configs := filesOf(info)
+		require.Len(t, configs, 2)
+		configs[0] = nil
+
+		require.NotContains(t, filesOf(info), (*dynamic.Config)(nil))
+		require.Len(t, filesOf(info), 2)
+	})
+
+	t.Run("Configs does not race with Add", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		info := app.Http.Add(newFile("https://mokapi.io/a.yml", "/a"))
+		b := newFile("https://mokapi.io/b.yml", "/b")
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				app.Http.Add(b)
+			}
+		}()
+		go func() {
+			defer wg.Done()
+			for i := 0; i < 200; i++ {
+				_ = filesOf(info)
+			}
+		}()
+		wg.Wait()
+	})
+}
+
+func TestHttpStore_RemoveInfoWithoutConfigWithSearchEnabled(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	cfg := &static.Config{}
+	cfg.Api.Search.Enabled = true
+	app := runtime.New(cfg, &dynamictest.Reader{})
+	app.Http.Set("foo", runtime.NewHttpInfo(nil))
+	file := newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "")))
+
+	require.NotPanics(t, func() { app.Http.Remove(file) })
+	require.Nil(t, app.Http.Get("foo"))
+}
+
+func TestHttpStore_Set(t *testing.T) {
+	t.Run("Set registers an info that Get and List return", func(t *testing.T) {
+		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+		cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+		info := runtime.NewHttpInfo(cfg)
+
+		app.Http.Set("foo", info)
+
+		require.Same(t, info, app.Http.Get("foo"))
+		require.Same(t, cfg, info.Config())
+		require.Len(t, app.Http.List(), 1)
+	})
+
+	t.Run("info without config has no snapshot", func(t *testing.T) {
+		require.Nil(t, runtime.NewHttpInfo(nil).Config())
+	})
 }

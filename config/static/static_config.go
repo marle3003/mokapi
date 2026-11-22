@@ -21,7 +21,7 @@ type Config struct {
 	Health           Health            `json:"health" yaml:"health"`
 	Mcp              Mcp               `json:"mcp" yaml:"mcp"`
 	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`
-	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-cert"`
+	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-key"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
 	Help             bool              `json:"-" yaml:"-" aliases:"h"`
 	GenerateSkeleton any               `json:"-" yaml:"-" flag:"generate-cli-skeleton"`

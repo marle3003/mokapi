@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/providers/openapi"
-	"mokapi/runtime"
 	"net/http"
 	"slices"
 	"strings"
@@ -113,22 +112,32 @@ func parseHttpValidateRequest(r *http.Request) (*httpValidateRequest, error) {
 	return &payload, nil
 }
 
-// selectHttpApis returns the API named by name or, if name is empty, all HTTP APIs sorted by name.
-func (h *handler) selectHttpApis(name string) ([]*runtime.HttpInfo, error) {
+// selectHttpApis returns the config snapshots of the API named by name or, if name is empty,
+// of all HTTP APIs sorted by name.
+func (h *handler) selectHttpApis(name string) ([]*openapi.Config, error) {
 	if name == "" {
-		apis := h.app.Http.List()
-		slices.SortFunc(apis, func(a, b *runtime.HttpInfo) int { return strings.Compare(a.Info.Name, b.Info.Name) })
+		var apis []*openapi.Config
+		for _, info := range h.app.Http.List() {
+			if cfg := info.Config(); cfg != nil {
+				apis = append(apis, cfg)
+			}
+		}
+		slices.SortFunc(apis, func(a, b *openapi.Config) int { return strings.Compare(a.Info.Name, b.Info.Name) })
 		return apis, nil
 	}
 
-	api := h.app.Http.Get(name)
-	if api == nil {
+	info := h.app.Http.Get(name)
+	if info == nil {
 		return nil, fmt.Errorf("api '%s' not found", name)
 	}
-	return []*runtime.HttpInfo{api}, nil
+	cfg := info.Config()
+	if cfg == nil {
+		return nil, fmt.Errorf("api '%s' not found", name)
+	}
+	return []*openapi.Config{cfg}, nil
 }
 
-func findOperations(apis []*runtime.HttpInfo, method, url string) ([]httpOperationMatch, error) {
+func findOperations(apis []*openapi.Config, method, url string) ([]httpOperationMatch, error) {
 	var matches []httpOperationMatch
 	for _, api := range apis {
 		m, err := api.ResolveOperation(method, url)

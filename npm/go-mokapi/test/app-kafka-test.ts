@@ -7,6 +7,9 @@ topic.produce([{ key: "foo" }, { key: "bar" }]);
 topic.produce({}, {
     result: (r: KafkaProduceResult): void => {
         r.messages[0].offset;
+        r.api;
+        r.topic;
+        r.messages.forEach((m) => m.offset);
     },
 });
 topic.produce({ data: 123 }, { retry: { initialRetryTime: 1000 } });

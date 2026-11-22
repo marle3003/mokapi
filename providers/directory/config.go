@@ -3,13 +3,10 @@ package directory
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/sortedmap"
 	"mokapi/version"
 	"net/url"
 	"path/filepath"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -17,7 +14,7 @@ type Config struct {
 	Info       Info
 	Address    string
 	SizeLimit  int64
-	Entries    *sortedmap.LinkedHashMap[string, Entry]
+	Entries    *EntryStore
 	Files      []string
 
 	root       map[string][]string
@@ -35,14 +32,24 @@ type Info struct {
 	Version     string `yaml:"version"`
 }
 
+// Clone returns a copy that does not share entries with c. The schema is shared because it is
+// never changed after Parse. The result always has an EntryStore, so clients can add entries
+// to a directory loaded from a file without entries.
+func (c *Config) Clone() *Config {
+	r := *c
+	r.Entries = c.Entries.Clone()
+	return &r
+}
+
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	c.Entries = &sortedmap.LinkedHashMap[string, Entry]{KeyNormalizer: normalizeDN}
+	// the store is published at the end, until then the entries are not shared
+	entries := newEntryMap()
 	// copy from old format
 	for k, v := range c.oldEntries {
-		c.Entries.Set(k, v)
+		entries.Set(k, v)
 	}
 
-	for it := c.Entries.Iter(); it.Next(); {
+	for it := entries.Iter(); it.Next(); {
 		entry := it.Value()
 		err := entry.Parse(config, reader)
 		if err != nil {
@@ -86,14 +93,14 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			return fmt.Errorf("parse file %s failed: %v", file, err)
 		}
 		for _, record := range d.Records {
-			err = record.Apply(c.Entries, nil)
+			err = record.Apply(entries, nil)
 			if err != nil {
 				return fmt.Errorf("apply file '%s' failed: %w", file, err)
 			}
 		}
 	}
 
-	root, ok := c.Entries.Get("")
+	root, ok := entries.Get("")
 	if !ok {
 		root = Entry{
 			Attributes: map[string][]string{
@@ -113,7 +120,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				"objectClass": {"subschema"},
 			},
 		}
-		c.Entries.Set("cn=subschema", schema)
+		entries.Set("cn=subschema", schema)
 	} else {
 		if _, ok := root.Attributes["supportedLDAPVersion"]; !ok {
 			root.Attributes["supportedLDAPVersion"] = []string{"3"}
@@ -144,7 +151,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 					"objectClass": {"subschema"},
 				},
 			}
-			c.Entries.Set("cn=subschema", schema)
+			entries.Set("cn=subschema", schema)
 		}
 	}
 
@@ -158,10 +165,10 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if v, ok = c.root["namingContexts"]; ok {
 		root.Attributes["namingContexts"] = v
 	}
-	c.Entries.Set("", root)
+	entries.Set("", root)
 
 	dn := root.Attributes["subschemaSubentry"]
-	s, ok := c.Entries.Get(dn[0])
+	s, ok := entries.Get(dn[0])
 	if ok {
 		var err error
 		c.Schema, err = NewSchema(s)
@@ -170,50 +177,14 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	c.rebuildMemberOf()
+	rebuildMemberOf(entries)
+	c.Entries = &EntryStore{entries: entries}
 
 	return nil
 }
 
 func (c *Config) getSizeLimit() int64 {
 	return c.SizeLimit
-}
-
-func (c *Config) rebuildMemberOf() {
-	// reset entries
-
-	groups := map[string][]string{}
-	for it := c.Entries.Iter(); it.Next(); {
-		groupName := it.Value().Dn
-		for k, v := range it.Value().Attributes {
-			if k == "member" {
-				if _, ok := groups[k]; !ok {
-					groups[k] = []string{}
-				}
-				for _, member := range v {
-					groups[groupName] = append(groups[groupName], member)
-				}
-			}
-			if k == "memberOf" {
-				delete(it.Value().Attributes, "memberOf")
-			}
-		}
-	}
-
-	for group, members := range groups {
-		for _, member := range members {
-			e, ok := c.Entries.Get(member)
-			if !ok {
-				log.Warnf("LDAP: member %s for group %s not found", member, group)
-				continue
-			}
-			if e.Attributes == nil {
-				e.Attributes = map[string][]string{}
-			}
-			e.Attributes["memberOf"] = append(e.Attributes["memberOf"], group)
-			c.Entries.Set(member, e)
-		}
-	}
 }
 
 func (e *Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -242,7 +213,7 @@ func (e *Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			}
 
 			dynamic.AddRef(config, f)
-			aList[i] = f.Data.(string)
+			aList[i] = f.Data().(string)
 		}
 	}
 

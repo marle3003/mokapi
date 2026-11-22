@@ -32,7 +32,7 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 			openapitest.WithServer(fmt.Sprintf("http://127.0.0.1:%d", port), ""),
 			openapitest.WithPath(path, openapitest.WithOperation("GET", openapitest.WithResponse(200))),
 		)
-		return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl(file)}, Data: cfg}}
+		return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(file)}))}
 	}
 	a := newFile("a.yml", portA, "/fromA")
 	b := newFile("b.yml", portB, "/fromB")
@@ -52,8 +52,9 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 
 	info := app.Http.Get("foo")
 	require.NotNil(t, info)
-	require.Len(t, info.Configs(), 1, "only file a.yml must remain in the store")
-	require.Equal(t, "a.yml", info.Configs()[0].Info.Url.String())
+	_, files := info.Snapshot()
+	require.Len(t, files, 1, "only file a.yml must remain in the store")
+	require.Equal(t, "a.yml", files[0].Info.Url.String())
 
 	requirePortClosed(t, portB)
 
@@ -64,7 +65,7 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 	r, err = c.Get(fmt.Sprintf("http://127.0.0.1:%d/fromB", portA))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNotFound, r.StatusCode)
-	requireMergedConfigIsFileA(t, info.Config)
+	requireMergedConfigIsFileA(t, info.Config())
 }
 
 func requireMergedConfigIsFileA(t *testing.T, merged *openapi.Config) {

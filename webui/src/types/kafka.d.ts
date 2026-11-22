@@ -13,6 +13,7 @@ declare interface KafkaServer {
   summary: string
   description: string;
   tags: Tag[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   configs: { [key: string]: any }
 }
 

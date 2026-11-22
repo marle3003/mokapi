@@ -27,7 +27,7 @@ You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/
 
 ## Provider Configuration
 A list of all options that can be used with the file provider, refer to
-the [reference page](/docs/configuration/reference.md).
+the [CLI Flags](/docs/configuration/static/cli-flags#providers-file) page.
 
 ``` box=warning title=Limitation
 Mokapi uses fsnotify to listen to file system notification. There

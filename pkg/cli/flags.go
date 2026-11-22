@@ -24,6 +24,8 @@ type FlagSet struct {
 	orderedFlags  map[string]int
 	setConfigFile func(string)
 	orderFlag     int
+	group         string
+	lastOrder     int
 }
 
 type Flag struct {
@@ -35,6 +37,10 @@ type Flag struct {
 	DefaultValue any
 	Aliases      []string
 	Type         string
+	// Group is the topic the flag is documented under, see FlagSet.Group.
+	Group string
+	// Order is the position of the flag in registration order, starting at 1.
+	Order int
 }
 
 type DynamicFlag struct {
@@ -62,7 +68,30 @@ type Value interface {
 	IsSet() bool
 }
 
+// Group sets the group of all flags registered afterwards.
+func (fs *FlagSet) Group(name string) {
+	fs.group = name
+}
+
+// stamp assigns the current group and the next registration position unless the flag already has them,
+// as is the case for flags created at parse time from a dynamic flag.
+func (fs *FlagSet) stamp(f *Flag) {
+	if f.Group == "" {
+		f.Group = fs.group
+	}
+	if f.Order == 0 {
+		fs.lastOrder++
+		f.Order = fs.lastOrder
+	}
+}
+
+func (fs *FlagSet) stamped(f Flag) Flag {
+	fs.stamp(&f)
+	return f
+}
+
 func (fs *FlagSet) setFlag(f *Flag) {
+	fs.stamp(f)
 	if fs.flags == nil {
 		fs.flags = make(map[string]*Flag)
 	}
@@ -101,6 +130,21 @@ func (fs *FlagSet) setValue(name string, value []string, source Source) error {
 		}
 	}
 	return fmt.Errorf("unknown flag '%v'", name)
+}
+
+// flagType returns the type of the flag, also for dynamic flags not yet created.
+// It returns an empty string for unknown flags.
+func (fs *FlagSet) flagType(name string) string {
+	name = strings.ReplaceAll(name, ".", "-")
+	if f, ok := fs.flags[name]; ok {
+		return f.Type
+	}
+	for _, d := range fs.dynamic {
+		if d.isValidFlag(name) {
+			return d.Type
+		}
+	}
+	return ""
 }
 
 func (fs *FlagSet) IsValidFlag(name string) bool {

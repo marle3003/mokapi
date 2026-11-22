@@ -45,7 +45,7 @@ func timePairs() []*Node {
 
 	var nodes []*Node
 	for k, v := range commonTimePairs {
-		n1 := buildTimePairTree([]string{k}, nil, func(r *Request) (any, error) {
+		n1 := buildTimePairTree(k, nil, func(r *Request) (any, error) {
 			d, err := fakeDateInPastWithMinYear(r, now.Year()-5)
 			if err != nil {
 				return nil, err
@@ -55,15 +55,14 @@ func timePairs() []*Node {
 		})
 		nodes = append(nodes, n1)
 		for _, v2 := range v {
-			md := minDate
-			n2 := buildTimePairTree([]string{v2}, []string{k}, func(r *Request) (any, error) {
-				if depValue, ok := r.Context.Values[k]; ok {
-					t, err := time.Parse(time.RFC3339, depValue.(string))
-					if err == nil {
-						md = t
+			n2 := buildTimePairTree(v2, []string{k}, func(r *Request) (any, error) {
+				min := minDate
+				if start, ok := r.Context.Values[k].(string); ok {
+					if t, err := parseDate(start); err == nil {
+						min = t
 					}
 				}
-				return fakeDateWithYearRange(r, md, now.Year()+5)
+				return fakeDateWithYearRange(r, min, now.Year()+5)
 			})
 			nodes = append(nodes, n2)
 		}
@@ -71,13 +70,21 @@ func timePairs() []*Node {
 	return nodes
 }
 
-func buildTimePairTree(tokens []string, dependsOn []string, fake func(r *Request) (any, error)) *Node {
+func buildTimePairTree(name string, dependsOn []string, fake func(r *Request) (any, error)) *Node {
 	return &Node{
-		Name:       tokens[0],
+		Name:       name,
 		Fake:       fake,
 		DependsOn:  dependsOn,
-		Attributes: tokens[1:],
+		Attributes: []string{name},
 	}
+}
+
+// parseDate parses the values created by the date generators, format date-time or date.
+func parseDate(s string) (time.Time, error) {
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
+	}
+	return time.Parse("2006-01-02", s)
 }
 
 func fakePastDate(pastYears int) func(r *Request) (any, error) {

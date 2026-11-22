@@ -2,7 +2,6 @@ package swagger_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
@@ -12,22 +11,16 @@ import (
 func TestConfig_Parse(t *testing.T) {
 	var cfg *swagger.Config
 	err := cfg.Parse(
-		&dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: cfg,
-		},
+		dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 		&dynamictest.Reader{})
 	require.NoError(t, err)
 
 	cfg = &swagger.Config{
 		Info: openapi.Info{Name: "foo"},
 	}
-	c := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: cfg,
-	}
+	c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 	err = cfg.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
-	require.IsType(t, &openapi.Config{}, c.Data)
+	require.IsType(t, &openapi.Config{}, c.Data())
 	require.Equal(t, "foo", cfg.Info.Name)
 }

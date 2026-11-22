@@ -6,9 +6,9 @@ import (
 
 func newEventChannel(ch *Channel) *engine.WebsocketEventChannel {
 	ec := &engine.WebsocketEventChannel{
-		Key:    ch.Config.ResolveAddress(),
+		Key:    ch.Config().ResolveAddress(),
 		Name:   ch.Name,
-		Params: ch.params,
+		Params: ch.params(),
 		Conn:   ch,
 	}
 	for _, c := range ch.connectedClients() {

@@ -1,5 +1,8 @@
 import { test, expect } from '../models/fixture-dashboard'
+import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
+import { useMqttMessages } from '../components/mqtt'
 
 test('Visit MQTT overview', async ({ page, baseURL }) => {
     if (baseURL === 'http://localhost:8080') {
@@ -7,25 +10,29 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
     } else {
         await page.goto('/dashboard-demo')
     }
-    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+    const { sidebar } = new DashboardModel(page)
+    const { openFullView } = useMqttMessages(page)
 
     await test.step('Verify Dashboard', async () => {
 
         await expect(page.getByLabel('MQTT Messages')).toHaveText('1')
+
+        // the overview shows only the metrics, the services are on the protocol page
+        await expect(page.getByRole('table', { name: 'MQTT Clusters' })).toHaveCount(0)
+
+        await sidebar.getByRole('link', { name: 'MQTT', exact: true }).click()
+        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
         const table = page.getByRole('table', { name: 'MQTT Clusters' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('Smart Home MQTT API');
 
-        await page.getByLabel('Services').getByRole('link', { name: 'MQTT', exact: true }).click()
-        await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
-
     })
 
     await test.step('Visit Smart Home MQTT API', async () => {
 
-        await page.getByText('Smart Home MQTT API').click();
+        await sidebar.getByRole('link', { name: 'Smart Home MQTT API' }).click();
 
         const region = page.getByRole('region', { name: 'Info' });
         await expect(region.getByLabel('Name')).toHaveText('Smart Home MQTT API')
@@ -64,7 +71,8 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                 await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
                 await expect(messages.locator('tbody tr')).toHaveCount(1);
 
-                await breadcrumb.getByRole('link', { name: 'sensors/{sensorId}/data' }).click();
+                // the new layout has no breadcrumb: back to the topic page
+                await page.goBack();
 
             });
 
@@ -77,8 +85,8 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Topic')).toHaveText('sensors/12345/data');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -107,12 +115,12 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                     const rows = messages.locator('tbody tr');
                     await expect(rows).toHaveCount(1);
 
-                    await rows.nth(0).click()
+                    await openFullView(rows.nth(0))
 
                 })
 
                 await meta.getByLabel('Topic').click();
-                await breadcrumb.getByRole('link', { name: 'Smart Home MQTT API' }).click();
+                await sidebar.getByRole('link', { name: 'Smart Home MQTT API' }).click();
             })
 
         })
@@ -130,6 +138,27 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
 
         })
 
+        await test.step('Verify Messages', async () => {
+
+            await page.getByRole('tab', { name: 'Messages', exact: true }).click();
+
+            const messages = page.getByRole('region', { name: 'Recent Messages' }).getByRole('table', { name: 'Recent Messages' });
+            await expect(messages.locator('tbody tr')).toHaveCount(1);
+            await expect(page.getByRole('link', { name: 'Open as tab' })).toBeVisible();
+
+        })
+
     })
     
+})
+
+test('Metric tiles of the mqtt page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/mqtt`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'mqtt')
+
+    await expect(count.value).toHaveText('1')
+    await expect(second.value).toHaveText('1')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
 })

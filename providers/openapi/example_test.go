@@ -165,7 +165,7 @@ func TestExample_Parse(t *testing.T) {
 									&openapi.MediaType{Examples: map[string]*openapi.ExampleRef{"foo": nil}}),
 							))),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -183,7 +183,7 @@ func TestExample_Parse(t *testing.T) {
 									&openapi.MediaType{Examples: map[string]*openapi.ExampleRef{"foo": {}}}),
 							))),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -205,7 +205,7 @@ func TestExample_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
@@ -218,7 +218,7 @@ func TestExample_Parse(t *testing.T) {
 				calledReader := false
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
 					require.Equal(t, "https://foo.bar", u.String())
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: "foobar"}
+					cfg := dynamictest.NewConfig("foobar", dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					calledReader = true
 					return cfg, nil
 				})
@@ -233,7 +233,7 @@ func TestExample_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				require.True(t, calledReader, "reader not called")
 				content := config.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK).Content["application/json"]

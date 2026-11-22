@@ -165,3 +165,270 @@ func TestCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestCommand_PositionalArgsAfterFlag(t *testing.T) {
+	testcases := []struct {
+		name string
+		cmd  func() *cli.Command
+		args []string
+		test func(t *testing.T, cmd *cli.Command, args []string, err error)
+	}{
+		{
+			name: "string flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().String("name", "", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--name", "foo", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", cmd.Flags().GetString("name"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "string flag followed by several positional arguments",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().String("name", "", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--name", "foo", "a", "b"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", cmd.Flags().GetString("name"))
+				require.Equal(t, []string{"a", "b"}, args)
+			},
+		},
+		{
+			name: "shorthand string flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().StringShort("name", "n", "", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"-n", "foo", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", cmd.Flags().GetString("name"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "int flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Int("count", 1, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--count", "2", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 2, cmd.Flags().GetInt("count"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "float flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Float("ratio", 1, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--ratio", "0.5", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 0.5, cmd.Flags().GetFloat("ratio"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "bool flag without value followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Bool("flag", false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--flag", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, cmd.Flags().GetBool("flag"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "bool flag with explicit value followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Bool("flag", true, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--flag", "false", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, false, cmd.Flags().GetBool("flag"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "list flag consumes following values (documents current behavior)",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().StringSlice("list", nil, false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--list", "a", "b"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"a", "b"}, cmd.Flags().GetStringSlice("list"))
+				require.Empty(t, args)
+			},
+		},
+		{
+			name: "string flag with = followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().String("name", "", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--name=foo", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", cmd.Flags().GetString("name"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "bool flag with true followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Bool("flag", false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--flag", "true", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, cmd.Flags().GetBool("flag"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "--no-flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().Bool("flag", true, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--no-flag", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, false, cmd.Flags().GetBool("flag"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "shorthand bool flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().BoolShort("flag", "f", false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"-f", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, cmd.Flags().GetBool("flag"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "string flag at the end without value",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().String("name", "x", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--name"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "", cmd.Flags().GetString("name"))
+				require.Empty(t, args)
+			},
+		},
+		{
+			name: "dynamic string flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().DynamicString("foo[<index>]", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--foo[0]", "bar", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", cmd.Flags().GetString("foo[0]"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "dynamic int flag followed by positional argument",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().DynamicInt("foo-<name>-size", cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--foo-bar-size", "5", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 5, cmd.Flags().GetInt("foo-bar-size"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+		{
+			name: "dynamic list flag is greedy",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().DynamicStringSlice("foo[<index>]-list", false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--foo[0]-list", "a", "b"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"a", "b"}, cmd.Flags().GetStringSlice("foo[0]-list"))
+				require.Empty(t, args)
+			},
+		},
+		{
+			name: "list flag followed by -- separator ends the list",
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
+				c.Flags().StringSlice("list", nil, false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--list", "a", "b", "--", "pos"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"a", "b"}, cmd.Flags().GetStringSlice("list"))
+				require.Equal(t, []string{"pos"}, args)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			var cmd *cli.Command
+			var args []string
+			root := tc.cmd()
+			root.SetArgs(tc.args)
+			root.Run = func(c *cli.Command, a []string) error {
+				cmd = c
+				args = a
+				return nil
+			}
+
+			err := root.Execute()
+
+			tc.test(t, cmd, args, err)
+		})
+	}
+}

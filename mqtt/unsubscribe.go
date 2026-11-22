@@ -64,7 +64,7 @@ func (r *UnsubscribeResponse) Read(d *Decoder, _ *Header) {
 	}
 
 	for d.leftSize > 0 {
-		code := d.ReadByte()
+		code := d.ReadUInt8()
 		r.ReasonCodes = append(r.ReasonCodes, UnsubscriptionReason(code))
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"slices"
 )
@@ -20,13 +21,14 @@ type Command struct {
 	EnvPrefix string
 	Version   string
 
-	configFileName string
-	configPaths    []string
-	configFile     string
-	args           []string
-	flags          *FlagSet
-	output         io.Writer
-	ctx            context.Context
+	configFileOptions []configFileOption
+	configFileName    string
+	configPaths       []string
+	configFile        string
+	args              []string
+	flags             *FlagSet
+	output            io.Writer
+	ctx               context.Context
 }
 
 func (c *Command) Execute() error {
@@ -50,13 +52,17 @@ func (c *Command) Execute() error {
 		}
 	}
 
+	if cmd.output == nil {
+		cmd.output = c.output
+	}
+
 	positional, err := parseFlags(args, envPrefix, cmd.Flags())
 	if err != nil {
 		return err
 	}
 
 	if cmd.Flags().GetBool("help") {
-		c.printHelp()
+		cmd.printHelp()
 		return nil
 	}
 
@@ -109,8 +115,26 @@ func (c *Command) Flags() *FlagSet {
 		if c.Version != "" {
 			c.Flags().BoolShort("version", "v", false, FlagDoc{Short: "Show version information and exit"})
 		}
+
+		// built-in flags are documented after the flags of the command
+		for _, name := range []string{"help", "version"} {
+			if f := c.flags.Lookup(name); f != nil {
+				f.Order = math.MaxInt
+			}
+		}
 	}
 	return c.flags
+}
+
+// configFileOption is an option that can only be set in the config file. It has no flag.
+type configFileOption struct {
+	key string
+	doc FlagDoc
+}
+
+// ConfigFileOption documents an option that exists only in the config file, e.g. javascript.modules.
+func (c *Command) ConfigFileOption(key string, doc FlagDoc) {
+	c.configFileOptions = append(c.configFileOptions, configFileOption{key: key, doc: doc})
 }
 
 func (c *Command) SetConfigName(name string) {

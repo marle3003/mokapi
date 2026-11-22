@@ -37,7 +37,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = validationSchema.Parse(&dynamic.Config{Data: validationSchema}, nil)
+	cfg := &dynamic.Config{}
+	cfg.SetData(validationSchema)
+	err = validationSchema.Parse(cfg, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +152,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	config.Scope.OpenIfNeeded(config.Info.Path())
+	config.Scope().OpenIfNeeded(config.Info.Path())
 
 	err := c.Paths.Parse(config, reader)
 	if err != nil {
@@ -236,7 +238,7 @@ func (s Status) String() string {
 }
 
 func getName(cfg *dynamic.Config) string {
-	if c, ok := cfg.Data.(*Config); ok {
+	if c, ok := cfg.Data().(*Config); ok {
 		return c.Info.Name
 	}
 	return ""

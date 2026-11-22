@@ -10,11 +10,8 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"mokapi/sortedmap"
 	"net/http"
 	"sync"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type WebsocketStore struct {
@@ -27,10 +24,11 @@ type WebsocketStore struct {
 	reader  dynamic.Reader
 }
 
+// WebsocketInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type WebsocketInfo struct {
-	*asyncapi3.Config
 	*websocket.Store
-	configs               map[string]*dynamic.Config
+	configSnapshot[asyncapi3.Config]
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *WebsocketInfo)
 }
@@ -42,12 +40,19 @@ type WebsocketHandler struct {
 
 func newWebsocketInfo(store *websocket.Store, updateEventAndMetrics func(info *WebsocketInfo)) *WebsocketInfo {
 	hc := &WebsocketInfo{
-		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	return hc
+}
+
+// NewWebsocketInfo returns an info that publishes cfg as is, without merging files and
+// without the implicit default server of Add. It is meant for tests of readers.
+func NewWebsocketInfo(cfg *asyncapi3.Config, store *websocket.Store) *WebsocketInfo {
+	wi := newWebsocketInfo(store, nil)
+	wi.publish(cfg)
+	return wi
 }
 
 func (s *WebsocketStore) Get(name string) *WebsocketInfo {
@@ -93,16 +98,16 @@ func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.WebsocketEventEmi
 	}
 
 	if !ok {
-		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
-		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name))
+		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name))
 
 		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Websocket), s.updateEventStore)
 		s.infos[cfg.Info.Name] = wi
 	}
-	wi.addConfig(c, s.reader)
+	wi.afterPublish(wi.add(c, mergeWebsocketConfigs(s.reader)))
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(wi.Config)
+		s.addToIndex(wi.Config())
 	}
 
 	return wi, nil
@@ -120,7 +125,8 @@ func (s *WebsocketStore) Set(name string, wi *WebsocketInfo) {
 }
 
 func (s *WebsocketStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg, err := getWebsocketConfig(c)
 	if err != nil {
@@ -128,72 +134,49 @@ func (s *WebsocketStore) Remove(c *dynamic.Config) {
 	}
 	name := cfg.Info.Name
 	mi := s.infos[name]
-
-	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(mi.Config)
-	}
-
-	delete(mi.configs, c.Info.Url.String())
-	mi.update(s.reader)
-
-	if len(mi.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
-		delete(s.infos, name)
-		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
-	}
-}
-
-func (c *WebsocketInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	key := config.Info.Url.String()
-	c.configs[key] = config
-	c.update(reader)
-}
-
-func (c *WebsocketInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.Config = nil
-		c.Store = nil
+	if mi == nil {
 		return
 	}
 
-	cfg := mergeAsyncApiConfigs(c.configs, reader)
-
-	a := cfg.Analyze()
-	k := a.Usage("ws")
-	if len(k.Servers) == 0 {
-		log.Infof("websocket: using implicit default server for '%s' (inferred from bindings)", cfg.Info.Name)
-		if cfg.Servers == nil {
-			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
-		}
-		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
-			Value: &asyncapi3.Server{
-				Host:     ":80",
-				Protocol: "ws",
-				Title:    "Mokapi Default Server",
-				Summary:  "Automatically added server because no servers are defined in the AsyncAPI spec",
-			},
-		})
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(mi.Config())
 	}
 
-	c.Config = cfg
+	mi.afterPublish(mi.remove(c, mergeWebsocketConfigs(s.reader)))
+
+	if remaining := mi.Config(); remaining == nil {
+		delete(s.infos, name)
+		s.events.ResetStores(events.NewTraits().WithNamespace("websocket").WithName(name))
+	} else if s.cfg.Api.Search.Enabled {
+		s.addToIndex(remaining)
+	}
+}
+
+// mergeWebsocketConfigs merges the files of a service and adds the default server if the spec
+// defines none.
+func mergeWebsocketConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *asyncapi3.Config {
+	return func(files []*dynamic.Config) *asyncapi3.Config {
+		cfg := mergeAsyncApiConfigs(files, reader)
+		defaultAsyncApiServer(cfg, "ws", "websocket: using implicit default server", &asyncapi3.Server{
+			Host:     ":80",
+			Protocol: "ws",
+			Title:    "Mokapi Default Server",
+			Summary:  "Automatically added server because no servers are defined in the AsyncAPI spec",
+		})
+		return cfg
+	}
+}
+
+func (c *WebsocketInfo) afterPublish(cfg *asyncapi3.Config) {
+	if cfg == nil {
+		return
+	}
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
 func (c *WebsocketInfo) Handler(ws *monitor.Websocket) http.Handler {
 	return &WebsocketHandler{Websocket: ws, next: c.Store}
-}
-
-func (c *WebsocketInfo) Configs() []*dynamic.Config {
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -203,21 +186,21 @@ func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func getWebsocketConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
-	if _, ok := c.Data.(*asyncapi3.Config); ok {
-		return c.Data.(*asyncapi3.Config), nil
-	} else {
-		old := c.Data.(*asyncApi.Config)
-		return old.Convert()
+	data := c.Data()
+	if cfg, ok := data.(*asyncapi3.Config); ok {
+		return cfg, nil
 	}
+	return data.(*asyncApi.Config).Convert()
 }
 
 func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
-	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
+	cfg := k.Config()
+	eventStore, hasStoreConfig := s.cfg.Event.Store[cfg.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for channelName, topic := range k.Config.Channels {
+	for channelName, topic := range cfg.Channels {
 		if topic.Value == nil {
 			continue
 		}
@@ -227,9 +210,9 @@ func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
 		if _, ok := k.seenTopics[channelName]; ok {
 			continue
 		}
-		s.monitor.Websocket.Messages.WithLabel(k.Config.Info.Name, channelName)
-		s.monitor.Websocket.LastMessage.WithLabel(k.Config.Info.Name, channelName)
-		traits := events.NewTraits().WithNamespace("websocket").WithName(k.Config.Info.Name).With("channel", channelName)
+		s.monitor.Websocket.Messages.WithLabel(cfg.Info.Name, channelName)
+		s.monitor.Websocket.LastMessage.WithLabel(cfg.Info.Name, channelName)
+		traits := events.NewTraits().WithNamespace("websocket").WithName(cfg.Info.Name).With("channel", channelName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[channelName] = true
 	}

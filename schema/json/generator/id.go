@@ -15,7 +15,7 @@ func newIdNode() *Node {
 }
 
 func fakeId(r *Request) (any, error) {
-	if v, ok := r.Context.Values["id"]; ok {
+	if v, ok := r.Context.valueAt("id", r.level); ok {
 		if _, err := validate(v, r); err == nil {
 			return v, nil
 		}

@@ -59,20 +59,14 @@ func TestHandler_Mqtt(t *testing.T) {
 			name: "get MQTT services",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Mqtt.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("mqtt.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "mqtt", "1.0"),
-						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
-					),
-				}, enginetest.NewEngine())
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "kafka", "1.0"),
-						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
-					),
-				}, enginetest.NewEngine())
+				_, _ = app.Mqtt.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "mqtt", "1.0"),
+					asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("mqtt.yaml")})), enginetest.NewEngine())
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "kafka", "1.0"),
+					asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt",
@@ -82,12 +76,9 @@ func TestHandler_Mqtt(t *testing.T) {
 			name: "get specific",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-					),
-				}
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				_, _ = app.Mqtt.Add(cfg, enginetest.NewEngine())
@@ -101,15 +92,12 @@ func TestHandler_Mqtt(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
-						asyncapi3test.WithChannel("channel1"),
-						asyncapi3test.WithChannel("channel2"),
-					),
-				}
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+					asyncapi3test.WithChannel("channel1"),
+					asyncapi3test.WithChannel("channel2"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				app.Monitor.Mqtt.Messages.WithLabel("foo", "channel1").Add(1)
@@ -143,17 +131,13 @@ func TestHandler_Mqtt(t *testing.T) {
 					),
 				)
 
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: mqtt,
-				}
+				cfg := dynamictest.NewConfig(mqtt, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				err := mqtt.Parse(cfg, &dynamictest.Reader{})
 				require.NoError(t, err)
 
-				mi, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
+				_, err = app.Mqtt.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
 
 				return app
 			},
@@ -165,21 +149,19 @@ func TestHandler_Mqtt(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				addr := fmt.Sprintf(":%v", try.GetFreePort())
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("foo", "mqtt", addr),
-						asyncapi3test.WithChannel("sensors/{sensorId}/data",
-							asyncapi3test.WithParameter("sensorId", &asyncapi3.Parameter{}),
-						),
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("foo", "mqtt", addr),
+					asyncapi3test.WithChannel("sensors/{sensorId}/data",
+						asyncapi3test.WithParameter("sensorId", &asyncapi3.Parameter{}),
 					),
-				}
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
 				mi, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
 				require.NoError(t, err)
-				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
+				_, ok := mi.Store.Topic("sensors/1234z/data")
+				require.True(t, ok)
 
 				app.Monitor.Mqtt.Messages.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Add(1)
 				app.Monitor.Mqtt.LastMessage.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Set(1234)
@@ -270,8 +252,109 @@ func TestHandler_Mqtt_Metrics(t *testing.T) {
 }
 
 func getMqttInfo(config *asyncapi3.Config) *runtime.MqttInfo {
-	return &runtime.MqttInfo{
-		Config: config,
-		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()),
+	return runtime.NewMqttInfo(config, store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()))
+}
+
+func TestHandler_Mqtt_ServiceItems(t *testing.T) {
+	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
+		require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{}))
+		return cfg
 	}
+
+	testcases := []struct {
+		name   string
+		config *asyncapi3.Config
+		items  string
+	}{
+		{
+			name: "topics with tags sorted by name",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("sensors/humidity"),
+				asyncapi3test.WithChannel("sensors/temperature",
+					asyncapi3test.WithChannelTag("sensors", "Sensor data"),
+					asyncapi3test.WithChannelTag("indoor", ""),
+				),
+			),
+			items: `[{"name":"sensors/humidity"},{"name":"sensors/temperature","tags":["sensors","indoor"]}]`,
+		},
+		{
+			name: "parameterized address is resolved",
+			config: asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithChannel("channel1",
+					asyncapi3test.WithChannelAddress("sensors/{sensorId}/data"),
+					asyncapi3test.WithParameter("sensorId", &asyncapi3.Parameter{}),
+				),
+			),
+			items: `[{"name":"sensors/{sensorId}/data"}]`,
+		},
+		{
+			name: "channel of another protocol is excluded",
+			config: parsed(asyncapi3test.NewConfig(
+				asyncapi3test.WithTitle("foo"),
+				asyncapi3test.WithServer("mosquitto", "mqtt", "foo.bar"),
+				asyncapi3test.WithServer("broker", "kafka", "foo.bar"),
+				asyncapi3test.WithChannel("sensors", asyncapi3test.AssignToServer("#/servers/mosquitto")),
+				asyncapi3test.WithChannel("orders", asyncapi3test.AssignToServer("#/servers/broker")),
+			)),
+			items: `[{"name":"sensors"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := api.New(runtimetest.NewApp(runtimetest.WithMqttInfo("foo", getMqttInfo(tc.config))), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}
+
+func TestHandler_Mqtt_ConfigRemovedWhileRequestIsRunning(t *testing.T) {
+	// an info whose last file was removed has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(
+			runtimetest.WithMqtt(asyncapi3test.NewConfig(asyncapi3test.WithInfo("bar", "", "1.0"))),
+			runtimetest.WithMqttInfo("foo", &runtime.MqttInfo{}),
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0}}]`))
+	})
+
+	t.Run("cluster returns 404", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/mqtt/foo",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(404))
+	})
+
+	t.Run("topics return 404", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/mqtt/foo/topics",
+			nil,
+			"",
+			api.New(newApp(), static.Api{}),
+			try.HasStatusCode(404))
+	})
 }

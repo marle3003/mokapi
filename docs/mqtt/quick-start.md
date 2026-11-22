@@ -171,9 +171,15 @@ Instead of writing a subscriber just to check that a message arrived, you can us
 to inspect MQTT traffic directly. This is often the fastest way to debug message flow during development.
 
 1. Open the dashboard, by default at http://localhost:8080.
-2. Go to the MQTT tab.
-3. Select the sensors/temperature topic to see all messages that have been published to it, including
-their payload and QoS level.
+2. Select **MQTT** in the sidebar and open the **Sensor Service** cluster.
+3. Open the **Messages** sub tab. The log lists the messages that were published, newest first.
+4. Click the message of `sensors/temperature`. The panel next to the table shows the topic, the
+   time and, on the **Value** sub tab, the payload. The **Details** sub tab shows the client and
+   the content type.
+5. To see only this topic, add the filter **Topic** with the value `sensors/temperature`.
+
+See [Analyze your mocked MQTT API in Dashboard](/docs/mqtt/dashboard.md) for filters, pausing the
+log and sharing a message by its address.
 
 ## Schema Validation
 

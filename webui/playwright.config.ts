@@ -13,6 +13,8 @@ import { devices } from '@playwright/test'
 // The dashboard project needs a server in dashboard mode (VITE_WEBSITE=false). On CI the
 // `vite preview` server on 5173 serves the dashboard build, locally `vite dev` (all modes enabled
 // by .env) is joined by a second dev server in dashboard mode.
+// The projects dashboard and dev use Classic view (localStorage `dashboard-layout`), so existing specs
+// run unchanged. Specs for the new layout opt in through the `layout` option of fixture-dashboard.ts.
 const dashboardPort = process.env.CI ? 5173 : 5174
 const dashboardURL = `http://localhost:${dashboardPort}`
 
@@ -34,11 +36,13 @@ const config: PlaywrightTestConfig = {
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 5 : 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'line',
+  reporter: process.env.CI ? 'html' : 'line',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
-    actionTimeout: 0,
+    /* Maximum time each action such as `click()` can take. Without a limit, an action on a missing
+       element waits for the whole test timeout, which makes red runs slow. */
+    actionTimeout: 10 * 1000,
+    navigationTimeout: 15 * 1000,
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:5173',
 
@@ -61,6 +65,9 @@ const config: PlaywrightTestConfig = {
               localStorage: [
                 {
                   name: 'theme', value: 'dark'
+                },
+                {
+                  name: 'dashboard-layout', value: '"classic"'
                 }
               ]
             }
@@ -82,6 +89,9 @@ const config: PlaywrightTestConfig = {
               localStorage: [
                 {
                   name: 'theme', value: 'dark'
+                },
+                {
+                  name: 'dashboard-layout', value: '"classic"'
                 }
               ]
             }

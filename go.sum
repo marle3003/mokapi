@@ -75,6 +75,8 @@ github.com/brianvoe/gofakeit/v7 v7.18.0 h1:vn3tb6OKRUazCkzhotd8xEwz/mhkLFbDoR8OU
 github.com/brianvoe/gofakeit/v7 v7.18.0/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
 github.com/brianvoe/gofakeit/v7 v7.18.1 h1:gDjmUVe4q/xNvIGhH1Y1l+f1HLOpVUQTg4+2sFOECF4=
 github.com/brianvoe/gofakeit/v7 v7.18.1/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
+github.com/brianvoe/gofakeit/v7 v7.18.3 h1:SIBHYAFXJSynTU5aghITPyYdlrFaxA2rVGh5WtHSTUo=
+github.com/brianvoe/gofakeit/v7 v7.18.3/go.mod h1:QXuPeBw164PJCzCUZVmgpgHJ3Llj49jSLVkKPMtxtxA=
 github.com/cbroglie/mustache v1.4.2 h1:yHvAjVmSyYwCmEIYq7kBaZ4A+Q3kSYjJheLdB2H2r9U=
 github.com/cbroglie/mustache v1.4.2/go.mod h1:Q5dS171cNzDjfoeB6S1/GBl8bUJgIa3t8i3eyL80vzc=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -120,6 +122,10 @@ github.com/dop251/goja v0.0.0-20261105002551-2413f2132ac8 h1:QgXsRtHGoEITJcYOHdJ
 github.com/dop251/goja v0.0.0-20261105002551-2413f2132ac8/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
 github.com/dop251/goja v0.0.0-20261107161106-d6eaa50db8bc h1:4Sczgv7bAN62viekFz9wTF9PuXitaeyYKCSAICJwD6o=
 github.com/dop251/goja v0.0.0-20261107161106-d6eaa50db8bc/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
+github.com/dop251/goja v0.0.0-20261118204651-8dfece3d1e1d h1:MG+QmJk8N7lfsvBndLoPAIYhjYtJCEHMID11PskskTY=
+github.com/dop251/goja v0.0.0-20261118204651-8dfece3d1e1d/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
+github.com/dop251/goja v0.0.0-20261122121755-dcce7f63c23a h1:hIc8woyGWNfebI6xXZFH5aQ2lq9NKcLtzJXevCMFXXA=
+github.com/dop251/goja v0.0.0-20261122121755-dcce7f63c23a/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
 github.com/elazarl/goproxy v1.7.2/go.mod h1:82vkLNir0ALaW14Rc399OTTjyNREgmdL2cVoIbS6XaE=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
@@ -136,6 +142,8 @@ github.com/go-co-op/gocron/v2 v2.22.0 h1:uEuH2F7k7VoESb1BYSaffuuV+T0kkpzsC0aXk7/
 github.com/go-co-op/gocron/v2 v2.22.0/go.mod h1:hiH/U9RMhTi1BBZJmef9s3KC9QwhpBF6PFrvUKaXY9M=
 github.com/go-co-op/gocron/v2 v2.23.0 h1:Qkhe0ZlUf3sRMCEuoXRi5VU/t8fi5lyD97eO+PsGJ4g=
 github.com/go-co-op/gocron/v2 v2.23.0/go.mod h1:QwAfxPmGC9tPDL5R9R3inaJYPDvYEXs/zkYrXD3L9jk=
+github.com/go-co-op/gocron/v2 v2.23.1 h1:DAM4k6jfBHaaaLS0yCps8Jdq3smQZRoEg+/hwR5bLlk=
+github.com/go-co-op/gocron/v2 v2.23.1/go.mod h1:QwAfxPmGC9tPDL5R9R3inaJYPDvYEXs/zkYrXD3L9jk=
 github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 h1:+zs/tPmkDkHx3U66DAb0lQFJrpS6731Oaa12ikc+DiI=
 github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376/go.mod h1:an3vInlBmSxCcxctByoQdvwPiA7DTK7jaaFDBTtu0ic=
 github.com/go-git/go-billy/v5 v5.9.1 h1:8U73XiOTfINdItHVa6z4Gv7ToObcZ6grkqQbLryLCdA=

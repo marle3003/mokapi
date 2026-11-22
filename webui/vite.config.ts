@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig, type Plugin } from 'vite'
+import type { Plugin } from 'vite'
+import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 import { docsIndex } from './vite-plugin-docs-index.ts'
 
@@ -25,10 +26,16 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       APP_VERSION: JSON.stringify(process.env.npm_package_version),
     },
     resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '#docs-images': fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url))
-      }
+      alias: [
+        // unit tests (CI) run without src/assets/docs, see src/test-support/image-stub.ts; must precede '@'
+        ...(process.env.VITEST ? [{ find: '@/assets/docs/get-started/dashboard-overview-mock-api.png', replacement: fileURLToPath(new URL('./src/test-support/image-stub.ts', import.meta.url)) }] : []),
+        // the mock scripts in e2e/mocks import 'mokapi', which only exists in the Mokapi runtime; a regex, so 'mokapi/...' imports stay untouched
+        ...(process.env.VITEST ? [{ find: /^mokapi$/, replacement: fileURLToPath(new URL('./src/test-support/mokapi-stub.ts', import.meta.url)) }] : []),
+        // 'mokapi/encoding' needs its own exact entry for the same reason
+        ...(process.env.VITEST ? [{ find: /^mokapi\/encoding$/, replacement: fileURLToPath(new URL('./src/test-support/mokapi-encoding-stub.ts', import.meta.url)) }] : []),
+        { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+        { find: '#docs-images', replacement: fileURLToPath(new URL(`./src/composables/docs-images.${isDashboard ? 'dashboard' : 'website'}.ts`, import.meta.url)) }
+      ]
     },
     base: '', // required for relative urls for base-tag
     // The server bundle (pre-rendering, see ssg/prerender.js) contains its dependencies, so it runs
@@ -37,7 +44,17 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     build: { copyPublicDir: !isSsrBuild },
     server: {
       proxy: {
-        '/api': 'http://localhost:8090'
+        // MOKAPI_DASHBOARD_API: used by scripts/docs-screenshots to point the dashboard at a live Mokapi
+        '/api': process.env.MOKAPI_DASHBOARD_API ?? 'http://localhost:8090'
+      }
+    },
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.test.ts', 'scripts/docs-screenshots/**/*.test.ts'],
+      coverage: {
+        provider: 'v8',
+        include: ['src/composables/**/*.ts'],
+        exclude: ['src/**/*.test.ts']
       }
     }
   }

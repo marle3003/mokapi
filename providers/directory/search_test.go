@@ -474,7 +474,7 @@ attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.1
 			if err != nil {
 				tc.test(t, nil, hook, err)
 			} else {
-				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
+				err = c.Parse(dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")})), tc.reader)
 				tc.test(t, directory.NewHandler(c, enginetest.NewEngine(), &eventstest.Handler{}), hook, err)
 			}
 		})
@@ -684,7 +684,7 @@ foo: bar
 			if err != nil {
 				tc.test(t, nil, nil, err)
 			} else {
-				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
+				err = c.Parse(dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")})), tc.reader)
 				eh := &eventstest.Handler{}
 				h := directory.NewHandler(c, enginetest.NewEngine(), eh)
 				tc.test(t, h, eh, err)

@@ -68,6 +68,45 @@ Use the context to keep related values consistent. For example, an email address
 be built from a previously generated first and last name, or street, zip and city can
 all come from the same address.
 
+### Nested objects and arrays
+
+A nested object or an array item starts with a copy of its parent's values. Everything
+it writes to `values` is discarded when it returns, so values don't leak into the parent
+or into sibling objects. A `billingAddress` and a `shippingAddress` in the same schema
+therefore get different addresses.
+
+A property that the nested object declares itself, meaning one that matches a faker node,
+is generated again instead of copying the parent's value. A `manager` object with its own
+`firstName` and `lastName` gets a new name. Properties it doesn't declare are inherited:
+the `email` in a nested `contact` object is built from the parent's `firstName` and
+`lastName`.
+
+Values that a node stores under its own key, such as the `city` of an address, are
+inherited by nested objects as well. "One address per context" in the
+[example](#generate-addresses-for-your-own-country) below therefore means one address per
+object level.
+
+Request parameters of an OpenAPI operation stay in `context.values` at every level. Only
+the automatic copy is limited: a parameter is filled in only for the properties with the
+same name at the shallowest object level, which also applies to built-in nodes such as `id`.
+For `GET /users/123` the root `id` is `123`, but `friends[].id` is generated. A custom node
+can still read the parameter in nested objects. Built-in nodes that store their own
+generated value, such as `firstname`, `lastname` or `gender`, replace the parameter of the
+same name in a nested object that declares such a property. `id` and `name` don't.
+
+```javascript
+import { findByName, ROOT_NAME } from 'mokapi/faker'
+
+export default function () {
+    // ownerId inside friends[] receives the path id, here 123
+    findByName(ROOT_NAME).children.push({
+        name: 'ownerId',
+        attributes: ['ownerId'],
+        fake: (r) => r.context.values.id
+    })
+}
+```
+
 ## Domain detection
 
 Many property names are ambiguous. A `name` can be a person's name, a product name or a category name. To resolve this,
@@ -80,7 +119,7 @@ domain.
 For an object schema, Mokapi calculates a score for each domain:
 
 1. Take all property names of the schema.
-2. For each domain, add up the weights of its children that list one of the property names in their `attributes`. The comparison is case-insensitive.
+2. For each domain, add up the weights of its children that list one of the property names in their `attributes`. The comparison ignores case, `_` and `-`, so `first_name` matches `firstname`.
 3. The domain with the highest score wins. If no domain scores above 0, no domain is used.
 
 The name of the winning domain is appended to the request path. Nodes below the domain, such as `product/name`, can then
@@ -130,6 +169,10 @@ export default function() {
 }
 ```
 
+To check that the node is in the tree and that a property is matched to it, open the Faker page
+in the [dashboard](/docs/get-started/test-data.md#validate-in-the-dashboard). Filter by
+`frequency` or switch on **Custom only**, then try the property path `frequency` in the playground.
+
 ### Generate addresses for your own country
 
 This example overrides the existing name and address nodes. Street, house number,
@@ -153,7 +196,7 @@ export default function() {
     findByName('firstname').fake = () => random(firstnames)
     findByName('lastname').fake = () => random(lastnames)
 
-    // Pick one address per context and reuse it for all address parts
+    // Pick one address per object level and reuse it for all address parts
     const getAddress = (ctx) => {
         let address = ctx.values['selected_address']
         if (!address) {

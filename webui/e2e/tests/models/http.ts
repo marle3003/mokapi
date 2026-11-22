@@ -1,6 +1,7 @@
-import type { Locator } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { Metric } from './metric'
 import { ServiceInfoModel } from './service-info'
+import { LogModel } from './log'
 
 export class HttpModel {
     readonly metricHttpRequests: Metric
@@ -122,5 +123,22 @@ export class ExampleModel {
         this.button = element.getByRole('button', { name: 'Example & Validate' })
         this.code = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('region', { name: 'Source' }).getByRole('region', { name: 'Content' })
         this.example = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('button', { name: 'Example' })
+    }
+}
+
+// The request log of the HTTP dashboard: region "Recent Requests", panel "Request details".
+export class HttpRequestLogModel extends LogModel<'API Name' | 'Method' | 'URL' | 'Request Header' | 'Status Code' | 'Response Header' | 'Client IP'> {
+    constructor(page: Page) {
+        super(page, { log: 'Recent Requests', panel: 'Request details' })
+    }
+
+    // The row of a request, found by the link to its full view.
+    row(id: string): Locator {
+        return this.rows.filter({ has: this.page.locator(`a[href$="/requests/${id}"]`) })
+    }
+
+    cell(row: Locator, column: 'Method' | 'URL' | 'Status Code' | 'Time' | 'Duration'): Locator {
+        const index = ['Method', 'URL', 'Status Code', 'Time', 'Duration'].indexOf(column)
+        return row.getByRole('cell').nth(index)
     }
 }

@@ -15,6 +15,14 @@ export async function driveWebsocket(): Promise<void> {
     bob.send(JSON.stringify({ text: 'Hello there!', username: 'bob'}));
 
     await broadcastReceived;
+
+    // dave sends a message that does not match ChatMessage (text must be a string). Mokapi logs
+    // it as invalid and closes his connection, bob and carol stay connected for the client views.
+    const dave = new WebSocket('ws://localhost:8000/chats/general');
+    await opened(dave);
+    const daveClosed = new Promise<void>((resolve) => dave.addEventListener('close', () => resolve(), { once: true }));
+    dave.send(JSON.stringify({ text: 42, username: 'dave'}));
+    await daveClosed;
 }
 
 function opened(socket: WebSocket) {

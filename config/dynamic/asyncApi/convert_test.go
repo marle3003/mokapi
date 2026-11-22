@@ -23,11 +23,11 @@ func TestConfig_Convert(t *testing.T) {
 	err = yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
-	c := &dynamic.Config{Data: cfg}
+	c := dynamictest.NewConfig(cfg)
 	err = cfg.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
 
-	cfg3, err := c.Data.(*asyncApi.Config).Convert()
+	cfg3, err := c.Data().(*asyncApi.Config).Convert()
 	require.NoError(t, err)
 
 	require.Equal(t, "3.0.0", cfg3.Version)
@@ -209,7 +209,7 @@ func TestConvert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			c := &dynamic.Config{Data: tc.cfg}
+			c := dynamictest.NewConfig(tc.cfg)
 			err := tc.cfg.Parse(c, &dynamictest.Reader{})
 			require.NoError(t, err)
 

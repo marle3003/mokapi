@@ -1,10 +1,10 @@
-import type { MarkdownIt, MarkdownItOptions, Token, Renderer, RendererRule } from "markdown-it"
+import type { Env, MarkdownIt, MarkdownItOptions, Token, Renderer, RendererRule } from "markdown-it"
 import { useRouter } from "@/router"
 import { resolveLink } from "./site-base"
 
 export function MarkdownItBox(md: MarkdownIt) {
     const router = useRouter()
-    var defaultRender: RendererRule = md.renderer.rules.fence,
+    const defaultRender: RendererRule = md.renderer.rules.fence,
         unescapeAll = md.utils.unescapeAll,
         boxExpr = /box=(\w*)/,
         noTitleExpre = /noTitle/,
@@ -20,19 +20,19 @@ export function MarkdownItBox(md: MarkdownIt) {
     }
 
     function getAlertName(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
         return boxExpr.exec(info)?.slice(1)[0]
     }
 
     function getUrl(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
         
         const v = url.exec(info)
         if (!v) {
             return ''
         }
 
-        var u = v[2]
+        let u = v[2]
         if (u?.endsWith('.md')) {
             u = resolveLink(u.replace('.md', ''), router.currentRoute.value.path)
         }
@@ -41,16 +41,16 @@ export function MarkdownItBox(md: MarkdownIt) {
     }
 
     function showTitle(token: Token): boolean {
-        var info = getInfo(token)
+        const info = getInfo(token)
         return noTitleExpre.exec(info) == null
     }
 
     function parseContent(content: string) {
-        var m;
+        let m;
         do {
             m = link.exec(content)
             if (m) {
-                var url = m[2]
+                let url = m[2]
                 if (url?.endsWith('.md')) {
                     url = resolveLink(url.replace('.md', ''), router.currentRoute.value.path)
                 }
@@ -62,7 +62,7 @@ export function MarkdownItBox(md: MarkdownIt) {
     }
 
     function getTitle(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
 
         const r = titleQuote.exec(info)
         if (r && r.length > 1) {
@@ -73,7 +73,7 @@ export function MarkdownItBox(md: MarkdownIt) {
     }
 
     function hideIcon(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
 
         const r = hideIconExpr.exec(info)
         if (r && r.length > 1) {
@@ -83,7 +83,7 @@ export function MarkdownItBox(md: MarkdownIt) {
     }
 
     function getEmoji(token: Token) {
-        var info = getInfo(token) 
+        const info = getInfo(token) 
 
         const r = emoji.exec(info)
         if (r && r.length > 1) {
@@ -92,7 +92,7 @@ export function MarkdownItBox(md: MarkdownIt) {
         return undefined
     }
 
-    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
+    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: Env | undefined, slf: Renderer): string {
         if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
         const name = getAlertName(tokens[idx])
@@ -100,7 +100,7 @@ export function MarkdownItBox(md: MarkdownIt) {
             return defaultRender(tokens, idx, options, env, slf)
         }
         
-        var alert = ''
+        let alert = ''
         for (let i = idx; i < tokens.length; i++) {
             const token = tokens[i]!
             const name = getAlertName(token)

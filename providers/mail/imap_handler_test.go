@@ -139,7 +139,7 @@ func TestImapHandler(t *testing.T) {
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
 				_ = h.Login("alice", "foo", ctx)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.EnsureInbox()
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{})
@@ -388,7 +388,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{})
 
@@ -419,7 +419,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{
 					Flags: []imap.Flag{imap.FlagDeleted},
@@ -452,7 +452,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{
 					Flags: []imap.Flag{imap.FlagDeleted},
@@ -485,7 +485,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{
 					Flags: []imap.Flag{imap.FlagDeleted},
@@ -518,7 +518,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages, &mail.Mail{
 					UId: uint32(143),
@@ -552,7 +552,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{
@@ -583,7 +583,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{
@@ -616,7 +616,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{
@@ -653,7 +653,7 @@ func TestImapHandler(t *testing.T) {
 				err = h.Create("foo", &imap.CreateOptions{}, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				require.Contains(t, mb.Folders, "foo")
 			},
 		},
@@ -674,7 +674,7 @@ func TestImapHandler(t *testing.T) {
 				err = h.Create("foo", &imap.CreateOptions{Flags: []imap.MailboxFlags{"foo"}}, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				require.Contains(t, mb.Folders, "foo")
 				require.Equal(t, []imap.MailboxFlags{"foo"}, mb.Folders["foo"].Flags)
 			},
@@ -696,7 +696,7 @@ func TestImapHandler(t *testing.T) {
 				err = h.Create("inbox/foo", &imap.CreateOptions{}, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				require.Contains(t, mb.Folders["INBOX"].Folders, "foo")
 			},
 		},
@@ -715,7 +715,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{UId: uint32(111)},
@@ -755,7 +755,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{UId: uint32(111)},
@@ -797,7 +797,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{UId: uint32(111)},
@@ -836,7 +836,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				inbox := mb.Folders["INBOX"]
 				inbox.Messages = append(inbox.Messages,
 					&mail.Mail{UId: uint32(111)},
@@ -875,7 +875,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.AddFolder(&mail.Folder{Name: "foo"})
 
 				err = h.Delete("foo", ctx)
@@ -919,7 +919,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.AddFolder(&mail.Folder{Name: "foo", Folders: map[string]*mail.Folder{"bar": {Name: "bar"}}})
 
 				err = h.Delete("foo", ctx)
@@ -941,7 +941,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.AddFolder(&mail.Folder{Name: "foo", Folders: map[string]*mail.Folder{"bar": {Name: "bar"}}})
 
 				err = h.Delete("foo/bar", ctx)
@@ -985,7 +985,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.AddFolder(&mail.Folder{Name: "foo"})
 
 				err = h.Rename("foo", "bar", ctx)
@@ -1013,7 +1013,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.AddFolder(&mail.Folder{Name: "foo"})
 				mb.AddFolder(&mail.Folder{Name: "bar"})
 
@@ -1042,7 +1042,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.Folders["INBOX"].Messages = append(mb.Folders["INBOX"].Messages, &mail.Mail{})
 
 				err = h.Rename("INBOX", "old", ctx)
@@ -1076,7 +1076,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.Folders["INBOX"].Messages = append(mb.Folders["INBOX"].Messages, &mail.Mail{})
 
 				err = h.Append("Sent", &smtp.Message{MessageId: "1"}, imap.AppendOptions{}, ctx)
@@ -1106,7 +1106,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.Folders["INBOX"].Messages = append(mb.Folders["INBOX"].Messages, &mail.Mail{})
 
 				err = h.Append("Sent", &smtp.Message{MessageId: "1"}, imap.AppendOptions{Flags: []imap.Flag{imap.FlagSeen}}, ctx)
@@ -1212,7 +1212,7 @@ func TestImapHandler(t *testing.T) {
 				_, err := h.Select("Inbox", false, ctx)
 				require.NoError(t, err)
 
-				mb := s.Mailboxes["alice@mokapi.io"]
+				mb, _ := s.Mailbox("alice@mokapi.io")
 				mb.Folders["INBOX"].Messages = []*mail.Mail{
 					{
 						Message:  &smtp.Message{},
@@ -1251,6 +1251,48 @@ func TestImapHandler(t *testing.T) {
 				err = h.Expunge(&imap.IdSet{Ids: []imap.Set{imap.IdNum(1)}}, &imaptest.ExpungeRecorder{}, ctx)
 
 				require.Len(t, r.Messages, 2)
+			},
+		},
+		{
+			name: "Subscribe twice adds flag once",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders:  map[string]*mail.FolderConfig{"INBOX": {}, "Archive": {}},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				require.NoError(t, h.Login("alice", "foo", ctx))
+
+				require.NoError(t, h.Subscribe("Archive", ctx))
+				require.NoError(t, h.Subscribe("Archive", ctx))
+
+				mb, _ := s.Mailbox("alice@mokapi.io")
+				require.Equal(t, []imap.MailboxFlags{imap.Subscribed}, mb.Folders["Archive"].Flags)
+			},
+		},
+		{
+			name: "Unsubscribe removes flag",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders:  map[string]*mail.FolderConfig{"INBOX": {}, "Archive": {}},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				require.NoError(t, h.Login("alice", "foo", ctx))
+				require.NoError(t, h.Subscribe("Archive", ctx))
+
+				require.NoError(t, h.Unsubscribe("Archive", ctx))
+
+				mb, _ := s.Mailbox("alice@mokapi.io")
+				require.Empty(t, mb.Folders["Archive"].Flags)
 			},
 		},
 	}

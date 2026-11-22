@@ -511,6 +511,55 @@ paths:
             "text/plain":
               schema:
                 type: string
+  /api/jobs:
+    get:
+      summary: returns the registered jobs
+      operationId: jobs
+      responses:
+        "200":
+          description: registered jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, name, schedule, maxRuns, runs, state, tags]
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    schedule:
+                      type: string
+                    maxRuns:
+                      type: integer
+                    runs:
+                      type: integer
+                    state:
+                      type: string
+                      enum: [scheduled, finished, cancelled]
+                    nextRun:
+                      type: string
+                      format: date-time
+                    tags:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    lastRun:
+                      type: object
+                      required: [eventId, time, duration, status]
+                      properties:
+                        eventId:
+                          type: string
+                        time:
+                          type: string
+                          format: date-time
+                        duration:
+                          type: integer
+                        status:
+                          type: string
+                          enum: [success, warning, error]
   /api/configs:
     get:
       summary: returns configs
@@ -615,11 +664,41 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/FakerTree'
-  /api/faker/node/{name}/fake:
+  /api/faker/fake:
+    post:
+      summary: generates a value and reports which faker node produced which value
+      operationId: fakerFake
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: array
+                  items:
+                    type: string
+                schema:
+                  type: object
+      responses:
+        "200":
+          description: the generated value and one match per generated value
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/FakerFakeResult'
+        "400":
+          description: invalid request or generator error
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/faker/node/fake:
     parameters:
-      - in: path
-        name: name
+      - in: query
+        name: path
         required: true
+        description: path of the node, e.g. /person/email
         schema:
           type: string
     get:
@@ -632,7 +711,7 @@ paths:
             'application/json':
               schema: true
         "400":
-          description: bad request for faker node
+          description: the node has no fake function
           content:
             text/plain:
               schema:
@@ -659,11 +738,7 @@ paths:
         - in: query
           name: type
           schema:
-            type: array
-            items:
-              type: string
-          style: matrix
-          explode: true
+            type: string
       responses:
         "200":
           description: search results
@@ -685,16 +760,50 @@ components:
             $ref: '#/components/schemas/Error'
   schemas:
     FakerTree:
-      type: [ 'object', 'null' ]
+      type: object
       properties:
         name:
           type: string
-        value:
+        path:
           type: string
-        nodes:
-          type: [ 'array', 'null' ]
+        attributes:
+          type: array
+          items:
+            type: string
+        weight:
+          type: number
+        dependsOn:
+          type: array
+          items:
+            type: string
+        children:
+          type: array
           items:
             $ref: '#/components/schemas/FakerTree'
+        custom:
+          type: boolean
+        hasFakeFunc:
+          type: boolean
+    FakerFakeResult:
+      type: object
+      properties:
+        value: true
+        matches:
+          type: array
+          items:
+            type: object
+            properties:
+              propertyPath:
+                type: string
+              node:
+                type: string
+              tokens:
+                type: array
+                items:
+                  type: string
+              source:
+                type: string
+              value: true
     HttpValidateRequest:
       type: object
       required: [request, response]

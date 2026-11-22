@@ -13,6 +13,8 @@ import (
 
 type Handler interface {
 	Push(data EventData, traits Traits) error
+	// Update re-indexes an event that was pushed before its data was complete.
+	Update(data EventData)
 	GetEvents(traits Traits) []Event
 }
 
@@ -31,11 +33,17 @@ func NewStoreManager(index search.Index) *StoreManager {
 }
 
 func (m *StoreManager) Push(data EventData, traits Traits) error {
+	_, err := m.PushEvent(data, traits)
+	return err
+}
+
+// PushEvent stores the event like Push and returns it, so the caller knows its id and time.
+func (m *StoreManager) PushEvent(data EventData, traits Traits) (Event, error) {
 	m.m.RLock()
 	defer m.m.RUnlock()
 
 	if len(traits) == 0 {
-		return fmt.Errorf("empty traits not allowed")
+		return Event{}, fmt.Errorf("empty traits not allowed")
 	}
 	score := 0
 	var bestStore *store
@@ -49,7 +57,7 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 	}
 
 	if bestStore == nil {
-		return fmt.Errorf("no store found for %s", traits)
+		return Event{}, fmt.Errorf("no store found for %s", traits)
 	}
 
 	evt := NewEvent(data, traits)
@@ -61,7 +69,22 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 		m.index.Delete(removed.Id)
 	}
 
-	return nil
+	return evt, nil
+}
+
+// Update indexes the stored event of data again, after data has changed since Push. The write
+// lock keeps lookup and indexing atomic against the eviction in PushEvent, so the document of
+// an evicted event is not resurrected.
+func (m *StoreManager) Update(data EventData) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, s := range m.stores {
+		if evt, ok := s.find(data); ok {
+			m.addToIndex(&evt)
+			return
+		}
+	}
 }
 
 func (m *StoreManager) SetStore(size int, traits Traits) {

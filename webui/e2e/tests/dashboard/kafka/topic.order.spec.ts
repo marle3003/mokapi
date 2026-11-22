@@ -3,9 +3,9 @@ import { useDashboard } from '../../components/dashboard'
 import { useKafkaGroups, useKafkaMessages, useKafkaPartitions } from '../../components/kafka'
 import { test, expect } from '../../models/fixture-dashboard'
 import { useSourceView } from '../../components/source'
-import type { Locator } from '@playwright/test'
 
-const ace = { edit: (id: any) => { return { setValue: (s: string) => {} } } }
+// ace is a global of the dashboard page; page.evaluate runs in the browser
+declare const ace: { edit(id: string | null): { setValue(value: string): void } }
 
 test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
@@ -39,7 +39,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         }
     })
 
-    await useKafkaMessages(page).test(page.getByRole('table', { name: 'Recent Messages' }), false)
+    await useKafkaMessages(page).expectColumns(page.getByRole('table', { name: 'Recent Messages' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
     
@@ -57,7 +57,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await tabList.getByRole('tab', { name: 'Groups' }).click()
         const table = page.getByRole('tabpanel', { name: 'Groups' }).getByRole('table', { name: 'Topic Groups' })
         await expect(table).toBeVisible()
-        const group = useKafkaGroups(table, 'mokapi.shop.products')
+        const group = useKafkaGroups(table)
         await group.testGroup(0, cluster.groups[0], '10')
     })
 
@@ -127,7 +127,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             // first we try data that are wrong against the schema
             const id = await dialog.locator('.modal-dialog .ace_editor').getAttribute('id')
             await page.evaluate((id) => {
-                ace.edit(id).setValue('{"price":"bar"}')
+                ace.edit(id).setValue('{"features":"foo","price":"bar"}')
                 return id
             }, id)
             await dialog.getByRole('button', { name: 'Validate' }).click()
@@ -142,7 +142,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
             // now with a valid one
             await page.evaluate((id) => {
-                ace.edit(id).setValue('{"price":12}')
+                ace.edit(id).setValue('{"features":"foo","price":12}')
                 return id
             }, id)
             await dialog.getByRole('button', { name: 'Validate' }).click()
@@ -162,9 +162,3 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         })
     })
 })
-
-async function writeToAceEditor(locator: Locator, s: string) {
-    for (const key of s) {
-        await locator.press(key)
-    }
-}

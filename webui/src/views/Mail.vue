@@ -16,8 +16,9 @@ rules:
     recipient: '@mokapi.io'
     action: allow
 `
-const script = `import { on } from 'mokapi'
-import { send } from 'mokapi/mail'
+// The second import is joined with \n on the first line: Vite's dependency scan treats every line
+// starting with "import ... from" as a real import, even inside a string, and can't resolve 'mokapi/mail'.
+const script = `import { on } from 'mokapi'\nimport { send } from 'mokapi/mail'
 
 export default function() {
     on('smtp', function(mail) {

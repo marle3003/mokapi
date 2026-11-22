@@ -1,4 +1,6 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -12,7 +14,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByRole('cell').getByText('HR Employee Directory').click();
+    await new DashboardModel(page).sidebar.getByRole('link', { name: 'HR Employee Directory' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -27,8 +29,8 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     await test.step('Verify Servers', async () => {
 
-        const region = page.getByRole('region', { name: 'Servers' });
-        const table = region.getByRole('table', { name: 'Servers' });
+        await page.getByRole('tab', { name: 'Servers' }).click();
+        const table = page.getByRole('table', { name: 'Servers' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
 
@@ -38,6 +40,7 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     await test.step('Verify Configs', async () => {
 
+        await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
         await expect(await getCellByColumnName(table, 'URL')).toContainText('/ldap.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
@@ -45,8 +48,9 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
     });
 
     await test.step('Verify Recent Requests', async () => {
+        await page.getByRole('tab', { name: 'Requests' }).click();
         const table = page.getByRole('table', { name: 'Recent Requests' });
-        let rows = table.locator('tbody tr');
+        const rows = table.locator('tbody tr');
 
         // Unbind
         await expect(await getCellByColumnName(table, 'Operation', rows.nth(0))).toHaveText('Unbind');
@@ -130,3 +134,14 @@ test('Visit LDAP Testserver', async ({ page, baseURL }) => {
 
     });
 });
+
+test('Metric tiles of the ldap page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/ldap`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'ldap')
+
+    await expect(count.value).toHaveText('10')
+    await expect(second.value).toHaveText('0')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

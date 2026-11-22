@@ -110,27 +110,27 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 	rw.Write(res)
 }
 
-func (d *Directory) skip(e *Entry, baseDN string) bool {
-	if baseDN != "" && e.Dn == "" {
-		return true
-	}
+// isHiddenSubschema reports whether a search omits e: the subschema entry named by the root DSE
+// (subschemaDN) is returned only when it is the search base. The root DSE needs no check here,
+// the scope filter in the search already drops it for every non-empty base and supported scope.
+func isHiddenSubschema(e *Entry, baseDN string, subschemaDN string) bool {
+	return subschemaDN != "" && e.Dn == subschemaDN && baseDN != subschemaDN
+}
 
+func (d *Directory) subschemaDN() string {
 	root, _ := d.config.Entries.Get("")
-	name, ok := root.Attributes["subschemaSubentry"]
-	if !ok || len(name) == 0 {
-		return false
+	if name := root.Attributes["subschemaSubentry"]; len(name) > 0 {
+		return name[0]
 	}
-	return e.Dn == name[0] && baseDN != name[0]
+	return ""
 }
 
 func (d *Directory) getEntry(dn string) *Entry {
-	for it := d.config.Entries.Iter(); it.Next(); {
-		e := it.Value()
-		if e.Dn == dn {
-			return &e
-		}
+	e, ok := d.config.Entries.Find(func(e Entry) bool { return e.Dn == dn })
+	if !ok {
+		return nil
 	}
-	return nil
+	return &e
 }
 
 func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, ctx context.Context) {
@@ -153,7 +153,7 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 		modify.Actions = append(modify.Actions, &a)
 	}
 
-	err := modify.Apply(d.config.Entries, d.config.Schema)
+	err := d.config.Entries.Apply(modify, d.config.Schema)
 	var res *ldap.ModifyResponse
 	if err != nil {
 		var ee *EntryError
@@ -161,7 +161,6 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 		res = &ldap.ModifyResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
-		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -204,7 +203,7 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx con
 		add.Attributes[attr.Type] = attr.Values
 	}
 
-	err := add.Apply(d.config.Entries, d.config.Schema)
+	err := d.config.Entries.Apply(add, d.config.Schema)
 	var res *ldap.AddResponse
 	if err != nil {
 		var ee *EntryError
@@ -212,7 +211,6 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx con
 		res = &ldap.AddResponse{ResultCode: ee.Code, Message: err.Error()}
 	} else {
 		res = &ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
-		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -236,7 +234,7 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, c
 	del := &DeleteRecord{
 		Dn: r.Dn,
 	}
-	err := del.Apply(d.config.Entries, d.config.Schema)
+	err := d.config.Entries.Apply(del, d.config.Schema)
 	var res *ldap.DeleteResponse
 	if err != nil {
 		var ee *EntryError
@@ -244,7 +242,6 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, c
 		res = &ldap.DeleteResponse{ResultCode: ee.Code, MatchedDn: del.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn}
-		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -271,7 +268,7 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 		NewSuperiorDn: r.NewSuperiorDn,
 		DeleteOldDn:   r.DeleteOldDn,
 	}
-	err := del.Apply(d.config.Entries, d.config.Schema)
+	err := d.config.Entries.Apply(del, d.config.Schema)
 	var res *ldap.ModifyDNResponse
 	if err != nil {
 		var ee *EntryError
@@ -279,7 +276,6 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 		res = &ldap.ModifyDNResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
-		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)

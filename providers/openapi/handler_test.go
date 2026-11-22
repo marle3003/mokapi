@@ -754,7 +754,7 @@ func TestResolveEndpoint(t *testing.T) {
 					),
 				)
 				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
-				err := c.Parse(&dynamic.Config{Data: c}, &dynamictest.Reader{})
+				err := c.Parse(dynamictest.NewConfig(c), &dynamictest.Reader{})
 				require.NoError(t, err)
 
 				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
@@ -1689,11 +1689,7 @@ func (e *testEngine) Emit(event string, args ...any) []*common.Action {
 }
 
 func newScript(path, src string) dynamic.ConfigEvent {
-	return dynamic.ConfigEvent{Config: &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: mustParse(path)},
-		Raw:  []byte(src),
-		Data: src,
-	}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(src, dynamictest.WithInfo(dynamic.ConfigInfo{Url: mustParse(path)}), dynamictest.WithRaw([]byte(src)))}
 }
 
 func mustParse(s string) *url.URL {

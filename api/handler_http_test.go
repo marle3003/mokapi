@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
@@ -81,11 +82,9 @@ func TestHandler_Http(t *testing.T) {
 			name: "get http service info",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(), Data: openapitest.NewConfig("3.0.0",
-						openapitest.WithInfo("foo", "1.0", "bar"),
-					),
-				}
+				cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0.0",
+					openapitest.WithInfo("foo", "1.0", "bar"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				app.Http.Add(cfg)
 				return app
@@ -700,6 +699,159 @@ func TestHandler_Http_Metrics(t *testing.T) {
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
 				try.BodyContains(tc.responseBody))
+		})
+	}
+}
+
+func TestHandler_Http_ServiceItems(t *testing.T) {
+	testcases := []struct {
+		name   string
+		config *openapi.Config
+		items  string
+	}{
+		{
+			name: "operation with tags",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet/{petId}",
+					openapitest.WithOperation("GET", openapitest.WithOperationTags("pet", "store")),
+				),
+			),
+			items: `[{"name":"/pet/{petId}","method":"get","tags":["pet","store"]}]`,
+		},
+		{
+			name: "operation without tags",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet", openapitest.WithOperation("POST")),
+			),
+			items: `[{"name":"/pet","method":"post"}]`,
+		},
+		{
+			name: "path without operations has no item",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/empty"),
+				openapitest.WithPath("/pet", openapitest.WithOperation("GET")),
+			),
+			items: `[{"name":"/pet","method":"get"}]`,
+		},
+		{
+			name: "one item per operation sorted by path and method order",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithInfo("foo", "1.0", "bar"),
+				openapitest.WithPath("/pet",
+					openapitest.WithOperation("LINK"),
+					openapitest.WithOperation("DELETE"),
+					openapitest.WithOperation("POST"),
+					openapitest.WithOperation("GET"),
+				),
+				openapitest.WithPath("/owner", openapitest.WithOperation("PUT")),
+			),
+			items: `[{"name":"/owner","method":"put"},{"name":"/pet","method":"get"},{"name":"/pet","method":"post"},{"name":"/pet","method":"delete"},{"name":"/pet","method":"link"}]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := New(runtimetest.NewHttpApp(tc.config), static.Api{})
+
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services",
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasBody(`[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0},"items":`+tc.items+`}]`))
+		})
+	}
+}
+
+func TestHandler_Http_List_ExcludesOtherServiceTypes(t *testing.T) {
+	kafkaConfig := asyncapi3test.NewConfig(asyncapi3test.WithInfo("kafka-api", "bar", "1.0"))
+
+	testcases := []struct {
+		name         string
+		app          *runtime.App
+		responseBody string
+	}{
+		{
+			name: "http and kafka returns only http",
+			app: runtimetest.NewApp(
+				runtimetest.WithHttp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "1.0", "bar"))),
+				runtimetest.WithKafka(kafkaConfig),
+			),
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
+		},
+		{
+			name:         "only kafka returns empty list",
+			app:          runtimetest.NewApp(runtimetest.WithKafka(kafkaConfig)),
+			responseBody: `[]`,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			try.Handler(t,
+				http.MethodGet,
+				"http://foo.api/api/services/http",
+				nil,
+				"",
+				New(tc.app, static.Api{}),
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(tc.responseBody))
+		})
+	}
+}
+
+func TestHandler_Http_ConfigRemoved(t *testing.T) {
+	// an info whose last file was removed has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(
+			runtimetest.WithHttp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("bar", "1.0", ""))),
+			func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) },
+		)
+	}
+
+	t.Run("service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`))
+	})
+
+	t.Run("http service list skips it", func(t *testing.T) {
+		try.Handler(t,
+			http.MethodGet,
+			"http://foo.api/api/services/http",
+			nil,
+			"",
+			New(newApp(), static.Api{}),
+			try.HasStatusCode(200),
+			try.HasBody(`[{"name":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`))
+	})
+
+	for _, url := range []string{
+		"http://foo.api/api/services/http/foo",
+		"http://foo.api/api/services/http/foo/operations",
+		"http://foo.api/api/services/http/foo/openapi.json",
+		"http://foo.api/api/services/http/foo/openapi.yaml",
+		"http://foo.api/api/services/http/foo/bruno.yaml",
+	} {
+		t.Run(url+" returns 404", func(t *testing.T) {
+			try.Handler(t,
+				http.MethodGet,
+				url,
+				nil,
+				"",
+				New(newApp(), static.Api{}),
+				try.HasStatusCode(404))
 		})
 	}
 }

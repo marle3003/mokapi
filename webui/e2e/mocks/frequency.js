@@ -6,7 +6,7 @@ export default function() {
     root.children.unshift({
         name: 'Frequency',
         attributes: ['frequency'],
-        fake: (r) => {
+        fake: () => {
             return frequency[Math.floor(Math.random()*frequency.length)]
         }
     })

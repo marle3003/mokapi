@@ -1,4 +1,6 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -14,7 +16,8 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByRole('cell').getByText(/^Mail Server$/).click();
+    const { sidebar } = new DashboardModel(page)
+    await sidebar.getByRole('link', { name: 'Mail Server' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -31,6 +34,8 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
     });
 
     await test.step('Verify Servers', async () => {
+
+        await page.getByRole('tab', { name: 'Servers' }).click();
 
         const region = page.getByRole('tabpanel', { name: 'Servers' });
         const table = region.getByRole('table', { name: 'Servers' });
@@ -110,7 +115,7 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
         await test.step('Verify Mailbox alice.johnson@example.com', async () => {
 
-            await page.getByText('Mail Server').click();
+            await sidebar.getByRole('link', { name: 'Mail Server' }).click();
             await page.getByRole('tab', { name: 'Mailboxes' }).click();
             await page.getByRole('table', { name: 'Mailboxes' }).getByText('alice.johnson@example.com').click();
 
@@ -161,7 +166,7 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
     await test.step('Verify Settings', async () => {
 
-        await page.getByText('Mail Server').click();
+        await sidebar.getByRole('link', { name: 'Mail Server' }).click();
         await page.getByRole('tab', { name: 'Settings' }).click();
 
         const region = page.getByRole('tabpanel', { name: 'Settings' });
@@ -182,3 +187,14 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
     });
 });
+
+test('Metric tiles of the mail page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/mail`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'mail')
+
+    await expect(count.value).toHaveText('2')
+    await expect(second.value).toHaveText('3')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

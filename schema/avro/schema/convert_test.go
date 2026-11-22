@@ -1,8 +1,8 @@
 package schema
 
 import (
+	encodingjson "encoding/json"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	json "mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
@@ -135,7 +135,8 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, js *json.Schema) {
 				require.Equal(t, schematest.NewTypes(nil,
 					schematest.WithProperty("foo",
-						schematest.New("string", schematest.WithTitle("foo")))),
+						schematest.New("string", schematest.WithTitle("foo"))),
+					schematest.WithRequired("foo")),
 					js)
 			},
 		},
@@ -228,6 +229,62 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "record fields are required",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{Name: "id", Type: []interface{}{"int"}},
+					{Name: "name", Type: []interface{}{"null", "string"}},
+				},
+			},
+			test: func(t *testing.T, js *json.Schema) {
+				// Avro binary encoding writes every field of a record,
+				// so the generator must never omit one
+				require.Equal(t, []string{"id", "name"}, js.Required)
+			},
+		},
+		{
+			name: "nested record fields are required",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Name: "address",
+						Type: []interface{}{
+							&Schema{
+								Type: []interface{}{"record"},
+								Fields: []*Schema{
+									{Name: "street", Type: []interface{}{"string"}},
+									{Name: "zip", Type: []interface{}{"string"}},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Equal(t, []string{"address"}, js.Required)
+				address := js.Properties.Get("address").AnyOf[0]
+				require.Equal(t, []string{"street", "zip"}, address.Required)
+			},
+		},
+		{
+			name: "null union field is required but allows null",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{Name: "nickname", Type: []interface{}{"null", "string"}},
+				},
+			},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Equal(t, []string{"nickname"}, js.Required)
+				anyOf := js.Properties.Get("nickname").AnyOf
+				require.Len(t, anyOf, 2)
+				require.Equal(t, "null", anyOf[0].Type.String())
+				require.Equal(t, "string", anyOf[1].Type.String())
+			},
+		},
+		{
 			name: "loop",
 			s: &Schema{
 				Type: []interface{}{"record"},
@@ -253,11 +310,21 @@ func TestConvert(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			err := tc.s.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.s}, &dynamictest.Reader{})
+			err := tc.s.Parse(dynamictest.NewConfig(tc.s, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			require.NoError(t, err)
 
 			js := ConvertToJsonSchema(tc.s)
 			tc.test(t, js)
 		})
 	}
+}
+
+func TestConvert_FieldWithDefaultIsRequired(t *testing.T) {
+	var s Schema
+	err := encodingjson.Unmarshal([]byte(`{"type":"record","name":"U","fields":[{"name":"role","type":"string","default":"guest"}]}`), &s)
+	require.NoError(t, err)
+
+	js := ConvertToJsonSchema(&s)
+
+	require.Equal(t, []string{"role"}, js.Required)
 }

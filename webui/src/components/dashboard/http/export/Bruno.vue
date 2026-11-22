@@ -46,7 +46,11 @@ onMounted(() => {
 })
 
 watch(() => props.visible, v => {
-    v ? modalInstance?.show() : modalInstance?.hide()
+    if (v) {
+        modalInstance?.show()
+    } else {
+        modalInstance?.hide()
+    }
 })
 
 function close() {

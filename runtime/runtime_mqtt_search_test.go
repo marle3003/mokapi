@@ -22,10 +22,7 @@ func TestIndex_Mqtt(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c *asyncapi3.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -193,4 +190,38 @@ func TestIndex_Mqtt(t *testing.T) {
 			tc.test(t, app)
 		})
 	}
+}
+
+func TestIndex_Mqtt_MergedFiles(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	file := func(url, channel string) *dynamic.Config {
+		return dynamictest.NewConfig(asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel(channel),
+		), dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
+	}
+	found := func(t *testing.T, app *runtime.App, text string) bool {
+		r, err := app.Search(search.Request{QueryText: text, Limit: 10})
+		require.NoError(t, err)
+		return len(r.Results) > 0
+	}
+
+	app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, InMemory: true}}}, &dynamictest.Reader{})
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
+
+	_, err := app.Mqtt.Add(file("https://mokapi.io/a.yml", "alpha"), enginetest.NewEngine())
+	require.NoError(t, err)
+	b := file("https://mokapi.io/b.yml", "beta")
+	_, err = app.Mqtt.Add(b, enginetest.NewEngine())
+	require.NoError(t, err)
+	waitSearchIndex(t, func() bool { return found(t, app, "alpha") && found(t, app, "beta") })
+
+	app.Mqtt.Remove(b)
+
+	waitSearchIndex(t, func() bool {
+		return found(t, app, "foo") && found(t, app, "alpha") && !found(t, app, "beta")
+	})
 }

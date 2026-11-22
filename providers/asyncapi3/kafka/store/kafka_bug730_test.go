@@ -4,7 +4,7 @@ package store_test
 	var c *asyncapi3.Config
 	err := yaml.Unmarshal([]byte(cfg), &c)
 	require.NoError(t, err)
-	err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka-clusters.yaml")}}, &dynamictest.Reader{})
+	err = c.Parse(dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka-clusters.yaml")})), &dynamictest.Reader{})
 	require.NoError(t, err)
 
 	s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{})

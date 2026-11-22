@@ -12,6 +12,24 @@ export async function driveMail() {
     await transporter.close();
     await sendForgetPassword();
     await transporter.close();
+    await sendRejectedOffer();
+    await transporter.close();
+}
+
+// The rule denySpam in demo-configs/mail.yaml rejects the sender domain with 550 5.7.1.
+async function sendRejectedOffer() {
+    try {
+        await transporter.sendMail({
+            from: 'offers@spam.example',
+            to: '"Bob Miller" <bob.miller@example.com>',
+            subject: 'You won a free smartwatch!',
+            text: 'Click here to claim your prize.',
+        });
+    } catch (err) {
+        console.log('mail: rejected as expected', (err as Error).message);
+        return;
+    }
+    throw new Error('mail from spam.example was not rejected');
 }
 
 async function sendNewsletter() {

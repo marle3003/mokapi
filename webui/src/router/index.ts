@@ -85,6 +85,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP – ${params.service}` }
           },
           {
+            path: 'log/:service',
+            name: getRouteName('httpServiceLog'),
+            component: dashboardView,
+            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP – ${params.service} requests` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('httpLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - HTTP – Requests' }
+          },
+          {
             path: 'requests/:id',
             name: getRouteName('httpRequest'),
             component: dashboardView,
@@ -113,6 +125,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             name: getRouteName('kafkaService'),
             component: dashboardView,
             meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka – ${params.service}` }
+          },
+          {
+            path: 'log/:service',
+            name: getRouteName('kafkaServiceLog'),
+            component: dashboardView,
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka – ${params.service} messages` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('kafkaLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - Kafka – Messages' }
           },
           {
             path: 'service/:service/servers/:server',
@@ -182,6 +206,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP Service – ${params.service}` },
           },
           {
+            path: 'log/:service',
+            name: getRouteName('ldapServiceLog'),
+            component: dashboardView,
+            meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP – ${params.service} requests` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('ldapLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - LDAP – Requests' }
+          },
+          {
             path: 'ldap/requests/:id',
             name: getRouteName('ldapRequest'),
             component: dashboardView,
@@ -204,6 +240,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             name: getRouteName('mailService'),
             component: dashboardView,
             meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail Service – ${params.service}` },
+          },
+          {
+            path: 'log/:service',
+            name: getRouteName('mailServiceLog'),
+            component: dashboardView,
+            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail – ${params.service} mails` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('mailLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - Mail – Mails' }
           },
           {
             path: 'service/:service/maiboxes/:name',
@@ -234,6 +282,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             name: getRouteName('mqttService'),
             component: dashboardView,
             meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service}` }
+          },
+          {
+            path: 'log/:service',
+            name: getRouteName('mqttServiceLog'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service} messages` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('mqttLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - MQTT – Messages' }
           },
           {
             path: 'service/:service/servers/:server',
@@ -291,6 +351,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket – ${params.service}` }
           },
           {
+            path: 'log/:service',
+            name: getRouteName('websocketServiceLog'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket – ${params.service} messages` }
+          },
+          {
+            path: 'log',
+            name: getRouteName('websocketLog'),
+            component: dashboardView,
+            meta: { title: 'Dashboard - Websocket – Messages' }
+          },
+          {
             path: 'service/:service/servers/:server',
             name: getRouteName('websocketServer'),
             component: dashboardView,
@@ -337,7 +409,18 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'jobs',
         name: getRouteName('jobs'),
         component: dashboardView,
-        meta: { title: 'Dashboard - Jobs' }
+        meta: { title: 'Dashboard - Jobs' },
+        children: [
+          {
+            path: ':id',
+            name: getRouteName('job'),
+            component: dashboardView,
+            meta: {
+              title: ({ params }: MatcherLocation) => `Dashboard - Job – ${params.id}`,
+              noindex: true
+            }
+          }
+        ]
       },
       {
         path: 'configs',
@@ -355,10 +438,15 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         }
       },
       {
-        path: 'tree',
-        name: getRouteName('tree'),
+        path: 'faker',
+        name: getRouteName('faker'),
         component: dashboardView,
-        meta: { title: 'Dashboard - Tree' }
+        meta: { title: 'Dashboard - Faker' }
+      },
+      {
+        // the former path of the Faker view, kept for pinned tabs and links
+        path: 'tree',
+        redirect: to => ({ name: getRouteName('faker'), query: to.query, hash: to.hash })
       },
     ]
   }
@@ -567,7 +655,7 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
         } else {
           requestAnimationFrame(check)
         }
-      } catch(e) {
+      } catch {
         resolve(false)
       }
     }

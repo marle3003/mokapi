@@ -86,7 +86,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 
 		if !e.parsed.Load() {
 			if v != nil {
-				c.Data = v
+				c.SetData(v)
 			}
 
 			log.Debugf("read processing %v", c.Info.Path())
@@ -97,7 +97,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if err != nil {
 				return nil, err
 			}
-			e.parsed.Store(c.Data != nil)
+			e.parsed.Store(c.Data() != nil)
 		}
 	}
 
@@ -133,12 +133,12 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 		for {
 			select {
 			case <-ctx.Done():
-				close(ch)
+				// ch stays open: providers may still be sending and stop on their own context
 				return
 			case evt := <-ch:
 				if evt.Event == dynamic.Delete {
 					w.m.Lock()
-					e, ok := w.configs[evt.Name]
+					e, ok := w.configForDeleteEvent(evt.Name)
 					w.m.Unlock()
 					if !ok {
 						continue
@@ -154,6 +154,21 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 		}
 	})
 	return nil
+}
+
+// configForDeleteEvent expects the caller to hold w.m. Providers name a delete event with the URL
+// of the config; the file provider names it with the path of the file instead.
+func (w *ConfigWatcher) configForDeleteEvent(name string) (*entry, bool) {
+	if e, ok := w.configs[name]; ok {
+		return e, true
+	}
+	// same conversion as the file provider uses for the config URL, so Windows paths match too
+	u, err := file.ParseUrl(name)
+	if err != nil {
+		return nil, false
+	}
+	e, ok := w.configs[getConfigKey(u)]
+	return e, ok
 }
 
 func (w *ConfigWatcher) AddListener(f func(e dynamic.ConfigEvent)) {
@@ -265,9 +280,9 @@ func (w *ConfigWatcher) reload(e *entry, evt *dynamic.ConfigEvent) bool {
 		e.parsed.Store(false)
 		return false
 	}
-	e.parsed.Store(c.Data != nil)
+	e.parsed.Store(c.Data() != nil)
 
-	if c.Data == nil {
+	if c.Data() == nil {
 		log.Debugf("processed %v", c.Info.Path())
 		return false
 	}

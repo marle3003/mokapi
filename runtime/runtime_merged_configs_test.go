@@ -14,9 +14,12 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"os"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -54,7 +57,7 @@ func requireMergedWithB(t *testing.T, merged *asyncapi3.Config) {
 func requireOnlyFileA(t *testing.T, protocol string, merged *asyncapi3.Config) {
 	t.Helper()
 	fresh, _ := twoFilesWithSameTitle(protocol)
-	require.JSONEq(t, marshal(t, fresh.Data), marshal(t, merged))
+	require.JSONEq(t, marshal(t, fresh.Data()), marshal(t, merged))
 }
 
 func marshal(t *testing.T, v any) string {
@@ -73,14 +76,13 @@ func twoAsyncApi2FilesWithSameTitle(t *testing.T) (a, b *dynamic.Config) {
 		require.NoError(t, err)
 		var cfg *asyncApi.Config
 		require.NoError(t, yaml.Unmarshal(data, &cfg))
-		c := getConfig(url, nil)
-		c.Data = cfg
+		c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
 		require.NoError(t, cfg.Parse(c, &dynamictest.Reader{}))
 		return c
 	}
 	a = load("https://mokapi.io/a.yml")
 	b = load("https://mokapi.io/b.yml")
-	payload := b.Data.(*asyncApi.Config).Components.Schemas["lightMeasuredPayload"].Value.(*schema.Schema)
+	payload := b.Data().(*asyncApi.Config).Components.Schemas["lightMeasuredPayload"].Value.(*schema.Schema)
 	payload.Properties.Set("extra", schematest.New("string"))
 	return
 }
@@ -88,7 +90,7 @@ func twoAsyncApi2FilesWithSameTitle(t *testing.T) (a, b *dynamic.Config) {
 func requireExtraPropertyOnlyIn(t *testing.T, merged *asyncapi3.Config, a, b *dynamic.Config) {
 	t.Helper()
 	extra := func(c *dynamic.Config) bool {
-		s := c.Data.(*asyncApi.Config).Components.Schemas["lightMeasuredPayload"].Value.(*schema.Schema)
+		s := c.Data().(*asyncApi.Config).Components.Schemas["lightMeasuredPayload"].Value.(*schema.Schema)
 		return s.Properties.Get("extra") != nil
 	}
 	mergedSchema := merged.Components.Schemas["lightMeasuredPayload"].Value.(*schema.Schema)
@@ -156,7 +158,7 @@ func TestKafkaStore_MergeFilesWithIncompleteEntries(t *testing.T) {
 				info, err = app.Kafka.Add(asyncApiFile(t, "https://mokapi.io/b.yml", tc.b), enginetest.NewEngine())
 			})
 			require.NoError(t, err)
-			tc.check(t, info.Config)
+			tc.check(t, info.Config())
 		})
 	}
 }
@@ -206,4 +208,50 @@ func TestAsyncApiStores_FileWithEmptyEntries(t *testing.T) {
 			})
 		}
 	}
+}
+
+// requireStoreUsableAfterRemoveOfUnknownConfig removes a config that was never added.
+// That must neither panic nor keep the lock of the store: add must still return.
+func requireStoreUsableAfterRemoveOfUnknownConfig(t *testing.T, remove, add func()) {
+	t.Helper()
+	assert.NotPanics(t, remove)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		add()
+	}()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("add of a config blocks: remove did not release the lock of the store")
+	}
+}
+
+// removeConcurrently removes all files at the same time. Run with -race.
+func removeConcurrently(remove func(*dynamic.Config), files ...*dynamic.Config) {
+	var wg sync.WaitGroup
+	for _, c := range files {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			remove(c)
+		}()
+	}
+	wg.Wait()
+}
+
+// asyncApi2FileThatCannotBeConverted is an AsyncAPI 2.x file that fails to convert to
+// AsyncAPI 3 because a parameter has a non-string enum value.
+func asyncApi2FileThatCannotBeConverted(name string) *dynamic.Config {
+	return dynamictest.NewConfig(&asyncApi.Config{
+		Info: asyncApi.Info{Name: name},
+		Channels: map[string]*asyncApi.ChannelRef{
+			"foo": {Value: &asyncApi.Channel{
+				Parameters: map[string]*asyncApi.ParameterRef{
+					"id": {Value: &asyncApi.Parameter{Schema: &schema.Schema{Enum: []any{1}}}},
+				},
+			}},
+		},
+	}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://mokapi.io/invalid.yml"))))
 }

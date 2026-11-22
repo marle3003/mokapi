@@ -192,10 +192,12 @@ func (n *Node) Set(key string, val goja.Value) bool {
 
 			// v is a goja value, so it must be exported on the loop
 			var exported any
-			_, _ = n.m.loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
+			if _, err = n.m.loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
 				exported = v.Export()
 				return nil, nil
-			})
+			}); err != nil {
+				return nil, err
+			}
 			return exported, nil
 		}
 		n.restore = append(n.restore, func() {
@@ -227,8 +229,9 @@ func (n *Node) Keys() []string {
 }
 
 func (n *Node) Restore() {
-	for _, f := range n.restore {
-		f()
+	// newest first, so each function restores the state it snapshotted
+	for i := len(n.restore) - 1; i >= 0; i-- {
+		n.restore[i]()
 	}
 }
 

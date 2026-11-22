@@ -3,7 +3,8 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterMcpFlags(cmd *cli.Command) {
-	cmd.Flags().Bool("mcp-server-enabled", false, mcpServerEnabled)
+	cmd.Flags().Group("MCP Server")
+	cmd.Flags().Bool("mcp-server-enabled", true, mcpServerEnabled)
 	cmd.Flags().Int("mcp-server-port", 8080, mcpServerPort)
 	cmd.Flags().String("mcp-server-path", "/mcp", mcpServerPath)
 }
@@ -15,9 +16,9 @@ When enabled, Mokapi exposes an MCP-compatible endpoint that allows external too
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "CLI", Source: "--mcp-server-enabled"},
-				{Title: "Env", Source: "MOKAPI_MCP_SERVER=true"},
-				{Title: "File", Source: "mcp:\n  server:\n    enabled: true"},
+				{Title: "CLI", Source: "--mcp-server-enabled false"},
+				{Title: "Env", Source: "MOKAPI_MCP_SERVER_ENABLED=false"},
+				{Title: "File", Source: "mcp:\n  server:\n    enabled: false", Language: "yaml"},
 			},
 		},
 	},
@@ -31,8 +32,8 @@ The MCP server provides access to Mokapi resources via the Model Context Protoco
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--mcp-server-port 5000"},
-				{Title: "Env", Source: "MOKAPI_MCP_PORT=5000"},
-				{Title: "File", Source: "mcp:\n  server:\n    port: 5000"},
+				{Title: "Env", Source: "MOKAPI_MCP_SERVER_PORT=5000"},
+				{Title: "File", Source: "mcp:\n  server:\n    port: 5000", Language: "yaml"},
 			},
 		},
 	},
@@ -46,8 +47,8 @@ This is useful when Mokapi is running behind a reverse proxy or when the MCP end
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--mcp-server-path /foo/mcp"},
-				{Title: "Env", Source: "MOKAPI_MCP_PATH=/foo/mcp"},
-				{Title: "File", Source: "mcp:\n  server:\n    path: /foo/mcp"},
+				{Title: "Env", Source: "MOKAPI_MCP_SERVER_PATH=/foo/mcp"},
+				{Title: "File", Source: "mcp:\n  server:\n    path: /foo/mcp", Language: "yaml"},
 			},
 		},
 	},

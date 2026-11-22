@@ -76,14 +76,8 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 		}
 
 		// value is next args
-		var values []string
-		for i++; i < len(args); i++ {
-			if strings.HasPrefix(args[i], "--") || strings.HasPrefix(args[i], "-") {
-				i--
-				break
-			}
-			values = append(values, args[i])
-		}
+		values := takeValues(flags.flagType(strings.TrimPrefix(param, "no-")), args[i+1:])
+		i += len(values)
 
 		if len(values) == 0 {
 			values = []string{""}
@@ -100,6 +94,30 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 	}
 
 	return positionalArgs, nil
+}
+
+// takeValues returns the arguments after a flag that belong to it. Only list flags are
+// greedy; all other flags take at most one value, so remaining arguments stay positional.
+func takeValues(flagType string, rest []string) []string {
+	switch flagType {
+	case "list":
+		n := 0
+		for n < len(rest) && !strings.HasPrefix(rest[n], "-") {
+			n++
+		}
+		return rest[:n]
+	case "bool":
+		// a bool flag without value is true, so only an explicit bool belongs to it
+		if len(rest) > 0 && (rest[0] == "true" || rest[0] == "false") {
+			return rest[:1]
+		}
+		return nil
+	default:
+		if len(rest) > 0 && !strings.HasPrefix(rest[0], "-") {
+			return rest[:1]
+		}
+		return nil
+	}
 }
 
 func normalizeNoFlags(param, value string) (string, string) {

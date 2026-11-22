@@ -73,7 +73,7 @@ function lastMessage(channel: ChannelInstance) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="instance in data" :key="channel.name" @mouseup.left="goToChannel(instance.name)"
+                        <tr v-for="instance in data" :key="instance.name" @mouseup.left="goToChannel(instance.name)"
                             @mousedown.middle="goToChannel(instance.name, true)">
                             <td>
                                 <router-link @click.stop class="row-link"

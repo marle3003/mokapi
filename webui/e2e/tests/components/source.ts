@@ -1,4 +1,5 @@
 import { test, Locator, expect } from "playwright/test"
+import type { ExpectedString } from "../types/types"
 
 export interface Source {
     lines?: ExpectedString
@@ -25,7 +26,7 @@ export function useSourceView(locator: Locator) {
             await expect(source.getByRole('region', { name: 'content' }).locator('.ace_content')).toHaveText(expected.content)
 
             await source.getByRole('button', { name: 'Copy raw content' }).click()
-            let clipboardText = await locator.page().evaluate('navigator.clipboard.readText()')
+            const clipboardText = await locator.page().evaluate('navigator.clipboard.readText()')
             if (typeof expected.clipboard === 'string') {
                 await expect(clipboardText).toContain(expected.clipboard)
             }else if (expected.clipboard instanceof RegExp) {

@@ -1,38 +1,32 @@
 interface FormatFunc {
-    (value: any): string
+    (value: unknown): string
 }
 
 export function usePrettyBytes() : {format: FormatFunc} {
-    function format(value: any): string {
+    function format(value: unknown): string {
         // jacked from: https://github.com/sindresorhus/pretty-bytes
         if (typeof value !== 'number' || isNaN(value)) {
             return '0'
         }
 
-        let exponent
-        let unit
-        let neg = value < 0
-        let units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        const neg = value < 0
+        const units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
-        if (neg) {
-            value = -value
+        let magnitude = neg ? -value : value
+
+        if (magnitude < 1) {
+            return (neg ? '-' : '') + magnitude + ' B'
         }
 
-        if (value < 1) {
-            return (neg ? '-' : '') + value + ' B'
-        }
-
-        exponent = Math.min(
-            Math.floor(Math.log(value) / Math.log(1000)),
+        const exponent = Math.min(
+            Math.floor(Math.log(magnitude) / Math.log(1000)),
             units.length - 1
         )
-        value = (value / Math.pow(1000, exponent))
-        if(Math.round(value) !== value) {
-            value = value.toFixed(2);
-        }
-        unit = units[exponent]
+        magnitude = magnitude / Math.pow(1000, exponent)
+        const amount = Math.round(magnitude) !== magnitude ? magnitude.toFixed(2) : magnitude
+        const unit = units[exponent]
 
-        return (neg ? '-' : '') + value + ' ' + unit
+        return (neg ? '-' : '') + amount + ' ' + unit
     }
 
     return { format }

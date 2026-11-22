@@ -37,7 +37,8 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 				r.NoError(t, err)
 			},
 			test: func(t *testing.T, store *mail.Store) {
-				msg := store.Mailboxes["bob@mokapi.io"].Folders["INBOX"].Messages[0]
+				bob, _ := store.Mailbox("bob@mokapi.io")
+				msg := bob.Folders["INBOX"].Messages[0]
 				r.Equal(t, "A test mail", msg.Subject)
 				r.Equal(t, "Hello Bob", msg.Body)
 				r.Equal(t, "Alice", msg.From[0].Name)
@@ -61,7 +62,8 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 				r.NoError(t, err)
 			},
 			test: func(t *testing.T, store *mail.Store) {
-				msg := store.Mailboxes["bob@mokapi.io"].Folders["INBOX"].Messages[0]
+				bob, _ := store.Mailbox("bob@mokapi.io")
+				msg := bob.Folders["INBOX"].Messages[0]
 				r.Equal(t, "A test mail", msg.Subject)
 				r.Equal(t, "Hello Bob", msg.Body)
 				r.Equal(t, "Alice", msg.From[0].Name)
@@ -85,7 +87,8 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 				r.NoError(t, err)
 			},
 			test: func(t *testing.T, store *mail.Store) {
-				msg := store.Mailboxes["bob@mokapi.io"].Folders["INBOX"].Messages[0]
+				bob, _ := store.Mailbox("bob@mokapi.io")
+				msg := bob.Folders["INBOX"].Messages[0]
 				r.Equal(t, "A test mail", msg.Subject)
 				r.Equal(t, "Hello Bob", msg.Body)
 				r.Equal(t, "Alice", msg.From[0].Name)

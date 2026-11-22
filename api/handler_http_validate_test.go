@@ -138,6 +138,27 @@ func TestHandler_Http_Validate(t *testing.T) {
 			result: `{"message":"api 'foo' not found"}`,
 		},
 		{
+			name: "api without config snapshot",
+			app: func() *runtime.App {
+				return runtimetest.NewApp(func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) })
+			},
+			body:   `{"api":"foo","request":{"method":"GET","url":"/api/v1/profile"},"response":{"statusCode":200}}`,
+			status: 404,
+			result: `{"message":"api 'foo' not found"}`,
+		},
+		{
+			name: "api without config snapshot is skipped without api name",
+			app: func() *runtime.App {
+				return runtimetest.NewApp(
+					runtimetest.WithHttp(newProfileApi("Profile API")),
+					func(app *runtime.App) { app.Http.Set("foo", runtime.NewHttpInfo(nil)) },
+				)
+			},
+			body:   `{"request":{"method":"GET","url":"/api/v1/profile?id=1"},"response":{"statusCode":200,"body":"{}"}}`,
+			status: 200,
+			result: `{"valid":true,"operation":{"api":"Profile API","method":"GET","path":"/profile"},"errors":[]}`,
+		},
+		{
 			name:   "invalid JSON",
 			app:    func() *runtime.App { return runtimetest.NewHttpApp() },
 			body:   `{`,

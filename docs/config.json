@@ -56,6 +56,11 @@
                 "path": "/docs/http/tls"
               },
               {
+                "label": "Security Schemes",
+                "source": "http/security.md",
+                "path": "/docs/http/security"
+              },
+              {
                 "label": "Dashboard",
                 "source": "http/dashboard.md",
                 "path": "/docs/http/dashboard"
@@ -84,6 +89,11 @@
                 "label": "Config",
                 "source": "kafka/config.md",
                 "path": "/docs/kafka/config"
+              },
+              {
+                "label": "Dashboard",
+                "source": "kafka/dashboard.md",
+                "path": "/docs/kafka/dashboard"
               }
             ]
           },
@@ -99,6 +109,11 @@
                 "label": "Quick Start",
                 "source": "mqtt/quick-start.md",
                 "path": "/docs/mqtt/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "mqtt/dashboard.md",
+                "path": "/docs/mqtt/dashboard"
               }
             ]
           },
@@ -114,6 +129,11 @@
                 "label": "Quick Start",
                 "source": "websocket/quick-start.md",
                 "path": "/docs/websocket/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "websocket/dashboard.md",
+                "path": "/docs/websocket/dashboard"
               }
             ]
           },
@@ -129,6 +149,11 @@
                 "label": "Quick Start",
                 "source": "ldap/quick-start.md",
                 "path": "/docs/ldap/quick-start"
+              },
+              {
+                "label": "Dashboard",
+                "source": "ldap/dashboard.md",
+                "path": "/docs/ldap/dashboard"
               }
             ]
           },
@@ -149,6 +174,11 @@
                 "label": "Rules",
                 "source":  "mail/rules.md",
                 "path":  "/docs/mail/rules"
+              },
+              {
+                "label": "Dashboard",
+                "source": "mail/dashboard.md",
+                "path": "/docs/mail/dashboard"
               }
             ]
           }
@@ -160,8 +190,13 @@
         "items": [
           {
             "label": "Overview",
-            "source": "configuration/introduction.md",
+            "source": "configuration/overview.md",
             "path": "/docs/configuration/overview"
+          },
+          {
+            "label": "Running Mokapi",
+            "source": "configuration/running-mokapi.md",
+            "path": "/docs/configuration/running-mokapi"
           },
           {
             "label": "Patching",
@@ -172,7 +207,7 @@
             "label": "Static",
             "items": [
               {
-                "label": "CLI Usage",
+                "label": "CLI Syntax",
                 "source": "configuration/static/cli.md",
                 "path": "/docs/configuration/static/cli-usage"
               },
@@ -210,11 +245,6 @@
                 "label": "NPM",
                 "source": "configuration/dynamic/npm.md",
                 "path": "/docs/configuration/dynamic/npm"
-              },
-              {
-                "label": "Reference",
-                "source": "configuration/reference.md",
-                "path": "/docs/configuration/reference"
               }
             ]
           },
@@ -222,6 +252,61 @@
             "label": "Health Check",
             "source": "configuration/healthcheck.md",
             "path": "/docs/configuration/health-check"
+          },
+          {
+            "label": "Dashboard",
+            "source": "configuration/dashboard.md",
+            "path": "/docs/configuration/dashboard"
+          },
+          {
+            "label": "Dashboard API",
+            "source": "configuration/dashboard-api.md",
+            "path": "/docs/configuration/dashboard-api"
+          },
+          {
+            "label": "Use Cases",
+            "items": [
+              {
+                "label": "Corporate Proxy",
+                "source": "configuration/use-cases/corporate-proxy.md",
+                "path": "/docs/configuration/use-cases/corporate-proxy"
+              },
+              {
+                "label": "Reverse Proxy",
+                "source": "configuration/use-cases/reverse-proxy.md",
+                "path": "/docs/configuration/use-cases/reverse-proxy"
+              },
+              {
+                "label": "Private GitHub Repository",
+                "source": "configuration/use-cases/private-github-repository.md",
+                "path": "/docs/configuration/use-cases/private-github-repository"
+              },
+              {
+                "label": "Own Root CA for HTTPS",
+                "source": "configuration/use-cases/custom-root-ca.md",
+                "path": "/docs/configuration/use-cases/custom-root-ca"
+              },
+              {
+                "label": "Docker and Docker Compose",
+                "source": "configuration/use-cases/docker.md",
+                "path": "/docs/configuration/use-cases/docker"
+              },
+              {
+                "label": "Mokapi in CI",
+                "source": "configuration/use-cases/ci-health-check.md",
+                "path": "/docs/configuration/use-cases/ci-health-check"
+              },
+              {
+                "label": "MCP Server",
+                "source": "configuration/use-cases/mcp-server.md",
+                "path": "/docs/configuration/use-cases/mcp-server"
+              },
+              {
+                "label": "Sample Data",
+                "source": "configuration/use-cases/sample-data.md",
+                "path": "/docs/configuration/use-cases/sample-data"
+              }
+            ]
           }
         ]
       },
@@ -754,7 +839,7 @@
         },
         "items": [
           {
-            "label": "Storybook Stories That Check Your OpenAPI Contract: Switch Between MSW and Mokapi",
+            "label": "Storybook Stories That Check Your OpenAPI Contract with Mokapi",
             "source": "resources/blogs/storybook-msw-mokapi.md",
             "path": "/resources/blogs/storybook-msw-mokapi",
             "hideNavigation": true

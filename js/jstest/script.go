@@ -37,7 +37,6 @@ func WithPathSource(path, source string) js.Option {
 			Time:     time.Time{},
 		},
 		Raw:       []byte(source),
-		Data:      nil,
 		Refs:      dynamic.Refs{},
 		Listeners: dynamic.Listeners{},
 	}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useMeta, useSoftwareApplicationMeta } from '@/composables/meta'
+import { removeSoftwareApplicationMeta, useMeta, useSoftwareApplicationMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
 import dashboardOverviewImage from '@/assets/docs/get-started/dashboard-overview-mock-api.png'
@@ -17,6 +17,13 @@ const image = ref<HTMLImageElement | undefined>();
 const showImageDialog = ref<boolean>(false)
 const github = ref<{ stars: string | null, release: string | null}>({stars: null, release: null})
 
+// the GitHub response may arrive after the page was left, it must not bring the JSON-LD back
+let unmounted = false
+onUnmounted(() => {
+  unmounted = true
+  removeSoftwareApplicationMeta()
+})
+
 onMounted(async () => {
   try {
       const [repoRes, releaseRes] = await Promise.all([
@@ -26,6 +33,9 @@ onMounted(async () => {
 
       const repo = await repoRes.json()
       const release = await releaseRes.json()
+      if (unmounted) {
+        return
+      }
 
       github.value.stars = repo.stargazers_count
       github.value.release = release.tag_name
@@ -352,7 +362,7 @@ function showImage(evt: MouseEvent) {
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img src="/mock-realistic-test-data.png" alt="Mokapi Faker decision tree for generating realistic random data." />
+            <img src="/mock-realistic-test-data.png" alt="Mokapi dashboard showing the Faker explorer with the generated value and the node that produced each property." />
           </div>
         </div>
 

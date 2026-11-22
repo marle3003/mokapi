@@ -7,7 +7,6 @@ import (
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
 	"mokapi/runtime/events/eventstest"
-	"mokapi/sortedmap"
 	"testing"
 )
 
@@ -15,7 +14,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *directory.Config
-		fn     func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry])
+		fn     func(t *testing.T, h ldap.Handler, entries *directory.EntryStore)
 	}{
 		{
 			name: "replace entry",
@@ -25,7 +24,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo"},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyDNRequest{
 					Dn:          "cn=foo",
@@ -51,7 +50,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo"},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyDNRequest{
 					Dn:          "cn=foo",
@@ -78,7 +77,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 					"cn=foo": {Dn: "cn=foo"},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyDNRequest{
 					Dn:            "cn=foo",
@@ -104,7 +103,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 					"cn=alice,ou=foo": {Dn: "cn=alice,ou=foo"},
 				}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyDNRequest{
 					Dn:            "cn=alice,ou=foo",
@@ -128,7 +127,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 				Info:    directory.Info{Name: "foo"},
 				Entries: convert(map[string]directory.Entry{}),
 			},
-			fn: func(t *testing.T, h ldap.Handler, entries *sortedmap.LinkedHashMap[string, directory.Entry]) {
+			fn: func(t *testing.T, h ldap.Handler, entries *directory.EntryStore) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.ModifyDNRequest{
 					Dn:          "cn=foo",

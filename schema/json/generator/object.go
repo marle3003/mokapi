@@ -35,8 +35,8 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
 		}
-		match := findBestMatch(g.root, req)
-		return newFakerWithFallback(match, req), nil
+		match, tokens := findBestMatch(g.root, req)
+		return newFakerWithFallback(match, tokens, req), nil
 	}
 
 	var fakes *sortedmap.LinkedHashMap[string, *faker]
@@ -51,6 +51,11 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 	fake := func() (any, error) {
 		req.Context.Snapshot()
 		defer req.Context.Restore()
+		if len(req.Context.snapshots) > 1 {
+			for it := fakes.Iter(); it.Next(); {
+				req.Context.forgetNode(it.Value().node)
+			}
+		}
 
 		var propNames []string
 		props := map[string]any{}
@@ -221,6 +226,8 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		req.Path = append(req.Path, domain)
 	}
 	propertyNameParser := propertyNamesParser(s)
+	// everything built below is a child of this object
+	req = req.inObject()
 
 	if s.Properties != nil {
 		for it := s.Properties.Iter(); it.Next(); {
@@ -230,7 +237,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 			prop := append(req.Path, propName)
 			ex := propertyFromExample(propName, req)
-			f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
+			f, err := r.resolve(req.With(prop, it.Value(), ex).property(propName), fallback)
 			if err != nil {
 				var guard *RecursionGuard
 				if errors.As(err, &guard) {
@@ -240,7 +247,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				}
 				if errors.Is(err, NoMatchFound) {
 					if domain != "" {
-						f, err = r.resolve(req.With([]string{domain, propName}, it.Value(), ex), true)
+						f, err = r.resolve(req.With([]string{domain, propName}, it.Value(), ex).property(propName), true)
 						if err != nil {
 							return nil, err
 						}
@@ -267,10 +274,10 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		for _, pattern := range keys {
 			prop := s.PatternProperties[pattern]
 			if !strings.HasPrefix(pattern, "^") {
-				pattern = "[a-zA-z0-9]*" + pattern
+				pattern = "[a-zA-Z0-9]*" + pattern
 			}
 			if !strings.HasSuffix(pattern, "$") {
-				pattern = pattern + "[a-zA-z0-9]*"
+				pattern = pattern + "[a-zA-Z0-9]*"
 			}
 			re, err := syntax.Parse(pattern, syntax.Perl)
 			if err != nil {
@@ -282,7 +289,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				gen.regexGenerate(re, len(pattern)*100)
 				propName := gen.sb.String()
 				ex := propertyFromExample(propName, req)
-				f, err := r.resolve(req.With(append(req.Path), prop, ex), fallback)
+				f, err := r.resolve(req.With(append(req.Path, propName), prop, ex).property(propName), fallback)
 				if err != nil {
 					return nil, err
 				}
@@ -300,7 +307,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 
 		length := numProperties(1, 10, s)
 		for range length {
-			f, err := r.resolve(req.WithSchema(s.AdditionalProperties), true)
+			f, err := r.resolve(req.WithSchema(s.AdditionalProperties).property(additionalPropertySegment), true)
 			if err != nil {
 				return nil, err
 			}
@@ -314,7 +321,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 
 	for _, name := range s.Required {
 		if _, ok := fakes.Get(name); !ok {
-			f, err := r.resolve(req.With(append(req.Path, name), s.AdditionalProperties, req.examples), false)
+			f, err := r.resolve(req.With(append(req.Path, name), s.AdditionalProperties, req.examples).property(name), false)
 			if err != nil {
 				return nil, err
 			}
@@ -448,12 +455,20 @@ func detectDomain(s *schema.Schema, root *Node) string {
 	return best.Name
 }
 
+var separators = strings.NewReplacer("_", "", "-", "")
+
+// sameName compares property names and attributes ignoring case, '_' and '-',
+// so first_name matches firstname.
+func sameName(a, b string) bool {
+	return strings.EqualFold(separators.Replace(a), separators.Replace(b))
+}
+
 func scoreDomain(attribute []string, n *Node) float64 {
 	score := 0.0
 	for _, attr := range attribute {
 		for _, child := range n.Children {
 			found := slices.ContainsFunc(child.Attributes, func(s string) bool {
-				return strings.EqualFold(attr, s)
+				return sameName(attr, s)
 			})
 			if found {
 				score += child.Weight
@@ -466,8 +481,13 @@ func scoreDomain(attribute []string, n *Node) float64 {
 func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, error) {
 	inDegree := map[string]int{}
 	graph := map[string][]string{}
+	// DependsOn holds node names, but properties are keyed by their schema name
+	keysByNode := map[string][]string{}
 	for it := fakes.Iter(); it.Next(); {
 		inDegree[it.Key()] = 0
+		if node := it.Value().node; node != nil {
+			keysByNode[node.Name] = append(keysByNode[node.Name], it.Key())
+		}
 	}
 
 	for it := fakes.Iter(); it.Next(); {
@@ -477,12 +497,14 @@ func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, 
 			continue
 		}
 		for _, dep := range val.node.DependsOn {
-			if _, ok := inDegree[dep]; !ok {
-				// Skip dependents that are not present
-				continue
+			// dependencies that are not present are skipped
+			for _, depKey := range keysByNode[dep] {
+				if depKey == key {
+					continue
+				}
+				graph[depKey] = append(graph[depKey], key)
+				inDegree[key]++
 			}
-			graph[dep] = append(graph[dep], key)
-			inDegree[key]++
 		}
 	}
 
@@ -538,6 +560,7 @@ func fakeByExample(r *Request) (*faker, error) {
 		return nil, NoMatchFound
 	}
 	f := func() (any, error) {
+		r.recordSource(SourceExamples, m)
 		return m, nil
 	}
 	return newFaker(f), nil

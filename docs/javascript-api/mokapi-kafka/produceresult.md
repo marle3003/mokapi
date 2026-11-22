@@ -7,15 +7,11 @@ description: ProduceResult is an object used by functions in the module mokapi/k
 ProduceResult is an object used by [produce](/docs/javascript-api/mokapi-kafka/produce.md) function
 and contains information of the written Kafka messages.
 
-| Name                   | Type   | Description                                                                                         |
-|------------------------|--------|-----------------------------------------------------------------------------------------------------|
-| cluster                | string | Name of the  Kafka cluster where the message was written.                                           |
-| topic                  | string | Kafka topic name where the message was written.                                                     |
-| messages               | array  | A list of [Message](/docs/javascript-api/mokapi-kafka/message.md) contains written Kafka messages   |
-| partition (deprecated) | number | Kafka partition where the message was written.                                                      |
-| offset (deprecated)    | number | The offset of the written message.                                                                  |
-| key (deprecated)       | string | The key of the written message.                                                                     |
-| value (deprecated)     | string | The value of the written message.                                                                   |
+| Name     | Type   | Description                                                                                              |
+|----------|--------|----------------------------------------------------------------------------------------------------------|
+| api      | string | Name of the Kafka cluster (AsyncAPI `info.title`) where the messages were written.                       |
+| topic    | string | Kafka topic name where the messages were written.                                                        |
+| messages | array  | A list of [MessageResult](/docs/javascript-api/mokapi-kafka/messageresult.md) with one entry per written message, in input order. |
 
 ## Example
 
@@ -32,6 +28,6 @@ export default function() {
             }
         ]
     })
-    console.log(`new kafka message written with offset: ${res.offset}`)
+    console.log(`new kafka message written to ${res.api}/${res.topic} with offset: ${res.messages[0].offset}`)
 }
 ```

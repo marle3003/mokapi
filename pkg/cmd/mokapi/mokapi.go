@@ -57,39 +57,23 @@ func NewCmdMokapi() *cli.Command {
 
 	cmd.SetConfigPath(".", "/etc/mokapi")
 
-	flags.RegisterFileProvider(cmd)
-	flags.RegisterGitProvider(cmd)
-	flags.RegisterHttpProvider(cmd)
-	flags.RegisterNpmProvider(cmd)
+	flags.RegisterLogFlags(cmd)
 
 	flags.RegisterApiFlags(cmd)
 	flags.RegisterMcpFlags(cmd)
 	flags.RegisterHealthFlags(cmd)
+
+	flags.RegisterFileProvider(cmd)
+	flags.RegisterHttpProvider(cmd)
+	flags.RegisterGitProvider(cmd)
+	flags.RegisterNpmProvider(cmd)
+
 	flags.RegisterTlsFlags(cmd)
 	flags.RegisterEventStoreFlags(cmd)
 	flags.RegisterDataGeneratorFlags(cmd)
 
-	cmd.Flags().StringSlice("config", []string{}, true, cli.FlagDoc{Short: "Provide inline configuration data"})
-	cmd.Flags().StringSlice("configs", []string{}, false, cli.FlagDoc{Short: "Provide inline configuration data"})
-
-	// config file
-	cmd.Flags().File("config-file", cliInput)
-	cmd.Flags().Alias("config-file", "cli-input")
-
-	// logging
-	cmd.Flags().String("log-level", "info", cli.FlagDoc{Short: "Set log level (debug|info|warn|error)"}).WithExample(
-		cli.Example{
-			Codes: []cli.Code{
-				{Title: "CLI", Source: "--log-level warn"},
-				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
-				{Title: "File", Source: "log:\n  level: warn", Language: "yaml"},
-			},
-		},
-	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")
-	cmd.Flags().String("log-format", "text", cli.FlagDoc{Short: "Set log output format (text|json)"})
-
-	cmd.Flags().String("generate-cli-skeleton", "", cli.FlagDoc{Short: "Generate a configuration skeleton and exit. If set without a value, generates the full skeleton. " +
-		"If a value is provided, generates only the specified section (e.g. `providers`)."})
+	flags.RegisterGeneralFlags(cmd)
+	flags.RegisterConfigFileOptions(cmd)
 
 	return cmd
 }
@@ -211,7 +195,7 @@ func reportMockability(e dynamic.ConfigEvent) {
 		delete(lastMockability, key)
 		return
 	}
-	m, ok := e.Config.Data.(dynamic.Mockable)
+	m, ok := e.Config.Data().(dynamic.Mockable)
 	if !ok {
 		return
 	}
@@ -267,43 +251,4 @@ func applyPositionalArgs(cfg *static.Config, args []string) error {
 		return fmt.Errorf("parse config failed: %w", err)
 	}
 	return nil
-}
-
-var cliInput = cli.FlagDoc{
-	Short: "Read configuration from a file",
-	Long: `Reads configuration from a file provided via the command line.
-The file content is processed as configuration input and merged with other configuration sources such as inline configuration and environment variables.`,
-	Examples: []cli.Example{
-		{
-			Codes: []cli.Code{
-				{Title: "CLI", Source: "--cli-input=mokapi.yaml"},
-			},
-		},
-	},
-}
-
-var config = cli.FlagDoc{
-	Short: "Provide inline configuration data",
-	Long: `Provides inline configuration data directly via the command line.
-This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
-	Examples: []cli.Example{
-		{
-			Codes: []cli.Code{
-				{Title: "CLI", Source: "--config {\"openapi\": \"3.0\", \"info\": { \"title\": \"foo\" } }\n--config file:/path/to/config.yaml"},
-			},
-		},
-	},
-}
-
-var configs = cli.FlagDoc{
-	Short: "Provide inline configuration data",
-	Long: `Provides inline configuration data directly via the command line.
-This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
-	Examples: []cli.Example{
-		{
-			Codes: []cli.Code{
-				{Title: "CLI", Source: "--configs file:/path/to/config.yaml  file:/path/to/config.yaml"},
-			},
-		},
-	},
 }

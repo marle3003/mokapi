@@ -87,6 +87,12 @@ Content-Type: application/json
 Notice how the status field in the second example matches the query parameter.
 Mokapi understands the request context and generates appropriate data.
 
+A request parameter is copied only into the properties with the same name at the shallowest
+object level where such a property exists. For `GET /users/123` with a schema
+`{ id, friends: [{ id }] }`, the root `id` is `123` and the `id` of each friend is generated
+randomly. Query filters in a root array or in a wrapper such as `{ items: [...] }` still
+apply to every item, because the items are the shallowest level that has the property.
+
 ## Declarative Formats in Schema
 
 Use standard OpenAPI formats to generate specific data types automatically. 
@@ -125,6 +131,77 @@ schema:
 ```
 
 This declarative approach requires no JavaScript, just add the `format` field to your schema.
+Besides the formats above, Mokapi also supports `hostname` and `ipv6`.
+
+### Custom Format with Placeholders
+
+If `format` is not one of the built-in formats, Mokapi treats it as a template and replaces
+every placeholder in curly braces with generated data. Text outside the braces is kept as is.
+`#` is replaced by a digit and `?` by a letter.
+
+```yaml
+schema:
+  type: object
+  properties:
+    fullName:
+      type: string
+      format: '{firstname} {lastname}' # Danny Robel
+    orderNumber:
+      type: string
+      format: 'ORD-{number:1000,9999}' # ORD-4821
+    phone:
+      type: string
+      format: '+41 ## ### ## ##' # +41 79 482 17 03
+    price:
+      type: string
+      format: '{price:5,50} {currencyshort}' # 18.35 EUR
+```
+
+Some placeholders take parameters after a colon, separated by commas, such as `{number:1,10}`
+or `{price:5,50}`. If a placeholder is unknown, Mokapi keeps it unchanged in the output.
+A `format` is ignored if the schema also sets `pattern`, `minLength` or `maxLength`. In the
+last two cases Mokapi generates a random string of the requested length instead.
+
+These placeholders are commonly used:
+
+| Category    | Placeholders                                                                              |
+|-------------|-------------------------------------------------------------------------------------------|
+| Person      | `{name}`, `{firstname}`, `{lastname}`, `{gender}`, `{email}`, `{phone}`                   |
+| Auth        | `{username}`, `{password}`                                                                |
+| Address     | `{street}`, `{city}`, `{state}`, `{zip}`, `{country}`, `{latitude}`, `{longitude}`        |
+| Company     | `{company}`, `{jobtitle}`                                                                 |
+| Text        | `{noun}`, `{verb}`, `{sentence}`, `{paragraph}`, `{question}`, `{phrase}`                 |
+| Numbers     | `{number:min,max}`, `{int32}`, `{int64}`, `{uint32}`, `{float32}`, `{float64}`, `{float32range:min,max}` |
+| Payment     | `{price:min,max}`, `{currencyshort}`, `{currencylong}`, `{creditcardnumber}`              |
+| Date/Time   | `{date}`, `{date:format}`, `{year}`, `{month}`, `{day}`, `{weekday}`, `{hour}`, `{minute}`, `{second}` |
+| Internet    | `{url}`, `{domainname}`, `{ipv4address}`, `{ipv6address}`, `{macaddress}`, `{httpstatuscode}`, `{httpmethod}`, `{useragent}` |
+| Colors      | `{color}`, `{hexcolor}`, `{rgbcolor}`, `{safecolor}`                                      |
+| Misc        | `{bool}`, `{uuid}`, `{fileextension}`, `{filemimetype}`, `{language}`                     |
+
+`{date}` formats the value as RFC3339 by default. Pass one of `ANSIC`, `UnixDate`, `RubyDate`,
+`RFC822`, `RFC822Z`, `RFC850`, `RFC1123`, `RFC1123Z`, `RFC3339` or `RFC3339Nano`, or a Go time
+layout, for example `{date:RFC1123}`.
+
+The placeholders come from [gofakeit](https://github.com/brianvoe/gofakeit), so you can use any
+of its lookup functions, including many that this table doesn't list (food, animals, cars,
+beer, emojis and more). See its README for the full list.
+
+### Restrict Values with pattern and enum
+
+Use `pattern` to describe a string with a regular expression, and `enum` to pick from a fixed
+list of values:
+
+```yaml
+schema:
+  type: object
+  properties:
+    ssn:
+      type: string
+      pattern: '^\d{3}-\d{2}-\d{4}$' # 123-45-6789
+    color:
+      type: string
+      enum: [red, green, blue]
+```
 
 ## Customize with JavaScript
 
@@ -211,14 +288,58 @@ timestamp instead of a static mock value.
 
 ## Validate in the Dashboard
 
-The Mokapi dashboard lets you:
+Open the dashboard at `http://localhost:8080` and click Faker in the activity bar. The page
+shows which node generates a value, so you can check that your own node is used before you call
+the API. See [Using Mokapi Dashboard](/docs/get-started/dashboard.md#faker) for an overview.
 
-- **Generate sample data:** See what Mokapi produces for your schemas
-- **Validate against spec:** Ensure mock data matches your OpenAPI definition
-- **Inspect requests:** View generated responses for different request parameters
-- **Test edge cases:** Verify your custom generators work as expected
+<img src="/docs/get-started/dashboard-faker-explorer.png" width="700" alt="The Faker page with the tree, the playground and the details of a node" />
 
-Access the dashboard at `http://localhost:8080` when Mokapi is running.
+### Find your node
+
+The Faker tree starts with a root row. Click the chevron of a node to open or close its
+children, and click the node to show its details: name, path, attributes, weight, dependencies
+and whether it is custom. A folder icon marks a node that only groups its children and has no
+fake function. A person icon marks a node that a script added or changed. You can also move
+through the tree with the arrow keys: Up and Down select the previous and next node, Right and
+Left open, close or step to the child or parent.
+
+Type in the filter field to search by name or attribute. While a filter is active, the matches
+are shown open. **Custom only** hides everything except the nodes that your scripts changed, for
+example the `Frequency` node from the example above. The tree is loaded when you open the page.
+Click **Reload** after a script has changed it.
+
+### Test a value
+
+The playground generates a value and explains how Mokapi got it. Enter a property path, a
+schema, or both, and click **Generate**:
+
+| Field         | Example                                    |
+|---------------|--------------------------------------------|
+| Property path | `customerEmail`                            |
+| Schema        | `{"type": "string", "format": "email"}`    |
+
+The property path is a dot-separated path such as `address.city`, the schema is JSON. Below the
+value, the Matches table has one row for each generated value:
+
+| Column        | Description                                                                          |
+|---------------|--------------------------------------------------------------------------------------|
+| Property path | The location of the value. `tags[]` is an array item, `*` a value of `additionalProperties`. |
+| Node          | The path of the node that produced the value. Click it to show the node in the tree. |
+| Tokens        | The words of the property name that Mokapi matched against the tree.                 |
+| Value         | The generated value                                                                  |
+
+For example, the property path `customerEmail` resolves to the node `/email` with the token
+`email`.
+
+Some rows show `-` as Node and a note such as "from enum". The value didn't come from a node but
+from the schema: `enum`, `const`, `examples`, the context or `null`. If no node fits, the node is
+`fakeBySchema`, the fallback that generates a value from the schema type and format alone. If
+your node doesn't appear, check its `attributes` and the tokens of the row.
+
+``` box=info
+If a custom `fake` function calls `fake()` again, Mokapi doesn't break down the nested values.
+The Matches table shows only the row of the outer node.
+```
 
 ## What's Next?
 

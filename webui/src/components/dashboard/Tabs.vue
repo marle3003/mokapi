@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getRouteName, useDashboard } from '@/composables/dashboard';
-import { useMetrics } from '@/composables/metrics';
+import { getRouteName } from '@/composables/dashboard';
+import { useSectionVisibility } from '@/composables/dashboard-sections';
 import { useRoute } from 'vue-router';
 import type { AppInfo } from '@/types/dashboard';
 import { computed, onBeforeUnmount, onMounted, nextTick, useTemplateRef, type PropType, onUpdated } from 'vue';
@@ -10,8 +10,7 @@ const props = defineProps({
     appInfo: { type: Object as PropType<AppInfo>, required: true },
 });
 
-const { dashboard, getMode } = useDashboard();
-const { sum } = useMetrics();
+const sections = useSectionVisibility(() => props.appInfo);
 const tabsContainer = useTemplateRef<HTMLElement>('tabsContainer');
 const dropdownMenu = useTemplateRef<HTMLElement>('dropdownMenu');
 const moreTabs = useTemplateRef<HTMLElement>('moreTabs');
@@ -23,19 +22,14 @@ const tabItems = computed(() => [
   { text: 'Websocket', isVisible: isServiceAvailable('websocket'), to: { name: getRouteName('websocket').value }  },
   { text: 'Mail', isVisible: isServiceAvailable('mail'), to: { name: getRouteName('mail').value }  },
   { text: 'LDAP', isVisible: isServiceAvailable('ldap'), to: { name: getRouteName('ldap').value }  },
-  { text: 'Jobs', isVisible: hasJobs.value, to: { name: getRouteName('jobs').value }  },
+  { text: 'Jobs', isVisible: sections.value.jobs, to: { name: getRouteName('jobs').value }  },
   { text: 'Configs', isVisible: true, to: { name: getRouteName('configs').value }  },
-  { text: 'Faker', isVisible: getMode() === 'live', to: { name: getRouteName('tree').value }  },
-  { text: 'Search', isVisible: props.appInfo.search.enabled && getMode() !== 'demo', to: { name: getRouteName('search').value }  },
+  { text: 'Faker', isVisible: sections.value.faker, to: { name: getRouteName('faker').value }  },
+  { text: 'Search', isVisible: sections.value.search, to: { name: getRouteName('search').value }  },
 ]);
 const route = useRoute();
 const router = useRouter();
 const tabActive = computed(() => tabItems.value.find(x => x.text !== 'Overview' && route.matched.some(r => r.name === x.to.name)) ?? tabItems.value[0])
-
-const response = dashboard.value.getMetrics('app')
-const hasJobs = computed(() => {
-  return sum(response.data, 'app_job_run_total') > 0
-})
 
 const handleResize = () => updateTabsResponsiveness();
 

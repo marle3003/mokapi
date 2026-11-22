@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sitePath } from '@/composables/site-base'
 import { computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePrettyDates } from '@/composables/usePrettyDate'
@@ -34,7 +35,7 @@ const contentType = computed(() => {
     return defaultContentType
 })
 
-function toString(arg: any): string {
+function toString(arg: unknown): string {
     if (typeof arg === 'string') {
         return arg
     }
@@ -70,7 +71,7 @@ const provider = computed(() => {
                             <p aria-labelledby="url">{{ config.url }}</p>
                         </div>
                         <div class="col text-end">
-                            <span v-if="config.tags" v-for="tag of config.tags" class="badge bg-primary ms-1">
+                            <span v-for="tag of config.tags" :key="tag" class="badge bg-primary ms-1">
                                 {{ tag }}
                             </span>
                             <span class="badge bg-secondary ms-1">Config</span>
@@ -80,7 +81,7 @@ const provider = computed(() => {
                         <div class="col">
                             <p id="provider" class="label">Provider</p>
                             <p aria-labelledby="provider">
-                                <a :href="'/docs/configuration/dynamic/' + config.provider">{{ provider }}</a>
+                                <a :href="sitePath('/docs/configuration/dynamic/' + config.provider)">{{ provider }}</a>
                             </p>
                         </div>
                         <div class="col">

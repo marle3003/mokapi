@@ -10,6 +10,7 @@ import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
 import NavDocItem from './NavDocItem.vue';
 import { isExternalWebsiteLink, toWebsiteUrl } from '@/composables/website-url';
+import LayoutSwitch from '@/components/dashboard/layout/LayoutSwitch.vue';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
@@ -96,9 +97,6 @@ function isExpanded(item: DocEntry | string) {
 function rootPath(root: DocEntry) {
   return root.path || '/' + root.label.toLocaleLowerCase()
 }
-function showItem(entry: DocEntry) {
-  return !entry.hideInNavigation
-}
 
 type SearchDocument = { name: string, description: string, path: string, content: string }
 const fuse = shallowRef<Fuse<SearchDocument>>()
@@ -116,17 +114,16 @@ async function loadSearchIndex() {
 }
 
 const filtered = computed(() => {
-  let result: any[] = [];
-  if (query.value && fuse.value) {
-    result = fuse.value.search(query.value).map(({ item }) => {
-      return {
-        name: item.name,
-        path: item.path,
-        description: item.description
-      }
-    })
+  if (!query.value || !fuse.value) {
+    return []
   }
-  return result
+  return fuse.value.search(query.value).map(({ item }) => {
+    return {
+      name: item.name,
+      path: item.path,
+      description: item.description
+    }
+  })
 })
 onUnmounted(() => {
   window.removeEventListener('keydown', shortcutHandler)
@@ -135,7 +132,7 @@ onUnmounted(() => {
 const SEQ_TIMEOUT = 1000
 let lastKeyTime = 0
 let awaitingSecondKey = false
-let shortcutHandler = (e: KeyboardEvent) => {
+const shortcutHandler = (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName
     if (tag === 'INPUT' || tag === 'TEXTAREA' || e.isComposing) {
         return
@@ -213,6 +210,9 @@ async function navigateAndClose(path: string) {
 function isDashboardDisplayed() {
   return route.matched.some(r => r.name?.toString().startsWith('dashboard'));
 }
+// Classic view is a fallback of the live dashboard. The switch reads localStorage, so it only exists
+// on a dashboard route, which is never rendered on the server: the website HTML stays the same.
+const isLiveDashboard = computed(() => route.meta.mode === 'live')
 </script>
 
 <template>
@@ -230,6 +230,7 @@ function isDashboardDisplayed() {
       <div class="container-fluid">
         <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi - Open-Source Multi-Protocol Mock API Tool"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
+            <layout-switch v-if="isLiveDashboard" />
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button id="search-button" class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
@@ -270,7 +271,7 @@ function isDashboardDisplayed() {
               <li v-if="useDemo" class="nav-item">
                 <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
               </li>
-              <li v-if="navHeaders" class="nav-item nav-tree" v-for="root of navHeaders">
+              <li class="nav-item nav-tree" v-for="root of navHeaders" :key="root.label">
                 <div class="chapter" v-if="hasChildren(root)">
                   <div class="d-flex align-items-center justify-content-between">
                     <a v-if="isExternalWebsiteLink(rootPath(root))" class="nav-link w-100" :href="toWebsiteUrl(rootPath(root))">
@@ -286,7 +287,7 @@ function isDashboardDisplayed() {
                   </div>
                   <section class="collapse d-md-none" :class="isActive(root) || isExpanded(root) ? 'show' : ''" :id="getId(root)" :aria-labelledby="'btn'+getId(root)">
                     <ul v-if="hasChildren(root)" class="nav nav-pills flex-column mb-auto">
-                      <li class="nav-item ps-3" v-for="item of root.items">
+                      <li class="nav-item ps-3" v-for="item of root.items" :key="item.label">
                         <nav-doc-item :current="item" :actives="breadcrumb" />
                       </li>
                     </ul>
@@ -298,6 +299,7 @@ function isDashboardDisplayed() {
           </div>
 
           <div class="d-flex ms-auto align-items-center tools">
+            <layout-switch v-if="isLiveDashboard" />
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
@@ -329,7 +331,7 @@ function isDashboardDisplayed() {
             </div>
           </form>
           <div class="list-group search-results">
-            <a v-for="item of filtered" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.path)">
+            <a v-for="item of filtered" :key="item.path" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.path)">
               <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
               <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
             </a>
@@ -440,6 +442,12 @@ header .container-fluid {
   margin-left: 6px;
   cursor: pointer;
   font-size: 1.3rem;
+}
+.tools .layout-switch {
+  font-size: 0.8rem;
+  padding: 0 0.5rem;
+  margin-right: 0.25rem;
+  color: var(--color-text);
 }
 .tools .btn.icon {
   transition: background 0.2s, transform 0.1s;

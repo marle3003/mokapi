@@ -46,7 +46,7 @@ test.describe('Visit Books API', () => {
             await page.getByRole('tab', { name: 'Configs' }).click();
             const table = page.getByRole('table', { name: 'Configs' });
             const rows = table.locator('tbody tr');
-            await expect(rows).toHaveCount(4);
+            await expect(rows).toHaveCount(5);
             await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toHaveText('file://cron.js');
             await expect(await getCellByColumnName(table, 'Provider', rows.nth(0))).toHaveText('File');
             await expect(await getCellByColumnName(table, 'Last Update', rows.nth(0))).not.toBeEmpty();
@@ -76,7 +76,7 @@ test.describe('Visit Books API', () => {
 
             await test.step('Verify path', async () => {
 
-                await page.getByRole('link', { name: '/books' }).click();
+                await page.getByRole('link', { name: '/books', exact: true }).click();
                 await expect(page).toHaveURL(/Books%20API\/books/)
 
                 await expect(page.getByLabel('Path', { exact: true })).toHaveText('/books');

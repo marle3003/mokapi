@@ -11,6 +11,7 @@ declare interface WebsocketServer {
   summary: string
   description: string;
   tags: Tag[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   configs: { [key: string]: any }
 }
 
@@ -46,6 +47,7 @@ declare interface WebsocketMessageData {
   direction: 'receive' | 'send'
   client: WebsocketClientLog
   actions: Action[]
+  script?: string
   validationErrors?: Record<string, string>
 }
 
@@ -56,7 +58,9 @@ declare interface WebsocketMessage extends BaseMessage {
 
 declare interface WebsocketClient {
   id: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   query: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   headers: Record<string, any>
   address: string
   serverAddress: string
@@ -64,7 +68,9 @@ declare interface WebsocketClient {
 
 declare interface WebsocketClientLog {
   id: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   query: Record<string, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- arbitrary JSON from the dashboard API
   headers: Record<string, any>
   address: string
   server: string

@@ -31,3 +31,12 @@ mailboxes:
 
   zzz@example.com:
     description: TODO remove it
+
+rules:
+  denySpam:
+    sender: '@spam\.example$'
+    action: deny
+    rejectResponse:
+      statusCode: 550
+      enhancedStatusCode: 5.7.1
+      message: Sender domain spam.example is blocked

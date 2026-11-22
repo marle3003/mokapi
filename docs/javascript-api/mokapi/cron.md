@@ -9,15 +9,17 @@ Schedules a new periodic job using cron expression.
 ### Behavior
 
 - By default, **cron jobs wait for the first scheduled tick** before executing.
-- To run the job immediately on creation, set `SkipImmediateFirstRun: false` in `args`.
+- To run the job immediately on creation, set `skipImmediateFirstRun: false` in `args`.
+- `times` limits the number of runs, see [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md). The immediate first run, enabled with `skipImmediateFirstRun: false`, counts as one of them.
+- Each run appears in the jobs log of the dashboard, see [Jobs](/docs/get-started/dashboard.md#jobs).
 
 ## Parameters
 
-| Name            | Type     | Description                                                                                                                         |
-|-----------------|----------|-------------------------------------------------------------------------------------------------------------------------------------|
-| expression      | string   | A cron expression defining the execution schedule.                                                                                  |
-| handler         | function | A function executed at intervals specified by `expression`. The first execution happens immediately.                                |
-| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object providing additional event arguments.   | 
+| Name            | Type     | Description                                                                                                                             |
+|-----------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| expression      | string   | A cron expression defining the execution schedule.                                                                                      |
+| handler         | function | A function executed at intervals specified by `expression`. By default, the first execution happens at the first match of `expression`. |
+| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object providing additional event arguments.       |
 
 ## Understanding Cron Expressions
 

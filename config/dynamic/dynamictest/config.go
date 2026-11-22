@@ -32,3 +32,27 @@ func WithUrl(s string) ConfigInfoOption {
 		info.Url = u
 	}
 }
+
+type ConfigOption func(c *dynamic.Config)
+
+// NewConfig returns a config that already holds the given parsed data.
+func NewConfig(data any, opts ...ConfigOption) *dynamic.Config {
+	c := &dynamic.Config{}
+	c.SetData(data)
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
+}
+
+func WithInfo(info dynamic.ConfigInfo) ConfigOption {
+	return func(c *dynamic.Config) {
+		c.Info = info
+	}
+}
+
+func WithRaw(raw []byte) ConfigOption {
+	return func(c *dynamic.Config) {
+		c.Raw = raw
+	}
+}

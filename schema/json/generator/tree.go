@@ -38,6 +38,60 @@ func FindByName(name string) *Node {
 	return g.root.findByName(name)
 }
 
+// FindByPath returns the node at the absolute path, e.g. /person/email. In contrast to
+// FindByName every segment must be a direct child, so nodes with the same name in different
+// branches can be told apart. "/" is the root node.
+func FindByPath(path string) *Node {
+	if !strings.HasPrefix(path, "/") {
+		return nil
+	}
+	n := g.root
+	if path == "/" {
+		return n
+	}
+	for _, name := range strings.Split(path[1:], "/") {
+		n = n.child(name)
+		if n == nil {
+			return nil
+		}
+	}
+	return n
+}
+
+// NodePath returns the absolute path of n in the tree, e.g. /person/email, or an empty
+// string if n is not part of the tree.
+func NodePath(n *Node) string {
+	if n == g.root {
+		return "/"
+	}
+	return g.root.pathTo(n, "")
+}
+
+func (n *Node) pathTo(target *Node, parentPath string) string {
+	for _, child := range n.Children {
+		if child == nil {
+			continue
+		}
+		path := parentPath + "/" + child.Name
+		if child == target {
+			return path
+		}
+		if found := child.pathTo(target, path); found != "" {
+			return found
+		}
+	}
+	return ""
+}
+
+func (n *Node) child(name string) *Node {
+	for _, child := range n.Children {
+		if child != nil && child.Name == name {
+			return child
+		}
+	}
+	return nil
+}
+
 func (n *Node) findByName(name string) *Node {
 	v := strings.Split(name, "/")
 	if len(v) > 1 {
@@ -138,6 +192,8 @@ func buildTree() *Node {
 	r.Children = append(r.Children, ictNodes()...)
 	r.Children = append(r.Children, textNodes()...)
 	r.Children = append(r.Children, personal...)
+	// shared with the person domain, so a property called firstName is a first name without a domain
+	r.Children = append(r.Children, personal[0].child("firstname"), personal[0].child("lastname"))
 	r.Children = append(r.Children, addresses()...)
 	r.Children = append(r.Children, locations()...)
 	r.Children = append(r.Children, financials()...)

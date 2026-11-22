@@ -12,7 +12,6 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
-	"mokapi/sortedmap"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -28,13 +27,13 @@ type KafkaStore struct {
 	reader  dynamic.Reader
 }
 
+// KafkaInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type KafkaInfo struct {
-	*asyncapi3.Config
 	*store.Store
-	configs               map[string]*dynamic.Config
+	configSnapshot[asyncapi3.Config]
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *KafkaInfo)
-	m                     sync.Mutex
 }
 
 type KafkaHandler struct {
@@ -44,12 +43,20 @@ type KafkaHandler struct {
 
 func newKafkaInfo(store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
 	hc := &KafkaInfo{
-		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	return hc
+}
+
+// NewKafkaInfo returns an info that publishes cfg as is, without merging files and
+// without the implicit default broker of Add. It is meant for tests of readers: it has no
+// event updater, so adding a file to it through KafkaStore.Add panics.
+func NewKafkaInfo(cfg *asyncapi3.Config, store *store.Store) *KafkaInfo {
+	ki := newKafkaInfo(store, nil)
+	ki.publish(cfg)
+	return ki
 }
 
 func (s *KafkaStore) Get(name string) *KafkaInfo {
@@ -89,14 +96,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 	ki, ok := s.infos[name]
 	if !ok {
 		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
-		ki.Config = cfg
 		s.infos[cfg.Info.Name] = ki
 	}
 
 	defer s.m.Unlock()
-
-	ki.m.Lock()
-	defer ki.m.Unlock()
 
 	eventStore, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -107,10 +110,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 	}
-	ki.addConfig(c, s.reader)
+	ki.afterPublish(ki.add(c, mergeKafkaConfigs(s.reader)))
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(ki.Config)
+		s.addToIndex(ki.Config())
 	}
 
 	return ki, nil
@@ -128,76 +131,54 @@ func (s *KafkaStore) Set(name string, ki *KafkaInfo) {
 }
 
 func (s *KafkaStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+	s.m.Lock()
+	defer s.m.Unlock()
 
 	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki := s.infos[name]
-
-	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(ki.Config)
-	}
-	delete(ki.configs, c.Info.Url.String())
-	ki.update(s.reader)
-
-	if len(ki.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
-		delete(s.infos, name)
-		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
-	}
-}
-
-func (c *KafkaInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
-	key := config.Info.Url.String()
-	c.configs[key] = config
-	c.update(reader)
-}
-
-func (c *KafkaInfo) update(reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.Config = nil
-		c.Store = nil
+	if ki == nil {
 		return
 	}
 
-	cfg := mergeAsyncApiConfigs(c.configs, reader)
-
-	a := cfg.Analyze()
-	k := a.Usage("kafka")
-	if len(k.Servers) == 0 {
-		log.Infof("kafka: using implicit default broker for '%s' (inferred from bindings)", cfg.Info.Name)
-		if cfg.Servers == nil {
-			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
-		}
-		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
-			Value: &asyncapi3.Server{
-				Host:     ":9092",
-				Protocol: "kafka",
-				Title:    "Mokapi Default Broker",
-				Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
-			},
-		})
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(ki.Config())
 	}
+	ki.afterPublish(ki.remove(c, mergeKafkaConfigs(s.reader)))
 
-	c.Config = cfg
+	if remaining := ki.Config(); remaining == nil {
+		delete(s.infos, name)
+		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
+	} else if s.cfg.Api.Search.Enabled {
+		s.addToIndex(remaining)
+	}
+}
+
+// mergeKafkaConfigs merges the files of a service and adds the default server if the spec
+// defines none.
+func mergeKafkaConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *asyncapi3.Config {
+	return func(files []*dynamic.Config) *asyncapi3.Config {
+		cfg := mergeAsyncApiConfigs(files, reader)
+		defaultAsyncApiServer(cfg, "kafka", "kafka: using implicit default broker", &asyncapi3.Server{
+			Host:     ":9092",
+			Protocol: "kafka",
+			Title:    "Mokapi Default Broker",
+			Summary:  "Automatically added broker because no Kafka servers are defined in the AsyncAPI spec",
+		})
+		return cfg
+	}
+}
+
+func (c *KafkaInfo) afterPublish(cfg *asyncapi3.Config) {
+	if cfg == nil {
+		return
+	}
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
 func (c *KafkaInfo) Handler(kafka *monitor.Kafka) kafka.Handler {
 	return &KafkaHandler{kafka: kafka, next: c.Store}
-}
-
-func (c *KafkaInfo) Configs() []*dynamic.Config {
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
@@ -208,7 +189,7 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 }
 
 func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	switch v := c.Data.(type) {
+	switch v := c.Data().(type) {
 	case *asyncapi3.Config:
 		return v, true
 	case *asyncApi.Config:
@@ -232,12 +213,13 @@ func getKafkaConfig(c *dynamic.Config) *asyncapi3.Config {
 }
 
 func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
-	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
+	cfg := k.Config()
+	eventStore, hasStoreConfig := s.cfg.Event.Store[cfg.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for topicName, topic := range k.Config.Channels {
+	for topicName, topic := range cfg.Channels {
 		if topic.Value == nil {
 			continue
 		}
@@ -247,9 +229,9 @@ func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		s.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
-		s.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("kafka").WithName(k.Config.Info.Name).With("topic", topicName)
+		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, topicName)
+		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", topicName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}

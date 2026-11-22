@@ -7,6 +7,16 @@ components:
         parameters:
           - $ref: '#/components/parameters/Traits'
           - $ref: '#/components/parameters/Http'
+          - name: page
+            in: query
+            schema:
+              type: integer
+              default: 1
+          - name: size
+            in: query
+            schema:
+              type: integer
+              default: 25
         responses:
           "200":
             description: name of kafka cluster

@@ -1,6 +1,5 @@
 import { Locator, expect, test, type Page } from "playwright/test"
 import { useTable } from './table'
-import { formatDateTime } from "../helpers/format"
 
 export interface Topic {
     name: string
@@ -33,11 +32,11 @@ export interface Group {
     members: number
 }
 
-export function useKafkaGroups(table: Locator, topic?: string) {
+export function useKafkaGroups(table: Locator) {
     return {
         async testGroup(row: number, group: Group, lags?: string) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
-                let columns = ['Name', 'State', 'Protocol', 'Generation', 'Last Rebalancing', 'Members']
+                const columns = ['Name', 'State', 'Protocol', 'Generation', 'Last Rebalancing', 'Members']
                 if (lags) {
                     columns.push('Lag')
                 }
@@ -79,60 +78,32 @@ export function useKafkaPartitions(table: Locator) {
 
 export function useKafkaMessages(page: Page) {
     return {
-        test: async (table: Locator, withTopic: boolean = true) => {
-            await test.step('Check messages log', async () => {
-                let columns = ['Topic', 'Key', 'Value', 'Time']
+        // The cells of the rows and the full view are tested in Vitest (KafkaMessages.test.ts, Message.test.ts).
+        async expectColumns(table: Locator, withTopic: boolean = true) {
+            await test.step('Check messages log columns', async () => {
+                const columns = ['Topic', 'Key', 'Value', 'Time']
                 if (!withTopic) {
-                    columns.splice(0,1)
+                    columns.splice(0, 1)
                 }
-
-                const messages = await useTable(table, columns)
-                let message = messages.getRow(1)
-                await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0827')
-                await expect(message.getCellByName('Value')).toHaveText(/^{"id":"GGOEWXXX0827","name":"Waze Women's Short Sleeve Tee",/)
-                if (withTopic) {
-                    await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
-                }
-                await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
-
-                await message.click()
-                await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0827')
-                await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
-                await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
-                await expect(page.getByLabel('Offset', { exact: true })).toHaveText('0')
-                await expect(page.getByLabel('Partition', { exact: true })).toHaveText('0')
-                await expect(page.getByText('Producer Id', { exact: true })).not.toBeVisible({ timeout: 100 })
-                await expect(page.getByText('Producer Epoch', { exact: true })).not.toBeVisible({ timeout: 100 })
-                await expect(page.getByText('Sequence Number', { exact: true })).not.toBeVisible({ timeout: 100 })
-                await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type', { exact: true })).toHaveText('application/json')
-                await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
-                await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
-
-                await page.goBack()
-        
-                message = messages.getRow(2)
-                await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0828')
-                await expect(message.getCellByName('Value')).toHaveText(/^{"id":"GGOEWXXX0828","name":"Waze Men's Short Sleeve Tee",/)
-                if (withTopic) {
-                    await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
-                }
-                await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
-
-                await message.click()
-                await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0828')
-                await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
-                await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
-                await expect(page.getByLabel('Offset', { exact: true })).toHaveText('1')
-                await expect(page.getByLabel('Partition', { exact: true })).toHaveText('1')
-                await expect(page.getByLabel('Producer Id', { exact: true })).toHaveText('3')
-                await expect(page.getByLabel('Producer Epoch', { exact: true })).toHaveText('1')
-                await expect(page.getByLabel('Sequence Number', { exact: true })).toHaveText('1')
-                await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type', { exact: true })).toHaveText('application/json')
-                await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
-                await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
-
-                await page.goBack()
+                await expect(table.getByRole('columnheader')).toHaveText(columns)
             })
+        },
+
+        // A click selects the row and shows the message beside the log, the full view opens with "Open as tab".
+        async openFullView(row: Locator) {
+            await row.click()
+            await page.getByRole('region', { name: 'Message details' }).getByRole('link', { name: 'Open as tab' }).click()
+            // the panel beside the log shows the same labels as the full view, so wait for the full view
+            await expect(page).toHaveURL(/\/kafka\/messages\//)
         }
     }
+}
+export function useKafkaRequests(page: Page) {
+    // A click selects the row and shows the request beside the log, the full view opens with "Open as tab".
+    async function openFullView(row: Locator) {
+        await row.click()
+        await page.getByRole('region', { name: 'Request details' }).getByRole('link', { name: 'Open as tab' }).click()
+    }
+
+    return { openFullView }
 }

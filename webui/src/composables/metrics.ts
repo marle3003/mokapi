@@ -6,7 +6,7 @@ export function useMetrics() {
         }
 
         let max = 0
-        for (let metric of metrics) {
+        for (const metric of metrics) {
             if (!metric.name.startsWith(name)) {
                 continue
             }
@@ -27,7 +27,7 @@ export function useMetrics() {
         }
     
         let sum = 0
-        for (let metric of metrics) {
+        for (const metric of metrics) {
             if (!metric.name.startsWith(name)) {
                 continue
             }
@@ -39,8 +39,8 @@ export function useMetrics() {
         return sum
     }
 
-    const matchLabels = (metric: Metric, labels: Label[]): Boolean => {
-        for (var label of labels){
+    const matchLabels = (metric: Metric, labels: Label[]): boolean => {
+        for (const label of labels){
             const s = `${label.name}="${label.value}"`
             if (!metric.name.includes(s)){
                 return false
@@ -54,7 +54,7 @@ export function useMetrics() {
             return 0
         }
 
-        for (let metric of metrics) {
+        for (const metric of metrics) {
             if (!metric.name.startsWith(name)) {
                 continue
             }
@@ -72,7 +72,7 @@ export function useMetrics() {
             return [];
         }
 
-        for (let metric of metrics) {
+        for (const metric of metrics) {
             if (!metric.name.startsWith(name)) {
                 continue
             }

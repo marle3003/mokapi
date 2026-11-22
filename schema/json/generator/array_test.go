@@ -332,3 +332,53 @@ func TestArray(t *testing.T) {
 		})
 	}
 }
+
+func TestArray_ItemsInsideAPerson(t *testing.T) {
+	str := func() *schema.Schema { return schematest.New("string") }
+
+	t.Run("first names do not repeat the first name of the person", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("firstNames", schematest.New("array",
+				schematest.WithItems("string"),
+				schematest.WithMinItems(4), schematest.WithMaxItems(4))),
+			schematest.WithRequired("firstName", "firstNames"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		names := map[any]bool{}
+		for _, name := range obj["firstNames"].([]any) {
+			require.NotEqual(t, obj["firstName"], name)
+			names[name] = true
+		}
+		require.Greater(t, len(names), 1)
+	})
+
+	t.Run("persons get different names", func(t *testing.T) {
+		Seed(1234567)
+
+		v, err := New(&Request{Schema: schematest.New("object",
+			schematest.WithProperty("firstName", str()),
+			schematest.WithProperty("lastName", str()),
+			schematest.WithProperty("friends", schematest.New("array",
+				schematest.WithItems("object",
+					schematest.WithProperty("firstName", str()),
+					schematest.WithProperty("lastName", str()),
+					schematest.WithRequired("firstName", "lastName")),
+				schematest.WithMinItems(3), schematest.WithMaxItems(3))),
+			schematest.WithRequired("firstName", "lastName", "friends"),
+		)})
+
+		require.NoError(t, err)
+		obj := v.(map[string]any)
+		names := map[string]bool{obj["firstName"].(string) + " " + obj["lastName"].(string): true}
+		for _, f := range obj["friends"].([]any) {
+			friend := f.(map[string]any)
+			names[friend["firstName"].(string)+" "+friend["lastName"].(string)] = true
+		}
+		require.Len(t, names, 4)
+	})
+}

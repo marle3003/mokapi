@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useMarkdown } from '@/composables/markdown';
 import { useToolbarItems } from '@/composables/toolbar-items';
-import { useRoute, useRouter } from '@/router';
+import { useRoute } from '@/router';
 import { Dropdown } from 'bootstrap';
 
 const props = defineProps<{
@@ -15,50 +15,30 @@ const route = useRoute()
 
 const description = computed(() => useMarkdown(props.service.description, true).content)
 const toolbar = useToolbarItems()
-const toolbarButton = useTemplateRef('toolbar-button')
+const exportButton = useTemplateRef('export-button')
 const highlightItem = ref<string | null>(null)
 
-watch(() => [route.query.demo, toolbarButton.value], async ([kind]) => {
-    if (kind !== 'bruno' || !toolbarButton.value) {
-        console.log('skip', toolbar.items.length)
+watch(() => [route.query.demo, exportButton.value], async ([kind]) => {
+    if (kind !== 'bruno' || !exportButton.value) {
         return
     }
-     console.log('highlight')
     await nextTick()
-    Dropdown.getOrCreateInstance(toolbarButton.value).show()
-    highlightItem.value = 'Export Bruno Collection'
+    Dropdown.getOrCreateInstance(exportButton.value).show()
+    highlightItem.value = 'Bruno collection'
 }, { immediate: true })
 </script>
 
 <template>
-    <section class="card position-relative" data-testid="service-info" aria-label="Info">
-
-        <div class="dropdown card-toolbar" style="z-index: 100;" v-if="toolbar.items.length > 0">
-            <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary kebab-btn"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                :aria-label="`Actions for ${service.name}`"
-                ref="toolbar-button"
-            >
-                <i class="bi bi-three-dots-vertical"></i>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li v-for="item in toolbar.items" :key="item.id">
-                    <button class="dropdown-item" @click.prevent="highlightItem = null; item.onClick(); item.onClick()" :class="{ 'menu-highlight': highlightItem == item.label}">
-                        <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
-                    </button>
-
-                </li>
-            </ul>
-        </div>
+    <section class="card" data-testid="service-info" aria-label="Info">
 
         <div class="card-body">
             <div class="row">
-                <div class="col col-8 header mb-3">
+                <div class="col header mb-3">
                     <p id="name" class="label">Name</p>
-                    <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
+                    <div class="service-title d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
+                        <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
+                    </div>
                 </div>
                 <div class="col-1">
                     <p id="version" class="label">Version</p>
@@ -81,8 +61,25 @@ watch(() => [route.query.demo, toolbarButton.value], async ([kind]) => {
                         </li>
                     </ul>
                 </div>
-                <div class="col-1 text-end">
-                    <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
+                <div class="col-auto ms-auto" v-if="toolbar.items.length > 0">
+                    <div class="dropdown">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary btn-compact dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                            ref="export-button"
+                        >
+                            <i class="bi bi-box-arrow-up me-1" aria-hidden="true"></i>Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end export-menu">
+                            <li v-for="item in toolbar.items" :key="item.id">
+                                <button class="dropdown-item" @click.prevent="highlightItem = null; item.onClick()" :class="{ 'menu-highlight': highlightItem == item.label}">
+                                    <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -102,6 +99,17 @@ watch(() => [route.query.demo, toolbarButton.value], async ([kind]) => {
 </template>
 
 <style scoped>
+/* the badge scales with the font size of the name (1.4rem in .header p) */
+.service-title {
+    font-size: 1.4rem;
+    margin-bottom: .3rem;
+}
+.dashboard .card .service-title p {
+    margin: 0;
+}
+.service-title .badge {
+    font-size: .55em;
+}
 ul.contact {
     list-style: none; 
     padding: 0;
@@ -113,14 +121,27 @@ ul.contact li {
 ul.contact li span.bi {
     vertical-align:middle;
 }
-.card-toolbar {
-    position: absolute;
-    top: -7px;
-    right: 0;
-    transform: translateY(-100%);
-    background: var(--bs-body-bg, #fff);
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+/* same look as the "Add filter" menu (.filter-menu in dashboard.css) */
+.export-menu {
+    --bs-dropdown-font-size: .8125rem;
+    --bs-dropdown-min-width: 12rem;
+    --bs-dropdown-padding-y: .25rem;
+    --bs-dropdown-border-color: var(--layout-border);
+    --bs-dropdown-border-radius: 6px;
+    --bs-dropdown-bg: var(--layout-popover-background);
+    --bs-dropdown-box-shadow: var(--layout-popover-shadow);
+    --bs-dropdown-color: var(--layout-text);
+    --bs-dropdown-link-color: var(--layout-text);
+    --bs-dropdown-link-hover-color: var(--layout-text);
+    --bs-dropdown-link-hover-bg: var(--layout-hover-background);
+    --bs-dropdown-link-active-color: var(--layout-text);
+    --bs-dropdown-link-active-bg: var(--layout-hover-background);
+    --bs-dropdown-item-padding-y: .3rem;
+    --bs-dropdown-item-padding-x: .75rem;
+}
+.export-menu .dropdown-item:focus-visible {
+    outline: 2px solid var(--layout-accent);
+    outline-offset: -2px;
 }
 .menu-highlight {
   background: var(--bs-primary-bg-subtle);

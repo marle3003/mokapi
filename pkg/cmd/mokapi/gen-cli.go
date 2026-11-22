@@ -14,7 +14,7 @@ func NewGenCliDocCmd() *cli.Command {
 		},
 	}
 
-	cmd.Flags().StringShort("output-dir", "-o", "./docs/configuration/static", cli.FlagDoc{})
+	cmd.Flags().StringShort("output-dir", "o", "./docs/configuration/static", cli.FlagDoc{})
 
 	return cmd
 }

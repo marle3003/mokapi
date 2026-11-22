@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import KafkaTopics from './KafkaTopics.vue'
 import KafkaGroups from './KafkaGroups.vue'
-import KafkaMessagesCard from './KafkaMessagesCard.vue'
+import KafkaMessages from './KafkaMessages.vue'
 import KafkaTopic from './KafkaTopic.vue'
 import Servers from './Servers.vue'
 import Configs from '../Configs.vue'
@@ -22,6 +22,7 @@ import { useToolbarItem } from '@/composables/toolbar-items.ts'
 import Breadcrumb from '../Breadcrumb.vue'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import { useService } from '@/composables/service.ts'
+import { withSelection } from '@/composables/log-selection'
 
 const { service } = useService<KafkaService>('kafka')
 
@@ -33,6 +34,7 @@ const activeTab = ref('tab-topics');
 
 function setTab(tab: string) {
     router.replace({
+        query: withSelection(route.query, 'message', undefined),
         hash: `#${tab}`
     });
 }
@@ -43,7 +45,7 @@ watch(() => route.hash, (hash) => {
 )
 useToolbarItem(
     {
-        label: 'Export AsyncAPI',
+        label: 'AsyncAPI specification',
         icon: 'bi-file-earmark-code',
         onClick: () => {
             exportAsyncAPIDialogVisible.value = true
@@ -82,6 +84,10 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                             aria-controls="topics-pane" @click="setTab('tab-topics')">
                             Topics
                         </button>
+                        <button :class="{ active: activeTab === 'tab-messages' }" id="messages-tab" type="button" role="tab"
+                            aria-controls="messages-pane" @click="setTab('tab-messages')">
+                            Messages
+                        </button>
                         <button :class="{ active: activeTab === 'tab-groups' }" id="groups-tab" type="button" role="tab"
                             aria-controls="groups" @click="setTab('tab-groups')">
                             Groups
@@ -103,8 +109,17 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
                             role="tabpanel" aria-labelledby="topics-tab">
                             <kafka-topics :service="service" />
+                        </div>
+                        <!-- v-if: the log reloads while it is mounted, so a hidden one would poll -->
+                        <div v-if="activeTab === 'tab-messages'" class="tab-pane fade show active" id="messages-pane"
+                            role="tabpanel" aria-labelledby="messages-tab">
+                            <div class="d-flex justify-content-end mb-2">
+                                <router-link :to="{ name: getRouteName('kafkaServiceLog').value, params: { service: service.name }, query: { refresh: route.query.refresh } }">
+                                    Open as tab
+                                </router-link>
+                            </div>
                             <div class="card-group">
-                                <kafka-messages-card :service="service" />
+                                <kafka-messages :service="service" />
                             </div>
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
@@ -127,6 +142,9 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                 </div>
             </section>
         </div>
+    </div>
+    <div class="card-group" v-if="$route.name == getRouteName('kafkaServiceLog').value && service != null">
+        <kafka-messages :service="service" />
     </div>
     <div v-if="service &&$route.matched.some(route => route.name === getRouteName('kafkaTopic').value)">
         <kafka-topic :service="service"></kafka-topic>

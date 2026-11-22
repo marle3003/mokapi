@@ -61,6 +61,28 @@ your base config clean and reusable.
 
 Learn more about how patching works and how to structure patch files in the [Patching Configuration Guide](/docs/configuration/patching.md).
 
+### Changing the Configuration at Runtime
+
+Mokapi applies a changed or reloaded mail configuration file while it is running. You don't need
+to restart it.
+
+Rules, settings, servers and the configured mailboxes (credentials, description, folder flags and
+`maxInboxMails`) change right away. If you lower `maxInboxMails`, the new limit takes effect with
+the next incoming mail, which trims the INBOX down to the new limit.
+
+Received mails are kept, and so are folders an IMAP client subscribed to: a reload never removes
+`\Subscribed`, even if the folder's flags in the file change. Mailboxes Mokapi created automatically
+when a mail arrived stay as well. If such a mailbox now appears in the file, it becomes a
+configured mailbox. Folders also stay with their mails, even if you remove them from the file. A mailbox you remove from the file is gone, and the
+API returns 404 for it. An IMAP session that is already logged in to that mailbox keeps working
+until it logs out.
+
+If several files define the same mail configuration, Mokapi merges them. A server defined only in
+a second file starts with that file and stops when you delete it. Servers with the same name in
+two files are merged into one, so give a server added by another file its own name.
+
+A folder named `inbox` in any letter case is treated as `INBOX`.
+
 ### Schema Reference
 
 #### Mail Object
@@ -242,9 +264,9 @@ The settings object defines global configuration options that influence server b
 | maxRecipients         | integer | 0       | (Optional) Maximum number of recipients per email. Use 0 for unlimited.                                                                                                                            |
 | autoCreateMailbox     | boolean | true    | (Optional) Allow create mailboxes at runtime.                                                                                                                                                      |
 | maxInboxMails         | integer | 100     | (Optional) Maximum number of messages kept in the INBOX folder. Oldest mails are removed when the limit is exceeded. Use 0 to disable the limit and store messages indefinitely (not recommended). |
-| AllowUnknownSenders   | boolean | true    | (Optional) If true, the server accepts any MAIL FROM: address, even if it’s not listed in the mailboxes: configuration.                                                                            |
+| allowUnknownSenders   | boolean | true    | (Optional) If true, the server accepts any MAIL FROM: address, even if it's not listed in the mailboxes: configuration.                                                                            |
 
-##### Mailbox Object Example
+##### Settings Object Example
 
 ```yaml
 maxRecipients: 20
@@ -253,8 +275,8 @@ autoCreateMailbox: true
 
 #### Rules Object
 
-The rules object defines message acceptance policies for the mock server.
-Each rule is keyed by a unique name and specifies criteria for allowing or denying incoming messages.
+The rules object defines which mails the server accepts. Each rule is keyed by a unique name.
+See [Mail Rules](/docs/mail/rules.md) for how rules are evaluated and more examples.
 
 | Field Pattern      | Type        | Description              |
 |--------------------|-------------|--------------------------|
@@ -264,38 +286,39 @@ Each rule is keyed by a unique name and specifies criteria for allowing or denyi
 
 ```yaml
 allowSender:
-  sender: alice@example.com
+  sender: '^alice@example\.com$'
   action: allow
 denySubject:
-  subject: Hello.*
+  subject: '^Hello'
   action: deny
 ```
 
 #### Rule Object
 
-A Rule Object defines a pattern-based rule that determines whether a message is accepted or rejected.
-The value of each matching field (e.g., sender, subject, body) can be either an exact string or a regular
-expression pattern for more flexible filtering.
+A Rule Object checks a mail against a regular expression and decides whether the server accepts
+or rejects it. The expression is not anchored, so `example.com` matches any address that contains
+it. Use `^` and `$` to match the whole value.
 
-| Field Name      | Type                   | Description                                   |
-|-----------------|------------------------|-----------------------------------------------|
-| sender          | string                 | (Optional) Match against the sender's address |
-| recipient       | string                 | (Optional) Match against recipient's address  |
-| subject         | string                 | (Optional) Match subject line                 |
-| body            | string                 | (Optional) Match against message body         |
-| action          | string                 | (Optional) Required: either allow or deny     |
-| rejectResponse  | Reject Response Object | Optional custom rejection response            |
+| Field Name      | Type                   | Description                                                            |
+|-----------------|------------------------|------------------------------------------------------------------------|
+| description     | string                 | (Optional) Description of the rule. Supports **CommonMark syntax**.     |
+| sender          | string                 | (Optional) Regular expression for the sender address                   |
+| recipient       | string                 | (Optional) Regular expression for a recipient address                  |
+| subject         | string                 | (Optional) Regular expression for the subject                          |
+| body            | string                 | (Optional) Regular expression for the message body                     |
+| action          | string                 | `allow` rejects mails that don't match, `deny` rejects mails that match |
+| rejectResponse  | Reject Response Object | (Optional) Custom response when the rule rejects a mail                |
 
-##### Server Object Example
+##### Rule Object Example
 
 ```yaml
-sender: alice@example.com
+sender: '^alice@example\.com$'
 action: allow
 ```
 
 #### Reject Response Object
 
-A Reject Response Object defines a detailed response when an incoming message is denied based on a rule.
+A Reject Response Object defines the response the server sends when a rule rejects a mail.
 
 | Field Name         | Type                   | Description                                       |
 |--------------------|------------------------|---------------------------------------------------|
@@ -308,5 +331,5 @@ A Reject Response Object defines a detailed response when an incoming message is
 ```yaml
 statusCode: 550
 enhancedStatusCode: 5.7.1
-text: Your error message
+message: Your error message
 ```

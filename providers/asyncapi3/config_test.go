@@ -59,7 +59,7 @@ func TestStreetlightKafka(t *testing.T) {
 	var cfg *asyncapi3.Config
 	err = yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
-	err = cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+	err = cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 	require.NoError(t, err)
 
 	require.Equal(t, "3.0.0", cfg.Version)
@@ -302,7 +302,7 @@ components:
     foo:
       $ref: 'swagger.json#/definitions/foo'`,
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
+				return dynamictest.NewConfig(&swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}), nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
 				ch := cfg.Channels["foo"]
@@ -332,7 +332,7 @@ components:
       schema:
         $ref: 'swagger.json#/definitions/foo'`,
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
+				return dynamictest.NewConfig(&swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}), nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
 				ch := cfg.Channels["foo"]
@@ -424,7 +424,7 @@ components:
 			err := yaml.Unmarshal([]byte(tc.cfg), &cfg)
 			require.NoError(t, err)
 
-			err = cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, tc.reader)
+			err = cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), tc.reader)
 			require.NoError(t, err)
 
 			tc.test(t, cfg)
@@ -665,7 +665,7 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
+				return dynamictest.NewConfig(&swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}), nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
 				ch := cfg.Channels["foo"]
@@ -705,7 +705,7 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
+				return dynamictest.NewConfig(&swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}), nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
 				ch := cfg.Channels["foo"]
@@ -771,7 +771,7 @@ func TestConfig_Payload_JSON(t *testing.T) {
 			err := json.Unmarshal([]byte(tc.cfg), &cfg)
 			require.NoError(t, err)
 
-			err = cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, tc.reader)
+			err = cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), tc.reader)
 			require.NoError(t, err)
 
 			tc.test(t, cfg)
@@ -866,7 +866,7 @@ func TestConfig_Parse_EmptyEntries(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal([]byte(head+tc.body), &cfg))
 
 			require.NotPanics(t, func() {
-				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 			})
 		})
 	}
@@ -903,7 +903,7 @@ components:
   parameters: {empty: }
 `), &cfg))
 
-	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+	require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 
 	require.Equal(t, []string{"dev"}, cfg.Servers.Keys())
 	require.Len(t, cfg.Channels, 1)

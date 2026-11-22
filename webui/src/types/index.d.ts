@@ -54,6 +54,27 @@ interface JobExecution {
   error?: { message: string }
 }
 
+// A registered job of `GET /api/jobs`. `maxRuns` is -1 for a job without a limit, `nextRun` and
+// `lastRun` are missing if there is none.
+declare interface JobInfo {
+  id: string
+  name: string
+  schedule: string
+  maxRuns: number
+  runs: number
+  state: 'scheduled' | 'finished' | 'cancelled'
+  nextRun?: string
+  tags: { [name: string]: string }
+  lastRun?: JobLastRun
+}
+
+declare interface JobLastRun {
+  eventId: string
+  time: string
+  duration: number
+  status: 'success' | 'warning' | 'error'
+}
+
 declare interface BreadcrumbItem {
   text: string
   to?: RouteLocationRaw

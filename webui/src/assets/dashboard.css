@@ -9,29 +9,68 @@
 .dashboard h1{
   margin-top: 0;
 }
+main {
+  --connection-banner-height: 1.75rem;
+}
 .dashboard-content {
   margin-top: 4rem;
 }
-.dashboard-content.demo {
-  margin-top: 10rem;
+/* The Classic tabs are fixed below the site header, so the banner is pinned there too and pushes
+   the tabs and the content down by its height. All three use 4rem, the grid row of the site header:
+   the promo banner never shows on dashboard routes, so --header-height has no promo part there. */
+main:has(.dashboard-tabs) .connection-lost-region {
+  position: fixed;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  z-index: 11;
 }
-.dashboard .card-group .card {
+main.connection-lost .dashboard-tabs {
+  top: calc(4rem + var(--connection-banner-height));
+}
+main.connection-lost .dashboard-content {
+  margin-top: calc(4rem + var(--connection-banner-height));
+}
+.dashboard :is(.card-group, .metric-grid) {
+  /* the space between two cards, also between the tiles of the metrics grid */
+  --card-gap: 7px;
+}
+.dashboard :is(.card-group, .metric-grid) .card {
   border-color: var(--color-border);
   background-color: var(--color-background-soft);
-  margin: 7px;
+  margin: var(--card-gap);
   margin-left: 0;
   font-weight: 400;
   font-size: 0.9rem;
   box-shadow: 0 4px 8px rgba(255, 255, 255, 0.05);
 }
-[data-theme="light"] .dashboard .card-group .card {
+[data-theme="light"] .dashboard :is(.card-group, .metric-grid) .card {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 .dashboard .card-group .card:first-child{
   margin-left: 0;
 }  
-.dashboard .card-group:last-child{
+.dashboard :is(.card-group, .metric-grid):last-child{
   margin-bottom: 50px;
+}
+/* at most 3 tiles per row, fewer when the content area is narrow, all tiles the same size */
+.dashboard .metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(14rem, calc((100% - 2 * var(--card-gap)) / 3)), 1fr));
+  gap: var(--card-gap);
+  /* the cards of a card-group bring this space themselves */
+  padding: var(--card-gap) var(--card-gap) var(--card-gap) 0;
+}
+.dashboard .metric-grid .card {
+  margin: 0;
+}
+.dashboard .metric-tile {
+  text-decoration: none;
+  color: inherit;
+}
+.dashboard .metric-tile:hover,
+.dashboard .metric-tile:focus-visible {
+  border-color: var(--layout-accent);
 }
 .dashboard .modal .card-group:last-child{
   margin-bottom: 0;
@@ -96,15 +135,21 @@
     margin: 0 auto;
 }
 .header-demo {
-    position: fixed;
-    top: 4rem;
-    left: 2rem;
-    right: 2rem;
-    z-index: 10;
-    padding-right: 2rem;
-    padding-top: 15px;
-    padding-bottom: 30px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: 0.5rem 2rem;
+    border-bottom: 1px solid var(--dashboard-nav-border);
     background-color: var(--color-background);
+}
+.header-demo h1 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+.header-demo p {
+    margin: 0;
 }
 .dashboard-tabs {
   background-color: var(--color-background);
@@ -113,9 +158,6 @@
   z-index: 10;
   width: 100%;
   /*padding-right: 39px; /* 2rem + 7px margin of card */
-}
-.dashboard-tabs.demo {
-    top: 10rem;
 }
 .dashboard-tabs nav > div {
   border-bottom: 2px solid;
@@ -182,15 +224,6 @@
     border-right-color: #f8f9fa;
 }
 
-@media only screen and (max-width: 450px)  {
-  .dashboard-content.demo {
-    margin-top: 10.8rem;
-  }
-  .dashboard-tabs.demo {
-    margin-top: 0.8rem;
-  }
-}
-
 .table-markdown {
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -238,3 +271,899 @@
 }
 
 .dashboard .channel-name .param { color: var(--bs-primary); font-weight: 500; }
+/* New layout: activity bar, sidebar and view */
+/* buttons that only show an icon or a text */
+.activity-bar-item,
+.sidebar-chevron,
+.sidebar-remove,
+.sidebar-filter-clear,
+.pin-button,
+.tab-close,
+.tab-more-button {
+  border: 0;
+  background: transparent;
+}
+.activity-bar-item:focus-visible,
+.sidebar-entry:focus-visible,
+.sidebar-group-title:focus-visible,
+.sidebar-chevron:focus-visible,
+.sidebar-filter-clear:focus-visible,
+.tab-link:focus-visible,
+.tab-close:focus-visible,
+.pin-button:focus-visible,
+.tab-more-button:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+/* main is a grid item that would grow to the widest view, so the tab bar could never overflow.
+   The connection banner sits above the layout, so the layout takes what is left of the window. */
+main:has(.dashboard-layout-tabbed) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+}
+main:has(.dashboard-layout-tabbed) .connection-lost-region {
+  flex: 0 0 auto;
+}
+/* the demo banner sits above the layout, so the layout takes what is left of the window */
+.dashboard:has(.dashboard-layout-tabbed) {
+  padding: 0;
+  max-width: none;
+  /* auto margins would shrink the layout to its content in the flex column of main */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.dashboard-layout-tabbed {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  /* separates the layout from the header, as in design A3 */
+  border-top: 1px solid var(--layout-border);
+}
+.dashboard-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+/* the tab shows the location, so the views do not need their breadcrumb */
+.dashboard-layout-tabbed .dashboard-breadcrumb {
+  display: none;
+}
+
+.activity-bar {
+  flex: 0 0 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  background-color: var(--layout-chrome-background);
+  border-right: 1px solid var(--layout-border);
+}
+.activity-bar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--layout-icon-color);
+  font-size: 1.2rem;
+}
+.activity-bar-item:hover {
+  color: var(--layout-text);
+  background-color: var(--layout-icon-hover-background);
+}
+.activity-bar-item.active,
+.activity-bar-item.router-link-active {
+  color: var(--layout-accent);
+  background-color: var(--layout-icon-active-background);
+}
+
+.dashboard-sidebar {
+  flex: 0 0 280px;
+  overflow-y: auto;
+  padding: 10px 8px;
+  background-color: var(--layout-sidebar-background);
+  border-right: 1px solid var(--layout-border);
+  font-size: 13px;
+}
+.dashboard-sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboard-sidebar li + li {
+  margin-top: 1px;
+}
+.sidebar-group-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 10px 6px;
+}
+.sidebar-chevron {
+  color: var(--layout-text-subtle);
+  padding: 0 6px 0 0;
+  font-size: 10px;
+}
+.sidebar-chevron:hover {
+  color: var(--layout-text);
+}
+.sidebar-group-title,
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--layout-text-subtle);
+}
+.sidebar-group-title:hover,
+.sidebar-group-title.router-link-exact-active {
+  color: var(--layout-text);
+}
+.sidebar-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--layout-text-muted);
+}
+.sidebar-entry:hover {
+  background-color: var(--layout-hover-background);
+  color: var(--layout-text);
+}
+.sidebar-entry.router-link-exact-active,
+.sidebar-entry.router-link-active {
+  color: var(--layout-text);
+  background-color: var(--layout-selected-background);
+}
+/* every dashboard route lies below the overview, only the overview itself is marked */
+.sidebar-overview .sidebar-entry.router-link-active:not(.router-link-exact-active) {
+  color: var(--layout-text-muted);
+  background-color: transparent;
+}
+.sidebar-overview .sidebar-entry.router-link-active:not(.router-link-exact-active):hover {
+  color: var(--layout-text);
+  background-color: var(--layout-hover-background);
+}
+.sidebar-entry-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-count {
+  font-size: 11px;
+  color: var(--layout-text-subtle);
+}
+.sidebar-error-dot {
+  font-size: 7px;
+  line-height: 1;
+  color: var(--layout-error-dot);
+}
+
+.tab-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--layout-tab-bar-background);
+  border-bottom: 1px solid var(--layout-border);
+}
+.tab-list {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tab-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 40px;
+  border-right: 1px solid var(--layout-border);
+  background-color: var(--layout-tab-bar-background);
+  color: var(--layout-text-muted);
+  font-size: 13px;
+}
+.tab-item:hover {
+  background-color: var(--layout-hover-background);
+  color: var(--layout-text);
+}
+.tab-item.active {
+  background-color: var(--color-background);
+  box-shadow: inset 0 2px 0 var(--layout-accent);
+  color: var(--layout-text);
+}
+.tab-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  padding: 0 4px 0 14px;
+  color: inherit;
+  font-size: inherit;
+}
+.tab-link .badge {
+  flex: 0 0 auto;
+}
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  margin-right: 6px;
+  color: var(--layout-icon-color);
+  border-radius: 5px;
+}
+.tab-close:hover,
+.sidebar-remove:hover {
+  background-color: var(--layout-selected-background);
+  color: var(--layout-text);
+}
+.tab-more {
+  flex: 0 0 auto;
+}
+.tab-more-button {
+  width: 100%;
+  height: 40px;
+  color: var(--layout-text-muted);
+  font-size: 13px;
+}
+.tab-more-button:hover {
+  color: var(--layout-text);
+}
+
+@media only screen and (max-width: 767.98px) {
+  .dashboard-view {
+    padding: 1rem;
+  }
+  /* overlay above the view, next to the activity bar */
+  .dashboard-sidebar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 56px;
+    z-index: 20;
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Pinned */
+.sidebar-section-title {
+  margin: 0;
+  padding: 14px 10px 6px;
+}
+.sidebar-hint {
+  margin: 0;
+  padding: 2px 10px 4px;
+  font-size: 12px;
+  color: var(--layout-text-subtle);
+}
+.sidebar-entry-missing {
+  color: var(--layout-text-subtle);
+  opacity: 0.6;
+  cursor: default;
+}
+.sidebar-entry-missing:hover {
+  background-color: transparent;
+}
+.sidebar-remove {
+  color: inherit;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.pin-button {
+  flex: 0 0 auto;
+  color: var(--layout-icon-color);
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.pin-button:hover,
+.pin-button.pinned {
+  color: var(--layout-accent);
+}
+
+/* Sidebar filter */
+.sidebar-filter {
+  padding-bottom: 6px;
+}
+.sidebar-filter-field {
+  position: relative;
+}
+/* the clear button replaces the browser's own one of a search input */
+.sidebar-filter-field input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+.sidebar-filter-field input {
+  height: 34px;
+  padding-right: 28px;
+  border: 1px solid var(--layout-input-border);
+  border-radius: 8px;
+  background-color: var(--layout-input-background);
+  color: var(--layout-text);
+  font-size: 13px;
+}
+.sidebar-filter-field input::placeholder {
+  color: var(--layout-text-subtle);
+}
+.sidebar-filter-field input:focus {
+  border-color: var(--layout-accent);
+  background-color: var(--layout-input-background);
+  color: var(--layout-text);
+}
+.sidebar-filter-clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  color: var(--layout-text-subtle);
+  padding: 0 8px;
+  font-size: 0.75rem;
+}
+.sidebar-filter-clear:hover {
+  color: var(--layout-text);
+}
+.sidebar-filter-group {
+  padding-top: 6px;
+}
+.sidebar-filter-group > .sidebar-group-title {
+  display: block;
+  padding: 10px 10px 4px;
+}
+.sidebar-more {
+  color: var(--layout-text-subtle);
+  font-size: 12px;
+}
+
+/* Search panel */
+.search-panel-label {
+  display: block;
+  margin: 0;
+  padding: 4px 10px 6px;
+}
+.search-panel-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+.search-panel-facets select {
+  width: auto;
+  max-width: 100%;
+  border: 1px solid var(--layout-input-border);
+  background-color: var(--layout-input-background);
+  color: var(--layout-text);
+  font-size: 12px;
+}
+.search-panel-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 10px 6px;
+  font-size: 12px;
+  color: var(--layout-text-subtle);
+}
+.search-panel-action {
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  color: var(--layout-accent);
+  font-size: 12px;
+}
+.search-panel-action:hover {
+  text-decoration: underline;
+}
+.search-panel-action:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: 2px;
+}
+.search-panel-action:disabled {
+  opacity: 0.6;
+}
+.search-panel-more {
+  display: block;
+  margin: 8px auto 0;
+}
+.search-panel-error {
+  margin: 0;
+  padding: 2px 10px 6px;
+  font-size: 12px;
+  color: var(--layout-status-error);
+}
+.search-panel-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 10px 4px;
+}
+.search-panel-tips {
+  font-size: 12px;
+  color: var(--layout-text-muted);
+}
+.dashboard-sidebar ul.search-results li + li {
+  margin-top: 0;
+}
+.search-result {
+  display: block;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--layout-row-separator);
+  color: var(--layout-text-muted);
+}
+a.search-result:hover {
+  background-color: var(--layout-hover-background);
+  color: var(--layout-text);
+}
+a.search-result:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+.search-result.open {
+  background-color: var(--layout-selected-background);
+  color: var(--layout-text);
+}
+.search-result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--layout-text);
+}
+.search-result-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.search-result-status {
+  font-size: 12px;
+  color: var(--layout-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.search-result-status.error {
+  color: var(--layout-status-error);
+}
+.search-result-status.client-error {
+  color: var(--layout-status-other);
+}
+.search-result-detail {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--layout-text-subtle);
+}
+.search-result-detail mark {
+  padding: 0;
+  background: none;
+  color: var(--layout-text);
+  font-weight: 600;
+}
+.search-type {
+  border: 1px solid var(--layout-border);
+  background-color: var(--layout-icon-active-background);
+  color: var(--layout-text-muted);
+  font-weight: 500;
+}
+
+/* Tag headings of a list grouped by tag */
+.dashboard table.dataTable .tag-group-heading th {
+  padding-top: 8px;
+  padding-bottom: 4px;
+  text-align: left;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+.tag-group-heading .tag-group-name {
+  font-weight: 600;
+}
+.tag-group-heading .tag-group-description {
+  margin-left: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-light);
+}
+
+/* Log of requests or messages: table beside the detail panel, filter chips and popover */
+.log-layout {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-start;
+  min-width: 0;
+}
+.log-layout > .card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* beside the panel the table has little room: its cells wrap instead of widening it */
+.log-layout.has-panel .table-responsive table.dataTable th,
+.log-layout.has-panel .table-responsive table.dataTable td {
+  white-space: normal;
+}
+.log-layout.has-panel table.dataTable th[class*="col"] {
+  width: auto;
+}
+.log-layout table.dataTable tr[aria-selected="true"] td {
+  background-color: var(--layout-row-selected-background);
+}
+.log-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.log-pause {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  margin-left: auto;
+}
+.log-filters {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.filter-chips {
+  display: contents;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--layout-input-border);
+  border-radius: 999px;
+  background-color: var(--layout-chip-background);
+  color: var(--layout-text);
+  font-size: 0.8rem;
+}
+.filter-chip button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.15rem 0.5rem;
+}
+.filter-chip .filter-chip-label {
+  border-radius: 999px 0 0 999px;
+}
+.filter-chip .filter-chip-remove {
+  border-radius: 0 999px 999px 0;
+  padding-left: 0.2rem;
+}
+.filter-chip button:hover,
+.filter-menu button:hover {
+  background-color: var(--layout-hover-background);
+}
+.filter-chip button:focus-visible,
+.filter-menu button:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+.filter-add {
+  position: relative;
+}
+/* Bootstrap sets the button variables on each .btn, so a size class or a button group can't pass them on.
+   The secondary gray is hard to read on the dark dashboard background. */
+.btn-compact {
+  --bs-btn-padding-y: .1rem;
+  --bs-btn-padding-x: .5rem;
+  --bs-btn-font-size: .75rem;
+  --bs-btn-color: var(--color-text);
+  --bs-btn-border-color: var(--color-text-light);
+}
+/* Icon-only buttons in narrow table columns need less horizontal padding. */
+.btn-compact-icon {
+  --bs-btn-padding-x: .25rem;
+}
+.filter-menu,
+.filter-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 30;
+  margin: 2px 0 0;
+  border: 1px solid var(--layout-border);
+  border-radius: 6px;
+  background-color: var(--layout-popover-background);
+  box-shadow: var(--layout-popover-shadow);
+}
+.filter-menu {
+  min-width: 12rem;
+  padding: 0.25rem 0;
+  list-style: none;
+}
+.filter-popover {
+  width: 22rem;
+  max-width: 100%;
+  padding: 0.75rem;
+  color: var(--layout-text);
+}
+.filter-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--layout-text);
+  padding: 0.3rem 0.75rem;
+  text-align: left;
+}
+.filter-popover .form-text {
+  color: var(--layout-text-subtle);
+  font-size: 0.75rem;
+}
+
+.log-detail-panel {
+  flex: 0 0 var(--layout-panel-width);
+  width: var(--layout-panel-width);
+  min-width: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  /* the panel scrolls inside, so the table stays in view */
+  max-height: calc(100vh - var(--header-height) - 8rem);
+  overflow-y: auto;
+  margin: 7px 0;
+  padding: 0.8rem;
+  border: 1px solid var(--layout-border);
+  border-radius: 6px;
+  background-color: var(--layout-panel-background);
+  color: var(--layout-text);
+  font-size: 0.9rem;
+}
+.log-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+/* the panel shows the info card without its own frame, in the width of the panel */
+.dashboard .log-detail-panel .card,
+[data-theme="light"] .dashboard .log-detail-panel .card {
+  margin: 0 0 0.5rem;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+.log-detail-panel .card .card-body {
+  padding: 0;
+}
+/* the light theme sets its card border with !important */
+[data-theme="light"] .log-detail-panel .card:not(.accented) {
+  border: 0 !important;
+}
+.log-detail-panel .card .row > [class*="col"] {
+  flex: 1 1 40%;
+  width: auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.log-detail-panel .card .row > .header {
+  flex-basis: 100%;
+}
+.dashboard .log-detail-panel .card .header p:not(.label) {
+  font-size: 1rem;
+}
+.log-detail-content {
+  padding-top: 0.8rem;
+}
+
+@media only screen and (max-width: 767.98px) {
+  /* below the table instead of beside it */
+  .log-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .log-detail-panel {
+    flex: none;
+    align-self: stretch;
+    width: auto;
+    position: static;
+    max-height: none;
+    margin: 0 0 7px;
+  }
+}
+
+/* Faker explorer: the tree beside the playground and the node detail */
+.faker-layout {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+.faker-tree-column {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.faker-tree-column > .card {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.faker-side {
+  flex: 1.4 1 0;
+  min-width: 0;
+}
+.faker-side .card-group {
+  display: block;
+}
+.dashboard .faker-side .card-group .card {
+  width: auto;
+}
+.faker-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.faker-toolbar input[type='search'] {
+  flex: 1 1 12rem;
+  width: auto;
+}
+.faker-toolbar .form-switch {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.faker-hint {
+  color: var(--layout-text-subtle);
+}
+.faker-nodes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: calc(100vh - var(--header-height) - 12rem);
+  overflow-y: auto;
+}
+.faker-node-row {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.faker-node-row:hover {
+  background-color: var(--layout-hover-background);
+}
+/* like a selected row of the log lists, with a stronger border as the tree has no table lines */
+.faker-node-row.selected {
+  background-color: var(--layout-row-selected-background);
+  box-shadow: inset 3px 0 0 var(--layout-accent), inset 0 0 0 1px var(--layout-accent);
+}
+.faker-node-row.selected .faker-node-name {
+  font-weight: 600;
+}
+.faker-node-row:focus-visible {
+  outline: 2px solid var(--layout-accent);
+  outline-offset: -2px;
+}
+/* one thin guide per level, in the middle of the chevron of the parent */
+.faker-indent {
+  position: relative;
+  flex: none;
+  width: 1.5rem;
+  align-self: stretch;
+}
+.faker-indent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.75rem;
+  border-left: 1px solid var(--layout-text-subtle);
+  opacity: 0.4;
+}
+.faker-toggle {
+  flex: none;
+  width: 1.5rem;
+  text-align: center;
+  color: var(--layout-text-subtle);
+}
+.faker-node {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  color: var(--layout-text);
+  font-size: 0.85rem;
+}
+.faker-node-icon {
+  flex: none;
+  color: var(--layout-text-subtle);
+}
+/* a node that only groups its children */
+.faker-node-row.grouping .faker-node-name {
+  color: var(--layout-text-muted);
+  font-style: italic;
+}
+.faker-node-attributes {
+  min-width: 0;
+  margin-left: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--layout-text-subtle);
+  font-size: 0.75rem;
+}
+.faker-node .bi-person-fill-gear {
+  flex: none;
+  color: var(--layout-accent);
+}
+.faker-playground .label {
+  display: block;
+  font-size: 0.7rem;
+  margin: 0 0 0.3rem;
+  color: var(--color-text-light);
+}
+.faker-value {
+  margin: 0 0 0.5rem;
+  max-height: 16rem;
+  overflow: auto;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.faker-matches .faker-node-link {
+  padding: 0;
+  font-size: inherit;
+  text-align: left;
+}
+.faker-source {
+  margin-left: 0.4rem;
+  color: var(--layout-text-subtle);
+  font-size: 0.75rem;
+}
+
+@media only screen and (max-width: 767.98px) {
+  /* the playground and the detail follow the tree */
+  .faker-layout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .faker-nodes {
+    max-height: 24rem;
+  }
+}
+
+/* Connection lost: dim the data that may be stale. Controls, headings and labels keep their look and
+   everything stays clickable (no pointer-events). Navigation such as search results is not dimmed.
+   Opacity compounds, so only leaf values are dimmed: the value after a label is skipped when it
+   holds a table, source view, code or buttons, those are dimmed (or left alone) by their own selector. */
+main.connection-lost :is(table, .metric-value, .source-view .source, pre, .card .label ~ :not(table, .source-view, :has(table, .source-view, pre, button)), dd, .mail-body .col) {
+  opacity: 0.5;
+}
+.faker-playground ::placeholder {
+  color: var(--layout-text-subtle);
+  opacity: 0.6;
+}

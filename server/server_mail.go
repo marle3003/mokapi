@@ -22,6 +22,7 @@ type MailServer interface {
 
 type MailManager struct {
 	servers      map[string]map[string]MailServer
+	handlers     map[string]runtime.ReloadableMailHandler
 	app          *runtime.App
 	eventEmitter engine.MailEventEmitter
 	certStore    *cert.Store
@@ -31,6 +32,7 @@ type MailManager struct {
 func NewMailManager(app *runtime.App, eventEmitter engine.MailEventEmitter, store *cert.Store) *MailManager {
 	return &MailManager{
 		servers:      make(map[string]map[string]MailServer),
+		handlers:     make(map[string]runtime.ReloadableMailHandler),
 		app:          app,
 		eventEmitter: eventEmitter,
 		certStore:    store,
@@ -46,25 +48,46 @@ func (m *MailManager) UpdateConfig(e dynamic.ConfigEvent) {
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	info := m.app.Mail.Get(cfg.Info.Name)
-	if e.Event == dynamic.Delete {
-		m.app.Mail.Remove(e.Config)
-		if info.Config == nil {
-			m.removeService(cfg.Info.Name)
-		}
-		return
-	} else if info == nil {
-		info = m.app.Mail.Add(e.Config)
-	} else {
-		oldServers := info.Servers
-		info.AddConfig(e.Config)
-		m.cleanupRemovedServers(info, oldServers)
+	name := cfg.Info.Name
+	info := m.app.Mail.Get(name)
+	var old *mail.Config
+	if info != nil {
+		old = info.Config()
 	}
 
-	err := m.startServers(info)
-	if err != nil {
-		log.Errorf("starting '%v' failed: %v", cfg.Info.Name, err)
+	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
+		m.app.Mail.Remove(e.Config)
+	} else {
+		info = m.app.Mail.Add(e.Config)
 	}
+
+	current := info.Config()
+	if current == nil {
+		m.removeService(name)
+		return
+	}
+	if old != nil {
+		m.cleanupRemovedServers(name, old.Servers, current.Servers)
+	}
+
+	if err := m.startServers(current, m.reloadedHandler(name, info)); err != nil {
+		log.Errorf("starting '%v' failed: %v", name, err)
+	}
+}
+
+// reloadedHandler returns the handler of the service, which serves the current config snapshot.
+func (m *MailManager) reloadedHandler(name string, info *runtime.MailInfo) runtime.MailHandler {
+	h, ok := m.handlers[name]
+	if !ok {
+		h = info.Handler(m.app.Monitor.Mail, m.eventEmitter, m.app.Events)
+		m.handlers[name] = h
+	} else {
+		h.Reload()
+	}
+	return h
 }
 
 type mailProtocol struct {
@@ -88,13 +111,12 @@ var mailProtocols = map[string]mailProtocol{
 	}},
 }
 
-func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
+func (m *MailManager) startServers(cfg *mail.Config, h runtime.MailHandler) error {
 	servers, ok := m.servers[cfg.Info.Name]
 	if !ok {
 		servers = map[string]MailServer{}
 		m.servers[cfg.Info.Name] = servers
 	}
-	h := cfg.Handler(m.app.Monitor.Mail, m.eventEmitter, m.app.Events)
 	for _, server := range cfg.Servers {
 		protocol, ok := mailProtocols[server.Protocol]
 		if !ok {
@@ -138,12 +160,13 @@ func (m *MailManager) removeService(name string) {
 		server.Stop()
 	}
 	delete(m.servers, name)
+	delete(m.handlers, name)
 }
 
-func (m *MailManager) cleanupRemovedServers(cfg *runtime.MailInfo, old map[string]*mail.Server) {
-	servers := m.servers[cfg.Info.Name]
+func (m *MailManager) cleanupRemovedServers(name string, old, current map[string]*mail.Server) {
+	servers := m.servers[name]
 	for key, val := range old {
-		if val2, ok := cfg.Servers[key]; ok {
+		if val2, ok := current[key]; ok {
 			if val2.Host == val.Host && val2.Protocol == val.Protocol {
 				continue
 			}
@@ -151,7 +174,7 @@ func (m *MailManager) cleanupRemovedServers(cfg *runtime.MailInfo, old map[strin
 
 		port := mailPort(val)
 		if server, ok := servers[port]; ok {
-			log.Infof("removing '%v' on binding :%v", cfg.Info.Name, port)
+			log.Infof("removing '%v' on binding :%v", name, port)
 			server.Stop()
 			delete(servers, port)
 		}

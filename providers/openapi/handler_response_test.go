@@ -1,6 +1,7 @@
 package openapi_test
 
 import (
+	"encoding/json"
 	"io"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -360,6 +361,76 @@ func TestHandler_Response_Context(t *testing.T) {
 				require.Equal(t, `[{},{"name":"bar"},{"name":"bar"},{"name":"foo"},{}]`, rr.Body.String())
 			},
 		},
+		{
+			name: "path parameter is only used in the root object",
+			opt: openapitest.WithPath("/foo/{name}",
+				openapitest.WithPathParam("name", openapitest.WithParamSchema(schematest.New("string"))),
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(nestedNameSchema()),
+					),
+					),
+				),
+			),
+			req: func() *http.Request {
+				req := httptest.NewRequest("get", "http://localhost/foo/acme", nil)
+				return req
+			},
+			test: requireNameOnlyInRootObject,
+		},
+		{
+			name: "query parameter is only used in the root object",
+			opt: openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithQueryParam("name", false, openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(nestedNameSchema()),
+					),
+					),
+				),
+			),
+			req: func() *http.Request {
+				req := httptest.NewRequest("get", "http://localhost/foo?name=acme", nil)
+				return req
+			},
+			test: requireNameOnlyInRootObject,
+		},
+		{
+			name: "header parameter is only used in the root object",
+			opt: openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithHeaderParam("name", false, openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(nestedNameSchema()),
+					),
+					),
+				),
+			),
+			req: func() *http.Request {
+				req := httptest.NewRequest("get", "http://localhost/foo", nil)
+				req.Header.Set("name", "acme")
+				return req
+			},
+			test: requireNameOnlyInRootObject,
+		},
+		{
+			name: "cookie parameter is only used in the root object",
+			opt: openapitest.WithPath("/foo",
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithCookieParam("name", false, openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(nestedNameSchema()),
+					),
+					),
+				),
+			),
+			req: func() *http.Request {
+				req := httptest.NewRequest("get", "http://localhost/foo", nil)
+				req.AddCookie(&http.Cookie{Name: "name", Value: "acme"})
+				return req
+			},
+			test: requireNameOnlyInRootObject,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -376,4 +447,25 @@ func TestHandler_Response_Context(t *testing.T) {
 			tc.test(t, rr)
 		})
 	}
+}
+
+func nestedNameSchema() *schema.Schema {
+	return schematest.New("object",
+		schematest.WithProperty("name", schematest.New("string")),
+		schematest.WithProperty("child", schematest.New("object",
+			schematest.WithProperty("name", schematest.New("string")),
+			schematest.WithRequired("name"))),
+		schematest.WithRequired("name", "child"),
+	)
+}
+
+func requireNameOnlyInRootObject(t *testing.T, rr *httptest.ResponseRecorder) {
+	require.Equal(t, http.StatusOK, rr.Code)
+	var v struct {
+		Name  string
+		Child struct{ Name string }
+	}
+	require.NoError(t, json.Unmarshal(rr.Body.Bytes(), &v), rr.Body.String())
+	require.Equal(t, "acme", v.Name)
+	require.NotEqual(t, "acme", v.Child.Name)
 }

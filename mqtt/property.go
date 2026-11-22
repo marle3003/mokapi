@@ -20,7 +20,7 @@ func (p Properties) Read(d *Decoder) {
 
 	stopAt := d.leftSize - propLen
 	for d.leftSize > stopAt && d.leftSize > 0 {
-		propID := d.ReadByte()
+		propID := d.ReadUInt8()
 		switch propID {
 		case SessionExpiryInterval:
 			p[propID] = d.ReadInt32()

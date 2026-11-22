@@ -52,7 +52,7 @@ type PublishResponse struct {
 
 func (r *PublishResponse) Read(d *Decoder, h *Header) {
 	r.MessageId = d.ReadUInt16()
-	r.ReasonCode = PublishReason(d.ReadByte())
+	r.ReasonCode = PublishReason(d.ReadUInt8())
 
 	if d.IsV5() {
 		r.Properties = Properties{}

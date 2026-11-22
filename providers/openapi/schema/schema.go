@@ -104,7 +104,7 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		config.OpenScope(s.Id)
 		defer config.CloseScope()
 	} else {
-		config.Scope.OpenIfNeeded(config.Info.Path())
+		config.Scope().OpenIfNeeded(config.Info.Path())
 	}
 
 	for _, d := range s.Definitions {
@@ -120,13 +120,13 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if s.Anchor != "" {
-		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+		if err := config.Scope().SetLexical(s.Anchor, s); err != nil {
 			return err
 		}
 	}
 
 	if s.DynamicAnchor != "" {
-		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
+		if err := config.Scope().SetDynamic(s.DynamicAnchor, s); err != nil {
 			return err
 		}
 	}

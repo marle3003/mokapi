@@ -40,6 +40,7 @@ func (c *Config) Convert() *mail.Config {
 	result.Settings = &mail.Settings{
 		AutoCreateMailbox: c.AutoCreateMailbox,
 		MaxRecipients:     c.MaxRecipients,
+		MaxInboxMails:     mail.DefaultMaxInboxMails,
 	}
 
 	for _, mb := range c.Mailboxes {

@@ -25,6 +25,8 @@ test('Visit Mail Testserver', async ({ page }) => {
     })
 
     await test.step('Check servers', async () => {
+        await page.getByRole('tab', { name: 'Servers', exact: true }).click()
+
         const table = page.getByRole('table', { name: 'Servers' })
         await expect(table).toBeVisible()
     
@@ -46,7 +48,7 @@ test('Visit Mail Testserver', async ({ page }) => {
     await test.step('Check mailboxes', async () => {
         await page.getByRole('tab', { name: 'Mailboxes' }).click()
 
-        let table = page.getByRole('table', { name: 'Mailboxes' })
+        const table = page.getByRole('table', { name: 'Mailboxes' })
         await expect(table).toBeVisible()
     
         const mailboxes = useTable(table, ['Mailbox', 'Username', 'Password', 'Description', 'Received Messages'])
@@ -62,7 +64,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(row.getCellByName('Username')).toHaveText('bob')
         await expect(row.getCellByName('Password')).toHaveText('foo')
         await expect(row.getCellByName('Description')).toHaveText('')
-        await expect(row.getCellByName('Received Messages')).toHaveText('1')
+        await expect(row.getCellByName('Received Messages')).toHaveText('2')
 
         await row.click()
 
@@ -85,7 +87,7 @@ test('Visit Mail Testserver', async ({ page }) => {
     await test.step('Check rules', async () => {
         await page.getByRole('tab', { name: 'Rules '}).click()
 
-        let table = page.getByRole('table', { name: 'Rules' })
+        const table = page.getByRole('table', { name: 'Rules' })
         await expect(table).toBeVisible()
     
         const rules = useTable(table, ['Name', 'Action', 'Sender', 'Recipient', 'Subject', 'Body'])
@@ -114,10 +116,13 @@ test('Visit Mail Testserver', async ({ page }) => {
     })
 
     await test.step('Check mail message', async () => {
-        let table = page.getByRole('table', { name: 'Recent Mails' })
+        await page.getByRole('tab', { name: 'Mails', exact: true }).click()
+        const table = page.getByRole('table', { name: 'Recent Mails' })
         await expect(table).toBeVisible()
 
+        // a click selects the mail and shows it beside the log, the full view opens with "Open as tab"
         await table.getByRole('row').nth(1).click()
+        await page.getByRole('region', { name: 'Mail details' }).getByRole('link', { name: 'Open as tab' }).click()
 
         const info = page.getByRole('region', { name: 'Info' })
         await expect(info.getByLabel('Subject')).toHaveText('A test mail')
@@ -129,6 +134,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(body.getByRole('heading')).toHaveText('Hello')
         await expect(body.getByText('Mail message from Alice')).toBeVisible()
         await expect(body.getByRole('img')).toHaveAttribute('src', /\/attachments\/icon.png$/)
+        await expect.poll(() => body.getByRole('img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0)
 
         const attachments = page.getByRole('region', { name: 'Attachments' })
         const foo = attachments.getByRole('link', { name: 'foo.txt' })
@@ -145,4 +151,23 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(icon.getByLabel('Disposition')).toHaveText('inline')
         await expect(icon.getByLabel('Size')).toHaveText('372 B')
     })
+})
+
+test('Visit plain text mail message', async ({ page }) => {
+    const { tabs, open } = useDashboard(page)
+    await open()
+    await tabs.mail.click()
+    await page.getByRole('table', { name: 'Mail Servers' }).getByText('Mail Testserver').click()
+    await page.getByRole('tab', { name: 'Mails', exact: true }).click()
+
+    const table = page.getByRole('table', { name: 'Recent Mails' })
+    await table.getByRole('row').filter({ hasText: 'A plain text mail' }).click()
+    await page.getByRole('region', { name: 'Mail details' }).getByRole('link', { name: 'Open as tab' }).click()
+
+    const info = page.getByRole('region', { name: 'Info' })
+    await expect(info.getByLabel('Subject')).toHaveText('A plain text mail')
+    await expect(info.getByLabel('From')).toHaveText('Alice <alice@mokapi.io>')
+
+    const body = page.getByRole('region', { name: 'Mail Body' })
+    await expect(body).toContainText('Plain text message from Alice')
 })

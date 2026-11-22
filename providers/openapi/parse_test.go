@@ -51,10 +51,7 @@ func Test_Parse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.c.Parse(&dynamic.Config{
-				Info: dynamictest.NewConfigInfo(),
-				Data: tc.c,
-			}, &dynamictest.Reader{})
+			err := tc.c.Parse(dynamictest.NewConfig(tc.c, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			tc.test(t, tc.c, err)
 		})
 	}
@@ -108,10 +105,7 @@ func Test_ParseAndPatch(t *testing.T) {
 				}
 			}
 
-			err := target.Parse(&dynamic.Config{
-				Info: dynamictest.NewConfigInfo(),
-				Data: target,
-			}, &dynamictest.Reader{})
+			err := target.Parse(dynamictest.NewConfig(target, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			require.NoError(t, err)
 
 			tc.test(t, target)

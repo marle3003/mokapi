@@ -30,7 +30,7 @@ func (r *SubscribeRequest) Read(d *Decoder, _ *Header) {
 
 	for d.leftSize > 0 {
 		name := d.ReadString()
-		qos := d.ReadByte()
+		qos := d.ReadUInt8()
 		r.Topics = append(r.Topics, SubscribeTopic{
 			Name: name,
 			QoS:  qos,
@@ -78,7 +78,7 @@ func (r *SubscribeResponse) Read(d *Decoder, _ *Header) {
 	}
 
 	for d.leftSize > 0 {
-		code := d.ReadByte()
+		code := d.ReadUInt8()
 		r.ReasonCodes = append(r.ReasonCodes, SubscriptionReason(code))
 	}
 }

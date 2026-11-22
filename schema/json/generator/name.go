@@ -13,7 +13,7 @@ func newNameNode() *Node {
 }
 
 func fakeName(r *Request) (any, error) {
-	if v, ok := r.Context.Values["name"]; ok {
+	if v, ok := r.Context.valueAt("name", r.level); ok {
 		return v, nil
 	}
 

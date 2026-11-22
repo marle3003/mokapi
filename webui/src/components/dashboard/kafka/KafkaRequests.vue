@@ -1,156 +1,86 @@
 <script setup lang="ts">
-import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, reactive, ref, watch, type Component } from 'vue';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { useRouter } from '@/router';
-import JoinGroupSummary from './requests/JoinGroupSummary.vue';
-import SyncGroupSummary from './requests/SyncGroupSummary.vue';
-import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
-import FindCoordinatorSummary from './requests/FindCoordinatorSummary.vue';
-import InitProducerIdSummary from './requests/InitProducerIdSummary.vue';
-import { usePageSize } from '@/composables/paging.ts';
+import { useTemplateRef } from 'vue'
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { getRouteName } from '@/composables/dashboard'
+import { useRequestLog } from '@/composables/use-request-log'
+import Loading from '@/components/Loading.vue'
+import Paging from '../Paging.vue'
+import LogPauseButton from '../log/LogPauseButton.vue'
+import KafkaRequestDetailPanel from './log/KafkaRequestDetailPanel.vue'
+import { kafkaRequestTypes } from './requests/request-types'
 
 const props = defineProps<{
   service: KafkaService,
   clientId: string
-}>();
+}>()
 
-const summary: { [apiKey: number]: Component } = {
-  2: ListOffsetsSummary,
-  10: FindCoordinatorSummary,
-  11: JoinGroupSummary,
-  14: SyncGroupSummary,
-  22: InitProducerIdSummary
-};
+const { format: formatTime } = usePrettyDates()
 
-const router = useRouter();
-const { format: formatTime } = usePrettyDates();
-
-const labels = computed(() => {
-  const result = [
-    { name: 'namespace', value: 'kafka' },
-    { name: 'type', value: 'request' }
-  ];
-  result.push({ name: 'name', value: props.service.name })
-  result.push({ name: 'clientId', value: props.clientId })
-  return result;
-})
-
-const paging = reactive({
-    current: 1,
-    size: usePageSize(25),
-})
-
-const { dashboard } = useDashboard()
-const result = ref<ServiceEventPage | null>(null);
-const events = computed(() => result.value?.items ?? [])
-watch(
-  [() => dashboard.value, () => paging.current, () => paging.size, labels],
-  ([db], _, onCleanup) => {
-    const res = db.getEvents({
-      page: paging.current,
-      size: paging.size,
-      labels: labels.value,
-    })
-
-    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
-
-    onCleanup(() => {
-      stop()
-      res.close()
-    })
-  },
-  { immediate: true }
-);
-
-const requests = computed(() => {
-  if (!events.value) {
-    return [];
-  }
-  const result = [];
-  for (const event of events.value) {
-    const data = eventData(event)
-    if (!data) {
-      continue
-    }
-
-    result.push({
-      event: event,
-      data: data
-    });
-  }
-  return result
-})
-
-function eventData(event: ServiceEvent): KafkaRequestLog {
-  return event.data as KafkaRequestLog
-}
-function goToRequest(eventId: string, openInNewTab = false) {
-  if (getSelection()?.toString()) {
-    return
-  }
-
-  const to = {
-    name: getRouteName('kafkaRequest').value,
-    params: { service: props.service.name, id: eventId }
-  }
-  if (openInNewTab) {
-    const routeData = router.resolve(to);
-    window.open(routeData.href, '_blank')
-  } else {
-    router.push(to)
-  }
-}
+const table = useTemplateRef<HTMLElement>('table')
+const {
+  paging, result, isLoading, events, rows, paused, canPause, togglePause,
+  selectedId, select, onRowClick, onLinkClick,
+} = useRequestLog<KafkaRequestLog>('kafka', 'request', {
+  get serviceName() { return props.service.name },
+  get clientId() { return props.clientId },
+}, table)
 </script>
 
 <template>
-  <section class="card" aria-labelledby="requests">
-    <div class="card-body">
-      <h2 id="requests" class="card-title text-center">Recent Requests</h2>
+  <div class="log-layout" :class="{ 'has-panel': selectedId }">
+    <section class="card" aria-labelledby="request-log-title">
+      <div class="card-body">
+        <h2 id="request-log-title" class="card-title text-center">Recent Requests</h2>
 
-      <p class="text-muted small text-center mb-3">
-        This view shows requests for producer initialization, group coordination, and offset resolution
-      </p>
+        <p class="text-muted small text-center mb-3">
+          This view shows requests for producer initialization, group coordination, and offset resolution
+        </p>
 
-      <div class="table-responsive-sm">
-        <table class="table dataTable selectable" aria-label="requests">
-          <thead>
-            <tr>
-              <th scope="col" class="text-left col-2">API Key</th>
-              <th scope="col" class="text-left col-2">Version</th>
-              <th scope="col" class="text-left col">Summary</th>
-              <th scope="col" class="text-left col">Error</th>
-              <th scope="col" class="text-center col-2">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in requests" :key="row.event.id" @click.left="goToRequest(row.event.id)"
-              @mousedown.middle="goToRequest(row.event.id, true)">
-              <td>
-                <router-link @click.stop class="row-link"
-                  :to="{ name: getRouteName('kafkaRequest').value, params: { service: props.service.name, id: row.event.id } }">
-                  {{ row.data.header.requestName }}
-                </router-link>
-              </td>
-              <td>{{ row.data.header.version }}</td>
-              <td>
-                <component :is="summary[row.data.header.requestKey]" :request="row.data.request"
-                  :response="row.data.response" />
-              </td>
-              <td>{{ row.data.response.errorCode && row.data.response.errorCode !== '' ? row.data.response.errorCode :
-                'None' }}</td>
-              <td class="text-center">{{ formatTime(row.event.time) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="log-toolbar">
+          <log-pause-button v-if="canPause" :paused="paused" @toggle="togglePause" />
+        </div>
+
+        <div class="table-responsive">
+          <table ref="table" class="table dataTable selectable" aria-label="Recent Requests">
+            <thead>
+              <tr>
+                <th scope="col" class="text-left col-2">API Key</th>
+                <th scope="col" class="text-left col-2">Version</th>
+                <th scope="col" class="text-left col">Summary</th>
+                <th scope="col" class="text-left col">Error</th>
+                <th scope="col" class="text-center col-2">Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ event, data } in rows" :key="event.id"
+                :aria-selected="event.id === selectedId ? 'true' : undefined" @click="onRowClick($event, event.id)">
+                <td>
+                  <router-link custom :to="{ name: getRouteName('kafkaRequest').value, params: { service: service.name, id: event.id } }" v-slot="{ href }">
+                    <a class="row-link" :href="href" @click="onLinkClick">{{ data.header.requestName }}</a>
+                  </router-link>
+                </td>
+                <td>{{ data.header.version }}</td>
+                <td>
+                  <component :is="kafkaRequestTypes[data.header.requestKey]?.summary" :request="data.request"
+                    :response="data.response" />
+                </td>
+                <td>{{ data.response.errorCode && data.response.errorCode !== '' ? data.response.errorCode : 'None' }}</td>
+                <td class="text-center">{{ formatTime(event.time) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <loading v-if="isLoading && events.length === 0" />
+        <Paging v-if="result"
+          :count="events.length"
+          :total="result.total"
+          v-model:current="paging.current"
+          v-model:size="paging.size"
+        />
       </div>
+    </section>
 
-      <Paging v-if="result"
-        :count="events.length"
-        :total="result.total"
-        v-model:current="paging.current"
-        v-model:size="paging.size"
-      />
-    </div>
-  </section>
+    <kafka-request-detail-panel v-if="selectedId" :service="service.name" :request-id="selectedId" @close="select(undefined)" />
+  </div>
 </template>

@@ -13,6 +13,6 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if err != nil {
 		return err
 	}
-	config.Data = converted
+	config.SetData(converted)
 	return converted.Parse(config, reader)
 }

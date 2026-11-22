@@ -183,7 +183,7 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 				if e.Event != dynamic.Delete {
 					wrapConfig(e.Config, r)
 				}
-				ch <- e
+				safe.Send(ctx, ch, e)
 			}
 		}
 	})

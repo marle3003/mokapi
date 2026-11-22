@@ -85,6 +85,12 @@ export function useMeta(title: string, description: string, canonicalUrl: string
     setHeadTag(metaTag('property', 'og:type', 'website'))
 }
 
+const softwareApplicationSelector = 'script[type="application/ld+json"]'
+
+export function removeSoftwareApplicationMeta() {
+    removeHeadTag(softwareApplicationSelector)
+}
+
 export function useSoftwareApplicationMeta(version: string) {
     const structuredData = {
         "@context": "https://schema.org",
@@ -124,7 +130,7 @@ export function useSoftwareApplicationMeta(version: string) {
     }
 
     setHeadTag({
-        selector: 'script[type="application/ld+json"]',
+        selector: softwareApplicationSelector,
         tagName: 'script',
         attributes: { type: 'application/ld+json' },
         text: JSON.stringify(structuredData),

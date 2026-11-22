@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { useMetrics } from '@/composables/metrics';
+import PinButton from '@/components/dashboard/layout/PinButton.vue'
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { type PropType, computed } from 'vue';
 import { useRouter, useRoute } from '@/router';
 import { useLocalStorage } from '@/composables/local-storage';
+import { groupRows, selectedTags, type TagGrouping } from '@/composables/tag-group'
+import TagToolbar from '@/components/dashboard/TagToolbar.vue'
+import TagGroupHeading from '@/components/dashboard/TagGroupHeading.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { sum } = useMetrics()
 const { format } = usePrettyDates()
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
 })
 const tags = useLocalStorage<string[]>(`http-${props.service.name}-tags`, ['__all'])
+const grouping = useLocalStorage<TagGrouping>(`http-${props.service.name}-group`, 'az')
 const allTags = computed(() => {
     if (!props.service.tags) {
         return [];
@@ -37,11 +40,13 @@ const allTags = computed(() => {
     return result;
 })
 
-const paths = computed(() => {
+const tagInfos = computed(() => allTags.value.map(t => ({ name: t.name, description: t.description ?? t.summary })))
+
+const filteredPaths = computed(() => {
     if (!props.service.paths) {
         return []
     }
-    let result = props.service.paths.sort(comparePath)
+    let result = [...props.service.paths]
     if (!tags.value.includes('__all')) {
         result = result.filter((p) => {
             for (const o of p.operations) {
@@ -55,10 +60,15 @@ const paths = computed(() => {
     return result;
 })
 
-function comparePath(p1: HttpPath, p2: HttpPath) {
-    const name1 = p1.path.toLowerCase()
-    const name2 = p2.path.toLowerCase()
-    return name1.localeCompare(name2)
+const groups = computed(() => groupRows(filteredPaths.value, grouping.value, {
+    nameOf: path => path.path,
+    tagsOf: pathTags,
+    tags: tagInfos.value,
+    onlyTags: selectedTags(tags.value),
+}))
+
+function pathTags(path: HttpPath): string[] {
+    return path.operations.flatMap(o => o.tags ?? [])
 }
 
 function goToPath(path: HttpPath, openInNewTab = false){
@@ -108,7 +118,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
     if (!path.operations) {
         return false;
     }
-    for (var op of path.operations){
+    for (const op of path.operations){
         if (!op.deprecated){
             return false
         }
@@ -121,7 +131,7 @@ function operations(path: HttpPath) {
         return []
     }
 
-    let result = path.operations
+    let result = [...path.operations]
     if (!tags.value.includes('__all')) {
         result = result.filter((o) => {
             if (o.tags && o.tags.some(t => tags.value.some(x => x == t))) {
@@ -150,35 +160,13 @@ function operationOrderValue(operation: HttpOperationInfo): number {
     }
 }
 const hasDeprecated = computed(() => {
-    for (const p of paths.value) {
+    for (const p of filteredPaths.value) {
         if (allOperationsDeprecated(p)) {
             return true;
         }
     }
     return false;
 })
-function toggleTag(name: string) {
-    if (name === '__all') {
-        if (tags.value.includes('__all')) {
-            tags.value = []
-        } else {
-            tags.value = ['__all']
-        }
-    } else {
-        if (tags.value.includes('__all')) {
-            tags.value = allTags.value.map(x => x.name)
-        }
-
-        const i = tags.value.indexOf(name)
-        if (i === -1) {
-            tags.value.push(name)
-        } else {
-            tags.value.splice(i, 1)
-        }
-
-        tags.value = tags.value.filter((t) => t !== '__all')
-    }
-}
 function operationTitle(operation: HttpOperationInfo): string {
     if (operation.errors && operation.errors.length > 0) {
         return `${operation.errors.map(x => x.message).join(' ')}`
@@ -201,38 +189,7 @@ function operationCssClass(operation: HttpOperationInfo): string {
         <div class="card-body">
             <h2 id="paths" class="card-title text-center">Paths</h2>
 
-            <fieldset class="text-center mt-3 mb-2" v-if="allTags.length > 1" aria-describedby="tag-help">
-
-                <legend class="visually-hidden">
-                    Filter topics by tags
-                </legend>
-
-                <p id="tag-help" class="visually-hidden">
-                    Select one or more tags to filter the topics. Selecting “All” enables all tags.
-                </p>
-
-
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input tag-checkbox" type="checkbox" id="all" 
-                      value="all" @change="toggleTag('__all')" :checked="tags.includes('__all')" aria-controls="tag-list">
-                    <label class="form-check-label" for="all">All</label>
-                </div>
-
-                <div id="tag-list" style="display: inline-block">
-                    <div class="form-check form-check-inline" v-for="tag in allTags" :title="tag.summary">
-                        <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" 
-                            :value="tag.name" @change="toggleTag(tag.name)"
-                            :checked="tags.includes(tag.name) || tags.includes('__all')"
-                            :aria-describedby="tag.description ? `desc-${tag.name}` : undefined">
-                        <label class="form-check-label" :for="tag.name">{{ tag.name }}</label>
-
-                        <span v-if="tag.description" :id="`desc-${tag.name}`" class="visually-hidden">
-                            {{ tag.description }}
-                        </span>
-                    </div>
-                </div>
-
-            </fieldset>
+            <tag-toolbar v-model:selected="tags" v-model:grouping="grouping" :tags="tagInfos" noun="paths" />
 
             <div class="table-responsive-sm">
                 <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
@@ -246,13 +203,15 @@ function operationCssClass(operation: HttpOperationInfo): string {
                             <th scope="col" class="text-center col-1" title="Total requests / error responses">Req / Err</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr v-for="path in paths" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
+                    <tbody v-for="group in groups" :key="group.heading ?? ''">
+                        <tag-group-heading v-if="group.heading" :heading="group.heading" :description="group.description" :columns="hasDeprecated ? 6 : 5" />
+                        <tr v-for="path in group.rows" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
                             <td v-if="hasDeprecated" style="padding-left:0;">
                                 <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
                                 <span class="visually-hidden">Deprecated</span>
                             </td>
                             <td>
+                                <pin-button class="float-end" :to="route.httpPath(props.service, path)" :label="path.path" />
                                 <router-link @click.stop class="row-link" :to="route.httpPath(props.service, path)">
                                     {{ path.path }}
                                 </router-link>

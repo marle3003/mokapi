@@ -199,7 +199,7 @@ func (d *Decoder) ReadInt16() int16 {
 }
 
 func (d *Decoder) ReadInt8() int8 {
-	return int8(d.ReadByte())
+	return int8(d.ReadUInt8())
 }
 
 func (d *Decoder) ReadVarInt() int64 {
@@ -243,7 +243,7 @@ func (d *Decoder) ReadUvarint() uint64 {
 	var x uint64
 	var s uint
 	for i := 0; ; i++ {
-		b := d.ReadByte()
+		b := d.ReadUInt8()
 		if b < 0x80 {
 			if i > 9 || i == 9 && b > 1 {
 				d.err = errors.New("kafka: varint overflows a 64-bit integer")
@@ -296,7 +296,7 @@ func (d *Decoder) decodeArray(v reflect.Value, decodeElem decodeFunc) {
 	}
 }
 
-func (d *Decoder) ReadByte() byte {
+func (d *Decoder) ReadUInt8() byte {
 	if d.err != nil {
 		return 0
 	}

@@ -351,15 +351,13 @@ func TestJson_Structuring(t *testing.T) {
 			test: func(t *testing.T) {
 				reader := &dynamictest.Reader{
 					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address", schematest.New("string")),
-							),
-						},
+						"https://example.com/schemas/address": dynamictest.NewConfig(schematest.New("object",
+							schematest.WithProperty("street_address", schematest.New("string")),
+						)),
 					},
 				}
 				s := &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#/properties/street_address"}}
-				err := s.Parse(&dynamic.Config{Data: &schema.Schema{}}, reader)
+				err := s.Parse(dynamictest.NewConfig(&schema.Schema{}), reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", s.Type.String())
 			},
@@ -369,27 +367,21 @@ func TestJson_Structuring(t *testing.T) {
 			test: func(t *testing.T) {
 				reader := &dynamictest.Reader{
 					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/address")),
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address",
-									schematest.New("string", schematest.WithAnchor("street_address"))),
-							),
-						},
+						"https://example.com/schemas/address": dynamictest.NewConfig(schematest.New("object",
+							schematest.WithProperty("street_address",
+								schematest.New("string", schematest.WithAnchor("street_address"))),
+						), dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/address")))),
 					},
 				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#street_address"}},
-				}
+				person := dynamictest.NewConfig(&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#street_address"}}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person"))))
 				person.OpenScope("")
 
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				err := person.Data().(*schema.Schema).Parse(person, reader)
 				require.NoError(t, err)
 
 				require.NoError(t, err)
-				require.Equal(t, "string", person.Data.(*schema.Schema).Type.String())
+				require.Equal(t, "string", person.Data().(*schema.Schema).Type.String())
 			},
 		},
 		{
@@ -397,27 +389,21 @@ func TestJson_Structuring(t *testing.T) {
 			test: func(t *testing.T) {
 				reader := &dynamictest.Reader{
 					Data: map[string]*dynamic.Config{
-						"https://example.com/schema/billing-address": {
-							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address")),
-							Data: schematest.New("object",
-								schematest.WithId("https://example.com/schema/address"),
-								schematest.WithProperty("street_address",
-									schematest.New("string", schematest.WithAnchor("street_address"))),
-							),
-						},
+						"https://example.com/schema/billing-address": dynamictest.NewConfig(schematest.New("object",
+							schematest.WithId("https://example.com/schema/address"),
+							schematest.WithProperty("street_address",
+								schematest.New("string", schematest.WithAnchor("street_address"))),
+						), dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address")))),
 					},
 				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address")),
-					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schema/billing-address#street_address"}},
-				}
+				person := dynamictest.NewConfig(&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schema/billing-address#street_address"}}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address"))))
 
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				err := person.Data().(*schema.Schema).Parse(person, reader)
 				require.NoError(t, err)
 
 				require.NoError(t, err)
-				require.Equal(t, "string", person.Data.(*schema.Schema).Type.String())
+				require.Equal(t, "string", person.Data().(*schema.Schema).Type.String())
 			},
 		},
 		{
@@ -425,21 +411,18 @@ func TestJson_Structuring(t *testing.T) {
 			test: func(t *testing.T) {
 				reader := &dynamictest.Reader{}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: schematest.New("object",
-						schematest.WithId("https://example.com/schemas/person"),
-						schematest.WithPropertyRef("foo", "#foo"),
-						schematest.WithDef("foo",
-							schematest.New("string",
-								schematest.WithId("https://example.com/schemas/foo"),
-								schematest.WithAnchor("foo"),
-							),
+				person := dynamictest.NewConfig(schematest.New("object",
+					schematest.WithId("https://example.com/schemas/person"),
+					schematest.WithPropertyRef("foo", "#foo"),
+					schematest.WithDef("foo",
+						schematest.New("string",
+							schematest.WithId("https://example.com/schemas/foo"),
+							schematest.WithAnchor("foo"),
 						),
 					),
-				}
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person"))))
 
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				err := person.Data().(*schema.Schema).Parse(person, reader)
 
 				require.EqualError(t, err, "parse schema 'foo' failed: resolve reference '#foo' failed: name 'foo' not found in scope 'https://example.com/schemas/person'")
 			},
@@ -449,15 +432,13 @@ func TestJson_Structuring(t *testing.T) {
 			test: func(t *testing.T) {
 				reader := &dynamictest.Reader{
 					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address", schematest.New("string")),
-							),
-						},
+						"https://example.com/schemas/address": dynamictest.NewConfig(schematest.New("object",
+							schematest.WithProperty("street_address", schematest.New("string")),
+						)),
 					},
 				}
 
-				cfg := &dynamic.Config{Data: &schema.Schema{Id: "https://example.com/schemas/customer"}}
+				cfg := dynamictest.NewConfig(&schema.Schema{Id: "https://example.com/schemas/customer"})
 
 				r := &dynamic.Reference[schema.Schema]{Ref: "/schemas/address"}
 				s, err := r.Resolve(cfg, reader)
@@ -474,7 +455,7 @@ func TestJson_Structuring(t *testing.T) {
 					schematest.WithDef("name", schematest.New("string")),
 				)
 
-				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err := s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "string", s.Properties.Get("first_name").Type.String())
@@ -490,7 +471,7 @@ func TestJson_Structuring(t *testing.T) {
 					),
 				)
 
-				err := entry.Parse(&dynamic.Config{Data: entry}, &dynamictest.Reader{})
+				err := entry.Parse(dynamictest.NewConfig(entry), &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				// entry does not contain $ref=#
@@ -517,20 +498,17 @@ func TestJson_Structuring(t *testing.T) {
 					},
 				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/list-of-string")),
-					Data: &schema.Schema{
-						Defs: map[string]*schema.Schema{
-							"string-items": {
-								DynamicAnchor: "T",
-								Type:          schema.Types{"string"},
-							},
+				person := dynamictest.NewConfig(&schema.Schema{
+					Defs: map[string]*schema.Schema{
+						"string-items": {
+							DynamicAnchor: "T",
+							Type:          schema.Types{"string"},
 						},
-						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
 					},
-				}
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
+				}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/list-of-string"))))
 
-				s := person.Data.(*schema.Schema)
+				s := person.Data().(*schema.Schema)
 				err := s.Parse(person, reader)
 				require.NoError(t, err)
 

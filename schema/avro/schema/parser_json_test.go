@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/avro/schema"
 	"testing"
@@ -213,7 +212,7 @@ func TestParser_Parse_Json(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.schema.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.schema}, &dynamictest.Reader{})
+			err := tc.schema.Parse(dynamictest.NewConfig(tc.schema, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			if err != nil {
 				tc.test(t, nil, err)
 				return

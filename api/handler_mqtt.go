@@ -3,6 +3,7 @@ package api
 import (
 	"maps"
 	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -70,15 +71,20 @@ func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
 	for _, mi := range list {
+		cfg := mi.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        mi.Info.Name,
-			Description: mi.Info.Description,
-			Version:     mi.Info.Version,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
+			Version:     cfg.Info.Version,
 			Type:        ServiceMqtt,
+			Items:       getChannelItems(cfg, "mqtt"),
 		}
 
-		if mi.Info.Contact != nil {
-			c := mi.Info.Contact
+		if cfg.Info.Contact != nil {
+			c := cfg.Info.Contact
 			s.Contact = &contact{
 				Name:  c.Name,
 				Url:   c.Url,
@@ -87,8 +93,8 @@ func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 		}
 
 		s.Metrics = mqttTopicMetrics{
-			NumMessages:     m.Mqtt.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
-			LastMessageTime: m.Mqtt.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			NumMessages:     m.Mqtt.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastMessageTime: m.Mqtt.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
 		result = append(result, s)
@@ -118,22 +124,27 @@ func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	m := mqttInfo{
-		Name:        mi.Config.Info.Name,
-		Description: mi.Config.Info.Description,
-		Version:     mi.Config.Info.Version,
+	cfg, files := mi.Snapshot()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	if mi.Config.Info.Contact != nil {
+	m := mqttInfo{
+		Name:        cfg.Info.Name,
+		Description: cfg.Info.Description,
+		Version:     cfg.Info.Version,
+	}
+
+	if cfg.Info.Contact != nil {
 		m.Contact = &contact{
-			Name:  mi.Config.Info.Contact.Name,
-			Url:   mi.Config.Info.Contact.Url,
-			Email: mi.Config.Info.Contact.Email,
+			Name:  cfg.Info.Contact.Name,
+			Url:   cfg.Info.Contact.Url,
+			Email: cfg.Info.Contact.Email,
 		}
 	}
 
-	for it := mi.Servers.Iter(); it.Next(); {
+	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
 		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "mqtt" {
@@ -165,7 +176,7 @@ func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
 		return strings.Compare(m.Servers[i].Name, m.Servers[j].Name) < 0
 	})
 
-	m.Topics = getMqttTopics(mi, h.app.Monitor.Mqtt)
+	m.Topics = getMqttTopics(cfg, mi.Topics(), h.app.Monitor.Mqtt)
 
 	for _, client := range mi.Store.Clients() {
 		c := mqttClient{
@@ -177,7 +188,7 @@ func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
 		m.Clients = append(m.Clients, c)
 	}
 
-	m.Configs = getConfigs(mi.Configs())
+	m.Configs = getConfigs(files)
 
 	write(w, m)
 }
@@ -191,12 +202,18 @@ func (h *handler) getMqttTopics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	write(w, getMqttTopics(ki, h.app.Monitor.Mqtt))
+	cfg := ki.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	write(w, getMqttTopics(cfg, ki.Topics(), h.app.Monitor.Mqtt))
 }
 
-func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
-	topics := make([]mqttTopic, 0, len(mi.Config.Channels))
-	for _, ch := range mi.Config.Channels {
+func getMqttTopics(cfg *asyncapi3.Config, brokerTopics []*store.Topic, m *monitor.Mqtt) []mqttTopic {
+	topics := make([]mqttTopic, 0, len(cfg.Channels))
+	for _, ch := range cfg.Channels {
 		if ch.Value == nil {
 			continue
 		}
@@ -205,12 +222,12 @@ func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
 		}
 		addr := ch.Value.ResolveAddress()
 
-		data := newMqttTopic(addr, ch.Value, mi.Config)
+		data := newMqttTopic(addr, ch.Value, cfg)
 		if len(ch.Value.Parameters) > 0 {
 			data.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
 				return strings.Compare(a, b)
 			})
-			for _, t := range mi.Topics {
+			for _, t := range brokerTopics {
 				if err := ch.Value.IsNameValid(t.Name); err == nil {
 					params, _ := ch.Value.ExtractParams(t.Name)
 					inst := mqttTopicInstance{
@@ -218,8 +235,8 @@ func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
 						Parameters: params,
 					}
 					inst.Metrics = mqttTopicMetrics{
-						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("instance", t.Name))),
-						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("instance", t.Name))),
+						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", t.Name))),
+						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", t.Name))),
 					}
 					data.Instances = append(data.Instances, inst)
 				}
@@ -227,8 +244,8 @@ func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
 		}
 
 		data.Metrics = mqttTopicMetrics{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("topic", addr))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("topic", addr))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("topic", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("topic", addr))),
 		}
 
 		topics = append(topics, data)

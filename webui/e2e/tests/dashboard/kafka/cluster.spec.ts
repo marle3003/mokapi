@@ -47,7 +47,12 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await topics.testTopic(2, cluster.topics[1])
     })
 
-    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
+    await page.getByRole('tab', { name: 'Messages', exact: true }).click()
+    const messages = page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' })
+    await useKafkaMessages(page).expectColumns(messages)
+    await useKafkaMessages(page).openFullView(messages.getByRole('row').nth(1))
+    await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0827')
+    await page.goBack()
 
     await test.step('Check groups section', async () => {
         await page.getByRole('tab', { name: 'Groups' }).click();
@@ -90,8 +95,8 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
 
     const { test: testSourceView } = useSourceView(dashboard.getByRole('region', { name: 'Content' }))
     await testSourceView({
-        lines: '136 lines',
-        size: '3.31 kB',
+        lines: '152 lines',
+        size: '3.66 kB',
         content: /"name": "Kafka World"/,
         filename: 'asyncapi.json',
         clipboard: '"name": "Kafka World"'

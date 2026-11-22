@@ -62,13 +62,14 @@ var (
 )
 
 type service struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description,omitempty"`
-	Contact     *contact    `json:"contact,omitempty"`
-	Version     string      `json:"version,omitempty"`
-	Type        serviceType `json:"type"`
-	Status      string      `json:"status,omitempty"`
-	Metrics     any         `json:"metrics,omitempty"`
+	Name        string        `json:"name"`
+	Description string        `json:"description,omitempty"`
+	Contact     *contact      `json:"contact,omitempty"`
+	Version     string        `json:"version,omitempty"`
+	Type        serviceType   `json:"type"`
+	Status      string        `json:"status,omitempty"`
+	Metrics     any           `json:"metrics,omitempty"`
+	Items       []serviceItem `json:"items,omitempty"`
 }
 
 type contact struct {
@@ -178,6 +179,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.serveSystem(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
+	case p == "/api/jobs":
+		h.getJobs(w, r)
 	case strings.HasPrefix(p, "/api/search"):
 		h.getSearchResults(w, r)
 	case strings.HasPrefix(p, h.healthPath) && h.healthHandler != nil:

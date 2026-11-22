@@ -22,7 +22,7 @@ func (d *Decoder) IsV5() bool {
 	return d.protocolVersion == 5
 }
 
-func (d *Decoder) ReadByte() byte {
+func (d *Decoder) ReadUInt8() byte {
 	if d.err != nil {
 		return 0
 	}
@@ -132,7 +132,7 @@ func (d *Decoder) ReadVariableInt() int {
 	var value = 0
 
 	for {
-		b := d.ReadByte()
+		b := d.ReadUInt8()
 
 		value += int(b&127) * multiplier
 

@@ -33,7 +33,7 @@ func TestPageBuffer(t *testing.T) {
 				b := new(bytes.Buffer)
 				n, err := pb.WriteTo(b)
 				require.NoError(t, err)
-				require.Equal(t, 11, n)
+				require.Equal(t, int64(11), n)
 				require.Equal(t, "hello World", b.String())
 			},
 		},

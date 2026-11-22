@@ -181,9 +181,9 @@ test.describe('hydration', () => {
             await expectAppMounted(page)
 
             await page.locator('.sidebar a[href$="/docs/http/quick-start"]').click()
-            await expect(page.getByRole('heading', { name: 'Quick Start', level: 1 })).toBeVisible()
+            await expect(page.getByRole('heading', { name: 'Mocking the Petstore REST API', level: 1 })).toBeVisible()
 
-            await expectOneHead(page, { title: 'HTTP Quick Start', canonical: 'https://mokapi.io/docs/http/quick-start' })
+            await expectOneHead(page, { title: 'HTTP API Mocking: Mock the Swagger Petstore', canonical: 'https://mokapi.io/docs/http/quick-start' })
         })
 
         test('on the home page after the GitHub release is known', async ({ page }) => {
@@ -199,6 +199,17 @@ test.describe('hydration', () => {
             await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1)
             expect(JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!).softwareVersion).toBe('9.9.9')
         })
+    })
+
+    test('the structured data of the home page is gone after a navigation to another page', async ({ page }) => {
+        await page.goto(pages[0]!.path)
+        await expectAppMounted(page)
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1)
+
+        await page.getByRole('link', { name: 'HTTP', exact: true }).first().click()
+        await expect(page.getByRole('heading', { name: pages[1]!.h1, level: 1 })).toBeVisible()
+
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0)
     })
 
     test('the page works after hydration: theme switch', async ({ page }) => {
@@ -328,6 +339,6 @@ function visibleThemeIcon(page: Page, title: 'Switch to light mode' | 'Switch to
 test('the demo dashboard still renders in the browser', async ({ page }) => {
     await page.goto('/dashboard-demo')
 
-    await expect(page.locator('main a[aria-current="page"]')).toHaveText('Overview')
-    await expect(page.getByRole('table', { name: 'HTTP APIs' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Tabs' }).locator('a[aria-current="page"]')).toHaveText('Overview')
+    await expect(page.getByRole('link', { name: /HTTP Requests/ })).toBeVisible()
 })

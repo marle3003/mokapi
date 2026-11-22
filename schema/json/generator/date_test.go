@@ -178,3 +178,86 @@ func TestFakeDateWithYearRange_NewYearsEve(t *testing.T) {
 	require.NotEqual(t, "", r)
 	require.True(t, strings.HasPrefix(r.(string), "2027"))
 }
+
+func TestTimePairs(t *testing.T) {
+	pairs := []struct{ start, end string }{
+		{"startDate", "endDate"},
+		{"validFrom", "validUntil"},
+		{"start_date", "end_date"},
+	}
+	formats := map[string]string{
+		"":          "2006-01-02",
+		"date":      "2006-01-02",
+		"date-time": time.RFC3339,
+	}
+
+	for _, pair := range pairs {
+		for format, layout := range formats {
+			for _, order := range [][]string{{pair.start, pair.end}, {pair.end, pair.start}} {
+				name := pair.start + "/" + pair.end + " format=" + format + " order=" + strings.Join(order, ",")
+				t.Run(name, func(t *testing.T) {
+					Seed(1234567)
+
+					s := schematest.New("object", schematest.WithRequired(order...))
+					for _, prop := range order {
+						opts := []schematest.SchemaOptions{}
+						if format != "" {
+							opts = append(opts, schematest.WithFormat(format))
+						}
+						schematest.WithProperty(prop, schematest.New("string", opts...))(s)
+					}
+
+					v, err := New(&Request{Schema: s})
+
+					require.NoError(t, err)
+					obj := v.(map[string]any)
+					start, err := time.Parse(layout, obj[pair.start].(string))
+					require.NoError(t, err, "%v", obj)
+					end, err := time.Parse(layout, obj[pair.end].(string))
+					require.NoError(t, err, "%v", obj)
+					require.False(t, end.Before(start), "%v", obj)
+				})
+			}
+		}
+	}
+}
+
+func TestTimePairs_EndDerivedFromStart(t *testing.T) {
+	for _, format := range []string{"", "date", "date-time"} {
+		t.Run("format="+format, func(t *testing.T) {
+			Seed(1234567)
+
+			opts := []schematest.SchemaOptions{}
+			if format != "" {
+				opts = append(opts, schematest.WithFormat(format))
+			}
+			v, err := New(&Request{Schema: schematest.New("array",
+				schematest.WithItems("object", schematest.WithProperty("endDate", schematest.New("string", opts...)),
+					schematest.WithProperty("startDate", schematest.New("string", opts...)),
+					schematest.WithRequired("endDate", "startDate")),
+				schematest.WithMinItems(40), schematest.WithMaxItems(40),
+			)})
+
+			require.NoError(t, err)
+			layout := "2006-01-02"
+			if format == "date-time" {
+				layout = time.RFC3339
+			}
+			parse := func(s string) (time.Time, error) { return time.Parse(layout, s) }
+			endsInThePast := 0
+			for _, e := range v.([]any) {
+				obj := e.(map[string]any)
+				start, err := parse(obj["startDate"].(string))
+				require.NoError(t, err, "%v", obj)
+				end, err := parse(obj["endDate"].(string))
+				require.NoError(t, err, "%v", obj)
+				require.False(t, end.Before(start), "%v", obj)
+				if end.Before(time.Now()) {
+					endsInThePast++
+				}
+			}
+			// an end that ignores its start would always lie in the future
+			require.Greater(t, endsInThePast, 0)
+		})
+	}
+}

@@ -3,7 +3,6 @@ package schema_test
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/json/schema"
 	"testing"
@@ -169,7 +168,7 @@ func TestSchema_ApplyRef(t *testing.T) {
 			if err != nil {
 				tc.test(t, s, err)
 			} else {
-				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err = s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 				tc.test(t, s, err)
 			}
 		})

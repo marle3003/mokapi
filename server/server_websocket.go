@@ -48,8 +48,11 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 
 	info := m.app.Websocket.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
+		if info == nil {
+			return
+		}
 		m.app.Websocket.Remove(e.Config)
-		if info.Config == nil {
+		if info.Config() == nil {
 			m.removeService(cfg.Info.Name)
 			return
 		}
@@ -62,21 +65,21 @@ func (m *WebsocketManager) UpdateConfig(e dynamic.ConfigEvent) {
 		}
 	}
 
-	m.addOrUpdateService(info)
+	m.addOrUpdateService(cfg.Info.Name, info)
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
-func (m *WebsocketManager) addOrUpdateService(cfg *runtime.WebsocketInfo) {
-	c := m.getOrCreateService(cfg)
-	c.update(cfg, m.app.Monitor.Websocket)
+func (m *WebsocketManager) addOrUpdateService(name string, info *runtime.WebsocketInfo) {
+	c := m.getOrCreateService(name, info)
+	c.update(info, m.app.Monitor.Websocket)
 }
 
 // getOrCreateService expects the caller to hold m.m.
-func (m *WebsocketManager) getOrCreateService(cfg *runtime.WebsocketInfo) *websocketService {
-	c, ok := m.services[cfg.Info.Name]
+func (m *WebsocketManager) getOrCreateService(name string, info *runtime.WebsocketInfo) *websocketService {
+	c, ok := m.services[name]
 	if !ok {
-		c = &websocketService{cfg: cfg, servers: make(map[string]*service.WebsocketServer)}
-		m.services[cfg.Info.Name] = c
+		c = &websocketService{cfg: info, servers: make(map[string]*service.WebsocketServer)}
+		m.services[name] = c
 	}
 	return c
 }
@@ -92,11 +95,15 @@ func (m *WebsocketManager) removeService(name string) {
 	delete(m.services, name)
 }
 
-func (c *websocketService) update(cfg *runtime.WebsocketInfo, monitor *monitor.Websocket) {
-	c.updateServers(cfg, monitor)
+func (c *websocketService) update(info *runtime.WebsocketInfo, monitor *monitor.Websocket) {
+	c.updateServers(info, monitor)
 }
 
-func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *monitor.Websocket) {
+func (c *websocketService) updateServers(info *runtime.WebsocketInfo, monitor *monitor.Websocket) {
+	cfg := info.Config()
+	if cfg == nil {
+		return
+	}
 	servers := c.servers
 	c.servers = make(map[string]*service.WebsocketServer)
 	for it := cfg.Servers.Iter(); it.Next(); {
@@ -116,7 +123,7 @@ func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *mo
 			delete(servers, port)
 		} else {
 			log.Infof("adding new Websocket server '%v' on port %v to '%v'", name, port, cfg.Info.Name)
-			h := cfg.Handler(monitor)
+			h := info.Handler(monitor)
 			broker = service.NewWebsocketServer(port, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				req = req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
 				h.ServeHTTP(w, req)

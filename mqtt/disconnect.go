@@ -14,7 +14,7 @@ type DisconnectRequest struct {
 
 func (r *DisconnectRequest) Read(d *Decoder, _ *Header) {
 	if d.leftSize > 0 {
-		r.Reason = DisconnectReason(d.ReadByte())
+		r.Reason = DisconnectReason(d.ReadUInt8())
 	}
 	if d.IsV5() {
 		r.Properties = Properties{}

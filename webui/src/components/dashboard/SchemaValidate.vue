@@ -5,12 +5,13 @@ import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/site-base'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { useDashboard } from '@/composables/dashboard';
+import { useConnection } from '@/composables/connection';
 import type { Example } from '@/types/dashboard';
 
 declare interface State {
     source: { preview: Data | undefined, binary: Data | undefined }
     errors: string
-    result: any
+    result: unknown
     validated: boolean
     validating: boolean
     view: 'preview' | 'binary'
@@ -38,6 +39,7 @@ const props = withDefaults(defineProps<{
 
 const { formatLanguage } = usePrettyLanguage()
 const { dashboard } = useDashboard()
+const connection = useConnection()
 const id = useId()
 const modal = ref<HTMLElement>()
 
@@ -52,7 +54,7 @@ const state = reactive<State>({
 
 type ExampleHandle = ReturnType<typeof dashboard.value.getExample>
 
-let example: ExampleHandle | null = null
+let currentExample: ExampleHandle | null = null
 let isOpen = false
 
 function buildExampleRequest() {
@@ -69,19 +71,19 @@ function buildExampleRequest() {
 
 function loadExample() {
     if (!props.exampleEnabled) return
-    example = dashboard.value.getExample(buildExampleRequest())
+    currentExample = dashboard.value.getExample(buildExampleRequest())
 }
 
 // Schema/Source haben sich geändert: altes Example verwerfen.
 // Neu geladen wird nur, wenn der Dialog gerade offen ist.
 function invalidateExample() {
-    example = null
+    currentExample = null
     if (isOpen) loadExample()
 }
 
 function onShow() {
     isOpen = true
-    if (!example) loadExample()
+    if (!currentExample) loadExample()
 }
 function onHidden() {
     isOpen = false
@@ -108,8 +110,8 @@ watch(() => props.source, (source) => {
 watch([() => props.schema, () => props.example], invalidateExample)
 
 function setExample() {
-    if (!example) loadExample()
-    const ex = example
+    if (!currentExample) loadExample()
+    const ex = currentExample
     if (!ex) return
 
     if (ex.error) {
@@ -151,7 +153,7 @@ async function validate() {
         : ''
 
     try {
-        const res = await fetch(transformPath('/api/schema/validate' + query), {
+        const res = await connection.monitoredFetch(transformPath('/api/schema/validate' + query), {
             method: 'POST',
             body: JSON.stringify(body),
             headers: { 'Content-Type': 'application/json' }
@@ -204,12 +206,12 @@ function switchSource(e: 'preview' | 'binary') {
     state.view = e
 }
 
-function formatResult(result: any): string {
+function formatResult(result: unknown): string {
     const [html, count] = formatResultItem(result)
     return `<div>error count ${count}: ${html}</div>`
 }
 
-function formatResultItem(result: any): [string, number] {
+function formatResultItem(result: unknown): [string, number] {
     if (Array.isArray(result)) {
         let html = '<ul>'
         let sum = 0
@@ -221,50 +223,54 @@ function formatResultItem(result: any): [string, number] {
         return [html + '</ul>', sum]
     }
     if (result !== null && typeof result === 'object') {
-        const head = `${result.schema}: ${result.message}`
-        if (Array.isArray(result.errors)) {
-            const [list, count] = formatResultItem(result.errors)
+        const { schema, message, errors } = result as { schema: string, message: string, errors?: unknown }
+        const head = `${schema}: ${message}`
+        if (Array.isArray(errors)) {
+            const [list, count] = formatResultItem(errors)
             return [head + list, count]
         }
         return [head, 1]
     }
-    return [result, 1]
+    return [String(result), 1]
 }
 </script>
 
 <template>
     <div>
         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" :data-bs-target="'#'+id">{{ exampleEnabled ? 'Example & Validate' : 'Validate' }}</button>
-        <div ref="modal" class="modal fade" :id="id" tabindex="-1" aria-hidden="true" :aria-labelledby="id+'title'">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h6 :id="id+'title'" class="modal-title">{{ title }}</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="alert alert-danger errors" role="alert" v-if="state.errors.length > 0">{{ state.errors }}</div>
-                        <div class="alert alert-danger" role="alert" v-if="state.result">
-                            <span v-html="formatResult(state.result)"></span>
+        <!-- in the body: inside a detail panel (own stacking context) the modal would be below its backdrop -->
+        <teleport to="body">
+            <div ref="modal" class="modal fade" :id="id" tabindex="-1" aria-hidden="true" :aria-labelledby="id+'title'">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h6 :id="id+'title'" class="modal-title">{{ title }}</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <source-view :filename="source?.filename" v-model:source="state.source" :readonly="false" @update="update" @switch="switchSource" />
-                    </div>
-                    <div class="modal-footer justify-content-between">
-                        <span class="float-start">
-                            <span class="status" role="status">
-                                <span v-if="state.validating" class="loading"><span class="bi bi-arrow-repeat spin"></span> Validating...</span>
-                                <span v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</span>
-                                <span v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</span>
+                        <div class="modal-body">
+                            <div class="alert alert-danger errors" role="alert" v-if="state.errors.length > 0">{{ state.errors }}</div>
+                            <div class="alert alert-danger" role="alert" v-if="state.result">
+                                <span v-html="formatResult(state.result)"></span>
+                            </div>
+                            <source-view :filename="source?.filename" v-model:source="state.source" :readonly="false" @update="update" @switch="switchSource" />
+                        </div>
+                        <div class="modal-footer justify-content-between">
+                            <span class="float-start">
+                                <span class="status" role="status">
+                                    <span v-if="state.validating" class="loading"><span class="bi bi-arrow-repeat spin"></span> Validating...</span>
+                                    <span v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</span>
+                                    <span v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</span>
+                                </span>
                             </span>
-                        </span>
-                        <div class="float-end">
-                            <button v-if="exampleEnabled" type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
-                            <button type="button" class="btn btn-primary btn-sm" :disabled="state.validating" @click="validate()">Validate</button>
+                            <div class="float-end">
+                                <button v-if="exampleEnabled" type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
+                                <button type="button" class="btn btn-primary btn-sm" :disabled="state.validating" @click="validate()">Validate</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </teleport>
     </div>
 </template>
 

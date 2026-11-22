@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
         with:
           go-version-file: 'go.mod'
 
@@ -31,6 +31,9 @@ jobs:
           npm run copy-docs
           npm run build
 
+      - name: Run go vet
+        run: go vet ./...
+
       - name: Run Unit tests.
         run: go test -v --cover -coverprofile=coverage.out -covermode=atomic ./...
 
@@ -38,3 +41,18 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         with:
           token: ${{secrets.CODECOV_TOKEN}}
+
+  race:
+    name: Race detector
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Go
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run tests with race detector
+        run: go test -race -count=1 ./engine/... ./server/... ./config/... ./runtime/...

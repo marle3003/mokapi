@@ -16,7 +16,7 @@ defineProps({
             </tr>
         </thead>
         <tbody>
-            <tr v-for="(value, name) of headers">
+            <tr v-for="(value, name) of headers" :key="name">
                 <td>{{ name }}</td>
                 <td>{{ value }}</td>
             </tr>

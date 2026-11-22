@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
@@ -55,8 +56,8 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c := try.GetConfig(t, ch, 1*time.Second)
 				require.NotNil(t, c)
-				require.IsType(t, &openapi.Config{}, c.Data)
-				require.Equal(t, "foo", c.Data.(*openapi.Config).Info.Name)
+				require.IsType(t, &openapi.Config{}, c.Data())
+				require.Equal(t, "foo", c.Data().(*openapi.Config).Info.Name)
 			},
 		},
 		{
@@ -137,7 +138,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				})
 				processed := make(chan struct{}, 1)
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					require.NotNil(t, e.Config.Data)
+					require.NotNil(t, e.Config.Data())
 					select {
 					case processed <- struct{}{}:
 					default:
@@ -162,7 +163,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				}
 				current, err := w.Read(configPath, nil)
 				require.NoError(t, err)
-				require.Equal(t, "foobar", current.Data)
+				require.Equal(t, "foobar", current.Data())
 			},
 		},
 		{
@@ -190,7 +191,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.NotNil(t, c)
-				require.Equal(t, "foobar", c.Data)
+				require.Equal(t, "foobar", c.Data())
 			},
 		},
 		{
@@ -220,7 +221,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.AddProvider("foo", &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &slow{}}, nil
+						return dynamictest.NewConfig(&slow{}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: u})), nil
 					},
 				})
 
@@ -230,14 +231,14 @@ func TestConfigWatcher_Read(t *testing.T) {
 					c1, err := w.Read(configPath, nil)
 					require.NoError(t, err)
 					require.Equal(t, configPath, c1.Info.Url)
-					ch <- c1.Data
+					ch <- c1.Data()
 				}()
 
 				go func() {
 					c1, err := w.Read(configPath, nil)
 					require.NoError(t, err)
 					require.Equal(t, configPath, c1.Info.Url)
-					ch <- c1.Data
+					ch <- c1.Data()
 				}()
 
 				i1 := <-ch
@@ -270,7 +271,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
-				require.NotNil(t, c.Data)
+				require.NotNil(t, c.Data())
 			},
 		},
 		{
@@ -345,6 +346,44 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
 				require.Equal(t, c, deleted.Load())
 
+			},
+		},
+		{
+			name: "file delete event named by the path of the file",
+			test: func(t *testing.T) {
+				w := server.NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file:/tmp/mokapi/file.yml")
+				var ch chan dynamic.ConfigEvent
+				w.AddProvider("file", &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				})
+				pool := safe.NewPool(context.Background())
+				_ = w.Start(pool)
+				defer pool.Stop()
+
+				c, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+
+				var deleted atomic.Pointer[dynamic.Config]
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						deleted.Store(e.Config)
+					}
+				})
+
+				time.Sleep(500 * time.Millisecond)
+				// the file provider names the event with the path, not with the URL
+				ch <- dynamic.ConfigEvent{Name: "/tmp/mokapi/file.yml", Event: dynamic.Delete}
+				require.Eventually(t, func() bool { return deleted.Load() != nil }, 2*time.Second, 5*time.Millisecond)
+				require.Equal(t, c, deleted.Load())
 			},
 		},
 		{
@@ -557,13 +596,13 @@ func TestConfigWatcher_Start(t *testing.T) {
 				require.Equal(t, int32(1), listenerReceived.Load())
 				pool.Stop()
 
-				func() {
-					defer func() {
-						err := recover()
-						require.Equal(t, err.(error).Error(), "send on closed channel")
-					}()
-					ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}}
-				}()
+				// the channel stays open for providers that are still sending, nobody reads it anymore
+				select {
+				case ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}}:
+					t.Fatal("event was consumed after the pool was stopped")
+				case <-time.After(50 * time.Millisecond):
+				}
+				require.Equal(t, int32(1), listenerReceived.Load())
 			},
 		},
 	}
@@ -765,11 +804,7 @@ func sendEvent(t *testing.T, ch chan dynamic.ConfigEvent, c *dynamic.Config) {
 }
 
 func newPanicTestConfig(name, raw string) *dynamic.Config {
-	return &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)},
-		Raw:  []byte(raw),
-		Data: &panicOnParse{},
-	}
+	return dynamictest.NewConfig(&panicOnParse{}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)}), dynamictest.WithRaw([]byte(raw)))
 }
 
 // panicOnParse panics in Parse when the config contains "panic": true.
@@ -794,7 +829,7 @@ type slow struct{}
 
 func (d *slow) Parse(config *dynamic.Config, _ dynamic.Reader) error {
 	time.Sleep(5 * time.Second)
-	config.Data = "foo"
+	config.SetData("foo")
 	return nil
 }
 

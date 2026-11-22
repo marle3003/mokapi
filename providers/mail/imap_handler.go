@@ -12,9 +12,9 @@ import (
 
 func (h *Handler) Login(username, password string, ctx context.Context) error {
 	c := imap.ClientFromContext(ctx)
-	for _, m := range h.store.Mailboxes {
-		if m.Username == username && m.Password == password {
-			c.Session["mailbox"] = m
+	for _, mb := range h.store.Mailboxes() {
+		if u, p := mb.Credentials(); u == username && p == password {
+			c.Session["mailbox"] = mb
 			return nil
 		}
 	}
@@ -187,7 +187,7 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Conte
 			current = mb.Folders["INBOX"]
 			continue
 		}
-		folder := &Folder{Name: part, maxMails: mailboxSize}
+		folder := &Folder{Name: part, maxMails: DefaultMaxInboxMails}
 		if current != nil {
 			current.AddFolder(folder)
 			current = folder
@@ -310,7 +310,7 @@ func (h *Handler) Subscribe(mailbox string, ctx context.Context) error {
 	if f == nil {
 		return fmt.Errorf("folder not found")
 	}
-	f.Flags = append(f.Flags, imap.Subscribed)
+	f.AddFlag(imap.Subscribed)
 	return nil
 }
 
@@ -350,16 +350,17 @@ func (h *Handler) Append(mailbox string, message *smtp.Message, opt imap.AppendO
 }
 
 func (h *Handler) Idle(w imap.UpdateWriter, done chan struct{}, ctx context.Context) error {
-	_, f := getContext(ctx)
+	mb, f := getContext(ctx)
 
-	if f.writers == nil {
-		f.writers = map[imap.UpdateWriter]imap.UpdateWriter{}
-	}
+	mb.m.Lock()
+	f.addWriter(w)
+	mb.m.Unlock()
 
-	f.writers[w] = w
 	go func() {
 		<-done
-		delete(f.writers, w)
+		mb.m.Lock()
+		defer mb.m.Unlock()
+		f.removeWriter(w)
 	}()
 
 	return nil
@@ -383,6 +384,7 @@ func addressToString(addr smtp.Address) string {
 	return fmt.Sprintf("%s <%s>", addr.Name, addr.Address)
 }
 
+// getContext returns the selected folder, which must only be used while holding mb.m.
 func getContext(ctx context.Context) (*Mailbox, *Folder) {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
@@ -391,6 +393,7 @@ func getContext(ctx context.Context) (*Mailbox, *Folder) {
 	if !ok {
 		return mb, nil
 	}
-	folder := mb.Select(selected.(string))
-	return mb, folder
+	mb.m.Lock()
+	defer mb.m.Unlock()
+	return mb, mb.Select(selected.(string))
 }

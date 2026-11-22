@@ -10,8 +10,6 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"net/http"
-	"path/filepath"
-	"sort"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -26,11 +24,11 @@ type HttpStore struct {
 	reader dynamic.Reader
 }
 
+// HttpInfo publishes the merged config as an immutable snapshot. A reload replaces the
+// whole config, so a reader takes one snapshot via Config and uses only that.
 type HttpInfo struct {
-	*openapi.Config
-	configs   map[string]*dynamic.Config
+	configSnapshot[openapi.Config]
 	seenPaths map[string]bool
-	m         sync.Mutex
 }
 
 type httpHandler struct {
@@ -60,28 +58,31 @@ func (s *HttpStore) List() []*HttpInfo {
 	return list
 }
 
+// NewHttpInfo returns an info that publishes cfg as is, without merging files and without
+// the default server of Add. It is meant for tests of readers: adding a file to it through
+// HttpStore.Add is not supported.
+func NewHttpInfo(cfg *openapi.Config) *HttpInfo {
+	hi := &HttpInfo{
+		seenPaths: map[string]bool{},
+	}
+	hi.publish(cfg)
+	return hi
+}
+
 func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	s.m.Lock()
+	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*HttpInfo)
 	}
-	cfg := c.Data.(*openapi.Config)
+	cfg := c.Data().(*openapi.Config)
 	name := cfg.Info.Name
 	hc, ok := s.infos[name]
 	if !ok {
-		hc = &HttpInfo{
-			Config:    cfg,
-			configs:   map[string]*dynamic.Config{},
-			seenPaths: map[string]bool{},
-		}
-		s.infos[cfg.Info.Name] = hc
+		hc = NewHttpInfo(nil)
+		s.infos[name] = hc
 	}
-
-	s.m.Unlock()
-
-	hc.m.Lock()
-	defer hc.m.Unlock()
 
 	store, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -92,11 +93,10 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
 		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
 	}
-	hc.configs[c.Info.Url.String()] = c
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(cfg)
 	}
-	patchHttp(hc, s.reader)
+	hc.add(c, mergeHttpConfigs(s.reader))
 
 	if cfg.Paths != nil {
 		for it := cfg.Paths.Iter(); it.Next(); {
@@ -110,91 +110,80 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	}
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(hc.Config)
+		s.addToIndex(hc.Config())
 	}
 
 	return hc
 }
 
-func (s *HttpStore) Remove(c *dynamic.Config) {
-	s.m.RLock()
+func (s *HttpStore) Set(name string, hi *HttpInfo) {
+	s.m.Lock()
+	defer s.m.Unlock()
 
-	cfg := c.Data.(*openapi.Config)
+	if len(s.infos) == 0 {
+		s.infos = make(map[string]*HttpInfo)
+	}
+
+	s.infos[name] = hi
+}
+
+func (s *HttpStore) Remove(c *dynamic.Config) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	cfg := c.Data().(*openapi.Config)
 	name := cfg.Info.Name
 	hc := s.infos[name]
-
-	if s.cfg.Api.Search.Enabled {
-		s.removeFromIndex(hc.Config)
-	}
-	delete(hc.configs, c.Info.Url.String())
-
-	patchHttp(hc, s.reader)
-	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(hc.Config)
+	if hc == nil {
+		return
 	}
 
-	if len(hc.configs) == 0 {
-		s.m.RUnlock()
-		s.m.Lock()
+	if old := hc.Config(); old != nil && s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(old)
+	}
+	hc.remove(c, mergeHttpConfigs(s.reader))
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(hc.Config())
+	}
+
+	if hc.Config() == nil {
 		delete(s.infos, name)
 		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
-		s.m.Unlock()
-	} else {
-		s.m.RUnlock()
 	}
 }
 
-func (c *HttpInfo) Handler(http *monitor.Http, emitter common.HttpEventEmitter, eh events.Handler) openapi.Handler {
-	cfg := c.Config
+// Handler serves requests with cfg, the snapshot the caller already holds.
+func (c *HttpInfo) Handler(cfg *openapi.Config, http *monitor.Http, emitter common.HttpEventEmitter, eh events.Handler) openapi.Handler {
 	h := openapi.NewHandler(cfg, emitter, eh)
 	return &httpHandler{http: http, next: h}
 }
 
-func patchHttp(c *HttpInfo, reader dynamic.Reader) {
-	if len(c.configs) == 0 {
-		c.Config = nil
-		return
-	}
-
-	var keys []string
-	for k := range c.configs {
-		keys = append(keys, k)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		x := keys[i]
-		y := keys[j]
-		return filepath.Base(x) < filepath.Base(y)
-	})
-
-	r := &openapi.Config{}
-	for i, k := range keys {
-		if i > 0 {
-			log.Infof("applying patch for %s: %s", c.Info.Name, k)
+// mergeHttpConfigs patches the OpenAPI files, ordered by file name, into a new config and adds
+// the default server "/" if the spec defines none.
+func mergeHttpConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *openapi.Config {
+	return func(files []*dynamic.Config) *openapi.Config {
+		r := &openapi.Config{}
+		for i, f := range files {
+			if i > 0 {
+				log.Infof("applying patch for %s: %s", r.Info.Name, f.Info.Url)
+			}
+			r.Patch(getHttpConfig(f))
 		}
-		r.Patch(getHttpConfig(c.configs[k]))
-	}
 
-	if len(c.configs) > 1 {
-		err := r.Parse(&dynamic.Config{Data: r}, reader)
-		if err != nil {
-			log.Errorf("failed to parse config: %s", err)
+		if len(files) > 1 {
+			parent := &dynamic.Config{}
+			parent.SetData(r)
+			err := r.Parse(parent, reader)
+			if err != nil {
+				log.Errorf("failed to parse config: %s", err)
+			}
 		}
-	}
 
-	if len(r.Servers) == 0 {
-		r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
+		if len(r.Servers) == 0 {
+			r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
+		}
+		return r
 	}
-
-	c.Config = r
-}
-
-func (c *HttpInfo) Configs() []*dynamic.Config {
-	var r []*dynamic.Config
-	for _, config := range c.configs {
-		r = append(r, config)
-	}
-	return r
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
@@ -204,7 +193,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openap
 }
 
 func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
-	switch v := c.Data.(type) {
+	switch v := c.Data().(type) {
 	case *openapi.Config:
 		return v, true
 	default:
@@ -213,7 +202,7 @@ func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
 }
 
 func getHttpConfig(c *dynamic.Config) *openapi.Config {
-	return c.Data.(*openapi.Config)
+	return c.Data().(*openapi.Config)
 }
 
 func (s *HttpStore) Len() int {
@@ -227,10 +216,17 @@ func (s *HttpStore) Len() int {
 }
 
 func (s *HttpStore) Webhook(name string, args common.WebhookArgs) (*openapi.Path, error) {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	if args.Api == "" {
 		var webhook *openapi.Path
-		for _, api := range s.infos {
-			if w, ok := api.Webhooks[name]; ok {
+		for _, info := range s.infos {
+			cfg := info.Config()
+			if cfg == nil {
+				continue
+			}
+			if w, ok := cfg.Webhooks[name]; ok {
 				if webhook != nil {
 					return nil, fmt.Errorf("ambiguous webhook '%s': use args.api to refine", name)
 				}
@@ -241,11 +237,14 @@ func (s *HttpStore) Webhook(name string, args common.WebhookArgs) (*openapi.Path
 			return webhook, nil
 		}
 	} else {
-		api, ok := s.infos[args.Api]
-		if !ok {
+		var cfg *openapi.Config
+		if info, ok := s.infos[args.Api]; ok {
+			cfg = info.Config()
+		}
+		if cfg == nil {
 			return nil, fmt.Errorf("api not found: %s", args.Api)
 		}
-		if w, ok := api.Webhooks[name]; ok && w.Value != nil {
+		if w, ok := cfg.Webhooks[name]; ok && w.Value != nil {
 			return w.Value, nil
 		}
 	}

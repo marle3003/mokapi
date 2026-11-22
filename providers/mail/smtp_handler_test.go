@@ -242,8 +242,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
-				require.Contains(t, s.Mailboxes, "bob@foo.bar")
-				box := s.Mailboxes["bob@foo.bar"]
+				box, ok := s.Mailbox("bob@foo.bar")
+				require.True(t, ok)
 				require.Len(t, box.Folders["INBOX"].Messages, 1)
 			},
 		},
@@ -477,4 +477,35 @@ func expectRcptResponse(t *testing.T, r smtp.Response) *smtp.RcptResponse {
 func expectDataesponse(t *testing.T, r smtp.Response) *smtp.DataResponse {
 	require.IsType(t, &smtp.DataResponse{}, r)
 	return r.(*smtp.DataResponse)
+}
+
+// A reload can remove a mailbox between RCPT and DATA. The mail is still accepted for the other
+// recipients.
+func TestHandler_MailboxRemovedBetweenRcptAndData(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	cfg := &mail.Config{Mailboxes: map[string]*mail.MailboxConfig{"bob@foo.bar": {}, "carol@foo.bar": {}}}
+	s := mail.NewStore(cfg)
+	sm := events.NewStoreManager(nil)
+	sm.SetStore(10, events.NewTraits().WithNamespace("mail"))
+	h := mail.NewHandler(cfg, s, enginetest.NewEngine(), sm)
+
+	ctx := smtp.NewClientContext(context.Background(), "")
+	sendMail(t, h, ctx)
+	sendThisRcpt(t, h, ctx, "bob@foo.bar")
+	sendThisRcpt(t, h, ctx, "carol@foo.bar")
+
+	s.Update(&mail.Config{Mailboxes: map[string]*mail.MailboxConfig{"carol@foo.bar": {}}})
+
+	rr := smtptest.NewRecorder()
+	require.NotPanics(t, func() {
+		h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{
+			From:    []smtp.Address{{Address: "alice@foo.bar"}},
+			To:      []smtp.Address{{Address: "bob@foo.bar"}, {Address: "carol@foo.bar"}},
+			Subject: "hello",
+		}, ctx))
+	})
+
+	require.Equal(t, smtp.Ok, expectDataesponse(t, rr.Response).Result)
+	carol, _ := s.Mailbox("carol@foo.bar")
+	require.Len(t, carol.Folders["INBOX"].Messages, 1)
 }

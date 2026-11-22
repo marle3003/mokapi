@@ -5,10 +5,12 @@ import (
 	"mokapi/version"
 	"net/url"
 	"reflect"
+	"sync"
 )
 
 var (
-	configTypes []*configType
+	configTypes   []*configType
+	configTypesMu sync.RWMutex
 )
 
 type Provider interface {
@@ -28,6 +30,8 @@ func AnyVersion(_ version.Version) bool {
 
 func Register(header string, checkVersion func(v version.Version) bool, c interface{}) {
 	val := reflect.ValueOf(c).Elem()
+	configTypesMu.Lock()
+	defer configTypesMu.Unlock()
 	configTypes = append(configTypes, &configType{
 		header:       header,
 		checkVersion: checkVersion,
@@ -35,5 +39,7 @@ func Register(header string, checkVersion func(v version.Version) bool, c interf
 }
 
 func Reset() {
+	configTypesMu.Lock()
+	defer configTypesMu.Unlock()
 	configTypes = nil
 }

@@ -3,6 +3,7 @@ package flags
 import "mokapi/pkg/cli"
 
 func RegisterGitProvider(cmd *cli.Command) {
+	cmd.Flags().Group("Git Provider")
 	cmd.Flags().String("providers-git", "", providerGit)
 	cmd.Flags().StringSlice("providers-git-url", []string{}, true, providerGitUrl)
 	cmd.Flags().StringSlice("providers-git-urls", []string{}, false, providerGitUrls)
@@ -21,7 +22,7 @@ func RegisterGitProvider(cmd *cli.Command) {
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-appid", providerGitRepositoriesAuthGitHubAppId)
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-installationid", providerGitRepositoriesAuthGitHubInstallationId)
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-privatekey", providerGitRepositoriesAuthGitHubPrivateKey)
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", cli.FlagDoc{Short: "Override pull interval for this repository"})
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", providerGitRepositoriesPullInterval)
 }
 
 var providerGit = cli.FlagDoc{
@@ -43,13 +44,14 @@ Additional flags allow you to control polling behavior, repository selection, au
 var providerGitUrl = cli.FlagDoc{
 	Short: "Clone configuration from a Git repository",
 	Long: `Specifies a single Git repository from which configuration is cloned.
-This option can be used multiple times to define additional repositories. Each repository is cloned and periodically pulled to fetch updates.`,
+This option can be used multiple times to define additional repositories. Each repository is cloned and periodically pulled to fetch updates.
+To pass several repository URLs in one argument, use --providers-git-urls instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-url https://github.com/foo/foo.git"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_URL=https://github.com/foo/foo.git"},
-				{Title: "File", Source: "providers:\n  git:\n    urls: https://github.com/foo/foo.git", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    urls: [https://github.com/foo/foo.git]", Language: "yaml"},
 			},
 		},
 	},
@@ -58,13 +60,13 @@ This option can be used multiple times to define additional repositories. Each r
 var providerGitUrls = cli.FlagDoc{
 	Short: "Clone configuration from Git repositories",
 	Long: `Specifies multiple Git repositories from which configuration is cloned.
-This option is equivalent to using providers-git-url multiple times, but allows defining all repositories in a single argument or configuration block.`,
+This option is equivalent to using --providers-git-url multiple times, but allows defining all repositories in a single argument or configuration block.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-urls https://github.com/foo/foo.git https://github.com/bar/bar.git"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_URLS=https://github.com/foo/foo.git https://github.com/bar/bar.git"},
-				{Title: "File", Source: "providers:\n  git:\n    urls: [https://github.com/foo/foo.git https://github.com/bar/bar.git]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    urls: [https://github.com/foo/foo.git, https://github.com/bar/bar.git]", Language: "yaml"},
 			},
 		},
 	},
@@ -79,7 +81,7 @@ The value must be a valid duration string, such as "30s", "1m", or "5m". Shorter
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-pull-interval 10s"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_PULL_INTERVAL=10s"},
-				{Title: "File", Source: "providers:\n  git:\n    pullInterval: 10s"},
+				{Title: "File", Source: "providers:\n  git:\n    pullInterval: 10s", Language: "yaml"},
 			},
 		},
 	},
@@ -103,7 +105,8 @@ If not set, Mokapi uses a default temporary directory. Setting this option can b
 var providerGitRepository = cli.FlagDoc{
 	Short: "Configure a Git repository using shorthand syntax",
 	Long: `Configures a single Git repository using a shorthand syntax.
-This option allows defining repository-specific settings such as allowed files, authentication, and pull intervals.`,
+This option allows defining repository-specific settings such as allowed files, authentication, and pull intervals.
+To pass several repositories in one argument, use --providers-git-repositories instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -118,7 +121,7 @@ This option allows defining repository-specific settings such as allowed files, 
 var providerGitRepositories = cli.FlagDoc{
 	Short: "Configure Git repositories using shorthand syntax",
 	Long: `Configures multiple Git repositories using shorthand syntax.
-This option is equivalent to using providers-git-repository multiple times, but allows defining all repositories in a single argument or configuration block.`,
+This option is equivalent to using --providers-git-repository multiple times, but allows defining all repositories in a single argument or configuration block.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -161,9 +164,10 @@ The repository is cloned and used as a source for configuration files.`,
 }
 
 var providerGitRepositoriesFile = cli.FlagDoc{
-	Short: "Allow only specific files from the repository",
+	Short: "Allow a single file from the repository (repeatable)",
 	Long: `Restricts configuration loading to specific files within the repository.
-Only the specified files are considered. This option can be used multiple times to allow additional files.`,
+Only the specified files are considered. This option can be used multiple times to allow additional files.
+To pass several files in one argument, use --providers-git-repositories[<index>]-files instead.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
@@ -184,7 +188,7 @@ This option is equivalent to using providers-git-repositories[<index>]-file mult
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-files mokapi/api.json mokapi/handler.js"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_FILES=mokapi/api.json mokapi/handler.js"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json mokapi/handler.js]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json, mokapi/handler.js]", Language: "yaml"},
 			},
 		},
 	},
@@ -199,7 +203,7 @@ If at least one include pattern is specified, only files matching one of the pat
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-include mokapi/**/*.json"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_INCLUDE=mokapi/**/*.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - includes: ['mokapi/**/*.json']", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - include: ['mokapi/**/*.json']", Language: "yaml"},
 			},
 		},
 	},
@@ -208,13 +212,13 @@ If at least one include pattern is specified, only files matching one of the pat
 var providerGitRepositoriesAuthGitHub = cli.FlagDoc{
 	Short: "Authenticate using GitHub credentials",
 	Long: `Enables authentication using GitHub credentials for the repository.
-This option allows accessing private repositories hosted on GitHub by using credentials provided via environment variables or the GitHub CLI configuration.`,
+It authenticates as a GitHub App, using the app ID, the installation ID and the app's private key (file path or key content).`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB=appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345\n         installationId: 12345\n         privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n         gitHub:\n           appId: 12345\n           installationId: 12345\n           privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
 			},
 		},
 	},
@@ -228,7 +232,7 @@ var providerGitRepositoriesAuthGitHubAppId = cli.FlagDoc{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-appId 12345"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_APPID=12345"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n         gitHub:\n           appId: 12345", Language: "yaml"},
 			},
 		},
 	},
@@ -242,7 +246,7 @@ var providerGitRepositoriesAuthGitHubInstallationId = cli.FlagDoc{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-installationid 123456789"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_INSTALLATIONID=123456789"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         installationId: 12345\n", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n         gitHub:\n           installationId: 12345\n", Language: "yaml"},
 			},
 		},
 	},
@@ -256,8 +260,14 @@ var providerGitRepositoriesAuthGitHubPrivateKey = cli.FlagDoc{
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-privatekey 2024-2-25.private-key.pem"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_PRIVATEKEY=2024-2-25.private-key.pem"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n         gitHub:\n           privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
 			},
 		},
 	},
+}
+
+var providerGitRepositoriesPullInterval = cli.FlagDoc{
+	Short: "Override pull interval for this repository",
+	Long: `Defines how often this repository is pulled. It overrides providers-git-pull-interval for this repository only.
+The value must be a valid duration string, such as "30s" or "5m".`,
 }

@@ -1,10 +1,13 @@
 package mail
 
+import "slices"
+
 func (c *Config) Patch(patch *Config) {
 	if patch == nil {
 		return
 	}
 	c.patchInfo(patch)
+	c.patchServer(patch)
 	c.patchSettings(patch.Settings)
 	c.patchMailboxes(patch)
 	c.patchRules(patch.Rules)
@@ -14,18 +17,27 @@ func (c *Config) patchInfo(patch *Config) {
 	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
+	if len(patch.Info.Version) > 0 {
+		c.Info.Version = patch.Info.Version
+	}
+	if patch.Info.Contact != nil {
+		c.Info.Contact = copyOf(patch.Info.Contact)
+	}
 }
 
 func (c *Config) patchServer(patch *Config) {
+	if len(patch.Servers) == 0 {
+		return
+	}
 	if len(c.Servers) == 0 {
-		c.Servers = patch.Servers
-	} else {
-		for name, ps := range patch.Servers {
-			if s, ok := c.Servers[name]; ok {
-				s.patch(ps)
-			} else {
-				c.Servers[name] = ps
-			}
+		c.Servers = cloneMap(patch.Servers, copyOf)
+		return
+	}
+	for name, ps := range patch.Servers {
+		if s, ok := c.Servers[name]; ok {
+			s.patch(ps)
+		} else {
+			c.Servers[name] = copyOf(ps)
 		}
 	}
 }
@@ -50,10 +62,12 @@ func (c *Config) patchSettings(patch *Settings) {
 		return
 	}
 	if c.Settings == nil {
-		c.Settings = patch
+		c.Settings = copyOf(patch)
 	} else {
 		c.Settings.AutoCreateMailbox = patch.AutoCreateMailbox
 		c.Settings.MaxRecipients = patch.MaxRecipients
+		c.Settings.MaxInboxMails = patch.MaxInboxMails
+		c.Settings.AllowUnknownSenders = patch.AllowUnknownSenders
 	}
 }
 
@@ -62,7 +76,7 @@ func (c *Config) patchMailboxes(patch *Config) {
 		return
 	}
 	if len(c.Mailboxes) == 0 {
-		c.Mailboxes = patch.Mailboxes
+		c.Mailboxes = cloneMap(patch.Mailboxes, (*MailboxConfig).clone)
 		return
 	}
 
@@ -70,17 +84,23 @@ func (c *Config) patchMailboxes(patch *Config) {
 		if mb, ok := c.Mailboxes[name]; ok {
 			mb.patch(p)
 		} else {
-			c.Mailboxes[name] = p
+			c.Mailboxes[name] = p.clone()
 		}
 	}
 }
 
 func (m *MailboxConfig) patch(patch *MailboxConfig) {
+	if patch == nil {
+		return
+	}
 	if len(patch.Username) > 0 {
 		m.Username = patch.Username
 	}
 	if len(patch.Password) > 0 {
 		m.Password = patch.Password
+	}
+	if len(patch.Description) > 0 {
+		m.Description = patch.Description
 	}
 
 	for name, child := range patch.Folders {
@@ -90,14 +110,14 @@ func (m *MailboxConfig) patch(patch *MailboxConfig) {
 			if m.Folders == nil {
 				m.Folders = make(map[string]*FolderConfig)
 			}
-			m.Folders[name] = child
+			m.Folders[name] = child.clone()
 		}
 	}
 }
 
 func (c *Config) patchRules(patch map[string]*Rule) {
 	if c.Rules == nil {
-		c.Rules = patch
+		c.Rules = cloneMap(patch, copyOf)
 		return
 	}
 
@@ -105,12 +125,15 @@ func (c *Config) patchRules(patch map[string]*Rule) {
 		if r, ok := c.Rules[name]; ok {
 			r.patch(rule)
 		} else {
-			c.Rules[name] = rule
+			c.Rules[name] = copyOf(rule)
 		}
 	}
 }
 
 func (r *Rule) patch(patch *Rule) {
+	if patch == nil {
+		return
+	}
 	if patch.Sender != nil {
 		r.Sender = patch.Sender
 	}
@@ -126,16 +149,28 @@ func (r *Rule) patch(patch *Rule) {
 	if patch.RejectResponse != nil {
 		r.RejectResponse = patch.RejectResponse
 	}
+	if patch.Action != "" {
+		r.Action = patch.Action
+	}
+	if patch.Description != "" {
+		r.Description = patch.Description
+	}
 }
 
 func (f *FolderConfig) patch(patch *FolderConfig) {
-	f.Flags = patch.Flags
+	if patch == nil {
+		return
+	}
+	f.Flags = slices.Clone(patch.Flags)
 
 	for name, child := range patch.Folders {
 		if c, ok := f.Folders[name]; ok {
 			c.patch(child)
 		} else {
-			f.Folders[name] = child
+			if f.Folders == nil {
+				f.Folders = make(map[string]*FolderConfig)
+			}
+			f.Folders[name] = child.clone()
 		}
 	}
 }

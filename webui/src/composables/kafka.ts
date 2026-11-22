@@ -1,6 +1,6 @@
-import { useRoute } from 'vue-router'
 import { computed, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
+import { usePrettyText } from '@/composables/usePrettyText'
 import type { KafkaChannelResult, KafkaTopicResult } from '@/types/dashboard'
 
 export function useKafka() {
@@ -81,4 +81,19 @@ export function formatKey(json: string | null | undefined): string {
   } catch {
     return json
   }
+}
+
+// The key of a message as the log and the message view show it: a text value without JSON quotes,
+// a binary key decoded as text, no key as an empty string.
+export function messageKey(key: KafkaValue | null | undefined): string {
+  if (!key) {
+    return ''
+  }
+  if (key.value) {
+    return formatKey(key.value)
+  }
+  if (key.binary) {
+    return usePrettyText().fromBinary(key.binary)
+  }
+  return ''
 }

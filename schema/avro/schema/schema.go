@@ -41,7 +41,7 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		name = name[i+1:]
 	}
 	if ns == "" {
-		ns = config.Scope.Name()
+		ns = config.Scope().Name()
 	} else {
 		config.OpenScope(ns)
 		defer config.CloseScope()
@@ -60,7 +60,7 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for i, t := range s.Type {
 		switch v := t.(type) {
 		case string:
-			nt, err := config.Scope.GetDynamic(v)
+			nt, err := config.Scope().GetDynamic(v)
 			if err == nil {
 				s.Type[i] = nt
 			}

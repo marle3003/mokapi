@@ -1,8 +1,8 @@
-import type { MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
+import type { MarkdownIt, Token } from "markdown-it"
 
 export function imageCaption(md: MarkdownIt) {
 
-    md.renderer.rules.image = function (tokens: Token[], idx, options, env, self) {
+    md.renderer.rules.image = function (tokens: Token[], idx) {
         const token = tokens[idx]
         const alt = token.content
 

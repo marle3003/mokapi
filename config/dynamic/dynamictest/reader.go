@@ -24,13 +24,13 @@ func (r *Reader) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	path := cleanPath(u)
 
 	if c, ok := r.Data[path]; ok {
-		if c.Data == nil {
-			c.Data = v
+		if c.Data() == nil {
+			c.SetData(v)
 			err := dynamic.Parse(c, r)
 			return c, err
 		}
 
-		if p, isParser := c.Data.(dynamic.Parser); isParser {
+		if p, isParser := c.Data().(dynamic.Parser); isParser {
 			if _, alreadyParsed := r.parsed[path]; alreadyParsed {
 				return c, nil
 			}

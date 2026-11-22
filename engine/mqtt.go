@@ -3,13 +3,11 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -26,7 +24,7 @@ func NewMqttClient(app *runtime.App) *MqttClient {
 }
 
 func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
-	m, t, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
+	m, api, t, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +53,9 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		return nil, err
 	}
 	return &common.MqttPublishResult{
-		Cluster: m.Info.Name,
-		Topic:   t.Name,
-		Value:   string(payload),
+		Api:   api,
+		Topic: t.Name,
+		Value: string(payload),
 	}, nil
 }
 
@@ -101,11 +99,11 @@ func mqttPayload(t *store.Topic, args *common.MqttPublishArgs) ([]byte, error) {
 	return encodePayload(msg, value)
 }
 
-func (c *MqttClient) tryGet(cluster string, topic string, retry common.RetryArgs) (m *runtime.MqttInfo, t *store.Topic, err error) {
+func (c *MqttClient) tryGet(cluster string, topic string, retry common.RetryArgs) (m *runtime.MqttInfo, api string, t *store.Topic, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
-		m, t, err = c.get(cluster, topic)
+		m, api, t, err = c.get(cluster, topic)
 		ambiguous := &ambiguousError{}
 		if err == nil || errors.As(err, &ambiguous) {
 			return
@@ -114,13 +112,15 @@ func (c *MqttClient) tryGet(cluster string, topic string, retry common.RetryArgs
 		if count >= retry.Retries || backoff > retry.MaxRetryTime {
 			return
 		}
-		log.Debugf("kafka topic '%v' not found. Retry in %v", topic, backoff)
+		log.Debugf("mqtt topic '%v' not found. Retry in %v", topic, backoff)
 		time.Sleep(backoff)
 		backoff *= time.Duration(retry.Factor)
 	}
 }
 
-func (c *MqttClient) get(cluster string, topic string) (m *runtime.MqttInfo, t *store.Topic, err error) {
+// get returns the cluster, its name and the topic. The name is taken from the same config
+// snapshot that was used to find the topic, so a config removed in the meantime is "not found".
+func (c *MqttClient) get(cluster string, topic string) (m *runtime.MqttInfo, api string, t *store.Topic, err error) {
 	if len(cluster) == 0 {
 		if len(topic) == 0 {
 			clusters := c.app.Mqtt.List()
@@ -128,46 +128,51 @@ func (c *MqttClient) get(cluster string, topic string) (m *runtime.MqttInfo, t *
 				err = newAmbiguousError("ambiguous cluster: specify the cluster")
 				return
 			}
-			topics := clusters[0].Topics
+			if len(clusters) == 1 {
+				topics := clusters[0].Topics()
+				if len(topics) > 1 {
+					err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
+					return
+				}
+				if snapshot := clusters[0].Config(); snapshot != nil && len(topics) == 1 {
+					return clusters[0], snapshot.Info.Name, topics[0], nil
+				}
+			}
+		} else {
+			var topics []*store.Topic
+			for _, v := range c.app.Mqtt.List() {
+				snapshot := v.Config()
+				if snapshot == nil {
+					continue
+				}
+				if found, ok := v.Topic(topic); ok {
+					m = v
+					api = snapshot.Info.Name
+					topics = append(topics, found)
+				}
+			}
 			if len(topics) > 1 {
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
+			} else if len(topics) == 1 {
+				t = topics[0]
 			}
-			if len(topics) == 0 {
-				return
-			}
-			t = slices.Collect(maps.Values(topics))[0]
-			return clusters[0], t, nil
-		}
-
-		var topics []*store.Topic
-		var ok bool
-		for _, v := range c.app.Mqtt.List() {
-			if t, ok = v.Topic(topic); ok {
-				m = v
-				if len(cluster) == 0 {
-					cluster = v.Info.Name
-				}
-				topics = append(topics, t)
-			}
-		}
-		if len(topics) > 1 {
-			err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
-			return
-		} else if len(topics) == 1 {
-			t = topics[0]
 		}
 	} else {
-		if m = c.app.Mqtt.Get(cluster); m != nil {
-			t, _ = m.Topic(topic)
-		} else {
-			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
+		m = c.app.Mqtt.Get(cluster)
+		if m == nil {
+			return nil, "", nil, fmt.Errorf("mqtt API '%v' not found", cluster)
 		}
+		snapshot := m.Config()
+		if snapshot == nil {
+			return nil, "", nil, fmt.Errorf("mqtt API '%v' not found", cluster)
+		}
+		api = snapshot.Info.Name
+		t, _ = m.Topic(topic)
 	}
 
 	if t == nil {
-		err = fmt.Errorf("kafka topic '%v' not found", topic)
-		return
+		return nil, "", nil, fmt.Errorf("mqtt topic '%v' not found", topic)
 	}
 
 	return

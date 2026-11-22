@@ -150,6 +150,7 @@ func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *
 		Dn:         add.Dn,
 		Attributes: add.Attributes,
 	}
+	e = e.copy()
 	err := e.validate(s)
 	if err != nil {
 		return err
@@ -206,7 +207,7 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], 
 		switch action.Type {
 		case "add":
 			if _, ok := e.Attributes[action.Name]; !ok {
-				e.Attributes[action.Name] = action.Attributes[action.Name]
+				e.Attributes[action.Name] = slices.Clone(action.Attributes[action.Name])
 			} else {
 				e.Attributes[action.Name] = append(e.Attributes[action.Name], action.Attributes[action.Name]...)
 			}
@@ -229,7 +230,7 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], 
 				}
 			}
 		case "replace":
-			e.Attributes[action.Name] = action.Attributes[action.Name]
+			e.Attributes[action.Name] = slices.Clone(action.Attributes[action.Name])
 		}
 	}
 
@@ -282,6 +283,7 @@ func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], 
 	if !ok {
 		return NewEntryError(ldap.NoSuchObject, "modifyDN operation failed: the specified entry does not exist: %v", m.Dn)
 	}
+	e = e.copy()
 
 	parts := strings.Split(e.Dn, ",")
 	if m.NewRdn != "" {

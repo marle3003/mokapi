@@ -1,197 +1,116 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import router from '@/router'
-import { getRouteName, useDashboard } from '@/composables/dashboard'
-import { useWebsocket } from '@/composables/websocket.ts'
 import { usePrettyText } from '@/composables/usePrettyText.ts'
-import { usePageSize } from '@/composables/paging'
+import { getRouteName } from '@/composables/dashboard'
+import { messageDestination, messageSource } from '@/composables/websocket'
+import * as websocketMessageFilter from '@/composables/websocket-message-filter'
+import { useMessageLog } from '@/composables/use-message-log'
+import Loading from '@/components/Loading.vue'
 import Paging from '../Paging.vue'
-
-const props = defineProps<{
-    service?: WebsocketService,
-    channelName?: string
-    instanceName?: string
-    clientId?: string
-}>()
-
-const emit = defineEmits<{
-    (e: "loaded", count: number): void
-}>();
-
-const labels = computed(() => {
-    const result = [{ name: 'namespace', value: 'websocket' }];
-    if (props.service) {
-        result.push({ name: 'name', value: props.service.name })
-    }
-    if (props.channelName) {
-        result.push({ name: 'channel', value: props.channelName })
-    }
-    if (props.instanceName) {
-        result.push({ name: 'instance', value: props.instanceName })
-    }
-    result.push({ name: 'type', value: 'message' })
-    if (props.clientId) {
-        result.push({ name: 'clientId', value: props.clientId })
-    }
-    return result;
-})
-
-const paging = reactive({
-    current: 1,
-    size: usePageSize(25),
-})
+import LogPauseButton from '../log/LogPauseButton.vue'
+import WebsocketMessageFilters from './log/WebsocketMessageFilters.vue'
+import WebsocketMessageDetailPanel from './log/WebsocketMessageDetailPanel.vue'
 
 const { format } = usePrettyDates()
 const { adaptiveTruncate } = usePrettyText()
-const { formatAddress } = useWebsocket()
 
-const { dashboard } = useDashboard()
-const result = ref<ServiceEventPage | null>(null);
-const events = computed(() => result.value?.items ?? [])
-watch(
-    [() => dashboard.value, () => paging.current, () => paging.size, labels],
-    ([db], _, onCleanup) => {
-        const res = db.getEvents({
-            page: paging.current,
-            size: paging.size,
-            labels: labels.value,
-        })
+const props = defineProps<{
+    service?: WebsocketService,
+    addressName?: string
+    instanceName?: string
+    clientId?: string
+    hideWhenEmpty?: boolean
+}>()
 
-        const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+const table = useTemplateRef<HTMLElement>('table')
+const {
+    context, filter, editingFilter, hide, paging, result, isLoading, events, paused, canPause, togglePause,
+    serviceNames, addressNames, showAddressColumn, selectedId, select, onRowClick, onLinkClick,
+} = useMessageLog('websocket', props, websocketMessageFilter, table)
 
-        onCleanup(() => {
-            stop()
-            res.close()
-        })
-    },
-    { immediate: true }
-);
-watch(() => events.value, (events) => emit("loaded", events.length), { immediate: true })
-
-const messages = computed(() => {
-    const result = [];
-    for (const event of events.value) {
-        const data = eventData(event)
-        if (!data) {
-            continue
-        }
-
-        result.push({
-            id: event.id,
-            value: data.message.value ?? data.message.binary,
-            event: event,
-            channel: data.channel,
-            client: data.client,
-            direction: data.direction,
-            validationErrors: data.validationErrors
-        });
+const messages = computed(() => events.value.map(event => {
+    const data = <WebsocketMessageData>event.data
+    return {
+        id: event.id, time: event.time, channel: data.channel, isInvalid: !!data.validationErrors,
+        to: { name: getRouteName('websocketMessage').value, params: { id: event.id } },
+        source: messageSource(data), destination: messageDestination(data),
+        value: data.message.value ?? data.message.binary,
     }
-    return result;
-})
-
-function eventData(event: ServiceEvent | null): WebsocketMessageInfo | null {
-    if (!event) {
-        return null
-    }
-    return event.data as WebsocketMessageData
-}
-
-function goToMessage(eventId: string, openInNewTab = false) {
-    if (getSelection()?.toString()) {
-        return
-    }
-
-    const to = {
-        name: getRouteName('websocketMessage').value,
-        params: { id: eventId }
-    }
-    if (openInNewTab) {
-        const routeData = router.resolve(to);
-        window.open(routeData.href, '_blank')
-    } else {
-        router.push(to)
-    }
-}
-
-const isTemplateChannel = computed(() => {
-    if (!props.service || !props.channelName) {
-        return false
-    }
-    const channel = props.service.channels.find(x => x.name === props.channelName)
-    if (!channel || !channel.instances) {
-        return false
-    }
-    return channel.instances.length > 0
-})
+}))
 </script>
 
 <template>
-    <div class="table-responsive">
-        <table class="table dataTable selectable" aria-label="Recent Messages">
-            <thead>
-                <tr>
-                    <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Path</th>
-                    <th scope="col" class="text-left col-1">Source</th>
-                    <th scope="col" class="text-left col-1">Destination</th>
-                    <th scope="col" class="text-left col-4">Value</th>
-                    <th scope="col" class="text-center col-2">Time</th>
+    <div class="log-layout" :class="{ 'has-panel': selectedId }" :style="{ display: hide ? 'none' : undefined }">
+        <section class="card" aria-labelledby="message-log-title">
+            <div class="card-body">
+                <h2 id="message-log-title" class="card-title text-center">Recent Messages</h2>
+                <div class="log-toolbar">
+                    <websocket-message-filters v-model="filter" v-model:editing="editingFilter" :context="context"
+                        :service-names="serviceNames" :channel-names="addressNames" />
+                    <log-pause-button v-if="canPause" :paused="paused" @toggle="togglePause" />
+                </div>
 
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="msg in messages" :key="msg.id" @click.left="goToMessage(msg.id)"
-                    @mousedown.middle="goToMessage(msg.id, true)">
-                    <td v-if="!channelName || isTemplateChannel">
-                        <router-link @click.stop class="row-link"
-                            :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
-                            <i v-if="msg.validationErrors" class="bi bi-x-circle-fill red" role="img"
-                                aria-label="Message data is invalid" style="vertical-align: middle;"></i>
-                            {{ adaptiveTruncate(msg.channel) }}
-                        </router-link>
-                    </td>
-                    <td class="text-left">
-                        {{ formatAddress(msg.direction === 'send' ? msg.client.address : msg.client.server) }}
-                    </td>
-                    <td class="text-left">
-                        {{ formatAddress(msg.direction === 'receive' ? msg.client.address : msg.client.server) }}
-                    </td>
-                    <td v-if="channelName" class="message">
-                        <router-link @click.stop class="row-link"
-                            :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
-                            {{ msg.value }}
-                        </router-link>
-                    </td>
-                    <td v-else class="message">{{ msg.value }}
-                    </td>
-                    <td class="text-center">{{ format(msg.event.time) }}</td>
-                </tr>
-            </tbody>
-        </table>
+                <div class="table-responsive">
+                    <table ref="table" class="table dataTable selectable" aria-label="Recent Messages">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-left col-3" v-if="showAddressColumn">Path</th>
+                                <th scope="col" class="text-left col-1">Source</th>
+                                <th scope="col" class="text-left col-1">Destination</th>
+                                <th scope="col" class="text-left col-4">Value</th>
+                                <th scope="col" class="text-center col-2">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="msg in messages" :key="msg.id"
+                                :aria-selected="msg.id === selectedId ? 'true' : undefined" @click="onRowClick($event, msg.id)">
+                                <td v-if="showAddressColumn">
+                                    <router-link custom :to="msg.to" v-slot="{ href }">
+                                        <a class="row-link" :href="href" @click="onLinkClick">
+                                            <i v-if="msg.isInvalid" class="bi bi-x-circle-fill red" role="img"
+                                                aria-label="Message data is invalid" style="vertical-align: middle;"></i>
+                                            {{ adaptiveTruncate(msg.channel) }}
+                                        </a>
+                                    </router-link>
+                                </td>
+                                <td class="text-left">{{ msg.source }}</td>
+                                <td class="text-left">{{ msg.destination }}</td>
+                                <td class="message">
+                                    <template v-if="showAddressColumn">{{ msg.value }}</template>
+                                    <router-link v-else custom :to="msg.to" v-slot="{ href }">
+                                        <a class="row-link" :href="href" @click="onLinkClick"><i v-if="msg.isInvalid" class="bi bi-x-circle-fill red" role="img" aria-label="Message data is invalid" style="vertical-align: middle;"></i>{{ msg.value }}</a>
+                                    </router-link>
+                                </td>
+                                <td class="text-center">{{ format(msg.time) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <loading v-if="isLoading && events.length === 0" />
+                <Paging v-if="result"
+                    :count="events.length"
+                    :total="result.total"
+                    v-model:current="paging.current"
+                    v-model:size="paging.size"
+                />
+            </div>
+        </section>
+
+        <websocket-message-detail-panel v-if="selectedId" :message-id="selectedId" @close="select(undefined)" />
     </div>
-    
-    <Paging v-if="result"
-        :count="events.length"
-        :total="result.total"
-        v-model:current="paging.current"
-        v-model:size="paging.size"
-    />
 </template>
 
 <style scoped>
-.message,
-.key {
+.message {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 0;
 }
-
-.tab-pane {
-    padding: 0;
-}
-
-table.dataTable tr.deleted td {
-    color: #5E5E5E;
+/* beside the panel the cells of a table wrap (dashboard.css), a message value stays on one line */
+.log-layout.has-panel .table-responsive table.dataTable td.message {
+    white-space: nowrap;
 }
 </style>

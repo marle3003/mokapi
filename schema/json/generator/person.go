@@ -23,7 +23,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "firstname",
-				Attributes: []string{"firstname", "firstname2"},
+				Attributes: []string{"firstname", "firstname2", "givenName"},
 				DependsOn:  []string{"gender", "sex"},
 				Weight:     1.0,
 				Fake:       fakeFirstname,
@@ -37,7 +37,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "lastname",
-				Attributes: []string{"lastname"},
+				Attributes: []string{"lastname", "familyName", "surname"},
 				Weight:     1.0,
 				Fake:       fakeLastname,
 			},
@@ -107,7 +107,7 @@ var personal = []*Node{
 			},
 			{
 				Name:       "email",
-				Attributes: []string{"email"},
+				Attributes: []string{"email", "emailAddress"},
 				Weight:     0.5,
 				Fake:       fakeEmail,
 			},
@@ -148,7 +148,7 @@ func fakePersonName(r *Request) (any, error) {
 }
 
 func fakeFirstname(r *Request) (any, error) {
-	if v, ok := r.Context.Values["firstname"]; ok {
+	if v, ok := r.Context.valueAt("firstname", r.level); ok {
 		return v, nil
 	}
 
@@ -170,7 +170,7 @@ func fakeFirstname(r *Request) (any, error) {
 }
 
 func fakeMiddlename(r *Request) (any, error) {
-	if v, ok := r.Context.Values["middlename"]; ok {
+	if v, ok := r.Context.valueAt("middlename", r.level); ok {
 		return v, nil
 	}
 
@@ -192,7 +192,7 @@ func fakeMiddlename(r *Request) (any, error) {
 }
 
 func fakeLastname(r *Request) (any, error) {
-	if v, ok := r.Context.Values["lastname"]; ok {
+	if v, ok := r.Context.valueAt("lastname", r.level); ok {
 		return v, nil
 	}
 
@@ -203,10 +203,10 @@ func fakeLastname(r *Request) (any, error) {
 }
 
 func fakeGender(r *Request) (any, error) {
-	if v, ok := r.Context.Values["gender"]; ok {
+	if v, ok := r.Context.valueAt("gender", r.level); ok {
 		return v, nil
 	}
-	if v, ok := r.Context.Values["sex"]; ok {
+	if v, ok := r.Context.valueAt("sex", r.level); ok {
 		return v, nil
 	}
 
@@ -310,7 +310,7 @@ func fakeContactType(_ *Request) (any, error) {
 }
 
 func fakePersonTitle(r *Request) (any, error) {
-	if v, ok := r.Context.Values["title"]; ok {
+	if v, ok := r.Context.valueAt("title", r.level); ok {
 		return v, nil
 	}
 

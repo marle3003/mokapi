@@ -24,7 +24,7 @@ type KafkaProduceArgs struct {
 	result KafkaProduceResultCallback
 }
 
-type KafkaProduceResultCallback func(result common.KafkaMessageResult) error
+type KafkaProduceResultCallback func(result *common.KafkaProduceResult) error
 
 func (k *Kafka) Topic(topicName string) *KafkaTopic {
 	f := k.filter
@@ -89,10 +89,8 @@ func produce(m *Module, filter common.KafkaFilter, vMsg goja.Value, vArgs goja.V
 		panic(m.vm.ToValue(err.Error()))
 	}
 	if callback != nil {
-		for _, r := range result.Messages {
-			if err := callback(r); err != nil {
-				panic(m.vm.ToValue(err.Error()))
-			}
+		if err := callback(result); err != nil {
+			panic(m.vm.ToValue(err.Error()))
 		}
 	}
 }
@@ -105,10 +103,8 @@ func produceAsync[T any](m *Module, filter common.KafkaFilter, vMsg goja.Value, 
 		func() (*common.KafkaProduceResult, error) { return client.Produce(args) },
 		func(result *common.KafkaProduceResult) (any, error) {
 			if callback != nil {
-				for _, r := range result.Messages {
-					if err := callback(r); err != nil {
-						return nil, err
-					}
+				if err := callback(result); err != nil {
+					return nil, err
 				}
 			}
 			return self, nil
@@ -250,7 +246,10 @@ func mapProduceArgs(v goja.Value, vm *goja.Runtime) (*KafkaProduceArgs, error) {
 			if !ok {
 				return nil, fmt.Errorf("unexpected type for 'produce': expected function, got %s", util.JsType(jsObj.Get(propName)))
 			}
-			args.result = func(result common.KafkaMessageResult) error {
+			args.result = func(result *common.KafkaProduceResult) error {
+				if result == nil {
+					return fmt.Errorf("kafka produce: client returned a nil pointer instead of a result")
+				}
 				_, err := call(goja.Undefined(), vm.ToValue(result))
 				return err
 			}

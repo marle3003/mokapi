@@ -303,7 +303,7 @@ func TestParameterHeader_Parse(t *testing.T) {
 					return nil, nil
 				})
 				param := openapi.Parameters{nil}
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}
+				c := dynamictest.NewConfig(param, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}}))
 				err := param.Parse(c, reader)
 				require.NoError(t, err)
 			},
@@ -312,11 +312,11 @@ func TestParameterHeader_Parse(t *testing.T) {
 			name: "reference",
 			test: func(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &openapi.ParameterRef{Value: &openapi.Parameter{Description: "foo"}}}
+					cfg := dynamictest.NewConfig(&openapi.ParameterRef{Value: &openapi.Parameter{Description: "foo"}}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				param := openapi.Parameters{&openapi.ParameterRef{Reference: dynamic.Reference[*openapi.ParameterRef]{Ref: "foo.yml"}}}
-				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
+				err := param.Parse(dynamictest.NewConfig(param, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param[0].Value.Description)
 			},
@@ -325,11 +325,11 @@ func TestParameterHeader_Parse(t *testing.T) {
 			name: "schema reference",
 			test: func(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: schematest.New("string")}
+					cfg := dynamictest.NewConfig(schematest.New("string"), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				param := openapi.Parameters{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "foo.yml"}}}}}
-				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
+				err := param.Parse(dynamictest.NewConfig(param, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", param[0].Value.Schema.Type.String())
 			},
@@ -341,7 +341,7 @@ func TestParameterHeader_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				param := openapi.Parameters{&openapi.ParameterRef{Reference: dynamic.Reference[*openapi.ParameterRef]{Ref: "foo.yml"}}}
-				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
+				err := param.Parse(dynamictest.NewConfig(param, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -352,7 +352,7 @@ func TestParameterHeader_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				param := openapi.Parameters{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "foo.yml"}}}}}
-				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
+				err := param.Parse(dynamictest.NewConfig(param, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: parse schema failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},

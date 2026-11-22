@@ -17,13 +17,22 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(KafkaSuite))
 	suite.Run(t, new(KafkaMessageIdSuite))
 	suite.Run(t, new(MailSuite))
+	suite.Run(t, new(MailReloadSuite))
 	suite.Run(t, new(LdapSuite))
+	suite.Run(t, new(LdapReloadSuite))
 	suite.Run(t, new(MqttSuite))
+	suite.Run(t, new(MqttReloadSuite))
 	suite.Run(t, new(WebsocketSuite))
+	suite.Run(t, new(WebsocketReloadSuite))
 	suite.Run(t, new(HttpSuite))
 	suite.Run(t, new(DelaySuite))
+	suite.Run(t, new(JobsSuite))
+	suite.Run(t, new(FakerSuite))
 	suite.Run(t, new(RequestUrlSuite))
+	suite.Run(t, new(EmailAddressSuite))
+	suite.Run(t, new(FakerContextSuite))
 	suite.Run(t, new(HttpValidateSuite))
+	suite.Run(t, new(HttpPatchSuite))
 }
 
 // waitForScript waits until the fixture script of a simulation endpoint has run. The script

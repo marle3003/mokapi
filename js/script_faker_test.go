@@ -6,6 +6,7 @@ import (
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"mokapi/schema/json/generator"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -232,6 +233,186 @@ func TestScript_Faker(t *testing.T) {
 				n := generator.FindByName(generator.RootName)
 				err = n.Remove("foo")
 				r.NoError(t, err)
+			},
+		},
+		{
+			name: "custom node reads a value of the parent object in a nested object",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { fakeAsync, findByName } from 'mokapi/faker'
+						 export default async function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'producer',
+								attributes: ['producer'],
+								fake: (r) => {
+									r.context.values['token'] = 'abc'
+									return 'produced'
+								}
+							})
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => {
+									return r.context.values['token']
+								}
+							})
+							return await fakeAsync({
+								type: 'object',
+								required: ['producer', 'nested'],
+								properties: {
+									producer: { type: 'string' },
+									nested: {
+										type: 'object',
+										required: ['consumer'],
+										properties: { consumer: { type: 'string' } }
+									}
+								}
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"producer": "produced",
+					"nested":   map[string]any{"consumer": "abc"},
+				}, v.Export())
+				n := generator.FindByName(generator.RootName)
+				r.NoError(t, n.Remove("producer"))
+				r.NoError(t, n.Remove("consumer"))
+			},
+		},
+		{
+			name: "custom node writes a value in a nested object that does not reach the parent",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { fakeAsync, findByName } from 'mokapi/faker'
+						 export default async function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'producer',
+								attributes: ['producer'],
+								fake: (r) => {
+									r.context.values['token'] = 'abc'
+									return 'produced'
+								}
+							})
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => {
+									return r.context.values['token'] ?? 'none'
+								}
+							})
+							return await fakeAsync({
+								type: 'object',
+								required: ['nested', 'consumer'],
+								properties: {
+									nested: {
+										type: 'object',
+										required: ['producer'],
+										properties: { producer: { type: 'string' } }
+									},
+									consumer: { type: 'string' }
+								}
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"nested":   map[string]any{"producer": "produced"},
+					"consumer": "none",
+				}, v.Export())
+				n := generator.FindByName(generator.RootName)
+				r.NoError(t, n.Remove("producer"))
+				r.NoError(t, n.Remove("consumer"))
+			},
+		},
+		{
+			name: "custom node reads a request parameter in a nested object",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+				s, err := jstest.New(jstest.WithSource(
+					`import { findByName } from 'mokapi/faker'
+						 export default function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'consumer',
+								attributes: ['consumer'],
+								fake: (r) => r.context.values['status']
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				defer func() { r.NoError(t, generator.FindByName(generator.RootName).Remove("consumer")) }()
+
+				v, err := generator.New(generator.NewRequest(nil, schematest.New("object",
+					schematest.WithProperty("status", schematest.New("string")),
+					schematest.WithProperty("nested", schematest.New("object",
+						schematest.WithProperty("consumer", schematest.New("string")),
+						schematest.WithRequired("consumer"))),
+					schematest.WithRequired("status", "nested"),
+				), map[string]any{"status": "active"}))
+
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"status": "active",
+					"nested": map[string]any{"consumer": "active"},
+				}, v)
+			},
+		},
+		{
+			name: "custom node reads a request parameter in a nested object that declares the same name",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+				s, err := jstest.New(jstest.WithSource(
+					`import { findByName } from 'mokapi/faker'
+						 export default function() {
+						 	let root = findByName('root')
+							root.children.push({
+								name: 'ownerId',
+								attributes: ['ownerId'],
+								fake: (r) => r.context.values['id']
+							})
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				defer func() { r.NoError(t, generator.FindByName(generator.RootName).Remove("ownerId")) }()
+
+				v, err := generator.New(generator.NewRequest(nil, schematest.New("object",
+					schematest.WithProperty("id", schematest.New("integer")),
+					schematest.WithProperty("friend", schematest.New("object",
+						schematest.WithProperty("id", schematest.New("integer")),
+						schematest.WithProperty("ownerId", schematest.New("integer")),
+						schematest.WithRequired("id", "ownerId"))),
+					schematest.WithRequired("id", "friend"),
+				), map[string]any{"id": int64(7000001)}))
+
+				r.NoError(t, err)
+				obj := v.(map[string]any)
+				r.Equal(t, int64(7000001), obj["id"])
+				friend := obj["friend"].(map[string]any)
+				r.Equal(t, int64(7000001), friend["ownerId"])
+				r.NotEqual(t, int64(7000001), friend["id"])
 			},
 		},
 	}

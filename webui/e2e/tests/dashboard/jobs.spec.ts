@@ -1,5 +1,6 @@
 import { useDashboard } from '../components/dashboard'
 import { test, expect } from '../models/fixture-dashboard'
+import { JobOverviewModel } from '../models/job-overview'
 
 test.describe('Visit Jobs dashboard', () => {
     test.use({ colorScheme: 'dark' })
@@ -8,9 +9,11 @@ test.describe('Visit Jobs dashboard', () => {
         const { tabs, open } = useDashboard(page)
         await open()
         await tabs.jobs.click()
+        await new JobOverviewModel(page).runsTab.click()
 
         const table = page.getByRole('table', { name: 'Recent Jobs' });
-        let rows = table.locator('> tbody > tr:not(.collapse-row)');
-        await expect(rows).toHaveCount(3)
+        const rows = table.locator('tbody tr');
+        await expect(rows).toHaveCount(14)
+        await expect(table.getByRole('columnheader')).toHaveText(['Status', 'Name', 'Schedule', 'Time', 'Duration'])
      })
 })

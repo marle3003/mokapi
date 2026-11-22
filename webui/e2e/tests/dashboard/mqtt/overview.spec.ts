@@ -1,7 +1,9 @@
 import { test, expect } from '../../models/fixture-dashboard'
 import { getCellByColumnName } from '../../helpers/table'
+import { useMqttMessages } from '../../components/mqtt'
 
 test('Visit MQTT overview', async ({ page }) => {
+    const { openFullView } = useMqttMessages(page)
     await page.goto('/dashboard')
     const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
@@ -37,7 +39,7 @@ test('Visit MQTT overview', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('Template sensors/{sensorId}/data, 1 topic');
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('Template sensors/{sensorId}/data, 2 topics');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('1');
@@ -52,14 +54,14 @@ test('Visit MQTT overview', async ({ page }) => {
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(1);
+            await expect(rows).toHaveCount(6);
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"sensorId":"12345","temperature":30,"unit":"celsius","timestamp":"2026-02-13T09:49:25.482366+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Topic')).toHaveText('home/livingroom/temperature');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -86,9 +88,9 @@ test('Visit MQTT overview', async ({ page }) => {
 
                     const messages = page.getByRole('table', { name: 'Messages' });
                     const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    await expect(rows).toHaveCount(6);
 
-                    await rows.nth(0).click()
+                    await openFullView(rows.nth(0))
 
                 })
 
@@ -116,7 +118,7 @@ test('Visit MQTT overview', async ({ page }) => {
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(1);
+            await expect(rows).toHaveCount(6);
             await expect(await getCellByColumnName(messages, 'Topic', rows.nth(0))).toHaveText('sensors/123/data');
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"temp":33,"timestamp":"2026-02-14T09:49:25.482366+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
@@ -133,8 +135,8 @@ test('Visit MQTT overview', async ({ page }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Topic')).toHaveText('sensors/123/data');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -161,9 +163,9 @@ test('Visit MQTT overview', async ({ page }) => {
 
                     const messages = page.getByRole('table', { name: 'Messages' });
                     const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    await expect(rows).toHaveCount(5);
 
-                    await rows.nth(0).click()
+                    await openFullView(rows.nth(0))
 
                 })
 

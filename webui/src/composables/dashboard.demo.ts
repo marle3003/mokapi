@@ -1,7 +1,7 @@
 import { reactive, ref, watchEffect } from "vue";
 import { useFetch } from "./fetch";
 import { transformPath } from "./site-base";
-import type { AppInfoResponse, EventQuery, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { AppInfoResponse, EventQuery, Dashboard, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
 import type { Response } from "./fetch";
 import { match, matchTraits } from '../../lib/events'
 
@@ -24,25 +24,28 @@ export function useDemoDashboard() {
             })
 
             watchEffect(() => {
+                response.isLoading = db.isLoading
+                response.error = db.error
                 if (!db.data) {
                     return
                 }
                 response.data = db.data.info
-                response.isLoading = db.isLoading
             })
             return response
         },
 
         getServices(type) {
             const services = ref<Service[]>([])
+            const isLoading = ref<boolean>(true)
 
             watchEffect(() => {
+                isLoading.value = db.isLoading
                 if (!db.data) {
                     return
                 }
                 let result = []
                 if (type) {
-                    for (let service of db.data['services']) {
+                    for (const service of db.data['services']) {
                         if (service.type == type) {
                             result.push(service)
                         }
@@ -52,7 +55,7 @@ export function useDemoDashboard() {
                 }
                 services.value = result.sort(compareService)
             })
-            return { services, close: () => {} } 
+            return { services, isLoading, close: () => {} }
         },
 
         getService(name) {
@@ -153,6 +156,7 @@ export function useDemoDashboard() {
             const isLoading = ref<boolean>(true)
 
             watchEffect(() => {
+                isLoading.value = db.isLoading
                 if (!db.data) {
                     return
                 }
@@ -173,7 +177,6 @@ export function useDemoDashboard() {
 
                 data.value.items = result.slice((page - 1) * size, page * size)
                 data.value.total = result.length
-                isLoading.value = db.isLoading
             })
             return { data, isLoading, close: () => {} }
         },
@@ -192,7 +195,7 @@ export function useDemoDashboard() {
             return { event, isLoading, close: () => {} }
         },
 
-        getMetrics(type?: string) {
+        getMetrics() {
             const response: Response = reactive({
                 data: null,
                 isLoading: false,
@@ -212,7 +215,7 @@ export function useDemoDashboard() {
             return response
         },
 
-        getExample(request: ExampleRequest) {
+        getExample() {
             const response: ExampleResult = {
                 data: [],
                 next: () => {},
@@ -246,7 +249,7 @@ export function useDemoDashboard() {
 
                 const result = [];
                 for (const mail of db.data['mails']) {
-                    if (mail.data.to.filter((x: any) => x.address === mailbox).length > 0) {
+                    if (mail.data.to.filter((x: MailAddress) => x.address === mailbox).length > 0) {
                         result.push({
                             messageId: mail.data.messageId,
                             subject: mail.data.subject,
@@ -271,7 +274,7 @@ export function useDemoDashboard() {
                 if (!db.data) {
                     return
                 }
-                mail.value = db.data['mails'].find((x: any) => x.data.messageId === messageId);
+                mail.value = db.data['mails'].find((x: Message) => x.data.messageId === messageId);
                 isLoading.value = db.isLoading
             })
             return { mail, isLoading, close: () => {} }
@@ -283,11 +286,25 @@ export function useDemoDashboard() {
                 return '';
             }
             const mail = result.mail.value;
-            const attachment = mail.data.attachments.find((x: any) => x.name === name);
+            const attachment = mail.data.attachments.find((x) => x.name === name);
             if (!attachment) {
                 return '';
             }
             return transformPath(`/demo/${getFilename(attachment.contentType)}`)
+        },
+
+        getJobs() {
+            const jobs = ref<JobInfo[]>([])
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                jobs.value = db.data.jobs ?? []
+                isLoading.value = db.isLoading
+            })
+            return { data: jobs, isLoading, close: () => {} }
         },
 
         getConfigs() {

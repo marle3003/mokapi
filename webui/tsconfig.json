@@ -1,10 +1,13 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "exclude": ["src/test-support/dependency-scan.test.ts"],
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "#docs-images": ["./src/composables/docs-images.website.ts"]
+      "#docs-images": ["./src/composables/docs-images.website.ts"],
+      "mokapi": ["./src/test-support/mokapi-stub.ts"],
+      "mokapi/encoding": ["./src/test-support/mokapi-encoding-stub.ts"]
     },
     "typeRoots": ["./src/types"],
     "ignoreDeprecations": "5.0",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDashboard } from '@/composables/dashboard'
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, useTemplateRef, watch } from 'vue'
 
 const props = defineProps({
     messageId: { type: String, required: true },
@@ -25,23 +25,23 @@ function parseHtmlBody(body: string) {
     return body
 }
 
-let shadowRoot: ShadowRoot;
-onMounted(() => {
-  const body = document.querySelector('#body')
-  if (body) {
-    shadowRoot = body.attachShadow({mode: 'open'});
-    setBody()
-  }
-})
+const bodyElement = useTemplateRef<HTMLElement>('body')
 
-watch(isDark, setBody)
+onMounted(setBody)
+// the panel shows another mail without a new component, and the body element comes and goes with the content type
+watch([isDark, bodyElement, () => props.body, () => props.messageId], setBody, { flush: 'post' })
 
 function setBody() {
+  const element = bodyElement.value
+  if (!element) {
+    return
+  }
+  const shadowRoot = element.shadowRoot ?? element.attachShadow({mode: 'open'})
   shadowRoot.innerHTML = parseHtmlBody(props.body)
 
   for (const sheet of shadowRoot.styleSheets) {
     for (const rule of sheet.cssRules) {
-      const r: any = rule
+      const r = rule as CSSMediaRule
       if (r.media?.mediaText === '(prefers-color-scheme: dark)') {
         r.media.mediaText = isDark.value ? '' : '(original-prefers-color-scheme)'
       }
@@ -69,10 +69,10 @@ function switchTheme() {
           <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></span>
         </div>
         <div class="row">
-          <p class="col">
-            <div id="body" v-if="contentType.startsWith('text/html')" style="display: inline-block; width: 100%;" :style="isDark ? 'color: #fff;' : 'color: #000;'"></div>
+          <div class="col">
+            <div ref="body" v-if="contentType.startsWith('text/html')" style="display: inline-block; width: 100%;" :style="isDark ? 'color: #fff;' : 'color: #000;'"></div>
             <p v-else>{{ body }}</p>
-          </p>
+          </div>
         </div>
       </div>
     </section>

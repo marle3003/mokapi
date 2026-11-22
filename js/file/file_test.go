@@ -42,11 +42,9 @@ func TestModule_Open(t *testing.T) {
 			name: "resolve",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.OpenFunc = func(file, hint string) (*dynamic.Config, error) {
-					return &dynamic.Config{
-						Data: openapitest.NewConfig("3.0.0",
-							openapitest.WithComponentSchema("Foo", schematest.New("string")),
-						),
-					}, nil
+					return dynamictest.NewConfig(openapitest.NewConfig("3.0.0",
+						openapitest.WithComponentSchema("Foo", schematest.New("string")),
+					)), nil
 				}
 
 				v, err := vm.RunString(`
@@ -64,11 +62,9 @@ func TestModule_Open(t *testing.T) {
 					s := &schema.Schema{Properties: &schema.Schemas{}}
 					s.Properties.Set("foo", s)
 
-					return &dynamic.Config{
-						Data: openapitest.NewConfig("2.0.0",
-							openapitest.WithComponentSchema("Foo", s),
-						),
-					}, nil
+					return dynamictest.NewConfig(openapitest.NewConfig("2.0.0",
+						openapitest.WithComponentSchema("Foo", s),
+					)), nil
 				}
 
 				v, err := vm.RunString(`

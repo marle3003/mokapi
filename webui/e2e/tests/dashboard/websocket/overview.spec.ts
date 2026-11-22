@@ -1,7 +1,9 @@
 import { test, expect } from '../../models/fixture-dashboard'
 import { getCellByColumnName, getCellByName } from '../../helpers/table'
+import { useWebsocketMessages } from '../../components/websocket'
 
 test('Visit Websocket overview', async ({ page }) => {
+    const { openFullView } = useWebsocketMessages(page)
     await page.goto('/dashboard')
     const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
@@ -9,7 +11,7 @@ test('Visit Websocket overview', async ({ page }) => {
 
         const dashboard = page.getByRole('region', { name: 'Dashboard' })
 
-        await expect(page.getByLabel('Websocket Messages')).toHaveText('4')
+        await expect(page.getByLabel('Websocket Messages')).toHaveText('12')
 
         const table = page.getByRole('table', { name: 'Websocket Services' });
         const rows = table.locator('tbody tr');
@@ -35,12 +37,12 @@ test('Visit Websocket overview', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('/chat');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('Single WS endpoint carrying all chat messages');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
-        await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('5');
 
-        await expect(await getCellByColumnName(table, 'Path', rows.nth(1))).toHaveText('Template /chats/{chatId}, 1 path');
+        await expect(await getCellByColumnName(table, 'Path', rows.nth(1))).toHaveText('Template /chats/{chatId}, 2 paths');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
-        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('2');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('7');
 
         await test.step('Visit /chat', async () => {
             const topics = page.getByRole('table', { name: 'Paths' });
@@ -52,14 +54,14 @@ test('Visit Websocket overview', async ({ page }) => {
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(2);
+            await expect(rows).toHaveCount(5);
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"userId":"alice","username":"Alice","text":"Hello, world!","timestamp":"2026-02-13T09:49:25.482366+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Path')).toHaveText('/chat');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -84,18 +86,18 @@ test('Visit Websocket overview', async ({ page }) => {
 
                     const tblMessages = page.getByRole('table', { name: 'Messages' });
                     const messages = tblMessages.locator('tbody tr');
-                    await expect(messages).toHaveCount(1);
+                    await expect(messages).toHaveCount(6);
 
                     const tblRequests = page.getByRole('table', { name: 'Requests' });
                     const requests = tblRequests.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    await expect(requests).toHaveCount(1);
                     await expect(await getCellByColumnName(tblRequests, 'Type', requests.nth(0))).toHaveText('Connect')
                     await expect(await getCellByColumnName(tblRequests, 'Channel', requests.nth(0))).toHaveText('/chats/general')
                     await expect(await getCellByColumnName(tblRequests, 'Reason', requests.nth(0))).toHaveText('')
                     await expect(await getCellByColumnName(tblRequests, 'Closed By', requests.nth(0))).toHaveText('')
                     await expect(await getCellByColumnName(tblRequests, 'Time', requests.nth(0))).not.toBeEmpty()
 
-                    await messages.nth(0).click()
+                    await openFullView(messages.nth(0))
 
                 })
 
@@ -119,11 +121,11 @@ test('Visit Websocket overview', async ({ page }) => {
             const instance = instances.locator('tbody tr').nth(0);
             await expect(await getCellByColumnName(instances, 'Path', instance)).toContainText('/chats/1234')
             await expect(await getCellByColumnName(instances, 'Last Message', instance)).not.toHaveText('-')
-            await expect(await getCellByColumnName(instances, 'Messages', instance)).toContainText('2')
+            await expect(await getCellByColumnName(instances, 'Messages', instance)).toContainText('4')
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(2);
+            await expect(rows).toHaveCount(7);
             let channel = await getCellByColumnName(messages, 'Path', rows.nth(0))
             await expect(channel).toHaveText('/chats/1234');
             await expect(channel.getByRole('img')).not.toBeVisible();
@@ -148,8 +150,8 @@ test('Visit Websocket overview', async ({ page }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
-                
+                await openFullView(rows.nth(0));
+
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Path')).toHaveText('/chats/1234');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
@@ -169,14 +171,15 @@ test('Visit Websocket overview', async ({ page }) => {
 
                     const info = page.getByRole('region', { name: 'Info' })
                     await expect(info.getByLabel('Client')).toHaveText('127.0.0.1:53298');
+                    await expect(info.getByLabel('Service')).toHaveText('WebSocket Chat API');
                     await expect(info.getByLabel('Server')).toHaveText('localhost:8080');
                     await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
 
                     const messages = page.getByRole('table', { name: 'Messages' });
                     const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(3);
+                    await expect(rows).toHaveCount(6);
 
-                    await rows.nth(1).click()
+                    await openFullView(rows.nth(1))
 
                 })
 
@@ -185,7 +188,7 @@ test('Visit Websocket overview', async ({ page }) => {
 
             await test.step('Visit invalid message', async () => {
 
-                await rows.nth(1).click();
+                await openFullView(rows.nth(1));
 
                 const validationErrors = page.getByRole('region', { name: 'Validation Errors' })
 

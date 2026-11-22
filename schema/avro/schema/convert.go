@@ -66,6 +66,8 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *json.Schema {
 		js.Properties = &json.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *json.Schema]{}}
 		for _, f := range s.Fields {
 			js.Properties.Set(f.Name, c.Convert(f))
+			// Avro binary encoding writes every field; optionality is a union with null
+			js.Required = append(js.Required, f.Name)
 		}
 	}
 

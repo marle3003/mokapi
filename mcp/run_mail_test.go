@@ -2,6 +2,9 @@ package mcp_test
 
 import (
 	"context"
+	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/imap"
 	"mokapi/mcp"
 	"mokapi/providers/mail"
@@ -11,6 +14,7 @@ import (
 	"mokapi/smtp"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -143,8 +147,8 @@ func TestService_Run_Mail(t *testing.T) {
 					}),
 				)
 				m := app.Mail.Get("foo")
-				f := m.Store.Mailboxes["foo@mokapi.io"].Folders["temp"]
-				f.Append(&smtp.Message{
+				mb, _ := m.Mailbox("foo@mokapi.io")
+				mb.Folders["temp"].Append(&smtp.Message{
 					Subject: "Hello world!",
 				})
 				return app
@@ -224,4 +228,108 @@ api.getMailbox('foo@mokapi.io')`,
 			tc.test(t, s)
 		})
 	}
+}
+
+func mailFile(url string, cfg *mail.Config) *dynamic.Config {
+	return dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
+}
+
+func getMailApi(t *testing.T, app *runtime.App, name string) *mcp.MailAPI {
+	t.Helper()
+	r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('` + name + `')`})
+	require.NoError(t, err)
+	require.IsType(t, &mcp.MailAPI{}, r.Result)
+	return r.Result.(*mcp.MailAPI)
+}
+
+func TestService_Run_Mail_ConfigRemoved(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// an info whose last file was removed has no config snapshot (nil)
+	t.Run("info without config is not found by getApi", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithMailInfo("foo", &runtime.MailInfo{}))
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
+
+		require.NoError(t, err)
+		require.Nil(t, r.Result)
+	})
+
+	t.Run("info without config is skipped by getApis", func(t *testing.T) {
+		app := runtimetest.NewApp(
+			runtimetest.WithMailInfo("foo", &runtime.MailInfo{}),
+			runtimetest.WithMail(&mail.Config{Info: mail.Info{Name: "bar"}}),
+		)
+		s := mcp.NewService(app)
+
+		r, err := s.GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApis()`})
+
+		require.NoError(t, err)
+		require.Equal(t, []mcp.ApiSummary{{Name: "bar", Type: "mail"}}, r.Result)
+	})
+
+	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		file := mailFile("a.yml", &mail.Config{
+			Info:      mail.Info{Name: "foo"},
+			Mailboxes: map[string]*mail.MailboxConfig{"alice@foo.bar": {}},
+		})
+		app.Mail.Add(file)
+		api := getMailApi(t, app, "foo")
+		mb, err := api.GetMailbox("alice@foo.bar")
+		require.NoError(t, err)
+		require.NotNil(t, mb)
+
+		app.Mail.Remove(file)
+
+		require.NotPanics(t, func() {
+			_, err = api.GetMailboxes()
+			require.EqualError(t, err, "mail API 'foo' not found")
+			_, err = api.GetMailbox("alice@foo.bar")
+			require.EqualError(t, err, "mail API 'foo' not found")
+			require.PanicsWithError(t, "mail API 'foo' not found", func() {
+				api.SendMail("alice@foo.bar", &smtp.Message{})
+			})
+		})
+	})
+
+	t.Run("unknown mailbox is nil", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithMail(&mail.Config{Info: mail.Info{Name: "foo"}}))
+
+		mb, err := getMailApi(t, app, "foo").GetMailbox("unknown@foo.bar")
+
+		require.NoError(t, err)
+		require.Nil(t, mb)
+	})
+
+	t.Run("send mail to unknown mailbox panics", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithMail(&mail.Config{Info: mail.Info{Name: "foo"}}))
+
+		require.PanicsWithError(t, "mailbox 'unknown@foo.bar' not found", func() {
+			getMailApi(t, app, "foo").SendMail("unknown@foo.bar", &smtp.Message{})
+		})
+	})
+}
+
+// A reload between two calls of the same object changes the second result.
+func TestService_Run_Mail_ReloadBetweenCalls(t *testing.T) {
+	app := runtimetest.NewApp()
+	app.Mail.Add(mailFile("a.yml", &mail.Config{
+		Info:      mail.Info{Name: "foo"},
+		Mailboxes: map[string]*mail.MailboxConfig{"alice@foo.bar": {Description: "first"}},
+	}))
+	api := getMailApi(t, app, "foo")
+	before, err := api.GetMailboxes()
+	require.NoError(t, err)
+	require.Equal(t, []mcp.MailboxSummary{{Name: "alice@foo.bar", Description: "first"}}, before)
+
+	app.Mail.Add(mailFile("a.yml", &mail.Config{
+		Info:      mail.Info{Name: "foo"},
+		Mailboxes: map[string]*mail.MailboxConfig{"alice@foo.bar": {Description: "second"}, "bob@foo.bar": {}},
+	}))
+
+	after, err := api.GetMailboxes()
+	require.NoError(t, err)
+	require.Equal(t, []mcp.MailboxSummary{{Name: "alice@foo.bar", Description: "second"}, {Name: "bob@foo.bar"}}, after)
 }

@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -35,7 +34,7 @@ func TestTopic_ChannelWithEmptyMessage(t *testing.T) {
 		asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1})),
 	)
 	cfg.Channels["foo"].Value.Messages = map[string]*asyncapi3.MessageRef{"order": nil}
-	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+	require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 
 	var s *store.Store
 	require.NotPanics(t, func() { s = newStoreFromConfig(cfg) })
@@ -49,7 +48,7 @@ func TestStore_EmptyChannelNextToValidChannel(t *testing.T) {
 		asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1})),
 	)
 	cfg.Channels["empty"] = nil
-	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+	require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 
 	s := newStoreFromConfig(cfg)
 	defer s.Close()

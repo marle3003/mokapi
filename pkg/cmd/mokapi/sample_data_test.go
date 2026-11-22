@@ -2,10 +2,15 @@ package mokapi_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"mokapi/pkg/cmd/mokapi"
 	"mokapi/schema/json/generator"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -33,6 +38,13 @@ func TestMain_SampleData(t *testing.T) {
 				items := strings.Split(out, "\n")
 				require.Equal(t, `{"category":{"id":36202,"name":"rabbit"},"name":"Kevin","photoUrls":[],"tags":[{"id":36098,"name":"VertexField"},{"id":27424,"name":"Lumin"},{"name":"OpalOasis"},{"name":"LunarFlare"},{"name":"VortexEdge"}],"status":"sold"}`, items[0])
 				require.Equal(t, `{"id":81873,"category":{"id":81079,"name":"canary"},"name":"Fergus","photoUrls":["https://www.primaryaggregate.com/leverage/facilitate","http://www.deputymagnetic.net/plug-and-play/deliver/proactive/back-end","https://www.districtclicks-and-mortar.org/whiteboard/web-enabled"],"tags":[{"id":55199,"name":"Swift"},{"id":38640,"name":"Unity"},{"name":"Rocket"},{"id":24044,"name":"Arctic"},{"id":95940,"name":"Amity"}],"status":"pending"}`, items[1])
+			},
+		},
+		{
+			name: "generate using shorthand count followed by inline schema",
+			args: []string{"sample-data", "-n", "2", `{"type":"integer"}`},
+			test: func(t *testing.T, out string) {
+				require.Len(t, strings.Split(out, "\n"), 2)
 			},
 		},
 		{
@@ -132,4 +144,365 @@ func TestMain_SampleData(t *testing.T) {
 			tc.test(t, buf.String())
 		})
 	}
+}
+
+func TestMain_SampleData_Help(t *testing.T) {
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs([]string{"sample-data", "--help"})
+	var sb strings.Builder
+	cmd.SetOutput(&sb)
+
+	require.NoError(t, cmd.Execute())
+
+	out := sb.String()
+	require.Contains(t, out, "Generates random example data from a schema definition.")
+	require.Contains(t, out, "Usage:\n  mokapi sample-data [flags] [FILE|URL|SCHEMA]\n")
+	require.Contains(t, out, "--count")
+	require.Contains(t, out, "--input-type")
+	require.Contains(t, out, "--output")
+	require.Contains(t, out, "mokapi sample-data ./schema.json")
+	require.NotContains(t, out, "--log-level")
+}
+
+func TestMain_Help_ListsSampleData(t *testing.T) {
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs([]string{"--help"})
+	var sb strings.Builder
+	cmd.SetOutput(&sb)
+
+	require.NoError(t, cmd.Execute())
+
+	require.Contains(t, sb.String(), "\nCommands:\n  sample-data  Generate sample data from a schema\n")
+}
+
+func TestMain_SampleData_Stdin(t *testing.T) {
+	t.Run("schema piped to stdin", func(t *testing.T) {
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		_, err = w.WriteString(`{"type":"integer"}`)
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = r
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("empty piped stdin", func(t *testing.T) {
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = r
+
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data"})
+		logrus.SetOutput(io.Discard)
+
+		err = cmd.Execute()
+
+		require.EqualError(t, err, "failed to read : no input provided (expected file, URL, or stdin)")
+	})
+
+	t.Run("no input and stdin is a terminal-like char device", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("/dev/null as character device is Unix-only")
+		}
+		// /dev/null is a character device like a terminal, so it is not treated as piped data
+		devNull, err := os.Open(os.DevNull)
+		require.NoError(t, err)
+		defer devNull.Close()
+		defer func(old *os.File) { os.Stdin = old }(os.Stdin)
+		os.Stdin = devNull
+
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data"})
+		logrus.SetOutput(io.Discard)
+
+		err = cmd.Execute()
+
+		require.EqualError(t, err, "failed to read : no input provided (expected file, URL, or stdin)")
+	})
+}
+
+// executeSampleData runs the CLI and returns everything written to stdout.
+func executeSampleData(t *testing.T, args ...string) string {
+	t.Helper()
+	stdOut := os.Stdout
+	reader, writer, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = writer
+	defer func() { os.Stdout = stdOut }()
+
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs(args)
+	logrus.SetOutput(io.Discard)
+	execErr := cmd.Execute()
+
+	_ = writer.Close()
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, reader)
+	_ = reader.Close()
+	require.NoError(t, execErr)
+	return buf.String()
+}
+
+func TestMain_SampleData_Yaml(t *testing.T) {
+	pipeToStdin := func(t *testing.T, data string) {
+		t.Helper()
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		_, err = w.WriteString(data)
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+		old := os.Stdin
+		t.Cleanup(func() { os.Stdin = old })
+		os.Stdin = r
+	}
+
+	t.Run("json schema as argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", `{"type":"integer"}`)
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml jsonschema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: integer\n")
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml openapi schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: integer\n")
+
+		out := executeSampleData(t, "sample-data", "--input-type", "openapi")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml avro schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: string\n")
+
+		out := executeSampleData(t, "sample-data", "--input-type", "avro")
+
+		require.NotEmpty(t, out)
+	})
+
+	t.Run("yaml object schema piped to stdin", func(t *testing.T) {
+		pipeToStdin(t, "type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\n")
+
+		out := executeSampleData(t, "sample-data")
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("yaml jsonschema as argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "type: integer")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+
+	t.Run("yaml schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.yaml")
+		require.NoError(t, os.WriteFile(file, []byte("type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n"), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("yml schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.yml")
+		require.NoError(t, os.WriteFile(file, []byte("type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n"), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("multi-line yaml argument", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "type: object\nproperties:\n  id:\n    type: integer\nrequired: [id]\nadditionalProperties: false\n")
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("json schema file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "schema.json")
+		require.NoError(t, os.WriteFile(file, []byte(`{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"],"additionalProperties":false}`), 0o600))
+
+		out := executeSampleData(t, "sample-data", file)
+
+		require.Regexp(t, `^\{"id":-?\d+\}$`, out)
+	})
+
+	t.Run("missing file reports read error", func(t *testing.T) {
+		cmd := mokapi.NewCmdMokapi()
+		cmd.SetArgs([]string{"sample-data", "./missing.yaml"})
+		logrus.SetOutput(io.Discard)
+
+		err := cmd.Execute()
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to read ./missing.yaml")
+		require.NotContains(t, err.Error(), "schema")
+	})
+}
+
+// Windows paths must be treated as files, not as URLs with a one-letter scheme.
+func TestMain_SampleData_WindowsPaths(t *testing.T) {
+	testcases := []struct {
+		name  string
+		input string
+		path  string
+	}{
+		{name: "drive letter with backslash", input: `C:\x.yaml`, path: `C:\x.yaml`},
+		{name: "drive letter with slash", input: `C:/x.yaml`, path: `C:/x.yaml`},
+		{name: "lower case drive letter in directory", input: `c:\dir\x.yaml`, path: `c:\dir\x.yaml`},
+		{name: "drive letter with fragment", input: `C:\x.yaml#/components/schemas/Pet`, path: `C:\x.yaml`},
+		{name: "UNC path", input: `\\server\share\x.yaml`, path: `\\server\share\x.yaml`},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := mokapi.NewCmdMokapi()
+			cmd.SetArgs([]string{"sample-data", tc.input})
+			logrus.SetOutput(io.Discard)
+
+			err := cmd.Execute()
+
+			// the files do not exist: the file provider fails to open the path (without fragment)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "open "+tc.path+": ")
+		})
+	}
+
+	t.Run("drive letter path with fragment reads the schema", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("creates a directory named C: in the working directory")
+		}
+		dir := t.TempDir()
+		require.NoError(t, os.Mkdir(filepath.Join(dir, "C:"), 0o700))
+		spec := "openapi: 3.0.0\ninfo:\n  title: test\n  version: '1'\npaths: {}\ncomponents:\n  schemas:\n    Pet:\n      type: integer\n"
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "C:", "x.yaml"), []byte(spec), 0o600))
+		t.Chdir(dir)
+
+		out := executeSampleData(t, "sample-data", "C:/x.yaml#/components/schemas/Pet")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+}
+
+func TestMain_SampleData_Url(t *testing.T) {
+	spec := "openapi: 3.0.0\ninfo:\n  title: test\n  version: '1'\npaths: {}\ncomponents:\n  schemas:\n    Pet:\n      type: integer\n"
+	pet, err := os.ReadFile(filepath.Join("test", "pet.json"))
+	require.NoError(t, err)
+	mux := http.NewServeMux()
+	// write the bytes directly: http.ServeFile returned a truncated body in the sandboxed test run
+	mux.HandleFunc("/pet.json", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(pet)
+	})
+	mux.HandleFunc("/api.yaml", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(spec))
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	t.Run("schema without fragment", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", server.URL+"/pet.json")
+
+		var sample map[string]any
+		require.NoError(t, json.Unmarshal([]byte(out), &sample))
+		require.Contains(t, sample, "name")
+	})
+
+	t.Run("openapi schema with fragment", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", server.URL+"/api.yaml#/components/schemas/Pet")
+
+		require.Regexp(t, `^-?\d+$`, out)
+	})
+}
+
+func TestMain_SampleData_YamlOutput(t *testing.T) {
+	writeSchema := func(t *testing.T, content string) string {
+		t.Helper()
+		file := filepath.Join(t.TempDir(), "schema.json")
+		require.NoError(t, os.WriteFile(file, []byte(content), 0o600))
+		return file
+	}
+
+	objectSchema := `{"type":"object","properties":{"id":{"type":"integer"},"name":{"type":"string"}},"required":["id","name"],"additionalProperties":false}`
+
+	t.Run("object", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, out)
+	})
+
+	t.Run("array", func(t *testing.T) {
+		file := writeSchema(t, `{"type":"array","items":{"type":"integer"},"minItems":2,"maxItems":2}`)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", file)
+
+		require.Regexp(t, `^- -?\d+\n- -?\d+\n?$`, out)
+	})
+
+	t.Run("openapi object", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "--input-type", "openapi", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, out)
+	})
+
+	t.Run("avro record", func(t *testing.T) {
+		file := writeSchema(t, `{"type":"record","name":"User","fields":[{"name":"id","type":"int"}]}`)
+
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "yaml", file)
+
+		require.Regexp(t, `^id: -?\d+\n?$`, out)
+	})
+
+	t.Run("count separates documents with ---", func(t *testing.T) {
+		file := writeSchema(t, objectSchema)
+
+		out := executeSampleData(t, "sample-data", "-o", "yaml", "-n", "2", file)
+
+		docs := strings.Split(out, "\n---\n")
+		require.Len(t, docs, 2)
+		for _, doc := range docs {
+			require.Regexp(t, `^id: -?\d+\nname: .+\n?$`, doc)
+		}
+	})
+}
+
+func TestMain_SampleData_AvroRecord(t *testing.T) {
+	// Avro has no optional record fields, so every sample must contain all of them
+	schema := `{"type":"record","name":"User","fields":[{"name":"id","type":"int"},{"name":"name","type":"string"}]}`
+	file := filepath.Join(t.TempDir(), "user.avsc")
+	require.NoError(t, os.WriteFile(file, []byte(schema), 0o600))
+
+	t.Run("binary output succeeds for many samples", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "binary", "-n", "50", file)
+
+		require.NotEmpty(t, out)
+	})
+
+	t.Run("json output contains every field in each sample", func(t *testing.T) {
+		out := executeSampleData(t, "sample-data", "--input-type", "avro", "-o", "json", "-n", "50", file)
+
+		lines := strings.Split(strings.TrimSpace(out), "\n")
+		require.Len(t, lines, 50)
+		for _, line := range lines {
+			var record map[string]any
+			require.NoError(t, json.Unmarshal([]byte(line), &record))
+			require.Contains(t, record, "id")
+			require.Contains(t, record, "name")
+		}
+	})
 }

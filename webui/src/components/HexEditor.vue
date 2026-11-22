@@ -12,8 +12,8 @@ const text = ref<HTMLElement>()
 const hex = ref<HTMLElement>()
 
 const result = computed(() => {
-    var result = '';
-    for (var i=0; i<props.data.length; i++) {
+    let result = '';
+    for (let i=0; i<props.data.length; i++) {
         const hex = props.data.charCodeAt(i).toString(16).padStart(2, '0')
         result += hex.toUpperCase();
     }
@@ -27,7 +27,7 @@ function rows() {
     }
     return result.value.match(/.{1,32}/g)!.length
 }
-function data() {
+function hexBytes() {
     if (result.value.length === 0) {
         return []
     }
@@ -35,7 +35,7 @@ function data() {
 }
 function string() {
     let result = ''
-    for (var i=0; i<props.data.length; i++) {
+    for (let i=0; i<props.data.length; i++) {
         const ch = props.data.charCodeAt(i)
         result += toText(ch)
     }
@@ -340,14 +340,14 @@ onBeforeUpdate(() => {
 <template>
     <div class="hexedit" @mouseover="mouseover" @mouseout="mouseleave" @mouseup="mouseup" @mousedown="mousedown" @keydown="keydown" tabindex="0" @mousemove="mousemove">
         <div class="offset">
-            <div v-for="r in rows()">{{ (r * 16).toString(16).padStart(4, '0') }}</div>
+            <div v-for="r in rows()" :key="r">{{ (r * 16).toString(16).padStart(4, '0') }}</div>
         </div>
         <div class="hex" ref="hex">
-            <span v-for="(hex, index) in data()" :data-offset="index">{{ hex }}</span>
-            <span v-if="!readonly" class="last" :data-offset="data().length">+</span>
+            <span v-for="(hex, index) in hexBytes()" :key="index" :data-offset="index">{{ hex }}</span>
+            <span v-if="!readonly" class="last" :data-offset="hexBytes().length">+</span>
         </div>
         <div class="text" ref="text">
-            <span v-for="(s, index) in string()" :data-offset="index">{{ s }}</span>
+            <span v-for="(s, index) in string()" :key="index" :data-offset="index">{{ s }}</span>
         </div>
     </div>
 </template>

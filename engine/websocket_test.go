@@ -10,7 +10,12 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/http/httptest"
@@ -531,6 +536,262 @@ func TestWebsocketClient_Send_MessageId(t *testing.T) {
 				received = string(b)
 			}
 			tc.test(t, received, err)
+		})
+	}
+}
+
+func TestWebsocketClient_Send_ScriptFile(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	e := enginetest.NewEngine(engine.WithWebsocketClient(engine.NewWebsocketClient(app)))
+	cfg := asyncapi3test.NewConfig(
+		asyncapi3test.WithInfo("foo", "", ""),
+		asyncapi3test.AddChannel("/chat", asyncapi3test.NewChannel(
+			asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+		)),
+	)
+	s, err := app.Websocket.Add(getConfig(cfg), e)
+	require.NoError(t, err)
+	serv := httptest.NewServer(s)
+	defer serv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, _, err := ws.Dial(ctx, serv.URL+"/chat", &ws.DialOptions{})
+	require.NoError(t, err)
+	defer func() { _ = c.CloseNow() }()
+
+	_, err = engine.NewWebsocketClient(app).Send(common.WebsocketSendArgs{
+		ChannelName: "/chat",
+		Message:     map[string]any{"text": "hi"},
+		ScriptFile:  "file:///scripts/sender.ts",
+	})
+	require.NoError(t, err)
+
+	evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket").With("type", "message"))
+	require.Len(t, evts, 1)
+	require.Equal(t, "file:///scripts/sender.ts", evts[0].Data.(*websocket.MessageLog).Script)
+}
+
+func TestWebsocketClient_Send_UsesConfigAfterReload(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newCfg := func(messageId string) *asyncapi3.Config {
+		msg := asyncapi3test.NewMessage(
+			asyncapi3test.WithContentType("application/json"),
+			asyncapi3test.WithPayload(schematest.New("object")),
+		)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("/chat", asyncapi3test.NewChannel(
+				asyncapi3test.UseMessage(messageId, &asyncapi3.MessageRef{Value: msg}),
+			)),
+		)
+	}
+	em := runtimetest.NewApp()
+	st := websocket.New(newCfg("old"), enginetest.NewEngine(), em.Events, monitor.NewWebsocket())
+	app := runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", runtime.NewWebsocketInfo(newCfg("new"), st)))
+	st.Update(newCfg("new"))
+	serv := httptest.NewServer(st)
+	defer serv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, _, err := ws.Dial(ctx, serv.URL+"/chat", &ws.DialOptions{})
+	require.NoError(t, err)
+	defer func() { _ = c.CloseNow() }()
+
+	_, err = engine.NewWebsocketClient(app).Send(common.WebsocketSendArgs{
+		ChannelName: "/chat",
+		Message:     map[string]any{"text": "hi"},
+	})
+	require.NoError(t, err)
+
+	evts := em.Events.GetEvents(events.NewTraits().WithNamespace("websocket").With("type", "message"))
+	require.Len(t, evts, 1)
+	require.Equal(t, "new", evts[0].Data.(*websocket.MessageLog).MessageId)
+}
+
+func TestWebsocketClient_Send_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// an API whose last file was removed keeps its store but has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		cfg := asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("/x", asyncapi3test.NewChannel(
+				asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+			)),
+		)
+		st := websocket.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewWebsocket())
+		return runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", runtime.NewWebsocketInfo(nil, st)))
+	}
+
+	testcases := []struct {
+		name string
+		args common.WebsocketSendArgs
+		err  string
+	}{
+		{name: "API given", args: common.WebsocketSendArgs{Api: "foo", ChannelName: "/x"}, err: "websocket API 'foo' not found"},
+		{name: "channel only skips it", args: common.WebsocketSendArgs{ChannelName: "/x"}, err: "websocket channel '/x' not found"},
+		{name: "neither API nor channel", args: common.WebsocketSendArgs{}, err: "websocket channel '' not found"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := engine.NewWebsocketClient(newApp()).Send(tc.args)
+
+				require.EqualError(t, err, tc.err)
+			})
+		})
+	}
+}
+
+func TestWebsocketClient_Send_NoApiOrChannel(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name string
+		app  func() *runtime.App
+	}{
+		{
+			name: "no API loaded",
+			app:  func() *runtime.App { return runtimetest.NewApp() },
+		},
+		{
+			name: "API without channels",
+			app: func() *runtime.App {
+				return runtimetest.NewApp(runtimetest.WithWebsocket(asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := engine.NewWebsocketClient(tc.app()).Send(common.WebsocketSendArgs{})
+
+				require.EqualError(t, err, "websocket channel '' not found")
+			})
+		})
+	}
+
+	t.Run("not found is retried", func(t *testing.T) {
+		app := runtimetest.NewApp()
+		// set after the app is created, adding an API changes the log level
+		logrus.SetLevel(logrus.DebugLevel)
+		hook := test.NewGlobal()
+
+		_, err := engine.NewWebsocketClient(app).Send(common.WebsocketSendArgs{
+			Retry: common.RetryArgs{Retries: 2, InitialRetryTime: time.Millisecond, MaxRetryTime: time.Second, Factor: 2},
+		})
+
+		require.EqualError(t, err, "websocket channel '' not found")
+		require.Contains(t, getMessages(hook), "websocket channel '' not found. Retry in 1ms")
+	})
+}
+
+func TestWebsocketClient_Send_Api(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newConfig := func(name string, channels ...string) *asyncapi3.Config {
+		opts := []asyncapi3test.ConfigOptions{asyncapi3test.WithInfo(name, "", "")}
+		for _, name := range channels {
+			opts = append(opts, asyncapi3test.AddChannel(name, asyncapi3test.NewChannel(
+				asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+			)))
+		}
+		return asyncapi3test.NewConfig(opts...)
+	}
+	message := map[string]any{"text": "hi"}
+
+	testcases := []struct {
+		name string
+		app  *runtime.App
+		args common.WebsocketSendArgs
+		// channel is the channel of the result, "/chat" if empty
+		channel string
+		err     string
+	}{
+		{
+			name: "neither API nor channel",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"))),
+			args: common.WebsocketSendArgs{},
+		},
+		{
+			name: "channel only",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"))),
+			args: common.WebsocketSendArgs{ChannelName: "/chat"},
+		},
+		{
+			name: "API given",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"))),
+			args: common.WebsocketSendArgs{Api: "foo", ChannelName: "/chat"},
+		},
+		{
+			name: "two APIs without API and channel",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"), newConfig("bar", "/chat"))),
+			args: common.WebsocketSendArgs{},
+			err:  "ambiguous websocket API: specify the cluster",
+		},
+		{
+			name: "two channels without API and channel",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat", "/news"))),
+			args: common.WebsocketSendArgs{},
+			err:  "ambiguous channel . Specify the API",
+		},
+		{
+			name: "same channel in two APIs",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"), newConfig("bar", "/chat"))),
+			args: common.WebsocketSendArgs{ChannelName: "/chat"},
+			err:  "ambiguous channel /chat. Specify the cluster",
+		},
+		{
+			name: "channel matching an address with parameters",
+			app: runtimetest.NewApp(runtimetest.WithWebsocket(asyncapi3test.NewConfig(
+				asyncapi3test.WithInfo("foo", "", ""),
+				asyncapi3test.AddChannel("/rooms/{id}", asyncapi3test.NewChannel(
+					asyncapi3test.WithParameter("id", &asyncapi3.Parameter{}),
+					asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+				)),
+			))),
+			args:    common.WebsocketSendArgs{ChannelName: "/rooms/1"},
+			channel: "/rooms/1",
+		},
+		{
+			name: "unknown API",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"))),
+			args: common.WebsocketSendArgs{Api: "bar", ChannelName: "/chat"},
+			err:  "websocket API 'bar' not found",
+		},
+		{
+			name: "unknown channel with API",
+			app:  runtimetest.NewApp(runtimetest.WithWebsocket(newConfig("foo", "/chat"))),
+			args: common.WebsocketSendArgs{Api: "foo", ChannelName: "/x"},
+			err:  "websocket channel '/x' not found",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := tc.args
+			args.Message = message
+
+			result, err := engine.NewWebsocketClient(tc.app).Send(args)
+
+			if tc.err != "" {
+				require.EqualError(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "foo", result.Api)
+			expected := tc.channel
+			if expected == "" {
+				expected = "/chat"
+			}
+			require.Equal(t, expected, result.Channel)
 		})
 	}
 }

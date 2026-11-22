@@ -104,7 +104,7 @@ operations:
 		t.Run(tc.name, func(t *testing.T) {
 			var cfg *asyncapi3.Config
 			require.NoError(t, yaml.Unmarshal([]byte(spec(tc.protocol)), &cfg))
-			c := &dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 			require.NoError(t, cfg.Parse(c, &dynamictest.Reader{}))
 
 			app := runtime.New(&static.Config{}, &dynamictest.Reader{})

@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import ChannelView from '@/components/dashboard/asyncapi/ChannelView.vue'
 import ChannelInstanceView from '@/components/dashboard/asyncapi/ChannelInstanceView.vue'
 import WebsocketMessages from './WebsocketMessages.vue'
-import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
 import WebsocketChannelConfig from './WebsocketChannelConfig.vue'
 import { getRouteName } from '@/composables/dashboard'
 import { useChannel } from '@/composables/channel.ts'
@@ -11,7 +10,7 @@ import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
 const props = defineProps<{ service?: WebsocketService }>()
 
-const { data, channelName } = useChannel<WebsocketChannel, WebsocketService>(() => props.service, 'websocket')
+const { data, channelName } = useChannel<WebsocketChannel, WebsocketService>(() => props.service)
 const serviceRoute = computed(() => ({
   name: getRouteName('websocketService').value,
   params: { service: props.service?.name },
@@ -44,13 +43,15 @@ useBreadcrumb(() => {
       <template v-if="data.channel.instances && !data.instance">
         <channel-instance-view v-if="data.channel.instances"
           :service-name="service.name" :channel="data.channel" :instances="data.channel.instances"
-          instances-label="Paths", instance-label="Path" channel-route="websocketChannel">
+          instances-label="Paths" instance-label="Path" channel-route="websocketChannel">
         </channel-instance-view>
         <div class="card-group">
-        <websocket-messages-card :service="service" :channelName="channelName" />
+          <websocket-messages :service="service" :address-name="channelName" />
         </div>
       </template>
-      <websocket-messages v-else :service="service" :channelName="data.channel.name" :instance-name="data.instance?.name" />
+      <div v-else class="card-group">
+        <websocket-messages :service="service" :address-name="data.channel.name" :instance-name="data.instance?.name" />
+      </div>
     </template>
     <template #config>
       <websocket-channel-config :channel="data.channel" />

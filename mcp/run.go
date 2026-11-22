@@ -144,42 +144,58 @@ func (m *mokapi) init(obj *goja.Object) {
 func (m *mokapi) getApis() []ApiSummary {
 	result := []ApiSummary{}
 	for _, api := range m.app.Http.List() {
-		if api.Info.Name == "" {
+		cfg := api.Config()
+		if cfg == nil {
+			continue
+		}
+		if cfg.Info.Name == "" {
 			log.Warnf("mcp tool mokapi_execute_code: skip empty HTTTP API name")
 			continue
 		}
 		result = append(result, ApiSummary{
-			Name: api.Info.Name,
+			Name: cfg.Info.Name,
 			Type: "http",
 		})
 	}
 	for _, api := range m.app.Kafka.List() {
-		if api.Info.Name == "" {
+		cfg := api.Config()
+		if cfg == nil {
+			continue
+		}
+		if cfg.Info.Name == "" {
 			log.Warnf("mcp tool mokapi_execute_code: skip empty Kafka API name")
 			continue
 		}
 		result = append(result, ApiSummary{
-			Name: api.Info.Name,
+			Name: cfg.Info.Name,
 			Type: "kafka",
 		})
 	}
 	for _, api := range m.app.Mail.List() {
-		if api.Info.Name == "" {
+		cfg := api.Config()
+		if cfg == nil {
+			continue
+		}
+		if cfg.Info.Name == "" {
 			log.Warnf("mcp tool mokapi_execute_code: skip empty Mail API name")
 			continue
 		}
 		result = append(result, ApiSummary{
-			Name: api.Info.Name,
+			Name: cfg.Info.Name,
 			Type: "mail",
 		})
 	}
 	for _, api := range m.app.Ldap.List() {
-		if api.Info.Name == "" {
-			log.Warnf("mcp tool mokapi_execute_code: skip empty Mail API name")
+		cfg := api.Config()
+		if cfg == nil {
+			continue
+		}
+		if cfg.Info.Name == "" {
+			log.Warnf("mcp tool mokapi_execute_code: skip empty LDAP API name")
 			continue
 		}
 		result = append(result, ApiSummary{
-			Name: api.Info.Name,
+			Name: cfg.Info.Name,
 			Type: "ldap",
 		})
 	}

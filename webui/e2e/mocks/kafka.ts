@@ -3,6 +3,12 @@ import { sum, max, metrics, filter as filterMetrics, parseLabels } from './metri
 import { base64 } from 'mokapi/encoding';
 import { getInfo, matchTraits } from './helpers';
 
+function omit<T extends object, K extends keyof T>(obj: T, key: K): Omit<T, K> {
+    const copy: Partial<T> = { ...obj }
+    delete copy[key]
+    return copy as Omit<T, K>
+}
+
 export default function () {
     app.http()
         .operation('serviceKafka', (_, res) => {
@@ -47,7 +53,7 @@ export default function () {
                 res.rebuild(404)
                 return
             }
-            const { partitions, ...channel } = topic
+            const channel = omit(topic, 'partitions')
             res.data = {
                 ...channel,
                 ...getChannelInfo(topic)
@@ -68,7 +74,7 @@ export default function () {
                 res.rebuild(404)
                 return
             }
-            const { parameters, ...data } = topic
+            const data = omit(topic, 'parameters')
             res.data = {
                 ...data,
                 ...('parameters' in topic ? { parameters: topic.parameters }: {}),
@@ -227,7 +233,8 @@ const Product = {
         subcategory: {
             type: 'string'
         }
-    }
+    },
+    required: ['features']
 }
 
 const Order = {
@@ -283,7 +290,10 @@ export const configs = {
     }
 }
 
-export let clusters = [
+const shopTag = { name: 'shop', description: 'Events of the web shop' }
+const usersTag = { name: 'users', description: 'Everything about user accounts' }
+
+export const clusters = [
     {
         name: 'Kafka World',
         description: 'To ours significant why upon tomorrow her faithful many motionless.',
@@ -309,6 +319,7 @@ export let clusters = [
             {
                 name: 'mokapi.shop.products',
                 summary: 'Though literature second anywhere fortnightly am this either so me.',
+                tags: [shopTag],
                 partitions: [
                     {
                         id: 0,
@@ -356,6 +367,7 @@ export let clusters = [
             {
                 name: 'mokapi.shop.userSignedUp',
                 summary: 'This channel contains a message per each user who signs up in our application.',
+                tags: [shopTag, usersTag],
                 partitions: [
                     {
                         id: 0,
@@ -512,6 +524,13 @@ export let clusters = [
                         software: 'mokapi 1.0',
                         heartbeat: 1654721269,
                         partitions: { 'mokapi.shop.userSignedUp': [0] }
+                    },
+                    {
+                        name: 'ursula',
+                        addr: '127.0.0.1:15004',
+                        software: 'mokapi 1.0',
+                        heartbeat: 1654721269,
+                        partitions: { 'mokapi.shop.userSignedUp': [1] }
                     }
                 ],
                 leader: 'george',
@@ -566,7 +585,26 @@ export let clusters = [
     }
 ]
 
-export let events = [
+const headers = {
+    foo: { value: 'bar', binary: '' },
+    bar: { value: '', binary: 'dmFsdWUgYXMgYmluYXJ5' }
+}
+
+const actions = [
+    {
+        duration: 20,
+        tags: {
+            name: "kafka",
+            file: "examples/mokapi/kafka.js",
+            fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+            event: "kafka"
+        }
+    }
+]
+
+// event data differs per type (message, request), handlers read the fields of the type they filter for
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const events: { id: string, traits: Record<string, string>, time: string, data: any }[] = [
     {
         id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
         traits: {
@@ -735,14 +773,149 @@ export let events = [
             messageId: 'shopOrder',
         }
     },
+    // messages for the message log: more than one page, two partitions and two clients per topic
+    productMessage('a0000000-0000-4000-8000-000000000001', { partition: 0, offset: 2, clientId: 'consumer-1', key: 'GGOEWXXX0829', time: '2025-03-01T10:00:00+01:00', actions }),
+    productMessage('a0000000-0000-4000-8000-000000000002', { partition: 0, offset: 3, clientId: 'consumer-2', key: 'GGOEWXXX0830', time: '2025-03-01T10:01:00+01:00', headers }),
+    productMessage('a0000000-0000-4000-8000-000000000003', { partition: 1, offset: 2, clientId: 'consumer-1', key: 'GGOEWXXX0831', time: '2025-03-01T10:02:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000004', { partition: 2, offset: 0, clientId: 'consumer-2', key: 'GGOEWXXX0832', time: '2025-03-01T10:03:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000005', { partition: 2, offset: 1, clientId: 'consumer-1', key: 'GGOEWXXX0833', time: '2025-03-01T10:04:00+01:00' }),
+    productMessage('a0000000-0000-4000-8000-000000000006', { partition: 2, offset: 2, clientId: 'consumer-2', key: 'GGOEWXXX0834', time: '2025-03-01T10:05:00+01:00' }),
+    orderMessage('a0000000-0000-4000-8000-000000000007', { offset: 1, clientId: 'consumer-1', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c01', time: '2025-03-01T10:06:00+01:00' }),
+    orderMessage('a0000000-0000-4000-8000-000000000008', { offset: 2, clientId: 'consumer-2', orderId: 'b1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c02', time: '2025-03-01T10:07:00+01:00' }),
+    // requests of client 'consumer', one per request type (FindCoordinator is above)
+    kafkaRequest('b0000000-0000-4000-8000-000000000011', {
+        time: '2025-02-13T09:50:00+01:00',
+        header: { requestKey: 11, requestName: 'JoinGroup', version: 7 },
+        request: { groupName: 'foo', memberId: 'julie', protocolType: 'consumer', protocols: ['range', 'roundrobin'] },
+        response: { errorCode: '', errorMessage: '', generationId: 3, protocolName: 'range', memberId: 'julie', leaderId: 'julie', members: ['julie', 'hermann'] }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000014', {
+        time: '2025-02-13T09:51:00+01:00',
+        header: { requestKey: 14, requestName: 'SyncGroup', version: 5 },
+        request: {
+            groupName: 'foo', generationId: 3, memberId: 'julie', protocolType: 'consumer', protocolName: 'range',
+            groupAssignments: {
+                julie: { version: 1, topics: { 'mokapi.shop.products': [0, 1] } },
+                hermann: { version: 1, topics: { 'mokapi.shop.products': [2] } }
+            }
+        },
+        response: { errorCode: '', errorMessage: '', protocolType: 'consumer', protocolName: 'range', assignment: { version: 1, topics: { 'mokapi.shop.products': [0, 1] } } }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000002', {
+        time: '2025-02-13T09:52:00+01:00',
+        header: { requestKey: 2, requestName: 'ListOffsets', version: 7 },
+        request: { topics: { 'mokapi.shop.products': [{ partition: 0, timestamp: -2 }, { partition: 1, timestamp: -1 }] } },
+        response: {
+            topics: {
+                'mokapi.shop.products': [
+                    { partition: 0, timestamp: -1, offset: 0, snapshot: { startOffset: 0, endOffset: 4 } },
+                    { partition: 1, timestamp: -1, offset: 3, snapshot: { startOffset: 0, endOffset: 3 } }
+                ]
+            }
+        }
+    }),
+    kafkaRequest('b0000000-0000-4000-8000-000000000022', {
+        time: '2025-02-13T09:53:00+01:00',
+        header: { requestKey: 22, requestName: 'InitProducerId', version: 4 },
+        request: { transactionalId: 'tx-orders', transactionTimeoutMs: 30000, producerId: -1, producerEpoch: -1, enable2PC: false },
+        response: { errorCode: 'COORDINATOR_NOT_AVAILABLE', errorMessage: 'The coordinator is not available.', producerId: -1, producerEpoch: -1, ongoingTxnProducerId: -1, ongoingTxnProducerEpoch: -1 }
+    }),
+    // a client that has messages too, for the client view with both logs
+    kafkaRequest('b0000000-0000-4000-8000-000000000100', {
+        clientId: 'consumer-1',
+        time: '2025-03-01T10:10:00+01:00',
+        header: { requestKey: 10, requestName: 'FindCoordinator', version: 2 },
+        request: { key: 'foo', keyType: 0 },
+        response: { errorCode: '', errorMessage: '', host: 'localhost', port: 9092 }
+    }),
 ]
 
-function getChannelInfo(c: any) {
+function kafkaRequest(id: string, r: { clientId?: string, time: string, header: object, request: object, response: object }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'request',
+            clientId: r.clientId ?? 'consumer'
+        },
+        time: r.time,
+        data: {
+            api: 'Kafka World',
+            header: r.header,
+            request: r.request,
+            response: r.response
+        }
+    }
+}
+
+function productMessage(id: string, m: { partition: number, offset: number, clientId: string, key: string, time: string, headers?: object, actions?: object[] }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'message',
+            topic: 'mokapi.shop.products',
+            partition: `${m.partition}`,
+            clientId: m.clientId
+        },
+        time: m.time,
+        data: {
+            topic: 'mokapi.shop.products',
+            offset: m.offset,
+            key: { value: m.key },
+            message: {
+                value: JSON.stringify({
+                    id: m.key,
+                    name: `Waze Tee ${m.key}`,
+                    price: '18.99',
+                    category: 'apparel'
+                })
+            },
+            partition: m.partition,
+            messageId: 'shopOrder',
+            clientId: m.clientId,
+            ...(m.headers ? { headers: m.headers } : {}),
+            ...(m.actions ? { actions: m.actions } : {})
+        }
+    }
+}
+
+function orderMessage(id: string, m: { offset: number, clientId: string, orderId: string, time: string }) {
+    return {
+        id,
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'message',
+            topic: 'orders.{region}.{eventType}',
+            instance: 'orders.us.created',
+            partition: '0',
+            clientId: m.clientId
+        },
+        time: m.time,
+        data: {
+            topic: 'orders.us.created',
+            offset: m.offset,
+            key: { value: m.orderId },
+            message: {
+                value: JSON.stringify({ orderId: m.orderId, amount: 99.5, timestamp: '2026-10-17T10:15:30' })
+            },
+            partition: 0,
+            messageId: 'shopOrder',
+            clientId: m.clientId
+        }
+    }
+}
+
+function getChannelInfo(c: (typeof clusters)[number]["topics"][number]) {
     return {
         name: c.name,
         ...c.summary === undefined ? {} : { summary: c.summary },
+        ...('tags' in c ? { tags: c.tags } : {}),
         ...('parameters' in c ? { parameters: c.parameters } : {}),
-        ...('instances' in c ? { instances: c.instances?.map((i: any) => (
+        ...('instances' in c ? { instances: c.instances?.map((i) => (
             {
                 ...i,
                 metrics: {

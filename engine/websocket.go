@@ -3,11 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"mokapi/engine/common"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -74,7 +72,7 @@ func NewWebsocketClient(app *runtime.App) *WebsocketClient {
 }
 
 func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.WebsocketSendResult, error) {
-	w, cfg, err := c.tryGet(args.Api, args.ChannelName, args.Retry)
+	w, api, cfg, err := c.tryGet(args.Api, args.ChannelName, args.Retry)
 	if err != nil {
 		return nil, err
 	}
@@ -97,13 +95,13 @@ func (c *WebsocketClient) Send(args common.WebsocketSendArgs) (*common.Websocket
 		return nil, err
 	}
 
-	err = ch.Broadcast(msg)
+	err = ch.BroadcastFromScript(msg, args.ScriptFile)
 	if err != nil {
 		return nil, err
 	}
 
 	return &common.WebsocketSendResult{
-		Api:     w.Info.Name,
+		Api:     api,
 		Channel: ch.Name,
 		Message: msg,
 	}, nil
@@ -135,11 +133,11 @@ func websocketMessage(selected *asyncapi3.Message, args common.WebsocketSendArgs
 	return msg, nil
 }
 
-func (c *WebsocketClient) tryGet(api string, channelName string, retry common.RetryArgs) (w *runtime.WebsocketInfo, cfg *asyncapi3.Channel, err error) {
+func (c *WebsocketClient) tryGet(api string, channelName string, retry common.RetryArgs) (w *runtime.WebsocketInfo, name string, cfg *asyncapi3.Channel, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
-		w, cfg, err = c.get(api, channelName)
+		w, name, cfg, err = c.get(api, channelName)
 		ambiguous := &ambiguousError{}
 		if err == nil || errors.As(err, &ambiguous) {
 			return
@@ -154,7 +152,9 @@ func (c *WebsocketClient) tryGet(api string, channelName string, retry common.Re
 	}
 }
 
-func (c *WebsocketClient) get(api string, channelName string) (k *runtime.WebsocketInfo, cfg *asyncapi3.Channel, err error) {
+// get returns the API, its name and the channel config. The name is taken from the same config
+// snapshot that was used to find the channel, so a config removed in the meantime is "not found".
+func (c *WebsocketClient) get(api string, channelName string) (k *runtime.WebsocketInfo, name string, cfg *asyncapi3.Channel, err error) {
 	if len(api) == 0 {
 		if len(channelName) == 0 {
 			apis := c.app.Websocket.List()
@@ -162,54 +162,64 @@ func (c *WebsocketClient) get(api string, channelName string) (k *runtime.Websoc
 				err = newAmbiguousError("ambiguous websocket API: specify the cluster")
 				return
 			}
-			channels := slices.Collect(maps.Values(apis[0].Store.Channels))
-			if len(channels) > 1 {
-				err = newAmbiguousError("ambiguous channel %v. Specify the API", channelName)
-				return
-			}
-			return apis[0], channels[0].Config, nil
-		}
-
-		var topics []*asyncapi3.Channel
-		for _, v := range c.app.Websocket.List() {
-			if t, ok := v.Channel(channelName); ok {
-				k = v
-				if len(api) == 0 {
-					api = v.Info.Name
+			if len(apis) == 1 {
+				channels := apis[0].Store.Channels()
+				if len(channels) > 1 {
+					err = newAmbiguousError("ambiguous channel %v. Specify the API", channelName)
+					return
 				}
-				topics = append(topics, t.Config)
-			} else if channelName != "" {
-				for _, ref := range v.Config.Channels {
-					if ref.Value == nil {
-						continue
-					}
-					if err = ref.Value.IsNameValid(channelName); err == nil {
-						k = v
-						topics = append(topics, ref.Value)
-					}
+				if snapshot := apis[0].Config(); snapshot != nil && len(channels) == 1 {
+					return apis[0], snapshot.Info.Name, channels[0].Config(), nil
 				}
-			}
-		}
-		if len(topics) > 1 {
-			err = newAmbiguousError("ambiguous channel %v. Specify the cluster", channelName)
-			return
-		} else if len(topics) == 1 {
-			cfg = topics[0]
-		}
-	} else {
-		if k = c.app.Websocket.Get(api); k != nil {
-			ch, ok := k.Store.Channel(channelName)
-			if ok {
-				cfg = ch.Config
 			}
 		} else {
-			return nil, nil, fmt.Errorf("websocket API '%v' not found", api)
+			var channels []*asyncapi3.Channel
+			for _, v := range c.app.Websocket.List() {
+				snapshot := v.Config()
+				if snapshot == nil {
+					continue
+				}
+				if t, ok := v.Channel(channelName); ok {
+					k = v
+					name = snapshot.Info.Name
+					channels = append(channels, t.Config())
+				} else {
+					for _, ref := range snapshot.Channels {
+						if ref.Value == nil {
+							continue
+						}
+						if ref.Value.IsNameValid(channelName) == nil {
+							k = v
+							name = snapshot.Info.Name
+							channels = append(channels, ref.Value)
+						}
+					}
+				}
+			}
+			if len(channels) > 1 {
+				err = newAmbiguousError("ambiguous channel %v. Specify the cluster", channelName)
+				return
+			} else if len(channels) == 1 {
+				cfg = channels[0]
+			}
+		}
+	} else {
+		k = c.app.Websocket.Get(api)
+		if k == nil {
+			return nil, "", nil, fmt.Errorf("websocket API '%v' not found", api)
+		}
+		snapshot := k.Config()
+		if snapshot == nil {
+			return nil, "", nil, fmt.Errorf("websocket API '%v' not found", api)
+		}
+		name = snapshot.Info.Name
+		if ch, ok := k.Store.Channel(channelName); ok {
+			cfg = ch.Config()
 		}
 	}
 
 	if cfg == nil {
-		err = fmt.Errorf("websocket channel '%v' not found", channelName)
-		return
+		return nil, "", nil, fmt.Errorf("websocket channel '%v' not found", channelName)
 	}
 
 	return

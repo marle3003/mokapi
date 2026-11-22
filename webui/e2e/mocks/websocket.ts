@@ -17,7 +17,10 @@ const clients = [
   { id: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e', address: '127.0.0.1:53200', serverAddress: 'localhost:8080' },
 ]
 
-export let services = [
+const chatTag = { name: 'chat', description: 'Chat messages between users' }
+const broadcastTag = { name: 'broadcast', description: 'Messages for every connected client' }
+
+export const services = [
   {
     name: 'WebSocket Chat API',
     description:
@@ -44,19 +47,8 @@ export let services = [
     ],
     channels: [
       {
-        name: '/chat',
-        summary: 'Single WS endpoint carrying all chat messages',
-        messages: {
-          ChatMessage: {
-            name: 'ChatMessage',
-            title: 'Chat Message',
-            payload: { schema: ChatMessage },
-            contentType: 'application/json',
-          }
-        },
-      },
-      {
         name: '/chats/{chatId}',
+        tags: [chatTag],
         messages: {
           ChatMessage: {
             name: 'ChatMessage',
@@ -78,8 +70,27 @@ export let services = [
             parameters: {
               chatId: '1234'
             },
+          },
+          {
+            name: '/chats/5678',
+            parameters: {
+              chatId: '5678'
+            },
           }
         ],
+      },
+      {
+        name: '/chat',
+        tags: [chatTag, broadcastTag],
+        summary: 'Single WS endpoint carrying all chat messages',
+        messages: {
+          ChatMessage: {
+            name: 'ChatMessage',
+            title: 'Chat Message',
+            payload: { schema: ChatMessage },
+            contentType: 'application/json',
+          }
+        },
       },
     ],
     metrics: metrics.filter((x) => x.name.includes('websocket')),
@@ -97,15 +108,16 @@ export default async function () {
           version: services[0].version,
           contact: services[0].contact,
           servers: services[0].servers,
-          channels: services[0].channels.map((x: any) => {
+          channels: services[0].channels.map((x) => {
             return {
               name: x.name,
               ...('title' in x ? { title: x.title } : {}),
               ...('summary' in x ? { summary: x.summary } : {}),
               ...('description' in x ? { description: x.description } : {}),
+              ...('tags' in x ? { tags: x.tags } : {}),
               messages: x.messages,
               ...('parameters' in x ? { parameters: x.parameters} : {}), 
-              ...('instances' in x ? { instances: x.instances.map((i: any) => (
+              ...('instances' in x ? { instances: x.instances.map((i) => (
                 {
                   ...i,
                   metrics: {
@@ -126,7 +138,91 @@ export default async function () {
   });
 }
 
-export let events = [
+const handlerActions = [
+  {
+    duration: 20,
+    tags: {
+      name: 'websocket',
+      file: 'examples/mokapi/websocket.js',
+      fileKey: 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8',
+      event: 'websocket',
+    },
+  },
+]
+
+// cron.js of the config mock (jobs.ts), so the Script link of a message resolves
+const scriptConfigId = '6f5cab53-9f51-4bbe-bb32-fe41ee71d542'
+
+interface MessageSeed {
+  id: string
+  time: string
+  channel: string
+  instance?: string
+  client: (typeof clients)[number]
+  direction: 'send' | 'receive'
+  username: string
+  text: string
+  withActions?: boolean
+  script?: string
+}
+
+// send: the client sent the message to the server, receive: the server sent it to the client
+function messageEvent(seed: MessageSeed) {
+  return {
+    id: seed.id,
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: seed.channel,
+      ...(seed.instance ? { instance: seed.instance } : {}),
+      type: 'message',
+      clientId: seed.client.id,
+    },
+    time: seed.time,
+    data: {
+      channel: seed.instance ?? seed.channel,
+      message: {
+        value: JSON.stringify({ userId: seed.username.toLowerCase(), username: seed.username, text: seed.text, timestamp: seed.time }),
+      },
+      messageId: 'ChatMessage',
+      api: 'WebSocket Chat API',
+      direction: seed.direction,
+      client: { ...seed.client, server: seed.client.serverAddress },
+      ...(seed.withActions ? { actions: handlerActions } : {}),
+      ...(seed.script ? { script: seed.script } : {}),
+    },
+  }
+}
+
+function connectionEvent(seed: { id: string, time: string, type: 'connect' | 'close', channel: string, client: (typeof clients)[number], reason?: string, closedBy?: string, withActions?: boolean }) {
+  return {
+    id: seed.id,
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: seed.channel,
+      type: 'connection',
+      clientId: seed.client.id,
+    },
+    time: seed.time,
+    data: {
+      type: seed.type,
+      channel: seed.channel,
+      ...(seed.reason ? { reason: seed.reason, closedBy: seed.closedBy } : {}),
+      client: {
+        id: seed.client.id,
+        query: {},
+        header: {},
+        address: seed.client.address,
+        server: seed.client.serverAddress,
+      },
+      api: 'WebSocket Chat API',
+      ...(seed.withActions ? { actions: handlerActions } : {}),
+    },
+  }
+}
+
+export const events = [
   {
     id: 'a1b2c3d4-0001-4d2d-a1b4-f022aeddeaf8',
     traits: {
@@ -243,8 +339,7 @@ export let events = [
     traits: {
       namespace: 'websocket',
       name: 'WebSocket Chat API',
-      channel: '/chats/{chatId}',
-      instance: '/chats/1234',
+      channel: '/chats/general',
       type: 'connection',
       clientId: clients[0].id,
     },
@@ -253,7 +348,7 @@ export let events = [
       type: 'connect',
       channel: '/chats/general',
       client: {
-        id: clients[1].id,
+        id: clients[0].id,
         query: {},
         header: {},
         address: clients[0].address,
@@ -262,4 +357,16 @@ export let events = [
       api: 'WebSocket Chat API',
     },
   },
+
+  // 12 messages in total, 6 per client: /chat 5, /chats/1234 4, /chats/5678 3 (metrics.ts has the same totals)
+  messageEvent({ id: 'a1b2c3d4-0005-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:00.000000+01:00', channel: '/chat', client: clients[0], direction: 'receive', username: 'Server', text: 'Welcome to the chat', withActions: true }),
+  messageEvent({ id: 'a1b2c3d4-0006-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:10.000000+01:00', channel: '/chat', client: clients[1], direction: 'send', username: 'Bob', text: 'Anyone here?' }),
+  messageEvent({ id: 'a1b2c3d4-0007-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:20.000000+01:00', channel: '/chats/{chatId}', instance: '/chats/5678', client: clients[0], direction: 'send', username: 'Alice', text: 'Lunch at noon?' }),
+  messageEvent({ id: 'a1b2c3d4-0008-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:30.000000+01:00', channel: '/chats/{chatId}', instance: '/chats/5678', client: clients[1], direction: 'receive', username: 'Server', text: 'Alice joined the room', withActions: true }),
+  messageEvent({ id: 'a1b2c3d4-0009-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:40.000000+01:00', channel: '/chats/{chatId}', instance: '/chats/1234', client: clients[0], direction: 'receive', username: 'Server', text: 'Scheduled announcement', script: scriptConfigId }),
+  messageEvent({ id: 'a1b2c3d4-0010-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:51:50.000000+01:00', channel: '/chats/{chatId}', instance: '/chats/5678', client: clients[0], direction: 'send', username: 'Alice', text: 'See you there' }),
+  messageEvent({ id: 'a1b2c3d4-0011-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:52:00.000000+01:00', channel: '/chat', client: clients[0], direction: 'send', username: 'Alice', text: 'Good night' }),
+  messageEvent({ id: 'a1b2c3d4-0012-4d2d-a1b4-f022aeddeaf8', time: '2026-02-13T09:52:10.000000+01:00', channel: '/chats/{chatId}', instance: '/chats/1234', client: clients[1], direction: 'send', username: 'Bob', text: 'Bye' }),
+  connectionEvent({ id: '9ab700fa-0002-4c32-9c53-8cd3926dacc4', time: '2026-02-13T09:52:20.000000+01:00', type: 'connect', channel: '/chats/1234', client: clients[1] }),
+  connectionEvent({ id: '9ab700fa-0003-4c32-9c53-8cd3926dacc4', time: '2026-02-13T09:52:30.000000+01:00', type: 'close', channel: '/chats/1234', client: clients[1], reason: 'connection closed', closedBy: 'client', withActions: true }),
 ];

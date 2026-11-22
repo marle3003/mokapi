@@ -49,14 +49,15 @@ type MailboxFolder struct {
 
 func (m *mokapi) getMailApi(name string) any {
 	for _, api := range m.app.Mail.List() {
-		if api.Name == name {
+		cfg := api.Config()
+		if cfg != nil && cfg.Info.Name == name {
 			result := &MailAPI{
 				Name:        name,
-				Description: api.Info.Description,
+				Description: cfg.Info.Description,
 				Type:        "mail",
 				info:        api,
 			}
-			for _, server := range api.Servers {
+			for _, server := range cfg.Servers {
 				result.Servers = append(result.Servers, MailServer{
 					Protocol:    server.Protocol,
 					Host:        server.Host,
@@ -69,41 +70,57 @@ func (m *mokapi) getMailApi(name string) any {
 	return nil
 }
 
-func (m *MailAPI) GetMailboxes() []MailboxSummary {
-	result := []MailboxSummary{}
-	for _, mb := range m.info.Store.Mailboxes {
-		result = append(result, MailboxSummary{
-			Name:        mb.Name,
-			Description: mb.Description,
-		})
-	}
-	return result
+// notFound is the error for an API whose last file was removed after the object was created.
+func (m *MailAPI) notFound() error {
+	return fmt.Errorf("mail API '%s' not found", m.Name)
 }
 
-func (m *MailAPI) GetMailbox(name string) *Mailbox {
-	if m.info.Store.Mailboxes == nil {
-		return nil
+func (m *MailAPI) GetMailboxes() ([]MailboxSummary, error) {
+	if m.info.Config() == nil {
+		return nil, m.notFound()
 	}
-	mb, ok := m.info.Store.Mailboxes[name]
+
+	result := []MailboxSummary{}
+	for _, mb := range m.info.Mailboxes() {
+		result = append(result, MailboxSummary{
+			Name:        mb.Name,
+			Description: mb.Description(),
+		})
+	}
+	return result, nil
+}
+
+func (m *MailAPI) GetMailbox(name string) (*Mailbox, error) {
+	if m.info.Config() == nil {
+		return nil, m.notFound()
+	}
+
+	mb, ok := m.info.Mailbox(name)
 	if !ok {
-		return nil
+		return nil, nil
 	}
+	username, password := mb.Credentials()
 	result := &Mailbox{
 		Name:        mb.Name,
-		Description: mb.Description,
-		Username:    mb.Username,
-		Password:    mb.Password,
+		Description: mb.Description(),
+		Username:    username,
+		Password:    password,
 		Folders:     map[string]*MailboxFolder{},
 		info:        m.info,
 	}
-	for _, f := range mb.Folders {
-		result.Folders[f.Name] = getMailboxFolder(f)
-	}
-	return result
+	mb.ReadFolders(func(folders map[string]*mail.Folder) {
+		for _, f := range folders {
+			result.Folders[f.Name] = getMailboxFolder(f)
+		}
+	})
+	return result, nil
 }
 
 func (m *MailAPI) SendMail(to string, msg *smtp.Message) {
-	if mb, ok := m.info.Store.Mailboxes[to]; !ok {
+	if m.info.Config() == nil {
+		panic(m.notFound())
+	}
+	if mb, ok := m.info.Mailbox(to); !ok {
 		panic(fmt.Errorf("mailbox '%s' not found", to))
 	} else {
 		mb.Append(msg)

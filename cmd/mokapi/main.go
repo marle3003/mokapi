@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"mokapi/pkg/cmd/mokapi"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ func main() {
 	cmd := mokapi.NewCmdMokapi()
 	err := cmd.ExecuteWithContext(ctx)
 	if err != nil {
-		_, _ = os.Stderr.Write([]byte(err.Error()))
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

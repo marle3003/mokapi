@@ -27,7 +27,7 @@ type Writer interface {
 
 type Buffer interface {
 	io.Writer
-	WriteTo(io.Writer) (int, error)
+	WriteTo(io.Writer) (int64, error)
 	WriteAt([]byte, int)
 	WriteSizeAt(size int, offset int)
 	Scan(begin, end int, f func([]byte) bool)
@@ -134,14 +134,14 @@ func (pb *pageBuffer) Scan(begin, end int, f func([]byte) bool) {
 	}
 }
 
-func (pb *pageBuffer) WriteTo(w io.Writer) (written int, err error) {
+func (pb *pageBuffer) WriteTo(w io.Writer) (written int64, err error) {
 	pb.Scan(pb.cursor, pb.length, func(b []byte) bool {
 		var n int
 		n, err = w.Write(b)
-		written += n
+		written += int64(n)
 		return err == nil
 	})
-	pb.cursor += written
+	pb.cursor += int(written)
 	return
 }
 

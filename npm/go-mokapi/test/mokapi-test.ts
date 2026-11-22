@@ -97,7 +97,10 @@ every("12m", () => {}, { tags: { foo: "bar" } });
 every("12m", () => {}, { times: "" });
 every("12m", () => {}, { times: 3 });
 // @ts-expect-error
-every("12m", () => {}, { runFirstTimeImmediately: 1 });
+every("12m", () => {}, { skipImmediateFirstRun: 1 });
+every("12m", () => {}, { skipImmediateFirstRun: true });
+every("12m", () => {}, { skipImmediateFirstRun: false });
+// @ts-expect-error
 every("12m", () => {}, { runFirstTimeImmediately: true });
 every("", async () => {});
 
@@ -112,7 +115,10 @@ cron("12m", () => {}, { tags: { foo: "bar" } });
 cron("12m", () => {}, { times: "" });
 cron("12m", () => {}, { times: 3 });
 // @ts-expect-error
-cron("12m", () => {}, { runFirstTimeImmediately: 1 });
+cron("12m", () => {}, { skipImmediateFirstRun: 1 });
+cron("12m", () => {}, { skipImmediateFirstRun: true });
+cron("12m", () => {}, { skipImmediateFirstRun: false });
+// @ts-expect-error
 cron("12m", () => {}, { runFirstTimeImmediately: true });
 cron("", async () => {});
 

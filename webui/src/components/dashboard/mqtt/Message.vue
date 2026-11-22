@@ -1,131 +1,15 @@
 <script setup lang="ts">
-import { useRoute } from "@/router";
-import { computed, watchEffect, ref, type Ref, watch } from "vue";
+import { useRoute } from '@/router'
 import SourceView from '../SourceView.vue'
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { getRouteName, useDashboard } from "@/composables/dashboard";
 import Actions from '../Actions.vue'
+import MessageSummary from './message/MessageSummary.vue'
+import MessageDetails from './message/MessageDetails.vue'
+import { useMqttMessageEvent } from '@/composables/mqtt-message-event'
 
-const route = useRoute();
-const { dashboard, getMode } = useDashboard()
-const { formatLanguage } = usePrettyLanguage()
-const { format } = usePrettyDates()
-
-const event = ref<ServiceEvent | null>(null);
-const isLoading = ref<boolean>(true)
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res = db.getEvent(route.params.id as string);
-
-    const stop = watch([res.event, res.isLoading], ([evt, loading]) => { event.value = evt; isLoading.value = loading }, { immediate: true })
-
-    onCleanup(() => {
-        stop()
-        res.close()
-    });
-  },
-  { immediate: true }
-);
-
-const topic = ref<MqttTopic | undefined>()
-const data = computed(() => {
-  if (!event.value) {
-    return undefined
-  }
-  return <MqttMessageData>event.value?.data
-})
-watchEffect(() => {
-  if (!event.value) {
-    return
-  }
-  const result = dashboard.value.getService(event.value?.traits.name!, 'mqtt')
-  const service = result.service as Ref<MqttService | null>
-  if (!service.value) {
-    return null
-  }
-  for (let t of service.value?.topics){
-    if (t.name == event.value.traits.topic) {
-      topic.value = t
-    }
-  }
-})
-const message = computed(() => {
-  if (!data.value || !topic.value) {
-    return undefined
-  }
-
-  const source: Source = {}
-  const messageConfig = getMessageConfig()
-    if (!messageConfig) {
-        console.error('resolve message failed')
-        return
-    }
-  const [ contentType, isAvro ] = getContentType(messageConfig)
-  const keyType = messageConfig.key?.schema.type
-
-  if (data.value.message.value) {
-      source.preview = {
-              content: formatLanguage(data.value.message.value, isAvro ? 'application/json' : messageConfig.contentType),
-              contentType: contentType,
-              contentTypeTitle: messageConfig.contentType,
-              description: isAvro ? 'Avro content in JSON format' : undefined
-          }
-  }
-
-  if (data.value.message.binary) {
-      switch (messageConfig.contentType) {
-              case 'avro/binary':
-              case 'application/avro':
-              case 'application/octet-stream':
-                  source.preview!.description = 'Avro content in JSON format'
-                  source.binary = { content: atob(data.value.message.binary), contentType: messageConfig.contentType}
-      }
-  }
-  return {source, contentType, contentTypeTitle: messageConfig.contentType, keyType}
-})
-function getContentType(msg: MqttMessage): [string, boolean] {
-    if (msg.payload.format?.includes('application/vnd.apache.avro')) {
-        switch (msg.contentType) {
-            case 'avro/binary':
-            case 'application/avro':
-            case 'application/octet-stream':
-                return [ 'application/json', true ]
-        }
-    }
-
-    return [ msg.contentType, false ]
-}
-function getMessageConfig(): MqttMessage | undefined {
-  if (!topic.value || !data.value) {
-    return undefined
-  }
-
-  const messageId = data.value.messageId
-
-  if (!messageId) {
-      console.error('missing messageId in MQTT event log')
-      return
-  }
-
-  for (const id in topic.value.messages){
-      if (id === messageId) {
-          return topic.value.messages[id]
-      }
-  }
-  return undefined
-}
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
-}
-const hasActions = computed(() => {
-    if (!data.value) {
-        return false
-    }
-    return data.value.actions?.length > 0
-})
+const route = useRoute()
+const { event, data, isLoading, message, hasActions } = useMqttMessageEvent(() => route.params.id as string)
 </script>
 
 <template>
@@ -133,53 +17,8 @@ const hasActions = computed(() => {
     <div class="card-group">
       <section class="card" aria-label="Meta">
         <div class="card-body">
-          <div class="row">
-            <div class="col">
-              <p id="message-topic" class="label">Topic</p>
-              <p>
-                <router-link :to="{ name: getRouteName('mqttTopic').value, params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
-                  {{ data.topic  }}
-                </router-link>
-              </p>
-            </div>
-            <div class="col text-end">
-              <span class="badge bg-secondary" aria-label="Service Type">MQTT</span>
-            </div>
-          </div>
-          <div class="row mb-2">
-            <div class="col-2">
-              <p id="message-retain" class="label">Retain</p>
-              <p aria-labelledby="message-retain">{{ data.retain }}</p>
-            </div>
-            <div class="col">
-              <p id="message-time" class="label">Time</p>
-              <p aria-labelledby="message-time">{{ format(event.time) }}</p>
-            </div>
-          </div>
-          <div class="row mb-2">
-            <div class="col-2">
-              <p id="clientId" class="label">Client</p>
-              <p aria-labelledby="clientId">
-                <router-link v-if="data.script" :to="{
-                    name: getRouteName('config').value,
-                    params: { id: data.script },
-                  }" aria-labelledby="group">
-                  {{ data.clientId }}
-                </router-link>
-                <router-link v-else-if="data.clientId" :to="{
-                    name: getRouteName('mqttClient').value,
-                    params: {service: event.traits.name, clientId: data.clientId},
-                  }" aria-labelledby="group">
-                  {{ data.clientId }}
-                </router-link>
-                <span v-else>-</span>
-              </p>
-            </div>
-            <div class="col-2">
-              <p id="message-contenttype" class="label">Content Type</p>
-              <p aria-labelledby="message-contenttype">{{ message?.contentTypeTitle ?? '-' }}</p>
-            </div>
-          </div>
+          <message-summary :event="event" :data="data" />
+          <message-details :event="event" :data="data" :content-type="message?.contentTypeTitle" />
         </div>
       </section>
     </div>
@@ -197,13 +36,14 @@ const hasActions = computed(() => {
       <section class="card" aria-labelledby="value-title">
         <div class="card-body">
           <h2 id="value-title" class="card-title text-center">Value</h2>
-            <source-view v-if="message" :source="message.source" :content-type="message.contentType" :content-type-title="message.contentTypeTitle" />
+          <source-view v-if="message" :source="message.source" :content-type="message.contentType"
+            :content-type-title="message.contentTypeTitle" />
         </div>
       </section>
     </div>
   </div>
   <loading v-if="!event && isLoading"></loading>
-  <div v-if="!event && !isLoading">
-    <message message="MQTT Message not found"></message>
+  <div v-else-if="!event && !isLoading">
+      <Message message="MQTT Message not found"></Message>
   </div>
 </template>

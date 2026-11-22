@@ -3,12 +3,13 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter } from 'vue-router'
 import { onUnmounted } from 'vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import Loading from '@/components/Loading.vue'
 import { useMarkdown } from '@/composables/markdown'
 
 const { format } = usePrettyDates()
 const router = useRouter()
 const { dashboard } = useDashboard();
-const { services, close } = dashboard.value.getServices('kafka');
+const { services, isLoading, close } = dashboard.value.getServices('kafka');
 
 function lastMessage(service: Service){
     const n = service.metrics.message_timestamp
@@ -54,7 +55,7 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                    <tr v-for="service in services" :key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
                         <td>
                             <router-link @click.stop class="row-link" :to="{ name: getRouteName('kafkaService').value, params: {service: service.name} }">
                                 {{ service.name }}
@@ -66,6 +67,7 @@ onUnmounted(() => {
                     </tr>
                 </tbody>
             </table>
+            <loading v-if="isLoading && services.length === 0" />
         </div>
     </section>
 </template>

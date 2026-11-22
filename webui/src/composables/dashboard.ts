@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import * as live from "./dashboard.backend";
 import * as demo from "./dashboard.demo";
 
-type Mode = 'live' | 'demo'
+export type Mode = 'live' | 'demo'
 
 const mode = ref<Mode>('live')
 
@@ -28,7 +28,7 @@ export function useDashboard() {
 }
 
 export const getRouteName = (name: string) => {
-    return computed<string>(x => {
+    return computed<string>(() => {
         return mode.value === 'live' ? name : name + '-demo'
     })
     

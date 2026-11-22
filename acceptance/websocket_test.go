@@ -3,9 +3,13 @@ package acceptance
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"mokapi/api"
 	"mokapi/config/static"
 	"mokapi/try"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -345,4 +349,239 @@ func (suite *WebsocketSuite) TestSendUnknownMessageIdFails() {
 	suite.postSimulation("/sim/websocket", `{"messageId":"ackk"}`,
 		try.HasStatusCode(http.StatusUnprocessableEntity),
 		try.BodyContains("message 'ackk' not found in channel '/dm'"))
+}
+
+// messageEvents returns the data of all message events of the websocket namespace.
+func (suite *WebsocketSuite) messageEvents() []map[string]any {
+	var page api.EventPage
+	suite.getJSON("/api/events?traits[namespace]=websocket&traits[type]=message&size=1000", &page)
+
+	var all []map[string]any
+	for _, e := range page.Items {
+		all = append(all, e.Data.(map[string]any))
+	}
+	return all
+}
+
+// configId returns the id the dashboard uses to link a config file, by the end of its url.
+func (suite *WebsocketSuite) configId(urlSuffix string) string {
+	var configs []struct {
+		Id  string `json:"id"`
+		Url string `json:"url"`
+	}
+	suite.getJSON("/api/configs", &configs)
+	for _, c := range configs {
+		if strings.HasSuffix(c.Url, urlSuffix) {
+			return c.Id
+		}
+	}
+	suite.T().Fatalf("config %v not found", urlSuffix)
+	return ""
+}
+
+func (suite *WebsocketSuite) getJSON(path string, v any) {
+	res, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d%s", suite.cfg.Api.Port, path))
+	require.NoError(suite.T(), err)
+	defer res.Body.Close()
+	require.NoError(suite.T(), json.NewDecoder(res.Body).Decode(v))
+}
+
+func messageContaining(events []map[string]any, text string) []map[string]any {
+	var found []map[string]any
+	for _, e := range events {
+		if strings.Contains(e["message"].(map[string]any)["value"].(string), text) {
+			found = append(found, e)
+		}
+	}
+	return found
+}
+
+// TestMessageSentByScriptLogsScriptFile verifies that the message event of a message sent with
+// mokapi.websocket().send() names the script that sent it.
+func (suite *WebsocketSuite) TestMessageSentByScriptLogsScriptFile() {
+	time.Sleep(2 * time.Second)
+
+	suite.simulateSend("/sim/websocket", `{"messageId":"ack","message":{"status":"error","error":"logged-by-script"}}`,
+		try.HasStatusCode(http.StatusNoContent))
+
+	events := messageContaining(suite.messageEvents(), "logged-by-script")
+
+	require.Len(suite.T(), events, 1)
+	require.Equal(suite.T(), "receive", events[0]["direction"])
+	require.Equal(suite.T(), suite.configId("/sim.ts"), events[0]["script"])
+}
+
+// TestMessageSentByHandlerHasNoScriptFile verifies that a reply sent by an event handler
+// is logged without a script.
+func (suite *WebsocketSuite) TestMessageSentByHandlerHasNoScriptFile() {
+	time.Sleep(2 * time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	c, _, err := websocket.Dial(ctx, "http://localhost:22801/dm", nil)
+	require.NoError(suite.T(), err)
+	defer c.CloseNow()
+
+	require.NoError(suite.T(), wsjson.Write(ctx, c, map[string]string{"to": "bob", "text": "reply-by-handler"}))
+	var reply map[string]any
+	require.NoError(suite.T(), wsjson.Read(ctx, c, &reply))
+
+	events := suite.messageEvents()
+	sent := messageContaining(events, "reply-by-handler")
+	require.Len(suite.T(), sent, 1)
+	clientId := sent[0]["client"].(map[string]any)["id"]
+
+	var received []map[string]any
+	for _, e := range events {
+		if e["direction"] == "receive" && e["client"].(map[string]any)["id"] == clientId {
+			received = append(received, e)
+		}
+	}
+
+	require.Len(suite.T(), received, 1)
+	require.NotContains(suite.T(), received[0], "script")
+}
+
+// WebsocketReloadSuite checks what a mock developer sees when the AsyncAPI file is edited while
+// Mokapi runs.
+type WebsocketReloadSuite struct {
+	BaseSuite
+	dir  string
+	port int
+}
+
+const (
+	reloadChatChannel = `
+  chat:
+    address: /chat
+`
+	reloadChatChannelWithRequiredToken = `
+  chat:
+    address: /chat
+    bindings:
+      ws:
+        query:
+          type: object
+          properties:
+            token:
+              type: string
+          required: [token]
+`
+	reloadRoomsChannel = `
+  rooms:
+    address: /rooms/{roomId}
+    parameters:
+      roomId: {}
+`
+)
+
+func (suite *WebsocketReloadSuite) SetupSuite() {
+	suite.port = try.GetFreePort()
+	suite.dir = suite.T().TempDir()
+	suite.writeSpec(reloadChatChannel + reloadRoomsChannel)
+
+	cfg := static.NewConfig()
+	cfg.Api.Port = try.GetFreePort()
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: suite.dir}}
+	suite.initCmd(cfg)
+}
+
+func (suite *WebsocketReloadSuite) writeSpec(channels string) {
+	spec := fmt.Sprintf(`asyncapi: 3.0.0
+info:
+  title: Reload Chat
+  version: 1.0.0
+servers:
+  mokapi:
+    host: 'localhost:%d'
+    protocol: ws
+channels:%s`, suite.port, channels)
+	suite.Require().NoError(os.WriteFile(filepath.Join(suite.dir, "reload.yml"), []byte(spec), 0o600))
+}
+
+// dial returns the connection (nil if the handshake failed) and the status code of the handshake.
+func (suite *WebsocketReloadSuite) dial(path string) (*websocket.Conn, int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	c, resp, err := websocket.Dial(ctx, fmt.Sprintf("http://localhost:%d%s", suite.port, path), nil)
+	if err != nil {
+		if resp != nil {
+			return nil, resp.StatusCode
+		}
+		return nil, 0
+	}
+	return c, resp.StatusCode
+}
+
+func (suite *WebsocketReloadSuite) waitForStatus(path string, status int) {
+	suite.T().Helper()
+	try.WaitFor(suite.T(), func() bool {
+		c, code := suite.dial(path)
+		if c != nil {
+			_ = c.CloseNow()
+		}
+		return code == status
+	})
+}
+
+// reset serves the initial spec again and waits until both channels accept connections.
+func (suite *WebsocketReloadSuite) reset() {
+	suite.writeSpec(reloadChatChannel + reloadRoomsChannel)
+	suite.waitForStatus("/chat", http.StatusSwitchingProtocols)
+	suite.waitForStatus("/rooms/1", http.StatusSwitchingProtocols)
+}
+
+// connect opens a connection that stays open until the end of the test.
+func (suite *WebsocketReloadSuite) connect(path string) *websocket.Conn {
+	c, code := suite.dial(path)
+	suite.Require().Equal(http.StatusSwitchingProtocols, code)
+	suite.T().Cleanup(func() { _ = c.CloseNow() })
+	return c
+}
+
+// TestChangedQueryBindingAppliesToNewConnections verifies that a query parameter made required
+// in the file is enforced for the next connection.
+func (suite *WebsocketReloadSuite) TestChangedQueryBindingAppliesToNewConnections() {
+	suite.reset()
+
+	suite.writeSpec(reloadChatChannelWithRequiredToken + reloadRoomsChannel)
+
+	suite.waitForStatus("/chat", http.StatusBadRequest)
+}
+
+// TestRemovedChannelReturnsNotFound verifies that a channel removed from the file is not served.
+func (suite *WebsocketReloadSuite) TestRemovedChannelReturnsNotFound() {
+	suite.reset()
+
+	suite.writeSpec(reloadRoomsChannel)
+
+	suite.waitForStatus("/chat", http.StatusNotFound)
+}
+
+// TestRemovedParameterizedChannelReturnsNotFound verifies that an instance of a parameterized
+// channel that was used before the reload is not served after the channel was removed.
+func (suite *WebsocketReloadSuite) TestRemovedParameterizedChannelReturnsNotFound() {
+	suite.reset()
+
+	suite.writeSpec(reloadChatChannel)
+
+	suite.waitForStatus("/rooms/1", http.StatusNotFound)
+}
+
+// TestOpenConnectionOfRemovedChannelIsClosed verifies that a client connected to a channel
+// that is removed from the file is told that the channel is gone.
+func (suite *WebsocketReloadSuite) TestOpenConnectionOfRemovedChannelIsClosed() {
+	suite.reset()
+	c := suite.connect("/chat")
+
+	suite.writeSpec(reloadRoomsChannel)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	_, _, err := c.Read(ctx)
+	suite.Equal(websocket.StatusGoingAway, websocket.CloseStatus(err), "read error: %v", err)
+	var closeErr websocket.CloseError
+	suite.Require().ErrorAs(err, &closeErr)
+	suite.Equal("channel removed", closeErr.Reason)
 }

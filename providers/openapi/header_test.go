@@ -251,7 +251,7 @@ func TestHeader_Parse(t *testing.T) {
 							)),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -269,7 +269,7 @@ func TestHeader_Parse(t *testing.T) {
 							)),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				h := config.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
 				require.Equal(t, "foo description", h.Value.Description)
@@ -290,7 +290,7 @@ func TestHeader_Parse(t *testing.T) {
 							)),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse header 'foo' failed: resolve reference '/foo' failed: TEST ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)

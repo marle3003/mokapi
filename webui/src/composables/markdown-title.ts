@@ -7,7 +7,7 @@ export function MarkdownItTitle(meta: DocMeta): (md: MarkdownIt) => void {
         md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
             const token = tokens[idx] as Token;
             
-            let heading = self.renderToken(tokens, idx, options);
+            const heading = self.renderToken(tokens, idx, options);
 
             if (token.tag !== 'h1') {
                 return heading;

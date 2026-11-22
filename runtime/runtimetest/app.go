@@ -2,7 +2,6 @@ package runtimetest
 
 import (
 	"fmt"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
@@ -48,10 +47,7 @@ func WithEngine(e *engine.Engine) Options {
 func WithHttp(configs ...*openapi.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			app.Http.Add(&dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			})
+			app.Http.Add(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))))))
 		}
 	}
 }
@@ -59,10 +55,7 @@ func WithHttp(configs ...*openapi.Config) Options {
 func WithKafka(configs ...*asyncapi3.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			c := &dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i)))))
 
 			_, err := app.Kafka.Add(c, app.Engine)
 			if err != nil {
@@ -81,10 +74,7 @@ func WithKafkaInfo(name string, ki *runtime.KafkaInfo) Options {
 func WithLdap(configs ...*directory.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			c := &dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i)))))
 
 			app.Ldap.Add(c, app.Engine)
 		}
@@ -100,10 +90,7 @@ func WithLdapInfo(name string, li *runtime.LdapInfo) Options {
 func WithMail(configs ...*mail.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			c := &dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i)))))
 
 			app.Mail.Add(c)
 		}
@@ -134,10 +121,7 @@ func WithMqttInfo(name string, mi *runtime.MqttInfo) Options {
 func WithMqtt(configs ...*asyncapi3.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			c := &dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i)))))
 
 			_, err := app.Mqtt.Add(c, app.Engine)
 			if err != nil {
@@ -156,10 +140,7 @@ func WithWebsocketInfo(name string, wi *runtime.WebsocketInfo) Options {
 func WithWebsocket(configs ...*asyncapi3.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			c := &dynamic.Config{
-				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
-				Data: cfg,
-			}
+			c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i)))))
 
 			_, err := app.Websocket.Add(c, app.Engine)
 			if err != nil {

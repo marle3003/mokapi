@@ -41,7 +41,7 @@ func TestConfig_Schema(t *testing.T) {
 			if err != nil {
 				tc.test(t, c, err)
 			} else {
-				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
+				err = c.Parse(dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")})), tc.reader)
 				tc.test(t, c, err)
 			}
 

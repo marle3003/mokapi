@@ -1,259 +1,383 @@
 ---
 title: Using Mokapi Dashboard
-description: Mokapi provides you a dashboard where you can view your mock APIs or analyze traffic like a HTTP request/response.
+description: Mokapi provides you a dashboard where you can view your mock APIs or analyze traffic like an HTTP request/response.
 ---
 # Using Mokapi Dashboard
 
-The dashboard provides graphical displays of your mock APIs and helps developers 
-simulate real API responses during the development and testing phases. It allows 
-you to validate data against the specification as well as generate new random, realistic and valid data.
-This is useful during the early stages of development, facilitating rapid prototyping, testing error handling, 
-and ensuring the mock APIs works seamlessly under various scenarios.
+The dashboard shows the APIs Mokapi mocks and the traffic they handle: HTTP requests, Kafka,
+MQTT and WebSocket messages, mails, LDAP requests and the runs of your jobs. You can also generate example data
+from a schema and validate data against your specification.
 
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
+To change the port, see [Dashboard Configuration](/docs/configuration/dashboard.md).
 
-<img src="/docs/get-started/dashboard-overview-mock-api.png" class="image-border" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
+<img src="/docs/get-started/dashboard-overview-mock-api.png" width="700" alt="The dashboard overview with the sidebar, the tabs and the metric tiles of all protocols" />
+
+## Layout
+
+The dashboard has four areas: the header, the activity bar on the left, the sidebar next to it
+and the tab bar with the open view.
+
+The header contains the Mokapi logo, the links to the dashboard and the documentation, the
+version, the documentation search and the theme switch.
+
+### Activity bar
+
+The icons of the activity bar open the main areas:
+
+| Icon     | Description                                                                         |
+|----------|-------------------------------------------------------------------------------------|
+| Services | Shows the sidebar. Click it again to collapse or expand the sidebar.                |
+| Search   | Shows the search panel in the sidebar. Click it again to collapse or expand the sidebar. Shown only if search is enabled, not in the demo. |
+| Jobs     | Opens the scheduled jobs as a tab. Always shown.                                    |
+| Configs  | Opens all configuration files as a tab.                                             |
+| Faker    | Opens the Faker explorer as a tab, with the tree, a playground and the node details. Shown only in the live dashboard, not in the demo. |
+
+Press `/` anywhere in the dashboard to open the search panel and focus its input. If the sidebar
+is collapsed, Mokapi expands it, or opens the overlay in a narrow window. In the Classic view,
+`/` opens the search page.
+
+### Sidebar
+
+The sidebar lists everything Mokapi serves. From top to bottom it contains:
+
+- a filter field (see [Filter the sidebar](#filter-the-sidebar))
+- **Overview**, the start page with runtime info and a metric tile per protocol (see [Overview](#overview))
+- **Pinned**, your pinned views (see [Pinned](#pinned))
+- one group per protocol that has at least one service, in the order HTTP, Kafka, MQTT,
+  WebSocket, Mail and LDAP
+
+Each group lists its services alphabetically with the number of requests or messages. For HTTP
+services, a red dot shows that the service handled requests with errors. Click a service to open
+its view.
+
+Click the group heading to open the page of the protocol with its metrics, services and log.
+The chevron next to the heading collapses or expands the group.
+
+### Overview
+
+The overview shows the runtime info (Uptime Since and Memory Usage) and one metric tile for each
+active protocol. A Jobs tile appears as well once a job has run. It doesn't list services.
+Click a protocol tile to open the page of that protocol with its metrics, services and log. The
+Jobs tile opens the Jobs page. Ctrl+click, Cmd+click or middle click opens a page in a new tab,
+as described in [Tabs](#tabs).
+
+### Tabs
+
+Every tab is a page of the dashboard, so the URL in the address bar always shows the active tab.
+You can copy it, bookmark it or share it. The title of an HTTP endpoint tab starts with the
+method.
+
+How a click opens a view depends on how you click:
+
+| Action                                    | Result                                                                  |
+|-------------------------------------------|-------------------------------------------------------------------------|
+| Click                                     | Activates the tab if the target is already open, otherwise replaces the active tab |
+| Ctrl+click, Cmd+click or middle click     | Always opens a new tab, even if the target is already open              |
+| Middle click on a tab or click on x       | Closes the tab                                                          |
+
+This applies to the sidebar, the activity bar, pinned entries and to links and table rows
+inside a view. The rows of the HTTP request log, the LDAP request log, the mail log, the jobs log
+and the Kafka, MQTT and WebSocket message logs are an exception: a click selects the row and shows its details next to the table, see
+[Request log](/docs/http/dashboard.md#request-log),
+[Kafka message log](/docs/kafka/dashboard.md#message-log),
+[LDAP request log](/docs/ldap/dashboard.md#request-log),
+[Jobs](#jobs),
+[Mail log](/docs/mail/dashboard.md#mail-log),
+[MQTT message log](/docs/mqtt/dashboard.md#message-log) and
+[WebSocket message log](/docs/websocket/dashboard.md#message-log).
+
+The dashboard keeps at most 10 tabs. If you open another tab, or the tab doesn't fit into the
+row, Mokapi closes the tab you used least recently. Resizing the window never closes a tab. If
+the window is too narrow, the tabs that don't fit move into a **+N** menu at the end of the bar,
+and the active tab stays visible.
+
+Mokapi saves your open tabs in the browser and restores them after a reload. Each browser window
+keeps its own tabs. If you open the dashboard with its start URL (`/dashboard`, which is what
+`mokapi` opens), Mokapi restores the saved tabs and shows the tab that was active last time. It
+adds no tab, and the address bar shows the address of that tab. If there are no saved tabs, the
+Overview opens. Any other URL, for example from a link or a bookmark, opens as an additional tab,
+or activates its tab if it's already open. The browser's back and forward buttons work as usual.
+Because a click replaces the active tab, back shows the previous view in the active tab.
+
+Switching to a tab loads its view again, so data is fetched again and the scroll position starts
+at the top.
+
+### Pinned
+
+Pin the views you need often. Click the star in a tab to pin or unpin it. In the service views,
+the rows of endpoints, topics and channels have a star as a shortcut.
+
+Pinned views appear in the **Pinned** section of the sidebar and behave like any other sidebar
+entry, including Ctrl/Cmd+click and middle click. If the target no longer exists, for example
+because the API was removed from your configuration, the entry stays in the list but is greyed
+out. Use its remove button to delete it.
+
+Pinned views are saved in the browser and restored after a reload.
+
+### Narrow windows
+
+In windows narrower than 768 px, the sidebar starts collapsed. Click the Services icon to open
+it as an overlay on top of the view. Clicking an entry opens it and closes the overlay. Mokapi
+remembers whether the sidebar and each protocol group is collapsed or expanded.
+
+### Classic view
+
+The previous layout with protocol tabs and a breadcrumb is still available as a temporary
+fallback. Click **Classic view** in the header to switch to it, and **New view** to switch back.
+Mokapi remembers your choice. URLs are the same in both layouts. The overview of the Classic view
+still shows the runtime metrics and the tables with all services.
+
+Classic view exists only in the live dashboard and will be removed in a later release. The
+[demo dashboard](/dashboard-demo) always uses the new layout.
+
+## Find things
+
+The sidebar filter, the search panel and the grouping of lists help you find a service, an
+endpoint or an event.
+
+### Filter the sidebar
+
+Type in the filter field to find a service, an endpoint, a topic, a channel or a mailbox. The
+filter ignores case and matches:
+
+- the service name
+- the path, topic, channel or mailbox name
+- the HTTP method, for example `post`
+- the tag
+
+The sidebar then shows the matches grouped by service, with a summary such as "5 matches in 2
+services". For each service it lists at most 6 items. If there are more, the entry "N more in
+`<service>`" opens the service view. Use the clear button or press `Escape` to empty the filter.
+
+### Search panel
+
+The search panel searches your services and what they define (HTTP paths and operations, Kafka
+and MQTT topics, WebSocket channels, mailboxes and LDAP entries), your configuration files and
+the events Mokapi recorded, such as HTTP requests or Kafka messages. Open it with the Search icon
+or the `/` key. Mokapi runs the
+search one second after your last key press if the text has at least 3 characters and doesn't
+end with `:`. Press `Enter` to search immediately.
+
+Search is enabled by default. If you turn it off with `api.search.enabled: false` (CLI flag
+`--no-api-search-enabled`, see [`--api-search-enabled`](/docs/configuration/static/cli-flags#api-search-enabled)),
+the Search icon and the panel are hidden. They're also hidden in the demo dashboard.
+
+<img src="/docs/get-started/dashboard-search.png" width="700" alt="The search panel with results, the facet selects and the search tips" />
+
+If the API returns facets, the panel shows one select for each of them, for example Type, to
+restrict the results. The panel shows "Showing 20 of 57 results" and loads 20 results at a time.
+Click **Load more** to append the next 20.
+
+Results don't refresh by themselves. The search runs again when you click **Refresh**, change
+the text or a facet, or open the panel.
+
+Each result has two lines. The first shows a badge with the HTTP method or the type, the title
+and the status. The second shows the service, the time and the matched text. The result that is
+open in the active tab is highlighted.
+
+Click a result to open it in the active tab. Ctrl+click, Cmd+click or middle click opens it in a
+new tab, as described in [Tabs](#tabs).
+
+Click **Search tips** to show or hide the query syntax. **Open all results** opens the full
+search page with the same text and facets. It's hidden while the input is empty.
+
+Press `Escape` in an empty input to switch back to Services. If the input contains text,
+`Escape` does nothing, so you don't lose your search by accident.
+
+Mokapi saves the search text and the facets in the browser, separately for each window, and
+restores them after a reload. After a reload the sidebar shows Services.
+
+### Group by tag
+
+The lists of HTTP endpoints, Kafka topics, MQTT topics and WebSocket channels have a switch with
+two options:
+
+- **A-Z** shows one list sorted alphabetically. This is the default.
+- **By tag** groups the rows under a heading per tag, with the tag's description from your
+  OpenAPI or AsyncAPI specification. Rows without a tag are listed last under "Untagged".
+
+Mokapi remembers your choice for each service.
+
+<img src="/docs/get-started/dashboard-http-endpoints-by-tag.png" width="700" alt="The paths of an HTTP API grouped by tag" />
+
+## Live data
+
+### Auto refresh
+
+By default, the dashboard loads its data when you open a view and doesn't reload it by itself.
+Open the dashboard with `?refresh=<seconds>`, for example `/dashboard?refresh=20`, to reload
+every 20 seconds. A thin bar at the top of the window shows the time until the next reload. The
+parameter stays in the URL when you open other views. A value that isn't a number above 0, such
+as `?refresh=0`, leaves auto refresh off.
+
+While auto refresh is on, the logs show a **Pause** button. It stops reloading that log, for
+example to read an entry without new ones pushing it down the table. The log shows "Paused"
+until you click **Resume**, which reloads it at once. Pause only affects this log, other views
+keep updating.
+
+Mokapi doesn't save the pause. A reload of the page or a switch to another tab runs the log
+again. If you change a filter or the page while paused, the log loads the new result and runs
+again. The demo dashboard has no auto refresh and no **Pause** button.
+
+### Connection lost
+
+If Mokapi stops or restarts while the dashboard is open, a banner "Connection lost. Please
+restart your Mokapi. Retrying..." appears below the header within about 5 seconds. The data on
+screen stays visible but is dimmed, because it may be outdated. Buttons, filters and tabs keep
+working, and views you open meanwhile show their loading spinner. Auto refresh pauses.
+
+The dashboard checks `GET /api/info` every 5 seconds. Once Mokapi answers again, the banner
+disappears and the views reload their data. HTTP errors such as `404` or `500` don't count as a
+lost connection. The demo dashboard doesn't show the banner.
 
 ## Working with Dashboard
 
-The dashboard displays key metrics like request logs, 
-response times, and error rates, offering a comprehensive 
-overview of how the mock API behaves under different conditions.
+### Jobs
 
-### Generate sample data from the specification
+The Jobs page shows your scheduled jobs. A job is a function you register with
+[cron](/docs/javascript-api/mokapi/cron.md) or [every](/docs/javascript-api/mokapi/every.md) in a
+script. Open the page with the Jobs icon of the activity bar, which is always shown. In the Classic
+view, the Jobs tab appears only after a job has run for the first time.
 
-Some API types support generating sample data and validating data against the specification 
-(namely HTTP and Kafka). Here is a quick overview with the HTTP example. To create sample data for a 
-request body, navigate to an HTTP endpoint and look for the "Example & Validate" button.
-In the opened dialog you can create, edit, validate, copy to the clipboard and download 
-your sample data.
+The page has two tabs, **Jobs** (the default) and **Runs**.
 
-<img src="/docs/get-started/dashboard-rest-api-endpoint-example-validate.jpg" alt="Localizes the sample and validation functionality in the REST API endpoint view." />
+#### Jobs tab
 
-### Validate data
+The Jobs tab has one row per registered job, sorted by name:
 
-In the same dialog where we can create sample data, we can also validate it. The next image
-shows an example of an HTTP REST request body that is not valid according to the specification.
+| Column   | Description                                                                                       |
+|----------|---------------------------------------------------------------------------------------------------|
+| Name     | The name of the job                                                                               |
+| Schedule | The cron expression or the interval of the job                                                    |
+| State    | **Scheduled**, **Finished** or **Cancelled**                                                      |
+| Runs     | `3 / 10` if the job has a limit of runs, otherwise only the number of runs                        |
+| Next Run | The date and, while it's in the future, a countdown, for example `2026-11-16 12:00:00 (in 1h 2min 3s)`. `-` if the job has no further run. |
+| Last Run | The status of the last run and its time. The time links to the run.                               |
+| File     | The script file of the job. It links to the configuration of the script.                          |
 
-<img src="/docs/get-started/dashboard-rest-api-data-validation-with-error.jpg" width="700" alt="Indicates an error validating an HTTP REST request body" />
+A job is **Scheduled** while it has a next run. **Finished** means an `every` or `cron` job that
+used all its runs. Mokapi keeps a finished job in the list instead of removing it.
 
-## How to customize?
+Click a row to open the Runs tab, filtered by the name of the job.
 
-There are several options to customize the dashboard to fit your environment.
+If no job is registered, the tab shows "No jobs defined" with links to the documentation of
+`every` and `cron`.
 
-### How to change the default port?
+The name is the name of the script file, for example `jobs.ts`, unless the job sets the `name` tag.
+Jobs of one script therefore share the same name by default. Set the `name` tag in the
+[arguments](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) to tell them apart:
 
-You can change the default port on which the dashboard should run as follows:
+```typescript
+import { every } from 'mokapi'
 
-```bash tab=CLI
---api-port 5000
-```
-```bash tab=Env
-MOKAPI_API_PORT=5000
-```
-```yaml tab=File (YAML)
-api:
-  port: 5000
-```
+export default function() {
+    every('1m', () => {
+        // sync orders
+    }, { tags: { name: 'sync-orders' } })
 
-### Adding a Path Prefix
-
-Many applications are not hosted in the root (/) of their domain. For example,  
-Mokapi's Dashboard could live at `example.com/mokapi`. In this case, a prefix must be 
-added to the dashboard, so a link to `/dashboard` should be rewritten as `/mokapi/dashboard`.
-
-```bash tab=CLI
---api-path /mokapi
-```
-```bash tab=Env
-MOKAPI_API_PATH=/mokapi/dashboard
-```
-```yaml tab=File (YAML)
-api:
- path: /mokapi
-```
-
-### Behind a Reverse Proxy
-
-If the dashboard is running behind a reverse proxy and the proxy strips segments from the request 
-URL, you must set the base path. For example, the URL to the dashboard is `example.com/app/mokapi`
-but the request URL to your host running the dashboard is `/`
-
-```bash tab=CLI
---api-base /app/mokapi
-```
-```bash tab=Env
-MOKAPI_API_BASE=/app/mokapi
-```
-```yaml tab=File (YAML)
-api:
- base: /app/mokapi
-```
-
-Further configuration options are documented [here](/docs/configuration/reference.md).
-
-## API
-
-Mokapi exposes a set of information through an API handler, 
-such as the configurations, logs and metrics. The API is available at the same port 
-as the dashboard but on the path /api
-
-### Endpoints
-
-You can find the OpenAPI specification of these endpoints 
-[here](https://github.com/marle3003/mokapi/blob/master/examples/mokapi/dashboard.yml)
-
-| Path                              | Description                            |
-|-----------------------------------|----------------------------------------|
-| /api/info                         | get information about mokapi's runtime |
-| /api/services                     | list of all services                   |
-| /api/services/http/{name}         | Information about the http service     |
-| /api/services/kafka/{name}        | Information about the kafka cluster    |
-| /api/services/mail/{name}         | Information about the smtp server      |
-| /api/services/kafka/{name}/groups | list of kafka groups                   |
-| /api/events                       | list of events                         |
-| /api/events/{id}                  | get event by id                        |
-| /api/metrics                      | get list of metrics                    |
-| /api/schema/example               | returns example for given schema       |
-| /api/services/http/validate       | validate an HTTP request and response  |
-
-### Validate a request and response
-
-`POST /api/services/http/validate` checks an HTTP request and its response against the
-OpenAPI contracts loaded in Mokapi. Use it to verify that the traffic of your application,
-or the output of a test, matches the specification. The endpoint has no side effects: Mokapi
-doesn't create an event or a metric and doesn't run any script.
-
-```bash
-curl -X POST http://localhost:8080/api/services/http/validate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "api": "Petstore",
-    "request": {
-      "method": "POST",
-      "url": "/pet",
-      "headers": { "Content-Type": "application/json" },
-      "body": "{\"name\": \"Rex\"}"
-    },
-    "response": {
-      "statusCode": 200,
-      "headers": { "Content-Type": "application/json" },
-      "body": "{\"id\": 1}"
-    }
-  }'
-```
-
-| Field                | Required | Description                                                             |
-|----------------------|----------|-------------------------------------------------------------------------|
-| api                  | no       | `info.title` of the OpenAPI specification. Without it, Mokapi searches all HTTP APIs. |
-| request.method       | yes      | HTTP method, case-insensitive                                           |
-| request.url          | yes      | Path and query string, for example `/pet/1?verbose=true`. An origin is ignored. |
-| request.headers      | no       | Object with header names and string values                              |
-| request.body         | no       | Request body as a string                                                |
-| response.statusCode  | yes      | HTTP status code                                                        |
-| response.headers     | no       | Object with header names and string values                              |
-| response.body        | no       | Response body as a string                                               |
-
-Header values and bodies are always strings. Mokapi converts header values to the type defined
-in the specification, so the value `"5"` is valid for an integer header.
-
-#### Result
-
-If the request is well-formed, Mokapi answers with status `200`, even if the validation fails.
-
-```json
-{
-  "valid": false,
-  "operation": {
-    "api": "Petstore",
-    "method": "POST",
-    "path": "/pet"
-  },
-  "errors": [
-    {
-      "location": "request.body",
-      "schema": "#/required",
-      "message": "required properties are missing: email"
-    }
-  ]
+    every('10m', () => {
+        // clean up
+    }, { tags: { name: 'cleanup' } })
 }
 ```
 
-| Field     | Description                                                                          |
-|-----------|--------------------------------------------------------------------------------------|
-| valid     | `true` if `errors` is empty                                                          |
-| operation | The matched operation: `api`, `method` in uppercase and `path` as written in the contract. Missing if no operation matches. |
-| errors    | List of violations, an empty array if the request and response are valid             |
+#### Runs tab
 
-Each error has a `location`, a `message` and, for schema violations, a `schema` with the
-JSON pointer to the failed schema keyword.
+The Runs tab lists the runs of your jobs, newest first. The log is titled "Recent Jobs" and is
+always shown, also when it's empty. An address with `?job=<id>` opens this tab with the run selected.
 
-| Location                  | Checks                                              |
-|---------------------------|-----------------------------------------------------|
-| operation                 | No operation found, or several APIs match           |
-| request.path.`<name>`     | Path parameter                                      |
-| request.query.`<name>`    | Query parameter                                     |
-| request.header.`<name>`   | Request header                                      |
-| request.cookie.`<name>`   | Request cookie                                      |
-| request.body              | Request body                                        |
-| response.status           | No response defined for the status code             |
-| response.header.`<name>`  | Response header                                     |
-| response.body             | Response body                                       |
+<img src="/docs/get-started/dashboard-jobs-log-panel.png" width="700" alt="The jobs log with the detail panel of a run open on the Logs sub tab" />
 
-#### Finding the operation
+The log has these columns:
 
-Mokapi resolves the operation like it does for a mock request: a literal path wins over a
-parameterized one, and the path of the `servers` URL is the base path of the API. The base
-path is matched case-insensitively. A server URL with variables, such as
-`https://{env}.example.com/v1`, is not supported and never matches.
+| Column   | Description                                                                          |
+|----------|--------------------------------------------------------------------------------------|
+| Status   | **Success**, **Warning** or **Error**, as a badge                                    |
+| Name     | The name of the job. Ctrl+click, Cmd+click or middle click opens the run in a new tab. |
+| Schedule | The cron expression or the interval of the job                                       |
+| Time     | When the run happened                                                                |
+| Duration | How long the handler ran                                                             |
 
-If no operation matches, the result has `valid: false`, no `operation` and a single error with
-the location `operation`. If operations in several APIs match, the error lists these APIs and
-you set `api` to choose one.
+Mokapi derives the status from the run. The status is **Error** if the run failed or the script
+logged a message with level `error`, and **Warning** if the script logged a message with level
+`warn`. Otherwise it's **Success**, also if the run has no logs.
 
-#### What is checked
+Click a row to open the run next to the table. The selected row is highlighted. The top of the
+panel shows the status, the name and the time of the run. Below the head, the panel has two sub
+tabs:
 
-Request parameters and the request body are validated, and Mokapi reports all errors instead
-of stopping at the first. Extra headers are allowed. Security requirements aren't checked.
+| Sub tab | Content                                                                                           |
+|---------|---------------------------------------------------------------------------------------------------|
+| Logs    | The error of the run, if there was one, and the messages the script logged. This is the default.  |
+| Details | Schedule, Runs, Duration, Next Run and the tags of the job                                        |
 
-For the response, Mokapi checks that the status code is defined, the response headers and the
-body. Header names are case-insensitive. A `Content-Type` header defined in the specification is
-ignored, as OpenAPI requires.
+The Runs field shows `3 / 10` if the job has a limit of runs, otherwise only the number of runs.
+Next Run shows the date and, while it's in the future, a countdown, for example
+`2026-11-16 12:00:00 (in 1h 2min 3s)`. The countdown keeps running while the log is paused. Next Run
+is `-` if the job has no further run. The tag `file` links to the configuration of the script.
 
-The content type of the body must be defined for the status code, whatever the type is. Only
-JSON bodies (`application/json` and `+json` types) are validated against the schema. Bodies
-of other types, such as XML or plain text, are not checked.
+<img src="/docs/get-started/dashboard-job-details.png" width="700" alt="The detail panel of a job run on the Details sub tab with the countdown in Next Run" />
 
-A `HEAD` operation must be defined as `head:` in the specification. Mokapi doesn't validate its
-response body.
+Click **Open as tab** to show the run in the full view, `/dashboard/jobs/<id>`. A click replaces the
+active tab, Ctrl+click or Cmd+click opens a new one. In the new layout, Ctrl+click, Cmd+click or
+middle click on the name does the same without selecting the row. The full view shows the same
+information one below the other.
 
-If the response has no `Content-Type` header, Mokapi works as follows:
+Use the arrow keys up and down to select the previous or next run of the current page. Press
+`Escape` or click **Close** to close the panel. The keys are ignored while you type in an input.
 
-- An empty body is valid if the status code defines no content, otherwise the error is
-  `response body is required`.
-- Otherwise Mokapi tries each media type defined for the status code. If none fits, the error is
-  `no matching content type defined`. If the status code defines exactly one JSON media type,
-  Mokapi reports the schema errors of that type instead.
+The selected run is part of the address (`?job=<id>`). After a reload, the panel opens again, and
+you can copy the address to share the run. Mokapi only keeps a limited number of events in memory.
+If Mokapi has dropped the event, the panel and the full view show "Job not found".
 
-#### Status codes
+Filter the log with the **Name** chip. Click **+ Add filter**, then **Name**, and type the name of
+a job. The filter matches the name exactly and is case-sensitive, so `Jobs.ts` doesn't find
+`jobs.ts`. The input suggests the names of the runs on the current page. A job that only ran on
+another page isn't suggested, but you can still type its name. Two scripts with the same file name
+share one name unless they set the `name` tag. Mokapi saves the filter in the browser and restores
+it after a reload.
 
-| Status | Description                                                                   |
-|--------|-------------------------------------------------------------------------------|
-| 200    | The request was validated. Check `valid` in the body.                         |
-| 400    | Invalid JSON, a missing `request`, `response`, `request.method`, `request.url` or `response.statusCode`, or an unparseable `request.url` |
-| 404    | The API in `api` doesn't exist                                                |
-| 405    | The HTTP method is not `POST`                                                 |
+**Pause** is shown while [auto refresh](#auto-refresh) is on. In the Classic view, the log has the
+same panel, filter and **Pause** button.
 
-Errors use the format `{ "message": "api 'Petstore' not found" }`.
+### Faker
 
-#### CORS
+The Faker page shows the tree of nodes that Mokapi uses to generate data, and lets you try the
+generator. See [Validate in the Dashboard](/docs/get-started/test-data.md#validate-in-the-dashboard)
+for a walkthrough.
 
-The API allows requests from any origin, so a browser application on another origin, for
-example Storybook, can call the endpoint. An `OPTIONS` request to any `/api/...` path
-answers with `204` and these headers:
+<img src="/docs/get-started/dashboard-faker-explorer.png" width="700" alt="The Faker page with the tree, the playground and the details of a node" />
 
-```
-Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET, POST
-Access-Control-Allow-Headers: Content-Type
-```
+The page has three cards:
+
+| Card         | Description                                                                                  |
+|--------------|----------------------------------------------------------------------------------------------|
+| Faker tree   | The nodes with their attributes. Filter by name or attribute, switch on **Custom only** to show only nodes changed by a script, or click **Reload** to fetch the tree again. |
+| Playground   | Enter a property path and a schema, click **Generate** and see the value and which node produced each part of it. |
+| Node details | Name, path, attributes, weight, dependencies and whether the node is custom. **Generate** creates a value from this node. |
+
+Scripts can add and change nodes while Mokapi runs, so the page doesn't refresh by itself. Click
+**Reload** to see the current tree. The selected node is part of the address, so you can share it.
+
+### Generate sample data from the specification
+
+HTTP request and response bodies, Kafka and MQTT topics and WebSocket channels have an
+**Example & Validate** button next to their schema. It opens a dialog with an editor. Click
+**Example** to generate data from the schema, then edit it, copy it to the clipboard or download
+it.
+
+<img src="/docs/get-started/dashboard-endpoint-example-validate.png" width="700" alt="The request body of an HTTP endpoint with the Example & Validate button" />
+
+### Validate data
+
+Paste or edit data in the same dialog and click **Validate** to check it against the schema. The
+footer shows **Valid** or **Failed**, and the violations appear above the editor, for example a
+missing required property in a request body.
+
+<img src="/docs/get-started/dashboard-validate-error.png" width="700" alt="The Data Validator dialog showing a validation error for a request body" />
+
+## Next steps
+
+- [Dashboard API](/docs/configuration/dashboard-api.md): the REST API behind the dashboard, including the endpoint that validates an HTTP request and response
+- [Dashboard Configuration](/docs/configuration/dashboard.md): change the port, the path prefix or run the dashboard behind a reverse proxy

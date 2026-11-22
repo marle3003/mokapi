@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -28,6 +29,7 @@ import (
 func NewCmdSampleData() *cli.Command {
 	var sampleDataCommand = &cli.Command{
 		Name:  "sample-data",
+		Use:   "mokapi sample-data [flags] [FILE|URL|SCHEMA]",
 		Short: "Generate sample data from a schema",
 		Long: `Generates random example data from a schema definition.
 
@@ -60,12 +62,37 @@ Supports JSON Schema, OpenAPI Schema, and Avro Schema formats.`,
 		},
 	}
 
-	sampleDataCommand.Flags().IntShort("count", "n", 1, cli.FlagDoc{Short: "Number of samples to generate (default 1)"})
-	sampleDataCommand.Flags().String("input-type", "jsonschema", cli.FlagDoc{Short: "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)"})
-	sampleDataCommand.Flags().StringShort("output", "o", "application/json",
-		cli.FlagDoc{Short: "Output format: json, xml, yaml, binary (or full content type, e.g. application/json)"})
+	sampleDataCommand.Flags().IntShort("count", "n", 1, sampleDataCount)
+	sampleDataCommand.Flags().String("input-type", "jsonschema", sampleDataInputType)
+	sampleDataCommand.Flags().StringShort("output", "o", "application/json", sampleDataOutput)
 
 	return sampleDataCommand
+}
+
+var sampleDataCount = cli.FlagDoc{
+	Short: "Number of samples to generate (default 1)",
+	Long:  "Defines how many samples are generated. Each sample is generated independently from the schema.",
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --count 5 ./schema.json"}}},
+	},
+}
+
+var sampleDataInputType = cli.FlagDoc{
+	Short: "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)",
+	Long: `Defines the format of the input schema. Supported types are jsonschema, openapi and avro.
+Use openapi if the input is an OpenAPI schema object and avro for an Avro schema.`,
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --input-type avro ./schema.avsc"}}},
+	},
+}
+
+var sampleDataOutput = cli.FlagDoc{
+	Short: "Output format: json, xml, yaml, binary (or full content type, e.g. application/json)",
+	Long: `Defines the format of the generated data. Use one of json, xml, yaml or binary, or a full content type such as application/json.
+The default is application/json.`,
+	Examples: []cli.Example{
+		{Codes: []cli.Code{{Title: "CLI", Source: "mokapi sample-data --output yaml ./schema.json"}}},
+	},
 }
 
 func sampleData(flags *cli.FlagSet, input string) error {
@@ -151,6 +178,10 @@ func sampleData(flags *cli.FlagSet, input string) error {
 
 	switch ct.Subtype {
 	case "yaml":
+		// yaml.Marshal ends each document with a newline
+		for i, item := range items {
+			items[i] = strings.TrimSuffix(item, "\n")
+		}
 		fmt.Printf("%s", strings.Join(items, "\n---\n"))
 	case "xml":
 		if n > 1 {
@@ -170,33 +201,27 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 
 	// nothing provided, read from stdin (pipe)
 	if input == "" {
-		stat, _ := os.Stdin.Stat()
-		if (stat.Mode() & os.ModeCharDevice) == 0 {
-			// data is piped
-			c.Raw, err = io.ReadAll(os.Stdin)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-		return nil, nil, fmt.Errorf("no input provided (expected file, URL, or stdin)")
-	} else {
-		// input is a URL
-		var u *url.URL
-		u, err = url.Parse(input)
+		c.Raw, err = readPipedStdin()
 		if err != nil {
-			// treat as raw JSON/YAML schema string
-			c.Raw = []byte(input)
-		} else {
-			if u.Scheme == "" {
-				u.Scheme = "file"
-			}
-
-			c, err = r.Read(u, nil)
-			if err != nil {
-				return nil, nil, err
-			}
-			return readFromConfig(c, inputType, r)
+			return nil, nil, err
 		}
+		if len(c.Raw) == 0 {
+			return nil, nil, fmt.Errorf("no input provided (expected file, URL, or stdin)")
+		}
+	} else if isSchemaString(input) {
+		c.Raw = []byte(input)
+	} else {
+		var u *url.URL
+		u, err = parseFileOrUrl(input)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		c, err = r.Read(u, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+		return readFromConfig(c, inputType, r)
 	}
 
 	err = dynamic.Parse(c, r)
@@ -206,93 +231,106 @@ func readInput(input string, inputType *string, r dynamic.Reader) (schema any, p
 	return readFromConfig(c, inputType, r)
 }
 
+var windowsDrivePath = regexp.MustCompile(`^[A-Za-z]:[\\/]`)
+
+// parseFileOrUrl turns a file path or URL argument into a URL. A Windows path
+// such as C:\x.yaml would otherwise be parsed as scheme "c", so it is
+// treated as an opaque file URL and keeps its optional #fragment. A URL with a
+// one-letter scheme followed by ":/" or ":\" (e.g. a://b) is read as a file path too.
+func parseFileOrUrl(input string) (*url.URL, error) {
+	if windowsDrivePath.MatchString(input) {
+		path, fragment, _ := strings.Cut(input, "#")
+		return &url.URL{Scheme: "file", Opaque: path, Fragment: fragment}, nil
+	}
+
+	u, err := url.Parse(input)
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme == "" {
+		u.Scheme = "file"
+	}
+	return u, nil
+}
+
+// readPipedStdin returns the data piped to stdin, or nil if stdin is a terminal.
+func readPipedStdin() ([]byte, error) {
+	stat, err := os.Stdin.Stat()
+	if err != nil || (stat.Mode()&os.ModeCharDevice) != 0 {
+		return nil, nil
+	}
+	return io.ReadAll(os.Stdin)
+}
+
 func readFromConfig(c *dynamic.Config, inputType *string, r dynamic.Reader) (schema any, path []string, err error) {
 	if c.Info.Url == nil || c.Info.Url.Fragment == "" {
 		schema, err = parseSchema(c, *inputType, r)
 		return
 	}
 
-	ref := ""
-	if c.Info.Url.Fragment != "" {
-		ref = fmt.Sprintf("#%s", c.Info.Url.Fragment)
-	}
+	ref := "#" + c.Info.Url.Fragment
 	if h, ok := runtime.IsHttpConfig(c); ok {
-		if ref != "" {
-			path = getPathFromOpenAPI(h, ref)
-		}
+		path = getPathFromOpenAPI(h, ref)
 		*inputType = "openapi"
 	}
 
-	schema, err = (&dynamic.Reference[any]{Ref: fmt.Sprintf("#%s", c.Info.Url.Fragment)}).Resolve(c, r)
+	schema, err = (&dynamic.Reference[any]{Ref: ref}).Resolve(c, r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to resolve fragment %s: %v", c.Info.Url.Fragment, err)
-	}
-
-	if c.Info.Url.Fragment != "" {
-
-	} else {
-		if h, ok := runtime.IsHttpConfig(c); ok {
-			if h.OpenApi.Major == 2 {
-				return nil, nil, fmt.Errorf("failed to generate data for Swagger file %s: requiring fragment", c.Info.Url)
-			}
-			return nil, nil, fmt.Errorf("failed to generate data for OpenAPI file %s: requiring fragment", c.Info.Url)
-		} else if _, ok := runtime.IsAsyncApiConfig(c); ok {
-			return nil, nil, fmt.Errorf("failed to generate data for AsyncAPI file %s: requiring fragment", c.Info.Url)
-		}
-		return nil, nil, fmt.Errorf("unsupported file: %s", c.Info.Url)
 	}
 	return
 }
 
-func parseSchema(c *dynamic.Config, inputType string, r dynamic.Reader) (s any, err error) {
+// isSchemaString reports whether the argument is an inline JSON/YAML schema.
+// A schema is always a mapping, whereas a file path or URL is a plain scalar.
+func isSchemaString(input string) bool {
+	var m map[string]any
+	return decode([]byte(input), "", &m) == nil && m != nil
+}
+
+func parseSchema(c *dynamic.Config, inputType string, r dynamic.Reader) (any, error) {
+	var s interface {
+		Parse(*dynamic.Config, dynamic.Reader) error
+	}
 	switch inputType {
 	case "jsonschema":
-		js := &jsonSchema.Schema{}
-		s = js
-		defer func() {
-			if err == nil {
-				err = js.Parse(c, r)
-			}
-		}()
+		s = &jsonSchema.Schema{}
 	case "openapi":
-		openSchema := &schema.Schema{}
-		s = openSchema
-		defer func() {
-			if err == nil {
-				err = openSchema.Parse(c, r)
-			}
-		}()
+		s = &schema.Schema{}
 	case "avro":
-		avroSchema := &avro.Schema{}
-		s = avroSchema
-		defer func() {
-			if err == nil {
-				err = avroSchema.Parse(c, r)
-			}
-		}()
+		s = &avro.Schema{}
+	default:
+		return nil, fmt.Errorf("unsupported input type: %s", inputType)
 	}
 
+	ext := ""
 	if c.Info.Url != nil {
-		ext := filepath.Ext(c.Info.Url.Path)
-		switch ext {
-		case ".json":
-			err = json.Unmarshal(c.Raw, &s)
-		}
-	} else {
-		if json.Unmarshal(c.Raw, &s) == nil {
-			return s, nil
-		}
-
-		if yaml.Unmarshal(c.Raw, &s) == nil {
-			return s, nil
-		}
-
-		return "", fmt.Errorf("input data format not supported")
+		ext = filepath.Ext(c.Info.Url.Path)
+	}
+	if err := decode(c.Raw, ext, s); err != nil {
+		return nil, err
 	}
 
-	c.Data = s
+	c.SetData(s)
+	return s, s.Parse(c, r)
+}
 
-	return
+// decode reads JSON or YAML into v. The file extension decides the format;
+// without a known extension (raw input) JSON is tried first, then YAML.
+func decode(raw []byte, ext string, v any) error {
+	switch ext {
+	case ".json":
+		return json.Unmarshal(raw, v)
+	case ".yaml", ".yml":
+		return yaml.Unmarshal(raw, v)
+	}
+	if json.Unmarshal(raw, v) == nil {
+		return nil
+	}
+	if yaml.Unmarshal(raw, v) == nil {
+		return nil
+	}
+	return fmt.Errorf("input data format not supported")
 }
 
 func getPathFromOpenAPI(cfg *openapi.Config, ref string) []string {

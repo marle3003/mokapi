@@ -1226,7 +1226,7 @@ export interface SmtpEventArgs extends EventArgs {
  * export default function() {
  *   every('1m', function() {
  *     console.log('foo')
- *   }, {times: 1, runFirstTimeImmediately: false})
+ *   }, {times: 1, skipImmediateFirstRun: true})
  * }
  */
 export type ScheduledEventHandler = () => void | Promise<void>;
@@ -1247,9 +1247,11 @@ export interface ScheduledEventArgs {
     times?: number;
 
     /**
-     * Toggles behavior of first execution. Default is true
+     * If true, the job does not run immediately but waits for the first
+     * interval or the first match of the cron expression.
+     * Default is `false` for `every` and `true` for `cron`.
      */
-    runFirstTimeImmediately?: boolean;
+    skipImmediateFirstRun?: boolean;
 }
 
 /**
@@ -2586,7 +2588,7 @@ export interface KafkaProduceArgs {
  * @example
  * app.kafka().produce('order-placed', { data: { id: 1 } }, {
  *   result: (r) => {
- *     console.log(r.cluster)             // e.g. 'Order Events'
+ *     console.log(r.api)                 // e.g. 'Order Events'
  *     console.log(r.topic)               // e.g. 'order-placed'
  *     console.log(r.messages[0].offset)  // e.g. 42
  *   }

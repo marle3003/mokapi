@@ -28,6 +28,7 @@ func fakeBySchema(r *Request) (any, error) {
 	}
 	if r.examples != nil {
 		if v, err := selectExample(r); err == nil {
+			r.recordSource(SourceExamples, v)
 			return v, nil
 		}
 	}
@@ -57,21 +58,22 @@ func fakeBySchema(r *Request) (any, error) {
 
 	switch {
 	case t.IsString():
-		return fakeString(r)
+		return r.recordFallback(fakeString(r))
 	case t.IsObject():
 		return fakeObject(r)
 	case t.IsArray():
 		items := func() (any, error) {
-			return fakeBySchema(r.WithSchema(s.Items))
+			return fakeBySchema(r.WithSchema(s.Items).property(itemSegment))
 		}
 		return fakeArray(r, newFaker(items))
 	case t.IsBool():
-		return gofakeit.Bool(), nil
+		return r.recordFallback(gofakeit.Bool(), nil)
 	case t.IsNumber():
-		return fakeNumber(r)
+		return r.recordFallback(fakeNumber(r))
 	case t.IsInteger():
-		return fakeInteger(r.Schema)
+		return r.recordFallback(fakeInteger(r.Schema))
 	case t.IsNullable():
+		r.recordSource(SourceNull, nil)
 		return nil, nil
 	case t.IsNullable():
 		return nil, nil
@@ -125,7 +127,7 @@ func fakeObject(r *Request) (any, error) {
 
 	m := map[string]any{}
 	for it := s.Properties.Iter(); it.Next(); {
-		v, err := New(r.With([]string{it.Key()}, it.Value(), nil))
+		v, err := New(r.With([]string{it.Key()}, it.Value(), nil).property(it.Key()))
 		if err != nil {
 			return nil, err
 		}

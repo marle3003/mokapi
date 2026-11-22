@@ -6,10 +6,16 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
@@ -45,7 +51,7 @@ func TestMqttServer(t *testing.T) {
 					),
 				)
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for mqtt start
 				time.Sleep(500 * time.Millisecond)
@@ -85,7 +91,7 @@ func TestMqttServer(t *testing.T) {
 						asyncapi3test.AssignToServer("#/servers/kafka"),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -143,6 +149,9 @@ func TestMqttManager_BindErrorIsLoggedAndServerStaysRegistered(t *testing.T) {
 	requireBindErrorIsLoggedAndServerStaysRegistered(t,
 		func(port int) { m.UpdateConfig(mqttConfigEvent(port)) },
 		func(port int) string { return fmt.Sprintf("listen tcp :%d: bind: address already in use", port) },
+		func(port int) string {
+			return fmt.Sprintf("adding new MQTT broker 'mqtt' on port %d to 'foo'", port)
+		},
 	)
 }
 
@@ -151,7 +160,7 @@ func mqttConfigEvent(port int) dynamic.ConfigEvent {
 		asyncapi3test.WithTitle("foo"),
 		asyncapi3test.WithServer("mqtt", "mqtt", fmt.Sprintf("127.0.0.1:%d", port)),
 	)
-	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))}
 }
 
 func TestMqttManager_DeleteRemovesConfigAndStopsServer(t *testing.T) {
@@ -176,13 +185,10 @@ func TestMqttManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
 	m := server.NewMqttManager(nil, app)
 	defer m.Stop()
 
-	kafkaCfg := &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")},
-		Data: asyncapi3test.NewConfig(
-			asyncapi3test.WithTitle("foo"),
-			asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
-		),
-	}
+	kafkaCfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+		asyncapi3test.WithTitle("foo"),
+		asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
+	), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")}))
 	_, err := app.Kafka.Add(kafkaCfg, nil)
 	require.NoError(t, err)
 
@@ -193,7 +199,7 @@ func TestMqttManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.T) {
 	require.NotPanics(t, func() { m.UpdateConfig(e) })
 
 	require.NotNil(t, app.Kafka.Get("foo"))
-	require.NotNil(t, app.Kafka.Get("foo").Config, "kafka config must survive a MQTT delete")
+	require.NotNil(t, app.Kafka.Get("foo").Config(), "kafka config must survive a MQTT delete")
 	require.Nil(t, app.Mqtt.Get("foo"), "config must be removed from the MQTT store")
 	requirePortClosed(t, port)
 }
@@ -204,4 +210,30 @@ func requirePortClosed(t *testing.T, port int) {
 		_ = conn.Close()
 	}
 	require.Error(t, err, "port must be closed after delete")
+}
+
+func TestMqttManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e := mqttConfigEvent(try.GetFreePort())
+	e.Event = dynamic.Delete
+
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+}
+
+func TestMqttManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
+	e := mqttConfigEvent(try.GetFreePort())
+	cfg := e.Config.Data().(*asyncapi3.Config)
+	st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
+	defer st.Close()
+	app := runtimetest.NewApp(runtimetest.WithMqttInfo("foo", runtime.NewMqttInfo(nil, st)))
+	m := server.NewMqttManager(nil, app)
+	defer m.Stop()
+
+	e.Event = dynamic.Delete
+	require.NotPanics(t, func() { m.UpdateConfig(e) })
+
+	require.Nil(t, app.Mqtt.Get("foo"))
 }

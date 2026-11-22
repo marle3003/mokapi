@@ -252,7 +252,7 @@ func TestValidate(t *testing.T) {
 					},
 				}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.True(t, called, "validate is called")
 				require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestValidate(t *testing.T) {
 					},
 				}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.Error(t, err)
 				require.EqualError(t, err, "TEST ERROR")
@@ -279,7 +279,7 @@ func TestValidate(t *testing.T) {
 				v := struct {
 				}{}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.NoError(t, err)
 			},
@@ -306,10 +306,10 @@ func TestConfigScope(t *testing.T) {
 			test: func(t *testing.T) {
 				c := &dynamic.Config{}
 				c.OpenScope("foo")
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 				c.CloseScope()
 				// top scope is never closed
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 			},
 		},
 		{
@@ -318,9 +318,9 @@ func TestConfigScope(t *testing.T) {
 				c := &dynamic.Config{}
 				c.OpenScope("foo")
 				c.OpenScope("bar")
-				require.Equal(t, "bar", c.Scope.Name())
+				require.Equal(t, "bar", c.Scope().Name())
 				c.CloseScope()
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 			},
 		},
 	}

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { getRouteName, useDashboard } from '@/composables/dashboard';
-import { useKafka } from '@/composables/kafka';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
-import { computed, ref, watch, type Ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Message from '../../Message.vue';
-import { useMetrics } from '@/composables/metrics';
 
 interface Partition {
   index: number, 
@@ -16,7 +14,6 @@ const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
 const { dashboard } = useDashboard();
-const { sum, value } = useMetrics()
 
 const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
@@ -48,7 +45,7 @@ const member = computed(() => {
   if (!group.value) {
     return null;
   }
-  for (let member of group.value.members){
+  for (const member of group.value.members){
     if (member.name == memberName) {
       return member;
     }
@@ -138,7 +135,7 @@ function goToTopic(topicName: string, openInNewTab = false){
                         }" aria-labelledby="group">
                         {{ member.clientId }}
                       </router-link>
-                      <p v-else>-</p>
+                      <span v-else>-</span>
                     </p>
                   </div>
                   <div class="col-6 col-sm-3">
@@ -164,7 +161,7 @@ function goToTopic(topicName: string, openInNewTab = false){
                     </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="p in partitions" :key="member.name" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
+                  <tr v-for="p in partitions" :key="`${p.topic}-${p.index}`" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
                     <td>
                         <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: serviceName, topic: p.topic }, hash: '#tab-partitions'}">
                             {{ p.topic }}

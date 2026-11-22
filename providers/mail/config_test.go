@@ -369,3 +369,77 @@ func TestParseConfig(t *testing.T) {
 		})
 	}
 }
+
+func newCloneFixture() *mail.Config {
+	return &mail.Config{
+		Version: "1.0",
+		Info: mail.Info{
+			Name:    "Test",
+			Version: "1.2.3",
+			Contact: &mail.Contact{Name: "Alice", Email: "alice@foo.bar"},
+		},
+		Servers:  map[string]*mail.Server{"smtp": {Host: ":25", Protocol: "smtp"}},
+		Settings: &mail.Settings{MaxRecipients: 5, MaxInboxMails: 10},
+		Mailboxes: map[string]*mail.MailboxConfig{
+			"alice@foo.bar": {
+				Username: "alice",
+				Folders: map[string]*mail.FolderConfig{
+					"INBOX": {
+						Flags:   []string{"a"},
+						Folders: map[string]*mail.FolderConfig{"Sub": {Flags: []string{"b"}}},
+					},
+				},
+			},
+		},
+		Rules: map[string]*mail.Rule{
+			"deny": {
+				Name:           "deny",
+				Sender:         mail.NewRuleExpr(".*"),
+				Action:         mail.Deny,
+				RejectResponse: &mail.RejectResponse{Message: "no"},
+			},
+		},
+	}
+}
+
+func TestConfig_Clone(t *testing.T) {
+	t.Run("equal to the original", func(t *testing.T) {
+		c := newCloneFixture()
+		require.Equal(t, c, c.Clone())
+	})
+
+	t.Run("nil", func(t *testing.T) {
+		var c *mail.Config
+		require.Nil(t, c.Clone())
+	})
+
+	t.Run("changing the clone does not change the original", func(t *testing.T) {
+		c := newCloneFixture()
+		clone := c.Clone()
+
+		clone.Info.Contact.Name = "Bob"
+		clone.Servers["smtp"].Host = ":2525"
+		clone.Servers["imap"] = &mail.Server{}
+		clone.Settings.MaxRecipients = 99
+		mb := clone.Mailboxes["alice@foo.bar"]
+		mb.Username = "changed"
+		inbox := mb.Folders["INBOX"]
+		inbox.Flags[0] = "changed"
+		inbox.Folders["Sub"].Flags[0] = "changed"
+		inbox.Folders["New"] = &mail.FolderConfig{}
+		clone.Mailboxes["bob@foo.bar"] = &mail.MailboxConfig{}
+		clone.Rules["deny"].Action = mail.Allow
+		clone.Rules["other"] = &mail.Rule{}
+
+		require.Equal(t, newCloneFixture(), c)
+	})
+
+	t.Run("nil values", func(t *testing.T) {
+		c := &mail.Config{
+			Servers:   map[string]*mail.Server{"smtp": nil},
+			Mailboxes: map[string]*mail.MailboxConfig{"alice@foo.bar": nil, "bob@foo.bar": {Folders: map[string]*mail.FolderConfig{"INBOX": nil}}},
+			Rules:     map[string]*mail.Rule{"r": nil},
+		}
+		require.Equal(t, c, c.Clone())
+	})
+}

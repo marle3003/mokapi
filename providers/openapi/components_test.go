@@ -202,12 +202,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "schema ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentSchema("foo", schematest.New("string")),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentSchema("foo", schematest.New("string")),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -221,7 +218,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				path, _ := config.Paths.Get("/foo")
 				require.NotNil(t, path)
@@ -252,7 +249,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content '' failed: parse schema failed: resolve reference '/foo.yml#/components/schemas/foo' failed: TESTING ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
@@ -263,12 +260,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "response ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"}),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"}),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -280,7 +274,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 
 				path := config.Paths.Lookup("/foo")
@@ -308,7 +302,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: resolve reference '/foo.yml#/components/responses/foo' failed: TESTING ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
@@ -319,12 +313,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "requestBody ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentRequestBody("foo", &openapi.RequestBody{Description: "foo"}),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentRequestBody("foo", &openapi.RequestBody{Description: "foo"}),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -334,7 +325,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				path := config.Paths.Lookup("/foo")
 				require.NotNil(t, path)
@@ -358,7 +349,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse request body failed: resolve reference '/foo.yml#/components/requestBodies/foo' failed: TESTING ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
@@ -369,12 +360,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "parameter ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "foo"}),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "foo"}),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -382,7 +370,7 @@ func TestComponents_Parse(t *testing.T) {
 						openapitest.WithPathParamRef("foo.yml#/components/parameters/foo"),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				path := config.Paths.Lookup("/foo")
 				require.NotNil(t, path)
@@ -404,7 +392,7 @@ func TestComponents_Parse(t *testing.T) {
 						openapitest.WithPathParamRef("foo.yml#/components/parameters/foo"),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse parameter '0' failed: resolve reference '/foo.yml#/components/parameters/foo' failed: TESTING ERROR")
 			},
 		},
@@ -412,12 +400,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "example ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentExample("foo", &openapi.Example{Description: "foo"}),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentExample("foo", &openapi.Example{Description: "foo"}),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -430,7 +415,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				path := config.Paths.Lookup("/foo")
 				require.NotNil(t, path)
@@ -461,7 +446,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference '/foo.yml#/components/parameters/foo' failed: TESTING ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
@@ -472,12 +457,9 @@ func TestComponents_Parse(t *testing.T) {
 			name: "header ref",
 			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: u},
-						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}),
-						),
-					}
+					cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0",
+						openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
@@ -489,7 +471,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.NoError(t, err)
 				path := config.Paths.Lookup("/foo")
 				require.NotNil(t, path)
@@ -516,7 +498,7 @@ func TestComponents_Parse(t *testing.T) {
 						),
 					),
 				)
-				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse header 'foo' failed: resolve reference '/foo.yml#/components/headers/foo' failed: TESTING ERROR", log.LastEntry().Message)
 				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)

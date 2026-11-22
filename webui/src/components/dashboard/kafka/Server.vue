@@ -13,7 +13,7 @@ const route = useRoute();
 const { dashboard } = useDashboard()
 const serviceName = route.params.service?.toString();
 const serverName = route.params.server?.toString();
-let data = ref<ServiceResult | null>(null);
+const data = ref<ServiceResult | null>(null);
 const { format: formatBytes } = usePrettyBytes();
 const { duration } = usePrettyDates();
 
@@ -49,7 +49,7 @@ watch(() => dashboard.value,
     { immediate: true }
 );
 
-function formatValue(value: any, key: string) {
+function formatValue(value: unknown, key: string) {
   switch (key) {
     case 'log.segment.bytes':
     case 'log.retention.bytes':
@@ -60,7 +60,7 @@ function formatValue(value: any, key: string) {
     case 'log.roll':
     case 'group.initial.rebalance.delay.ms':
     case 'group.min.session.timeout.ms':
-        return duration(value);
+        return duration(value as number);
     default: 
         return value;
   }

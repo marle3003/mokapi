@@ -92,12 +92,16 @@ func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.Ev
 }
 
 // trackOnLoop calls the track function on the loop, because it is a goja function.
-func trackOnLoop(loop *eventloop.EventLoop, args onArgs, params []goja.Value) (changed bool, err error) {
-	_, _ = loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
-		changed, err = args.track(params...)
+func trackOnLoop(loop *eventloop.EventLoop, args onArgs, params []goja.Value) (bool, error) {
+	var changed bool
+	var trackErr error
+	if _, err := loop.RunSync(func(*goja.Runtime) (goja.Value, error) {
+		changed, trackErr = args.track(params...)
 		return nil, nil
-	})
-	return
+	}); err != nil {
+		return false, err
+	}
+	return changed, trackErr
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {

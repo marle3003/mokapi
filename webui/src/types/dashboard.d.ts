@@ -25,6 +25,8 @@ export interface Dashboard {
 
     getMetrics(query: string): Response
 
+    getJobs(): JobsResult
+
     getConfigs(): ConfigsResult 
     getConfig(id: string): ConfigResult
     getConfigData(id: string): ConfigDataResult
@@ -52,6 +54,7 @@ export interface AppInfoResponse {
 
 export interface ServicesResult {
     services: Ref<Service[]>
+    isLoading: Ref<boolean>
     close(): void
 }
 
@@ -81,6 +84,7 @@ export interface KafkaTopicResult {
 
 export interface EventsResult {
     data: Ref<ServiceEventPage>
+    isLoading: Ref<boolean>
     close(): void
 }
 
@@ -124,6 +128,12 @@ export interface MailResult {
     isLoading: Ref<boolean>
 }
 
+export interface JobsResult {
+    data: Ref<JobInfo[] | null>
+    isLoading: Ref<boolean>
+    close: () => void
+}
+
 export interface ConfigsResult {
     data: Ref<Config[] | null>
     isLoading: Ref<boolean>
@@ -163,8 +173,4 @@ export interface HttpEventFilter {
     statusCode?: string
     responseHeaders?: { name: string, value: string }[]
     clientIP?: string
-}
-
-export interface KafkaEventFilter {
-
 }

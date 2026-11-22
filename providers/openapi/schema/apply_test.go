@@ -2,7 +2,6 @@ package schema_test
 
 import (
 	"encoding/json"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi/schema"
 	jsonSchema "mokapi/schema/json/schema"
@@ -191,7 +190,7 @@ func TestSchema_ApplyRef_JSON(t *testing.T) {
 			if err != nil {
 				tc.test(t, s, err)
 			} else {
-				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err = s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 				tc.test(t, s, err)
 			}
 		})
@@ -353,7 +352,7 @@ $ref: "#/$defs/foo"
 			if err != nil {
 				tc.test(t, s, err)
 			} else {
-				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err = s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 				tc.test(t, s, err)
 			}
 		})

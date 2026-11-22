@@ -29,7 +29,7 @@ func NewKafkaClient(app *runtime.App) *KafkaClient {
 }
 
 func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	k, ch, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
+	k, api, ch, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	}
 
 	return &common.KafkaProduceResult{
-		Api:      k.Info.Name,
+		Api:      api,
 		Topic:    args.Topic,
 		Messages: produced,
 	}, nil
@@ -153,11 +153,11 @@ func kafkaKeySchema(msg *asyncapi3.Message) *asyncapi3.SchemaRef {
 	}
 }
 
-func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArgs) (k *runtime.KafkaInfo, t *asyncapi3.Channel, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArgs) (k *runtime.KafkaInfo, api string, t *asyncapi3.Channel, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
-		k, t, err = c.get(cluster, topic)
+		k, api, t, err = c.get(cluster, topic)
 		ambiguous := &ambiguousError{}
 		if err == nil || errors.As(err, &ambiguous) {
 			return
@@ -172,7 +172,9 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArg
 	}
 }
 
-func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, ch *asyncapi3.Channel, err error) {
+// get returns the cluster, its name and the channel of the topic. The name is taken from the same
+// config snapshot that was used to find the channel, so a config removed in the meantime is "not found".
+func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, api string, ch *asyncapi3.Channel, err error) {
 	if len(cluster) == 0 {
 		if len(topic) == 0 {
 			clusters := c.app.Kafka.List()
@@ -180,54 +182,64 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, c
 				err = newAmbiguousError("ambiguous cluster: specify the cluster")
 				return
 			}
-			topics := clusters[0].Topics()
+			if len(clusters) == 1 {
+				topics := clusters[0].Topics()
+				if len(topics) > 1 {
+					err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
+					return
+				}
+				if snapshot := clusters[0].Config(); snapshot != nil && len(topics) == 1 {
+					return clusters[0], snapshot.Info.Name, topics[0].Config(), nil
+				}
+			}
+		} else {
+			var topics []*asyncapi3.Channel
+			for _, v := range c.app.Kafka.List() {
+				snapshot := v.Config()
+				if snapshot == nil {
+					continue
+				}
+				if t := v.Topic(topic); t != nil {
+					k = v
+					api = snapshot.Info.Name
+					topics = append(topics, t.Config())
+				} else {
+					for _, ref := range snapshot.Channels {
+						if ref.Value == nil {
+							continue
+						}
+						if ref.Value.IsNameValid(topic) == nil {
+							k = v
+							api = snapshot.Info.Name
+							topics = append(topics, ref.Value)
+						}
+					}
+				}
+			}
 			if len(topics) > 1 {
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
+			} else if len(topics) == 1 {
+				ch = topics[0]
 			}
-			return clusters[0], topics[0].Config(), nil
-		}
-
-		var topics []*asyncapi3.Channel
-		for _, v := range c.app.Kafka.List() {
-			if t := v.Topic(topic); t != nil {
-				k = v
-				if len(cluster) == 0 {
-					cluster = v.Info.Name
-				}
-				topics = append(topics, t.Config())
-			} else if topic != "" {
-				for _, ref := range v.Channels {
-					if ref.Value == nil {
-						continue
-					}
-					if err = ref.Value.IsNameValid(topic); err == nil {
-						k = v
-						topics = append(topics, ref.Value)
-					}
-				}
-			}
-		}
-		if len(topics) > 1 {
-			err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
-			return
-		} else if len(topics) == 1 {
-			ch = topics[0]
 		}
 	} else {
-		if k = c.app.Kafka.Get(cluster); k != nil {
-			t := k.Topic(topic)
-			if t != nil {
-				ch = t.Config()
-			}
-		} else {
-			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
+		k = c.app.Kafka.Get(cluster)
+		if k == nil {
+			return nil, "", nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
+		}
+		snapshot := k.Config()
+		if snapshot == nil {
+			return nil, "", nil, fmt.Errorf("kafka API '%v' not found", cluster)
+		}
+		api = snapshot.Info.Name
+		if t := k.Topic(topic); t != nil {
+			ch = t.Config()
 		}
 	}
 
 	if ch == nil {
-		err = fmt.Errorf("kafka topic '%v' not found", topic)
-		return
+		return nil, "", nil, fmt.Errorf("kafka topic '%v' not found", topic)
 	}
 
 	return

@@ -48,7 +48,7 @@ components:
 	err := yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
-	err = cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+	err = cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 	require.NoError(t, err)
 
 	msg := cfg.Channels["foo"].Value.Messages["bar"].Value

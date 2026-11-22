@@ -32,7 +32,7 @@ type Header struct {
 func readHeader(d *Decoder) *Header {
 	h := &Header{}
 
-	b := d.ReadByte()
+	b := d.ReadUInt8()
 	h.Type = Type(b >> 4)
 	h.Dup = (b>>3)&0x01 > 0
 	h.QoS = (b >> 1) & 0x03

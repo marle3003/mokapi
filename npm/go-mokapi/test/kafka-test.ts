@@ -6,6 +6,9 @@ produce(1);
 // @ts-expect-error
 produce({ topic: 123 });
 const result: ProduceResult = produce({});
+result.api;
+result.topic;
+result.messages[0].offset;
 // @ts-expect-error
 produce({ cluster: 123 });
 // @ts-expect-error

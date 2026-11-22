@@ -48,6 +48,9 @@ in the existing configuration. If there is a match, Mokapi updates the existing 
 If you delete or change a patch file while Mokapi is running, Mokapi removes only what that file added. The other files stay
 in place, and a server that was defined only in the deleted file is stopped.
 
+A relative `$ref` in a patch file is resolved against the patch file's own location, not the base file's, so a
+patch can reference files next to it, e.g. `$ref: './schemas/pet.yml'`.
+
 ``` box=tip
 Mokapi patches any configuration file even if the source comes from a different provider.
 ```

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import MqttTopics from './MqttTopics.vue'
-import MqttMessagesCard from './MqttMessagesCard.vue'
+import MqttMessages from './MqttMessages.vue'
 import MqttTopic from './MqttTopic.vue'
 import Servers from './Servers.vue'
 import Server from './Server.vue'
@@ -20,6 +20,7 @@ import { useToolbarItem } from '@/composables/toolbar-items.ts'
 import Breadcrumb from '../Breadcrumb.vue'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import { useService } from '@/composables/service.ts'
+import { withSelection } from '@/composables/log-selection'
 
 const { service } = useService<MqttService>('mqtt')
 
@@ -31,6 +32,7 @@ const activeTab = ref('tab-topics');
 
 function setTab(tab: string) {
     router.replace({
+        query: withSelection(route.query, 'message', undefined),
         hash: `#${tab}`
     });
 }
@@ -41,7 +43,7 @@ watch(() => route.hash, (hash) => {
 )
 useToolbarItem(
     {
-        label: 'Export AsyncAPI',
+        label: 'AsyncAPI specification',
         icon: 'bi-file-earmark-code',
         onClick: () => {
             exportAsyncAPIDialogVisible.value = true
@@ -80,6 +82,10 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                             aria-controls="topics-pane" @click="setTab('tab-topics')">
                             Topics
                         </button>
+                        <button :class="{ active: activeTab === 'tab-messages' }" id="messages-tab" type="button" role="tab"
+                            aria-controls="messages-pane" @click="setTab('tab-messages')">
+                            Messages
+                        </button>
                         <button :class="{ active: activeTab === 'tab-servers' }" id="servers-tab" type="button"
                             role="tab" aria-controls="servers" @click="setTab('tab-servers')">
                             Servers
@@ -97,8 +103,17 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
                             role="tabpanel" aria-labelledby="topics-tab">
                             <mqtt-topics :service="service" />
+                        </div>
+                        <!-- v-if: the log reloads while it is mounted, so a hidden one would poll -->
+                        <div v-if="activeTab === 'tab-messages'" class="tab-pane fade show active" id="messages-pane"
+                            role="tabpanel" aria-labelledby="messages-tab">
+                            <div class="d-flex justify-content-end mb-2">
+                                <router-link :to="{ name: getRouteName('mqttServiceLog').value, params: { service: service.name }, query: { refresh: route.query.refresh } }">
+                                    Open as tab
+                                </router-link>
+                            </div>
                             <div class="card-group">
-                                <mqtt-messages-card :service="service" />
+                                <mqtt-messages :service="service" />
                             </div>
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
@@ -117,6 +132,9 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
                 </div>
             </section>
         </div>
+    </div>
+    <div class="card-group" v-if="$route.name == getRouteName('mqttServiceLog').value && service != null">
+        <mqtt-messages :service="service" />
     </div>
     <div v-if="$route.matched.some(route => route.name === getRouteName('mqttTopic').value)">
         <mqtt-topic :service="service"></mqtt-topic>

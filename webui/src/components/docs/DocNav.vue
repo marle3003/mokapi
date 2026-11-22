@@ -46,7 +46,7 @@ watch(
     <span v-if="root" class="nav-title px-3">{{ root.label }}</span>
     <hr class="m-2" />
     <ul class="nav nav-pills root flex-column mb-auto px-3" v-if="root?.items">
-      <li class="nav-item" v-for="item1 of root.items">
+      <li class="nav-item" v-for="item1 of root.items" :key="item1.label">
         <nav-doc-item :current="item1" :actives="breadcrumb" />
       </li>
     </ul>

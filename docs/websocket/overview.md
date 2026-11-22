@@ -170,6 +170,21 @@ that flow over it. The dashboard shows the full conversation per connection:
 | server    | 127.0.0.1       | `{"userId":"alice","text":"hi"}` | 10:42:01 |
 | server    | 127.0.0.2       | `{"userId":"alice","text":"hi"}` | 10:42:01 |
 
+## Reloading the specification
+
+Mokapi watches your AsyncAPI file. When you change it while Mokapi runs, changed channels apply to new
+connections and to new messages. Query and header bindings are checked when a client connects, so
+clients that are already connected keep the bindings from their connect and stay connected.
+
+If you remove a channel from the specification, Mokapi no longer serves it. A new connection gets
+`404`, also for parameterized channels like `/rooms/{roomId}`. Clients that are still connected to the
+removed channel are closed by Mokapi with close code `1001` (going away) and the reason
+`channel removed`. The `close` event of your [script](/docs/javascript-api/mokapi/app/websocket-router.md)
+runs for them with `closedBy` set to `server`, and the dashboard log shows the connection as closed by
+the server.
+
+A file with parse or validation errors is not applied. The last valid version stays active.
+
 ## Next Steps
 
 - [Quick Start Guide](/docs/websocket/quick-start.md): Run Mokapi and load your first AsyncAPI file.

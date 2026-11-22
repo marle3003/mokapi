@@ -6,16 +6,16 @@ import { app } from 'mokapi'
 export default function () {
     app.http()
         .operation('metrics', (req, res) => {
-            let names = req.query['names']
+            const names = req.query['names']
             res.data = !names ? metrics : metrics.filter(x => names.includes(x.name))
         })
         .operation('metricsType', (req, res) => {
-            let type = req.path['type']
+            const type = req.path['type']
             res.data = metrics.filter(x => x.name.startsWith(type + '_'))
         })
 }
 
-export let metrics = [
+export const metrics = [
     {
         name: 'app_start_timestamp',
         value:  1652025690 //app_start.getTime() / 1000,// 1652025690,
@@ -65,6 +65,11 @@ export let metrics = [
         name: 'kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="0"}',
         value: 10
     },
+    // a second group, so that the lag tile has to sum over groups (the Kafka mocks only read group "foo")
+    {
+        name: 'kafka_consumer_group_lag{service="Kafka World",group="bar",topic="mokapi.shop.products",partition="0"}',
+        value: 5
+    },
     {
         name: 'kafka_consumer_group_commit{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="0"}',
         value: 1
@@ -108,18 +113,34 @@ export let metrics = [
     // Mails
     {
         name: 'mail_mails_total{service="Mail Testserver"}',
-        value: 3
+        value: 8
     },
     {
         name: 'mail_mail_timestamp{service="Mail Testserver"}',
         value: 1652635690
     },
     {
+        name: 'mail_mails_total{service="Mail Second Server"}',
+        value: 4
+    },
+    {
+        name: 'mail_mail_timestamp{service="Mail Second Server"}',
+        value: 1652635690
+    },
+    {
         name: 'ldap_requests_total{service="LDAP Testserver"}',
-        value: 6
+        value: 12
     },
     {
         name: 'ldap_request_timestamp{service="LDAP Testserver"}',
+        value: 1652635690
+    },
+    {
+        name: 'ldap_requests_total{service="LDAP Second Server"}',
+        value: 3
+    },
+    {
+        name: 'ldap_request_timestamp{service="LDAP Second Server"}',
         value: 1652635690
     },
     // mqtt
@@ -142,19 +163,44 @@ export let metrics = [
     // websocket
     {
         name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chat"}',
-        value: 2
+        value: 5
     },
     {
         name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chat"}',
-        value: 1672182690
+        value: 1770972720
     },
     {
         name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
-        value: 2
+        value: 4
     },
     {
         name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
-        value: 1771058323
+        value: 1770972730
+    },
+    {
+        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/5678"}',
+        value: 3
+    },
+    {
+        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/5678"}',
+        value: 1770972710
+    },
+    {
+        name: 'websocket_messages_error_total{service="WebSocket Chat API",channel="/chat"}',
+        value: 2
+    },
+    {
+        name: 'websocket_messages_error_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
+        value: 1
+    },
+    // ldap
+    {
+        name: 'ldap_search_errors_total{service="LDAP Testserver"}',
+        value: 2
+    },
+    {
+        name: 'ldap_search_errors_total{service="LDAP Second Server"}',
+        value: 4
     },
 ]
 
@@ -164,7 +210,7 @@ export function sum(name: string, ...labels: Label[]){
     }
 
     let sum = 0
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -182,7 +228,7 @@ export function max(name: string, ...labels: Label[]) {
     }
 
     let max = 0
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -203,7 +249,7 @@ export function filter(name: string, ...labels: Label[]) {
         return [];
     }
 
-    for (let metric of metrics) {
+    for (const metric of metrics) {
         if (!metric.name.startsWith(name)) {
             continue
         }
@@ -230,7 +276,7 @@ export function parseLabels(metric: { name: string }) {
 }
 
 function matchLabels(metric: { name: string }, labels: Label[]){
-    for (var label of labels){
+    for (const label of labels){
         const s = `${label.name}="${label.value}"`
         if (!metric.name.includes(s)){
             return false

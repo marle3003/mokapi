@@ -199,20 +199,25 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
 	for _, ki := range list {
+		cfg := ki.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        ki.Info.Name,
-			Description: ki.Info.Description,
-			Version:     ki.Info.Version,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
+			Version:     cfg.Info.Version,
 			Type:        ServiceKafka,
+			Items:       getChannelItems(cfg, "kafka"),
 		}
 
 		s.Metrics = kafkaTopicMetric{
-			NumMessages:     m.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
-			LastMessageTime: m.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
+			NumMessages:     m.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastMessageTime: m.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
-		if ki.Info.Contact != nil {
-			c := ki.Info.Contact
+		if cfg.Info.Contact != nil {
+			c := cfg.Info.Contact
 			s.Contact = &contact{
 				Name:  c.Name,
 				Url:   c.Url,
@@ -257,22 +262,27 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	k := kafkaInfo{
-		Name:        ki.Config.Info.Name,
-		Description: ki.Config.Info.Description,
-		Version:     ki.Config.Info.Version,
+	cfg, files := ki.Snapshot()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	if ki.Config.Info.Contact != nil {
+	k := kafkaInfo{
+		Name:        cfg.Info.Name,
+		Description: cfg.Info.Description,
+		Version:     cfg.Info.Version,
+	}
+
+	if cfg.Info.Contact != nil {
 		k.Contact = &contact{
-			Name:  ki.Config.Info.Contact.Name,
-			Url:   ki.Config.Info.Contact.Url,
-			Email: ki.Config.Info.Contact.Email,
+			Name:  cfg.Info.Contact.Name,
+			Url:   cfg.Info.Contact.Url,
+			Email: cfg.Info.Contact.Email,
 		}
 	}
 
-	for it := ki.Servers.Iter(); it.Next(); {
+	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
 		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "kafka" {
@@ -307,9 +317,9 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 		return strings.Compare(k.Servers[i].Name, k.Servers[j].Name) < 0
 	})
 
-	k.Topics = getKafkaChannels(slices.Collect(maps.Values(ki.Channels)), ki, h.app.Monitor.Kafka)
-	k.Groups = getGroupInfos(ki, "", h.app.Monitor.Kafka)
-	k.Configs = getConfigInfos(ki.Configs())
+	k.Topics = getKafkaChannels(slices.Collect(maps.Values(cfg.Channels)), ki, cfg.Info.Name, h.app.Monitor.Kafka)
+	k.Groups = getGroupInfos(ki, cfg.Info.Name, "", h.app.Monitor.Kafka)
+	k.Configs = getConfigInfos(files)
 
 	for _, ctx := range ki.Store.Clients() {
 		c := kafkaClientInfo{
@@ -332,9 +342,14 @@ func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	cfg := ki.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	var ch *asyncapi3.Channel
-	for name, item := range ki.Channels {
+	for name, item := range cfg.Channels {
 		if name == vars["channel"] {
 			ch = item.Value
 			break
@@ -356,7 +371,7 @@ func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
 		Title:       ch.Title,
 		Summary:     ch.Summary,
 		Description: ch.Description,
-		Messages:    getMessageConfigs(ch, ki.Config),
+		Messages:    getMessageConfigs(ch, cfg),
 		Tags:        getKafkaTags(ch),
 	}
 
@@ -372,8 +387,8 @@ func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
 					Parameters: params,
 				}
 				inst.Metrics = mqttTopicMetrics{
-					NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
-					LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
+					NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", t.Name))),
+					LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("instance", t.Name))),
 				}
 				result.Instances = append(result.Instances, inst)
 			}
@@ -384,8 +399,8 @@ func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result.Metrics = kafkaTopicMetric{
-		NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
-		LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
+		NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("topic", addr))),
+		LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name), metrics.ByLabel("topic", addr))),
 	}
 
 	write(w, result)
@@ -399,28 +414,33 @@ func (h *handler) getKafkaTopics(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	cfg := ki.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	var channels []*asyncapi3.ChannelRef
 	for _, topic := range ki.Topics() {
 		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config()})
 	}
 
-	topics := getKafkaChannels(channels, ki, h.app.Monitor.Kafka)
+	topics := getKafkaChannels(channels, ki, cfg.Info.Name, h.app.Monitor.Kafka)
 	write(w, topics)
 }
 
 func (h *handler) getKafkaTopic(w http.ResponseWriter, r *http.Request) {
-	ki, t, ok := h.resolveKafkaTopic(w, r)
+	ki, cfg, t, ok := h.resolveKafkaTopic(w, r)
 	if !ok {
 		return
 	}
 
-	ti := newTopic(t, ki, t.Config(), h.app.Monitor.Kafka)
+	ti := newTopic(t, ki, cfg.Info.Name, t.Config(), h.app.Monitor.Kafka)
 	write(w, ti)
 }
 
 func (h *handler) getKafkaPartitions(w http.ResponseWriter, r *http.Request) {
-	_, t, ok := h.resolveKafkaTopic(w, r)
+	_, _, t, ok := h.resolveKafkaTopic(w, r)
 	if !ok {
 		return
 	}
@@ -515,6 +535,13 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cfg := ki.Config()
+	if cfg == nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("kafka cluster not found"))
+		return
+	}
+
 	g, ok := ki.Group(vars["group"])
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
@@ -526,7 +553,7 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 	grp := group{
 		Name:    snapshot.Name,
 		State:   snapshot.State.String(),
-		Metrics: getGroupMetrics(snapshot.Name, ki, h.app.Monitor.Kafka),
+		Metrics: getGroupMetrics(snapshot.Name, cfg.Info.Name, h.app.Monitor.Kafka),
 	}
 
 	if snapshot.Generation != nil {
@@ -651,8 +678,8 @@ func (h *handler) produceKafkaMessage(w http.ResponseWriter, r *http.Request) {
 	write(w, res)
 }
 
-func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaChannelInfo {
-	topics := make([]kafkaChannelInfo, 0, len(ki.Config.Channels))
+func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, service string, m *monitor.Kafka) []kafkaChannelInfo {
+	topics := make([]kafkaChannelInfo, 0, len(channels))
 	for _, ch := range channels {
 		if ch.Value == nil {
 			continue
@@ -685,8 +712,8 @@ func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, m
 		}
 
 		ti.Metrics = kafkaTopicMetric{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", service), metrics.ByLabel("topic", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", service), metrics.ByLabel("topic", addr))),
 		}
 
 		topics = append(topics, ti)
@@ -697,7 +724,7 @@ func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, m
 	return topics
 }
 
-func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *monitor.Kafka) kafkaTopic {
+func newTopic(t *store.Topic, ki *runtime.KafkaInfo, service string, ch *asyncapi3.Channel, m *monitor.Kafka) kafkaTopic {
 	var partitions []kafkaPartition
 	for _, p := range t.PartitionList() {
 		partitions = append(partitions, newPartition(p))
@@ -723,7 +750,7 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 			ValueSchemaValidation: bindings.ValueSchemaValidation,
 			KeySchemaValidation:   bindings.KeySchemaValidation,
 		},
-		Groups: getGroupInfos(ki, t.Name, m),
+		Groups: getGroupInfos(ki, service, t.Name, m),
 	}
 
 	if len(ch.Parameters) > 0 {
@@ -732,7 +759,7 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	}
 
 	labels := []metrics.QueryOptions{
-		metrics.ByLabel("service", ki.Info.Name),
+		metrics.ByLabel("service", service),
 	}
 	if len(ch.Parameters) > 0 {
 		labels = append(labels, metrics.ByLabel("instance", t.Name))
@@ -748,7 +775,7 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	return result
 }
 
-func getGroupInfos(ki *runtime.KafkaInfo, topic string, m *monitor.Kafka) []kafkaGroupInfo {
+func getGroupInfos(ki *runtime.KafkaInfo, service string, topic string, m *monitor.Kafka) []kafkaGroupInfo {
 	groups := ki.Groups()
 	var result []kafkaGroupInfo
 Groups:
@@ -764,7 +791,7 @@ Groups:
 
 		gi := kafkaGroupInfo{
 			Name:    snapshot.Name,
-			Metrics: getGroupMetrics(snapshot.Name, ki, m),
+			Metrics: getGroupMetrics(snapshot.Name, service, m),
 		}
 		if snapshot.Generation != nil {
 			gi.Generation = snapshot.Generation.Id
@@ -780,13 +807,13 @@ Groups:
 	return result
 }
 
-func getGroupMetrics(groupName string, ki *runtime.KafkaInfo, m *monitor.Kafka) kafkaGroupMetrics {
+func getGroupMetrics(groupName string, service string, m *monitor.Kafka) kafkaGroupMetrics {
 	result := kafkaGroupMetrics{
-		LastRebalancing: m.LastRebalancing.Value(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
+		LastRebalancing: m.LastRebalancing.Value(metrics.NewQuery(metrics.ByLabel("service", service))),
 	}
 	lags := m.Lags.FindAll(
 		metrics.NewQuery(
-			metrics.ByLabel("service", ki.Info.Name),
+			metrics.ByLabel("service", service),
 			metrics.ByLabel("group", groupName),
 		),
 	)
@@ -800,7 +827,7 @@ func getGroupMetrics(groupName string, ki *runtime.KafkaInfo, m *monitor.Kafka) 
 			partition := lag.Info().GetLabel("partition")
 			id, _ := strconv.Atoi(partition)
 			mCommit, _ := m.Commits.FindOne(metrics.NewQuery(
-				metrics.ByLabel("service", ki.Info.Name),
+				metrics.ByLabel("service", service),
 				metrics.ByLabel("group", groupName),
 				metrics.ByLabel("topic", topic),
 				metrics.ByLabel("partition", partition),
@@ -932,28 +959,33 @@ func getKafkaTags(ch *asyncapi3.Channel) []kafkaTag {
 	return result
 }
 
-func (h *handler) resolveKafkaTopic(w http.ResponseWriter, r *http.Request) (*runtime.KafkaInfo, *store.Topic, bool) {
+func (h *handler) resolveKafkaTopic(w http.ResponseWriter, r *http.Request) (*runtime.KafkaInfo, *asyncapi3.Config, *store.Topic, bool) {
 	vars := mux.Vars(r)
 
 	ki := h.app.Kafka.Get(vars["cluster"])
 	if ki == nil {
 		http.Error(w, "kafka cluster not found", http.StatusNotFound)
-		return nil, nil, false
+		return nil, nil, nil, false
+	}
+	cfg := ki.Config()
+	if cfg == nil {
+		http.Error(w, "kafka cluster not found", http.StatusNotFound)
+		return nil, nil, nil, false
 	}
 
 	t := ki.Topic(vars["topic"])
 	if t == nil {
 		http.Error(w, "kafka topic not found", http.StatusNotFound)
-		return nil, nil, false
+		return nil, nil, nil, false
 	}
 
-	return ki, t, true
+	return ki, cfg, t, true
 }
 
 func (h *handler) resolveKafkaPartition(w http.ResponseWriter, r *http.Request) (*runtime.KafkaInfo, *store.Topic, *store.Partition, bool) {
 	vars := mux.Vars(r)
 
-	ki, t, ok := h.resolveKafkaTopic(w, r)
+	ki, _, t, ok := h.resolveKafkaTopic(w, r)
 	if !ok {
 		return nil, nil, nil, false
 	}
@@ -987,13 +1019,18 @@ func getSoftware(name, version string) string {
 func (h *handler) exportAsyncApi(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	s := h.app.Kafka.Get(vars["cluster"])
-	if s == nil {
+	ki := h.app.Kafka.Get(vars["cluster"])
+	if ki == nil {
+		w.WriteHeader(404)
+		return
+	}
+	cfg := ki.Config()
+	if cfg == nil {
 		w.WriteHeader(404)
 		return
 	}
 
-	e := s.Export()
+	e := cfg.Export()
 
 	ext := vars["ext"]
 	var b []byte

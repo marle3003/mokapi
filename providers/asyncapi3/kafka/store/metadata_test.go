@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"fmt"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -70,7 +69,7 @@ func TestMetadata(t *testing.T) {
 					asyncapi3test.WithChannel("foo"),
 				)
 				cfg.Channels["foo"].Value.Servers = []*asyncapi3.ServerRef{nil}
-				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 				s.Update(cfg)
 
 				rr := kafkatest.NewRecorder()
@@ -186,7 +185,7 @@ func TestMetadata(t *testing.T) {
 					asyncapi3test.WithServer("bar", "kafka", "127.0.0.1:9093"),
 					asyncapi3test.WithChannel("foo", asyncapi3test.AssignToServer("#/servers/foo")),
 				)
-				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				err := cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 				require.NoError(t, err)
 				s.Update(cfg)
 
@@ -233,7 +232,7 @@ func TestMetadata(t *testing.T) {
 					),
 				)
 
-				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				err := cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 				require.NoError(t, err)
 				s.Update(cfg)
 				rr := kafkatest.NewRecorder()
@@ -273,7 +272,7 @@ func TestMetadata(t *testing.T) {
 					),
 				)
 
-				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				err := cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 				require.NoError(t, err)
 				s.Update(cfg)
 				rr := kafkatest.NewRecorder()
@@ -312,7 +311,7 @@ func TestMetadata(t *testing.T) {
 					),
 				)
 
-				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				err := cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 				require.NoError(t, err)
 				s.Update(cfg)
 				rr := kafkatest.NewRecorder()

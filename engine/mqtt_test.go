@@ -9,12 +9,18 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -218,4 +224,110 @@ func TestMqttClient_Publish(t *testing.T) {
 			tc.test(t, retained, result, err)
 		})
 	}
+}
+
+func TestMqttClient_Publish_ConfigRemovedWhileScriptIsRunning(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	// a cluster whose last file was removed keeps its store but has no config snapshot (nil)
+	newApp := func() *runtime.App {
+		cfg := asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel("sensors", asyncapi3test.WithMessage("msg")),
+		)
+		st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
+		return runtimetest.NewApp(runtimetest.WithMqttInfo("foo", runtime.NewMqttInfo(nil, st)))
+	}
+
+	t.Run("cluster given returns not found", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			_, err := engine.NewMqttClient(newApp()).Publish(&common.MqttPublishArgs{Cluster: "foo", Topic: "sensors"})
+
+			require.EqualError(t, err, "mqtt API 'foo' not found")
+		})
+	})
+
+	t.Run("cluster searched by topic skips it", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			_, err := engine.NewMqttClient(newApp()).Publish(&common.MqttPublishArgs{Topic: "sensors"})
+
+			require.EqualError(t, err, "mqtt topic 'sensors' not found")
+		})
+	})
+}
+
+func TestMqttClient_Publish_NoApiOrTopic(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	t.Run("no API loaded returns not found", func(t *testing.T) {
+		require.NotPanics(t, func() {
+			_, err := engine.NewMqttClient(runtimetest.NewApp()).Publish(&common.MqttPublishArgs{})
+
+			require.EqualError(t, err, "mqtt topic '' not found")
+		})
+	})
+
+	// the $SYS topics of every API make a topic always ambiguous without a cluster
+	t.Run("API without topics of its own is ambiguous", func(t *testing.T) {
+		app := runtimetest.NewApp(runtimetest.WithMqtt(asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))))
+
+		_, err := engine.NewMqttClient(app).Publish(&common.MqttPublishArgs{})
+
+		require.EqualError(t, err, "ambiguous topic . Specify the cluster")
+	})
+}
+
+func TestMqttClient_Publish_Api(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newApp := func() *runtime.App {
+		return runtimetest.NewApp(runtimetest.WithMqtt(asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("sensors", asyncapi3test.NewChannel(
+				asyncapi3test.WithChannelAddress("sensors"),
+				asyncapi3test.UseMessage("msg", &asyncapi3.MessageRef{Value: asyncapi3test.NewMessage()}),
+			)),
+		)))
+	}
+
+	testcases := []struct {
+		name string
+		args common.MqttPublishArgs
+		err  string
+	}{
+		{name: "topic only", args: common.MqttPublishArgs{Topic: "sensors"}},
+		{name: "cluster given", args: common.MqttPublishArgs{Cluster: "foo", Topic: "sensors"}},
+		{name: "unknown cluster", args: common.MqttPublishArgs{Cluster: "bar", Topic: "sensors"}, err: "mqtt API 'bar' not found"},
+		{name: "unknown topic with cluster", args: common.MqttPublishArgs{Cluster: "foo", Topic: "x"}, err: "mqtt topic 'x' not found"},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := engine.NewMqttClient(newApp()).Publish(&tc.args)
+
+			if tc.err != "" {
+				require.EqualError(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, "foo", result.Api)
+		})
+	}
+}
+
+func TestMqttClient_Publish_RetriesTopicNotFound(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	app := runtimetest.NewApp(runtimetest.WithMqtt(asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))))
+	// set after the app is created, adding an API changes the log level
+	logrus.SetLevel(logrus.DebugLevel)
+	hook := logtest.NewGlobal()
+
+	_, err := engine.NewMqttClient(app).Publish(&common.MqttPublishArgs{
+		Cluster: "foo",
+		Topic:   "x",
+		Retry:   common.RetryArgs{Retries: 2, InitialRetryTime: time.Millisecond, MaxRetryTime: time.Second, Factor: 2},
+	})
+
+	require.EqualError(t, err, "mqtt topic 'x' not found")
+	require.Contains(t, getMessages(hook), "mqtt topic 'x' not found. Retry in 1ms")
 }

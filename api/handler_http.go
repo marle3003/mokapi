@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
@@ -142,20 +143,25 @@ func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 	list := s.List()
 	result := make([]service, 0, len(list))
 	for _, hs := range list {
+		cfg := hs.Config()
+		if cfg == nil {
+			continue
+		}
 		s := service{
-			Name:        hs.Info.Name,
-			Description: hs.Info.Description,
-			Version:     hs.Info.Version,
+			Name:        cfg.Info.Name,
+			Description: cfg.Info.Description,
+			Version:     cfg.Info.Version,
 			Type:        ServiceHttp,
-			Status:      hs.GetStatus().String(),
+			Status:      cfg.GetStatus().String(),
+			Items:       getHttpItems(cfg),
 		}
 
-		if hs.Info.Summary != "" {
-			s.Description = hs.Info.Summary
+		if cfg.Info.Summary != "" {
+			s.Description = cfg.Info.Summary
 		}
 
-		if hs.Info.Contact != nil {
-			c := hs.Info.Contact
+		if cfg.Info.Contact != nil {
+			c := cfg.Info.Contact
 			s.Contact = &contact{
 				Name:  c.Name,
 				Url:   c.Url,
@@ -164,9 +170,9 @@ func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 		}
 
 		s.Metrics = httpMetrics{
-			Requests:      m.Http.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
-			RequestErrors: m.Http.RequestErrorCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
-			LastRequest:   m.Http.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
+			Requests:      m.Http.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			RequestErrors: m.Http.RequestErrorCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
+			LastRequest:   m.Http.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", cfg.Info.Name))),
 		}
 
 		result = append(result, s)
@@ -185,37 +191,48 @@ func (h *handler) setupHttp() {
 }
 
 func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
-	services := getKafkaServices(h.app.Kafka, h.app.Monitor)
+	services := getHttpServices(h.app.Http, h.app.Monitor)
 	write(w, services)
 }
 
 func (h *handler) getHttpApi(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	if s := h.app.Http.Get(vars["api"]); s != nil {
-		result := h.getHttpService(s)
-		write(w, result)
-	} else {
+	info := h.app.Http.Get(vars["api"])
+	if info == nil {
 		w.WriteHeader(404)
+		return
 	}
+	cfg, files := info.Snapshot()
+	if cfg == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	write(w, h.getHttpService(cfg, files))
 }
 
 func (h *handler) getHttpOperations(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	s := h.app.Http.Get(vars["api"])
-	if s == nil {
+	info := h.app.Http.Get(vars["api"])
+	if info == nil {
+		w.WriteHeader(404)
+		return
+	}
+	cfg := info.Config()
+	if cfg == nil {
 		w.WriteHeader(404)
 		return
 	}
 
 	method := r.URL.Query().Get("method")
 	p := r.URL.Query().Get("path")
-	result := getOperations(s, p, method, h.app.Monitor.Http)
+	result := getOperations(cfg, p, method, h.app.Monitor.Http)
 	write(w, result)
 }
 
-func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
+func (h *handler) getHttpService(s *openapi.Config, configs []*dynamic.Config) httpInfo {
 	result := httpInfo{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
@@ -306,12 +323,12 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 		}
 	}
 
-	result.Configs = getConfigs(s.Configs())
+	result.Configs = getConfigs(configs)
 
 	return result
 }
 
-func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Http) []operation {
+func getOperations(s *openapi.Config, path, method string, monitor *monitor.Http) []operation {
 	var paths []string
 	if path != "" {
 		paths = append(paths, path)
@@ -492,7 +509,12 @@ func getErrors(err []openapi.Error) []errorData {
 func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	s := h.app.Http.Get(vars["api"])
+	info := h.app.Http.Get(vars["api"])
+	if info == nil {
+		w.WriteHeader(404)
+		return
+	}
+	s := info.Config()
 	if s == nil {
 		w.WriteHeader(404)
 		return
@@ -534,7 +556,12 @@ func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
 func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	s := h.app.Http.Get(vars["api"])
+	info := h.app.Http.Get(vars["api"])
+	if info == nil {
+		w.WriteHeader(404)
+		return
+	}
+	s := info.Config()
 	if s == nil {
 		w.WriteHeader(404)
 		return

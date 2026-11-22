@@ -470,3 +470,94 @@ func TestEventLoop_Stop_TimerGoroutinesExit(t *testing.T) {
 		require.False(t, ran.Load(), "a job must not run once the loop is stopped")
 	})
 }
+
+// runSyncWithTimeout makes a hanging RunSync fail the test instead of blocking it.
+func runSyncWithTimeout(t *testing.T, loop *eventloop.EventLoop) error {
+	t.Helper()
+	result := make(chan error, 1)
+	go func() {
+		_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+			return goja.Undefined(), nil
+		})
+		result <- err
+	}()
+
+	select {
+	case err := <-result:
+		return err
+	case <-time.After(time.Second):
+		t.Fatal("RunSync did not return within 1s")
+		return nil
+	}
+}
+
+func TestEventLoop_RunSync_AfterStop(t *testing.T) {
+	loop := startLoop(t)
+	loop.Stop()
+	time.Sleep(50 * time.Millisecond)
+
+	// queueChan has a buffer of one, so the job is accepted but nobody runs it
+	err := runSyncWithTimeout(t, loop)
+
+	require.ErrorIs(t, err, eventloop.ErrStopped)
+}
+
+func TestEventLoop_RunSync_ConcurrentCallersAfterStop(t *testing.T) {
+	loop := startLoop(t)
+	loop.Stop()
+	time.Sleep(50 * time.Millisecond)
+
+	// queueChan has room for one job, so a second caller would block on the send
+	const callers = 3
+	errs := make(chan error, callers)
+	for i := 0; i < callers; i++ {
+		go func() { errs <- runSyncWithTimeout(t, loop) }()
+	}
+
+	for i := 0; i < callers; i++ {
+		require.ErrorIs(t, <-errs, eventloop.ErrStopped)
+	}
+}
+
+// The loop picks randomly between a queued job and the stop signal, so the caller gets
+// either the result or ErrStopped. What must never happen is a caller waiting forever.
+func TestEventLoop_RunSync_LoopStopsWhileJobIsQueued(t *testing.T) {
+	for i := 0; i < 50; i++ {
+		loop := eventloop.New(goja.New(), &enginetest.Host{})
+		loop.StartLoop()
+
+		blocked := make(chan struct{})
+		release := make(chan struct{})
+		loop.Run(func(*goja.Runtime) {
+			close(blocked)
+			<-release
+		})
+		<-blocked
+
+		result := make(chan error, 1)
+		go func() {
+			_, err := loop.RunSync(func(*goja.Runtime) (goja.Value, error) { return nil, nil })
+			result <- err
+		}()
+		time.Sleep(5 * time.Millisecond)
+		loop.Stop()
+		close(release)
+
+		select {
+		case err := <-result:
+			if err != nil {
+				require.ErrorIs(t, err, eventloop.ErrStopped)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("RunSync did not return after the loop stopped")
+		}
+	}
+}
+
+func TestEventLoop_RunSync_NotStarted(t *testing.T) {
+	loop := eventloop.New(goja.New(), &enginetest.Host{})
+
+	err := runSyncWithTimeout(t, loop)
+
+	require.NoError(t, err)
+}

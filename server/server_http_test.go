@@ -40,10 +40,7 @@ func TestHttp(t *testing.T) {
 			name: "new service but no paths defined",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0"),
-					},
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0"), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 
@@ -57,15 +54,12 @@ func TestHttp(t *testing.T) {
 			name: "new service with path",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 
@@ -79,25 +73,19 @@ func TestHttp(t *testing.T) {
 			name: "add server url should remove default url",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						// Info must be different to other config event
-						// otherwise no paths would be defined
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")},
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithServer("/foo", ""),
-						),
-					},
+					// Info must be different to other config event
+					// otherwise no paths would be defined
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithServer("/foo", ""),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")})),
 				})
 				waitStartup()
 
@@ -116,28 +104,22 @@ func TestHttp(t *testing.T) {
 			name: "update server url",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer("/", ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer("/", ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer("/foo", ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer("/foo", ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 
@@ -156,29 +138,23 @@ func TestHttp(t *testing.T) {
 			name: "update server url on different port",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer("/foo", ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer("/foo", ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				port := try.GetFreePort()
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer(fmt.Sprintf("http://:%v/foo", port), ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer(fmt.Sprintf("http://:%v/foo", port), ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 
@@ -192,29 +168,23 @@ func TestHttp(t *testing.T) {
 			name: "delete config event",
 			test: func(t *testing.T, m *server.HttpManager) {
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer("/foo", ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer("/foo", ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				m.Update(dynamic.ConfigEvent{
 					Event: dynamic.Delete,
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200)),
-							),
-							openapitest.WithServer("/foo", ""),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200)),
 						),
-					},
+						openapitest.WithServer("/foo", ""),
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 
@@ -228,11 +198,8 @@ func TestHttp(t *testing.T) {
 			test: func(t *testing.T, m *server.HttpManager) {
 				require.NotPanics(t, func() {
 					m.Update(dynamic.ConfigEvent{
-						Event: dynamic.Delete,
-						Config: &dynamic.Config{
-							Info: dynamictest.NewConfigInfo(),
-							Data: openapitest.NewConfig("3.1.0", openapitest.WithInfo("foo", "", "")),
-						},
+						Event:  dynamic.Delete,
+						Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0", openapitest.WithInfo("foo", "", "")), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 					})
 				})
 			},
@@ -242,13 +209,10 @@ func TestHttp(t *testing.T) {
 			test: func(t *testing.T, m *server.HttpManager) {
 				portA, portB := try.GetFreePort(), try.GetFreePort()
 				event := func(file string, port int) dynamic.ConfigEvent {
-					return dynamic.ConfigEvent{Config: &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: try.MustUrl(file)},
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithInfo("foo", "", ""),
-							openapitest.WithServer(fmt.Sprintf("http://127.0.0.1:%d", port), ""),
-						),
-					}}
+					return dynamic.ConfigEvent{Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer(fmt.Sprintf("http://127.0.0.1:%d", port), ""),
+					), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(file)}))}
 				}
 				m.Update(event("a.yml", portA))
 				b := event("b.yml", portB)
@@ -272,18 +236,15 @@ func TestHttp(t *testing.T) {
 				require.NoError(t, err)
 
 				m.Update(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/",
-								openapitest.WithOperation("GET",
-									openapitest.WithResponse(200, openapitest.WithContent(
-										"application/json",
-										openapitest.WithSchema(schematest.New("string", schematest.WithConst("foo")))),
-									)),
-							),
+					Config: dynamictest.NewConfig(openapitest.NewConfig("3.1.0",
+						openapitest.WithPath("/",
+							openapitest.WithOperation("GET",
+								openapitest.WithResponse(200, openapitest.WithContent(
+									"application/json",
+									openapitest.WithSchema(schematest.New("string", schematest.WithConst("foo")))),
+								)),
 						),
-					},
+					), dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitStartup()
 

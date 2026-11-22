@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
+import { resultRoute } from '@/composables/search-result';
 
 const props = defineProps<{
     item: SearchItem
@@ -9,12 +10,11 @@ const props = defineProps<{
 const { adaptiveTruncate } = usePrettyText()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
-const route = computed(() => {
-    return { name: 'config', params: props.item.params }
-})
+// the type of this card always has a detail page
+const route = computed(() => resultRoute(props.item)!)
 </script>
 
 <template>

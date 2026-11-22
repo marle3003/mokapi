@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -305,12 +306,8 @@ export default function() {
 			defer s.Close()
 
 			err := e.AddScript(dynamic.ConfigEvent{
-				Config: &dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.js")},
-					Raw:  []byte(tc.script),
-					Data: tc.script,
-				},
-				Event: dynamic.Create,
+				Config: dynamictest.NewConfig(tc.script, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.js")}), dynamictest.WithRaw([]byte(tc.script))),
+				Event:  dynamic.Create,
 			})
 			require.NoError(t, err)
 

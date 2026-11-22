@@ -11,7 +11,10 @@ const Measurement = {
   },
 };
 
-export let clusters = [
+const sensorsTag = { name: 'sensors', description: 'Measurements of the temperature sensors' }
+const homeTag = { name: 'home', description: 'Rooms of the house' }
+
+export const clusters = [
   {
     name: 'MQTT Temperature Sensor API',
     description:
@@ -37,23 +40,8 @@ export let clusters = [
     ],
     topics: [
       {
-        name: 'home/livingroom/temperature',
-        summary: 'Channel for messages FROM the sensor (Publish)',
-        messages: {
-          TemperatureMeasurement: {
-            name: 'TemperatureMeasurement',
-            title: 'Temperature Measurement',
-            payload: { schema: Measurement },
-            contentType: 'application/json',
-          },
-        },
-        bindings: {
-          qos: 1,
-          retain: false,
-        },
-      },
-      {
         name: 'sensors/{sensorId}/data',
+        tags: [sensorsTag],
         messages: {
           TemperaturePayload: {
             name: 'TemperaturePayload',
@@ -82,14 +70,37 @@ export let clusters = [
             parameters: {
               sensorId: '123'
             },
+          },
+          {
+            name: 'sensors/456/data',
+            parameters: {
+              sensorId: '456'
+            },
           }
         ]
+      },
+      {
+        name: 'home/livingroom/temperature',
+        tags: [sensorsTag, homeTag],
+        summary: 'Channel for messages FROM the sensor (Publish)',
+        messages: {
+          TemperatureMeasurement: {
+            name: 'TemperatureMeasurement',
+            title: 'Temperature Measurement',
+            payload: { schema: Measurement },
+            contentType: 'application/json',
+          },
+        },
+        bindings: {
+          qos: 1,
+          retain: false,
+        },
       },
     ],
     metrics: metrics.filter((x) => x.name.includes('mqtt')),
     clients: [
-      { clientId: 'mqtt-client-1', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 4 },
-      { clientId: 'mqtt-client-2', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 5 }
+      { clientId: 'mqtt-client-2', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 5 },
+      { clientId: 'mqtt-client-1', address: '127.0.0.1:83374', brokerAddress: 'localhost:1883', protocolVersion: 4 }
     ]
   },
 ];
@@ -110,9 +121,10 @@ export default async function () {
                   ...('title' in x  ? { title: x.title } : {}),
                   ...('summary' in x ? { summary: x.summary } : {}),
                   ...('description' in x ? { description: x.description } : {}),
+                  ...('tags' in x ? { tags: x.tags } : {}),
                   messages: x.messages,
                   ...('parameters' in x ? { parameters: x.parameters} : {}),
-                  ...('instances' in x ? { instances: x.instances?.map((i: any) => (
+                  ...('instances' in x ? { instances: x.instances?.map((i) => (
                     {
                       ...i,
                       metrics: {
@@ -133,7 +145,7 @@ export default async function () {
   });
 }
 
-export let events = [
+export const events = [
   {
     id: '9f8bd24d-1480-4d2d-a1b4-f022aeddeaf8',
     traits: {
@@ -245,5 +257,77 @@ export let events = [
         reason: 0
       }
     },
-  }
+  },
+  ...mqttMessageEvents([
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a01', time: '2026-02-15T08:00:00.000000+01:00', topic: 'home/livingroom/temperature', clientId: 'mqtt-client-2', retain: true, temperature: 21.5 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a02', time: '2026-02-15T08:01:00.000000+01:00', topic: 'sensors/{sensorId}/data', instance: 'sensors/456/data', clientId: 'mqtt-client-1', temp: 18 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a03', time: '2026-02-15T08:02:00.000000+01:00', topic: 'sensors/{sensorId}/data', instance: 'sensors/123/data', clientId: 'mqtt-client-1', temp: 34 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a04', time: '2026-02-15T08:03:00.000000+01:00', topic: 'home/livingroom/temperature', clientId: 'mqtt-client-1', temperature: 22.0, withActions: true },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a05', time: '2026-02-15T08:04:00.000000+01:00', topic: 'sensors/{sensorId}/data', instance: 'sensors/456/data', clientId: 'mqtt-client-2', temp: 19 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a06', time: '2026-02-15T08:05:00.000000+01:00', topic: 'home/livingroom/temperature', clientId: 'mokapi-script', temperature: 23.5, script: 'examples/mqtt-sensor.js' },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a07', time: '2026-02-15T08:06:00.000000+01:00', topic: 'sensors/{sensorId}/data', instance: 'sensors/123/data', clientId: 'mqtt-client-2', temp: 35 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a08', time: '2026-02-15T08:07:00.000000+01:00', topic: 'home/livingroom/temperature', clientId: 'mqtt-client-1', temperature: 24.0 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a09', time: '2026-02-15T08:08:00.000000+01:00', topic: 'sensors/{sensorId}/data', instance: 'sensors/456/data', clientId: 'mqtt-client-1', temp: 20 },
+    { id: '3b1f6a52-5c0e-4a52-9d1a-0c7f0b6f2a0a', time: '2026-02-15T08:09:00.000000+01:00', topic: 'home/livingroom/temperature', clientId: 'mqtt-client-2', temperature: 24.5 },
+  ]),
 ];
+
+interface MqttMessageSeed {
+  id: string
+  time: string
+  topic: string
+  // the concrete topic name of a template topic
+  instance?: string
+  clientId: string
+  temp?: number
+  temperature?: number
+  retain?: boolean
+  withActions?: boolean
+  script?: string
+}
+
+// Message events of the Temperature Sensor API with fixed ids and times, appended after the
+// first events so that their order doesn't change.
+function mqttMessageEvents(seeds: MqttMessageSeed[]) {
+  return seeds.map((seed) => {
+    const isTemplate = seed.instance !== undefined
+    return {
+      id: seed.id,
+      traits: {
+        namespace: 'mqtt',
+        name: 'MQTT Temperature Sensor API',
+        type: 'message',
+        topic: seed.topic,
+        ...(isTemplate ? { instance: seed.instance } : {}),
+        clientId: seed.clientId,
+      },
+      time: seed.time,
+      data: {
+        topic: seed.instance ?? seed.topic,
+        messageId: isTemplate ? 'TemperaturePayload' : 'TemperatureMeasurement',
+        message: {
+          value: JSON.stringify(isTemplate
+            ? { temp: seed.temp, timestamp: seed.time }
+            : { sensorId: '12345', temperature: seed.temperature, unit: 'celsius', timestamp: seed.time }),
+        },
+        clientId: seed.clientId,
+        ...(seed.retain ? { retain: true } : {}),
+        ...(seed.script ? { script: seed.script } : {}),
+        ...(seed.withActions ? {
+          actions: [
+            {
+              duration: 20,
+              tags: {
+                name: 'mqtt sensor',
+                file: 'examples/mqtt-sensor.js',
+                fileKey: 'f4f1d0a3-6a3b-4f6e-8a55-1b6b8c2d9e11',
+                event: 'mqtt',
+              },
+              logs: [{ level: 'info', message: 'mqtt handler called' }],
+            },
+          ],
+        } : {}),
+      },
+    }
+  })
+}

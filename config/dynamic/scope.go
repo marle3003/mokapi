@@ -47,6 +47,9 @@ func (s *Scope) GetLexical(name string) (interface{}, error) {
 	}
 
 	current := s.top()
+	if current == nil {
+		return nil, fmt.Errorf("name '%s' not found: no scope present", name)
+	}
 
 	if current.lexical != nil {
 		if v, ok := current.lexical[name]; ok {

@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/smtp"
 	"regexp"
+	"slices"
 
 	"gopkg.in/yaml.v3"
 )
@@ -124,10 +125,14 @@ func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	return nil
 }
 
+func defaultSettings() *Settings {
+	return &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true, MaxInboxMails: DefaultMaxInboxMails}
+}
+
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
+	tmp.Settings = defaultSettings()
 	err := value.Decode(&tmp)
 	*c = Config(tmp)
 	return err
@@ -137,7 +142,7 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
+	tmp.Settings = defaultSettings()
 	err := dec.Decode(&tmp)
 	*c = Config(tmp)
 	return err
@@ -157,4 +162,55 @@ func (r *RuleExpr) UnmarshalJSON(b []byte) error {
 	}
 	r.expr, err = regexp.Compile(t.(string))
 	return err
+}
+
+// Clone returns a deep copy, so that patching the copy never changes the parsed file.
+// RuleExpr and RejectResponse are shared: a patch replaces them, it never changes them.
+func (c *Config) Clone() *Config {
+	if c == nil {
+		return nil
+	}
+	r := *c
+	r.Info.Contact = copyOf(c.Info.Contact)
+	r.Servers = cloneMap(c.Servers, copyOf)
+	r.Settings = copyOf(c.Settings)
+	r.Mailboxes = cloneMap(c.Mailboxes, (*MailboxConfig).clone)
+	r.Rules = cloneMap(c.Rules, copyOf)
+	return &r
+}
+
+func (m *MailboxConfig) clone() *MailboxConfig {
+	if m == nil {
+		return nil
+	}
+	r := *m
+	r.Folders = cloneMap(m.Folders, (*FolderConfig).clone)
+	return &r
+}
+
+func (f *FolderConfig) clone() *FolderConfig {
+	if f == nil {
+		return nil
+	}
+	return &FolderConfig{Flags: slices.Clone(f.Flags), Folders: cloneMap(f.Folders, (*FolderConfig).clone)}
+}
+
+// copyOf copies a struct that has no maps or slices of its own.
+func copyOf[T any](v *T) *T {
+	if v == nil {
+		return nil
+	}
+	r := *v
+	return &r
+}
+
+func cloneMap[T any](m map[string]*T, clone func(*T) *T) map[string]*T {
+	if m == nil {
+		return nil
+	}
+	r := make(map[string]*T, len(m))
+	for k, v := range m {
+		r[k] = clone(v)
+	}
+	return r
 }

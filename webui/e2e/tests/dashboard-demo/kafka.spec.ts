@@ -1,4 +1,6 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -13,10 +15,10 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         dashboard = '/dashboard-demo'
         await page.goto('/dashboard-demo')
     }
-    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+    const { sidebar } = new DashboardModel(page)
 
 
-    await page.getByText('Kafka Order Service API').click();
+    await sidebar.getByRole('link', { name: 'Kafka Order Service API' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -143,9 +145,14 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
 
     const messages = page.getByRole('table', { name: 'Recent Messages' });
 
+    // a click selects the message and shows it beside the log, the full view opens with "Open as tab"
+    async function openFullView() {
+        await page.getByRole('region', { name: 'Message details' }).getByRole('link', { name: 'Open as tab' }).click();
+    }
+
     await test.step('Verify Recent Messages', async () => {
 
-        await page.getByRole('tab', { name: 'Topics' }).click();
+        await page.getByRole('tab', { name: 'Messages', exact: true }).click();
         const region = page.getByRole('region', { name: 'Recent Messages' });
         await expect(region).toBeVisible();
 
@@ -172,6 +179,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await test.step('Verify Message 1', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
+            await openFullView();
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
@@ -204,6 +212,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await test.step('Verify Message 2', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'random-message-1' }).click();
+            await openFullView();
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('random-message-1');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
@@ -274,7 +283,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         });
 
         await test.step('Visit shipments.{region}.updates', async () => {
-            await breadcrumb.getByRole('link', { name: 'Kafka Order Service API' }).click();
+            await sidebar.getByRole('link', { name: 'Kafka Order Service API' }).click();
             await page.getByRole('link', { name: 'shipments.{region}.updates' }).click();
 
             const region = page.getByRole('region', { name: 'Info' })
@@ -299,3 +308,14 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
 
     });
 });
+
+test('Metric tiles of the kafka page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/kafka`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'kafka')
+
+    await expect(count.value).toHaveText('4')
+    await expect(second.value).toHaveText('0')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

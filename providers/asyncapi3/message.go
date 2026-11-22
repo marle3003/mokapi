@@ -148,7 +148,7 @@ func (m *Message) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if m.ContentType == "" {
-		cfg, ok := config.Data.(*Config)
+		cfg, ok := config.Data().(*Config)
 		if ok {
 			m.ContentType = cfg.DefaultContentType
 		}

@@ -3,7 +3,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRoute } from '@/router';
 import { computed } from 'vue';
 import Message from '../../Message.vue';
-import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
+import WebsocketMessages from './WebsocketMessages.vue'
 import WebsocketEvents from './WebsocketEvents.vue'
 import { useWebsocket } from '@/composables/websocket';
 
@@ -26,7 +26,7 @@ const client = computed(() => {
   if (!service.value || !service.value.data || !service.value.data.clients) {
     return null;
   }
-  for (let client of service.value.data.clients){
+  for (const client of service.value.data.clients){
     if (client.id == clientId) {
       return client;
     }
@@ -48,12 +48,12 @@ const client = computed(() => {
                         </p>
                     </div>
                     <div class="col">
-                        <p id="group" class="label">Cluster</p>
+                        <p id="service" class="label">Service</p>
                         <p>
                           <router-link :to="{
                               name: getRouteName('websocketService').value,
                               params: {service: service.data?.name},
-                          }" aria-labelledby="cluster">
+                          }" aria-labelledby="service">
                           {{ service.data?.name }}
                         </router-link>
                         </p>
@@ -72,7 +72,7 @@ const client = computed(() => {
           </section>
       </div>
       <div class="card-group">
-        <websocket-messages-card :service="service.data" :client-id="client.id" :hide-when-empty="true" />
+        <websocket-messages :service="service.data" :client-id="client.id" hide-when-empty />
       </div>
       <div class="card-group">
         <websocket-events :service="service.data" :client-id="client.id" />

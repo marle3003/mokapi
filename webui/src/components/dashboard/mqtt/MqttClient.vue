@@ -3,7 +3,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRoute } from '@/router';
 import { computed } from 'vue';
 import Message from '../../Message.vue';
-import MqttMessagesCard from './MqttMessagesCard.vue'
+import MqttMessages from './MqttMessages.vue'
 import MqttRequests from './MqttRequests.vue'
 import { useMqtt } from '@/composables/mqtt';
 
@@ -26,7 +26,7 @@ const client = computed(() => {
   if (!service.value || !service.value.data) {
     return null;
   }
-  for (let client of service.value.data.clients){
+  for (const client of service.value.data.clients){
     if (client.clientId == clientId) {
       return client;
     }
@@ -80,7 +80,7 @@ const client = computed(() => {
           </section>
       </div>
       <div class="card-group">
-        <mqtt-messages-card :service="service.data" :client-id="clientId" :hide-when-empty="true" />
+        <mqtt-messages :service="service.data" :client-id="clientId" :hide-when-empty="true" />
       </div>
       <div class="card-group">
         <mqtt-requests :service="service.data" :client-id="clientId" />

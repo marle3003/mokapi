@@ -7,7 +7,7 @@ const props = defineProps({
 })
 
 const sortedServers = computed(() => {
-    return props.servers.sort(comparePath)
+    return [...props.servers].sort(comparePath)
 })
 
 function comparePath(s1: HttpServer, s2: HttpServer) {

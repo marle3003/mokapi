@@ -1,4 +1,7 @@
 import { test, expect } from '../models/fixture-website'
+import { DashboardModel } from '../models/dashboard'
+import { ProtocolMetricsModel, demoDashboardPath } from '../models/protocol-metrics'
+import { HttpRequestLogModel } from '../models/http'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -6,15 +9,13 @@ test.use({ colorScheme: 'light' })
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test('Visit Petstore Demo', async ({ page, baseURL }) => {
-    let dashboard = '/dashboard'
     if (baseURL === 'http://localhost:8080') {
         await page.goto('/dashboard')
     } else {
-        dashboard = '/dashboard-demo'
         await page.goto('/dashboard-demo')
     }
 
-    await page.getByText('Swagger Petstore').click();
+    await new DashboardModel(page).sidebar.getByRole('link', { name: 'Swagger Petstore' }).click();
 
     await test.step('Verify service info', async () => {
 
@@ -90,9 +91,9 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
 
     await test.step('Verify Recent Requests', async () => {
 
-        await page.getByRole('tab', { name: 'Paths' }).click();
+        await page.getByRole('tab', { name: 'Requests', exact: true }).click();
         const table = page.getByRole('table', { name: 'Recent Requests' });
-        let rows = table.locator('tbody tr');
+        const rows = table.locator('tbody tr');
 
         await expect(rows).toHaveCount(13);
         await expect(await getCellByColumnName(table, 'Method', rows.nth(11))).toHaveText('POST');
@@ -103,29 +104,30 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         await expect(await getCellByColumnName(table, 'URL', rows.nth(12))).toHaveText('http://localhost/v2/pet/10');
         await expect(await getCellByColumnName(table, 'Status Code', rows.nth(12))).toHaveText('200 OK');
 
-        const filter = page.getByRole('region', { name: 'Recent Requests'}).getByRole('button', { name: 'Filter' })
-        await filter.click();
-        const dialog = page.getByRole('dialog', { name: 'Filter' });
-        await expect(dialog).toBeVisible();
-        await dialog.getByRole('checkbox', { name: 'Method' }).click();
+        const log = new HttpRequestLogModel(page)
+        let popover = await log.openAddFilter('Method')
+        await popover.getByRole('combobox', { name: 'Method' }).selectOption('GET');
         await expect(rows).toHaveCount(10);
 
-        await dialog.getByRole('checkbox', { name: 'Method' }).click();
-        await dialog.getByRole('checkbox', { name: 'GET' }).click();
+        await popover.getByRole('button', { name: 'Select several' }).click();
+        await popover.getByRole('checkbox', { name: 'GET' }).click();
         await expect(rows).toHaveCount(0);
 
-        await dialog.getByRole('checkbox', { name: 'Method' }).click();
+        await page.keyboard.press('Escape');
+        await log.chips.getByRole('button', { name: /^Remove Method/ }).click();
+        await expect(log.chips).toHaveCount(0);
         await expect(rows).toHaveCount(13);
 
-        await dialog.getByRole('checkbox', { name: 'URL' }).click();
-        await dialog.getByRole('textbox', { name: 'URL filter'}).fill('/pet/10');
+        popover = await log.openAddFilter('URL');
+        await popover.getByRole('textbox', { name: 'URL filter'}).fill('/pet/10');
         await expect(rows).toHaveCount(1);
 
-        await dialog.getByRole('button', { name: 'close' }).click();
-        await expect(filter).toHaveAccessibleName('Filter (1 active filter)')
+        await page.keyboard.press('Escape');
+        await expect(log.chips).toHaveText(['URL: /pet/10']);
     });
 
     await test.step('Verify /pet/{petId}', async () => {
+        await page.getByRole('tab', { name: 'Paths' }).click();
         await page.getByText('/pet/{petId}', { exact: true }).click()
 
         await expect(page.getByLabel('Path', { exact: true })).toHaveText('/pet/{petId}')
@@ -230,3 +232,15 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         });
     });
 });
+
+test('Metric tiles of the http page', async ({ page, baseURL }) => {
+    await page.goto(`${demoDashboardPath(baseURL)}/http`)
+    const { count, second, last } = new ProtocolMetricsModel(page, 'http')
+
+    await expect(count.value).toHaveText('12')
+    await expect(second.value).toHaveText('1')
+    await expect(second.additional).toHaveText('8.3 %')
+    // the recording is renewed on every build, so only the format of the time is fixed
+    await expect(last.value).toHaveText(/ ago$/)
+    await expect(last.additional).toHaveText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+})

@@ -61,6 +61,13 @@ func TestMain_Flags(t *testing.T) {
 			},
 		},
 		{
+			name: "--mcp-server-enabled false",
+			args: []string{"--mcp-server-enabled", "false"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.False(t, cfg.Mcp.Server.Enabled)
+			},
+		},
+		{
 			name: "--event-store-default-size 500",
 			args: []string{"--event-store-default-size", "500"},
 			test: func(t *testing.T, cfg *static.Config) {
@@ -665,4 +672,64 @@ func createTempFile(t *testing.T, filename, data string) string {
 	}
 
 	return path
+}
+
+func TestMain_FlagFollowedByPositionalArgs(t *testing.T) {
+	testcases := []struct {
+		name string
+		args []string
+		test func(t *testing.T, cfg *static.Config, args []string)
+	}{
+		{
+			name: "--log-level debug petstore.yaml",
+			args: []string{"--log-level", "debug", "petstore.yaml"},
+			test: func(t *testing.T, cfg *static.Config, args []string) {
+				require.Equal(t, "debug", cfg.Log.Level)
+				require.Equal(t, []string{"petstore.yaml"}, args)
+			},
+		},
+		{
+			name: "--api-port 8080 a.yaml b.yaml",
+			args: []string{"--api-port", "8080", "a.yaml", "b.yaml"},
+			test: func(t *testing.T, cfg *static.Config, args []string) {
+				require.Equal(t, 8080, cfg.Api.Port)
+				require.Equal(t, []string{"a.yaml", "b.yaml"}, args)
+			},
+		},
+		{
+			name: "--api-dashboard petstore.yaml",
+			args: []string{"--api-dashboard", "petstore.yaml"},
+			test: func(t *testing.T, cfg *static.Config, args []string) {
+				require.Equal(t, true, cfg.Api.Dashboard)
+				require.Equal(t, []string{"petstore.yaml"}, args)
+			},
+		},
+		{
+			name: "--no-api-dashboard petstore.yaml",
+			args: []string{"--no-api-dashboard", "petstore.yaml"},
+			test: func(t *testing.T, cfg *static.Config, args []string) {
+				require.Equal(t, false, cfg.Api.Dashboard)
+				require.Equal(t, []string{"petstore.yaml"}, args)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := mokapi.NewCmdMokapi()
+			cmd.SetArgs(tc.args)
+
+			var cfg *static.Config
+			var positional []string
+			cmd.Run = func(cmd *cli.Command, args []string) error {
+				cfg = cmd.Config.(*static.Config)
+				positional = args
+				return nil
+			}
+			err := cmd.Execute()
+			require.NoError(t, err)
+
+			tc.test(t, cfg, positional)
+		})
+	}
 }

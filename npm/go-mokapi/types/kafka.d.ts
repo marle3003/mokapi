@@ -182,44 +182,16 @@ export interface Message {
  * }
  */
 export interface ProduceResult {
-    /** Name of the Kafka cluster where the messages were written. */
-    readonly cluster: string;
+    /**
+     * Name of the Kafka cluster (AsyncAPI `info.title`) where the messages were written.
+     */
+    readonly api: string;
 
     /** Name of the Kafka topic where the messages were written. */
     readonly topic: string;
 
     /** The written messages, in the same order as in {@link ProduceArgs.messages}. */
     readonly messages: readonly MessageResult[];
-
-    /**
-     * Partition of the first written message.
-     * @deprecated Use `messages[i].partition` instead.
-     */
-    readonly partition: number;
-
-    /**
-     * Offset of the first written message.
-     * @deprecated Use `messages[i].offset` instead.
-     */
-    readonly offset: number;
-
-    /**
-     * Key of the first written message.
-     * @deprecated Use `messages[i].key` instead.
-     */
-    readonly key: string;
-
-    /**
-     * Value of the first written message.
-     * @deprecated Use `messages[i].value` instead.
-     */
-    readonly value: string;
-
-    /**
-     * Headers of the first written message.
-     * @deprecated Use `messages[i].headers` instead.
-     */
-    readonly headers: { [name: string]: string };
 }
 
 /**

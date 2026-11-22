@@ -3,6 +3,7 @@ package static_test
 import (
 	"encoding/json"
 	"mokapi/config/static"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -143,4 +144,24 @@ func TestJson(t *testing.T) {
 			tc.test(t, cfg)
 		})
 	}
+}
+
+// A copy-pasted name tag silently binds two fields to the same flag, so one of them can never be set.
+func TestConfig_NameTagsAreUniquePerStruct(t *testing.T) {
+	var check func(t *testing.T, typ reflect.Type)
+	check = func(t *testing.T, typ reflect.Type) {
+		seen := map[string]string{}
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			if name := field.Tag.Get("name"); name != "" {
+				other, found := seen[name]
+				require.False(t, found, "%s: fields %s and %s share name tag %q", typ.Name(), other, field.Name, name)
+				seen[name] = field.Name
+			}
+			if field.Type.Kind() == reflect.Struct {
+				check(t, field.Type)
+			}
+		}
+	}
+	check(t, reflect.TypeOf(static.Config{}))
 }

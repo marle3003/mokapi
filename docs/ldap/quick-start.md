@@ -1,156 +1,192 @@
 ---
-title: Quick Start to Mock a LDAP Server
-description: Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
+title: "LDAP Mocking: Query and Bind to a Mocked Directory with Mokapi"
+description: Start a mocked LDAP directory from a YAML file and an LDIF file, search it and bind as a user with ldapsearch, add an entry and inspect the requests in the dashboard.
 ---
-# Quick Start to Mock an LDAP Server
+# Mocking an LDAP Directory
 
-Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
+## Overview
 
-## Before you start
+This guide mocks a small company directory with Mokapi. By the end, you'll have:
 
-There are various ways to run Mokapi depending on your needs. For detailed instructions on how to get Mokapi running on 
-your workstation, refer to the information provided [here](/docs/get-started/installation.md).
+1. Defined a directory with two users and a group in an LDIF file.
+2. Started Mokapi so it serves the directory on port 389.
+3. Searched the directory with `ldapsearch`.
+4. Bound as a user with a correct and a wrong password.
+5. Added an entry and seen that a reload resets it.
+6. Inspected the requests in the dashboard.
 
-## Basic structure of an LDAP server configuration
+The commands use the OpenLDAP client tools (`ldapsearch`, `ldapadd`). If Mokapi isn't installed yet,
+see the [installation guide](/docs/get-started/installation.md).
 
-To run an LDAP server with Mokapi, the minimum requirement is specifying a host address. This allows Mokapi to bind to 
-the correct network interface and start serving requests.
+## Define the Directory
 
-Below is an example of the simplest configuration, which does not include any custom LDAP entries. In this configuration, 
-Mokapi automatically generates a basic Root DSE entry, which provides essential information about the server, such as 
-the supported LDAP versions, the vendor name, and vendor version.
-
-This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather
-than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more 
-advanced server settings as needed.
+Create the configuration file `ldap.yaml`:
 
 ```yaml tab=ldap.yaml
-ldap: 1.0 # file configuration version not LDAP protocol version
+ldap: 1.0 # version of the file format, not the LDAP protocol version
 info:
-  title: Basic LDAP Server
+  title: Company Directory
 host: :389
+server:
+  namingContexts:
+    - dc=example,dc=com
+files:
+  - ./users.ldif
 ```
 
-To start Mokapi with a specific configuration file, you can use the --providers-file-filename option in the command 
-line. This tells Mokapi to load the specified configuration file when it starts.
+`host` is the address Mokapi listens on and has no default. `server.namingContexts` sets the naming context that
+the root DSE reports. The file in `files` holds the entries:
 
-```bash
-mokapi --providers-file-filename ldap.yaml
+```ldif tab=users.ldif
+dn: dc=example,dc=com
+objectClass: top
+
+dn: cn=alice,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: alice
+sn: Smith
+userPassword: secret
+
+dn: cn=bob,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: bob
+sn: Jones
+userPassword: hunter2
+
+dn: cn=developers,dc=example,dc=com
+objectClass: groupOfNames
+cn: developers
+member: cn=alice,dc=example,dc=com
 ```
-There is a new shorthand option to start Mokapi with less typing. Simply run:
+
+The relative path is resolved against the location of `ldap.yaml`. See the [overview](/docs/ldap/overview.md) for the
+complete configuration, including inline entries and URLs as files.
+
+## Start Mokapi
+
 ```bash
 mokapi ldap.yaml
 ```
 
-## Set up a Simple LDAP Entry Structure
-
-Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations, 
-such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it 
-easy to simulate real-world LDAP scenarios and test different interactions with your server.
-
-``` box=info
-Mokapi does not include predefined LDAP entries except for a simple Root DSE and a basic schema. By default, Mokapi’s 
-Root DSE includes the namingContexts 'dc=mokapi,dc=io'
-```
-
-In your configuration file, you can reference multiple LDIF files. Mokapi will continuously monitor these files and 
-automatically update the LDAP server whenever a change is detected. This dynamic reloading of LDIF files helps streamline 
-the testing and development process, ensuring that your mock server always reflects the latest configurations.
-
-In the following example, we define an LDAP entry `dc=example,dc=com` and assign it the `top` object class.
-This entry is added to the `namingContexts` in the Root DSE. Additionally, we include a user entry for `cn=alice,dc=example,dc=com?`.
-This LDIF file can be referenced in the LDAP configuration file using a relative path.
-
-``` box=tip
-You can also reference an LDIF file using an HTTP or GIT URL, allowing you to source configuration data from remote 
-locations or version-controlled repositories for better integration and versioning.
-```
-
-```ldif tab=example.ldif
-# Root DSE
-dn:
-namingContexts: dc=example,dc=com
-
-dn: dc=example,dc=com
-objectClass: top
-
-dn: cn=alice,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: alice
-```
-
-In the LDAP configuration, you would reference this LDIF file as follows:
-
-```yaml tab=ldap.yaml
-ldap: 1.0 # file configuration version not LDAP protocol version 
-info:
-  title: LDAP Server using LDIF
-host: :389
-files:
-  - ./example.ldif
-```
-
-This setup provides a foundational LDAP structure, which you can build upon by adding more entries and customizing attributes to meet your testing requirements.
-
-To query the example LDAP setup, you can use the ldapsearch command, which is a common tool for querying LDAP directories from the command line.
+Or run it in Docker. The image's entrypoint is `mokapi`, so the configuration file goes after the image name. Mount
+the folder that contains both files:
 
 ```bash
-ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(objectClass=*)"
-# extended LDIF
-#
-# LDAPv3
-# base <dc=example,dc=com> with scope subtree
-# filter: (objectClass=*)
-# requesting: ALL
-#
-
-#
-dn:
-namingContexts: dc=example,dc=com
-supportedLDAPVersion: 3
-vendorName: Mokapi
-vendorVersion: v0.11.2
-
-# example.com
-dn: dc=example,dc=com
-objectClass: top
-
-# alice, example.com
-dn: cn=alice,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: alice
-
-# search result
-search: 2
-result: 0 Success
-text: Success
-
-# numResponses: 4
-# numEntries: 3
+docker run --rm -p 389:389 -p 8080:8080 -v "$(pwd):/ldap:ro" mokapi/mokapi:latest /ldap/ldap.yaml
 ```
 
-To query the cn=alice,dc=example,dc=com user entry, you can use a command like the following:
+Port 389 is the LDAP server and port 8080 the dashboard. If port 389 is already in use or you aren't allowed to bind it, use a port such as `:1389` in `host`, in the
+Docker `-p` option and in the commands below.
+
+## Search the Directory
+
+Find all users and return only their `cn` and `sn`:
 
 ```bash
-ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(cn=alice)"
-# extended LDIF
-#
-# LDAPv3
-# base <dc=example,dc=com> with scope subtree
-# filter: (cn=alice)
-# requesting: ALL
-#
-
-# alice, example.com
-dn: cn=alice,dc=example,dc=com
-objectClass: inetOrgPerson
-cn: alice
-
-# search result
-search: 2
-result: 0 Success
-text: Success
-
-# numResponses: 2
-# numEntries: 1
+ldapsearch -x -H ldap://localhost:389 -LLL -b "dc=example,dc=com" "(objectClass=inetOrgPerson)" cn sn
 ```
+
+`-x` selects simple authentication and `-LLL` prints plain LDIF without the comments. Mokapi returns the entries in
+the order of the LDIF file:
+
+```
+dn: cn=alice,dc=example,dc=com
+cn: alice
+sn: Smith
+
+dn: cn=bob,dc=example,dc=com
+cn: bob
+sn: Jones
+```
+
+The order of the attributes within an entry can differ between requests.
+
+Mokapi calculates `memberOf` from the `member` attributes of the groups, so alice knows her group although the LDIF
+file doesn't set it:
+
+```bash
+ldapsearch -x -H ldap://localhost:389 -LLL -b "dc=example,dc=com" "(cn=alice)" memberOf
+```
+
+```
+dn: cn=alice,dc=example,dc=com
+memberOf: cn=developers,dc=example,dc=com
+```
+
+The root DSE describes the server. Its `namingContexts` attribute is operational, so a search returns it only if you
+request it by name or with `+`:
+
+```bash
+ldapsearch -x -H ldap://localhost:389 -LLL -s base -b "" namingContexts
+```
+
+```
+dn:
+namingContexts: dc=example,dc=com
+```
+
+## Bind as a User
+
+Pass a DN with `-D` and a password with `-w`. Mokapi compares the password with the `userPassword` of the entry:
+
+```bash
+ldapsearch -x -H ldap://localhost:389 -LLL -D "cn=alice,dc=example,dc=com" -w secret -b "dc=example,dc=com" "(cn=alice)" cn
+```
+
+```
+dn: cn=alice,dc=example,dc=com
+cn: alice
+```
+
+With a wrong password, `ldapsearch` stops at the bind:
+
+```bash
+ldapsearch -x -H ldap://localhost:389 -LLL -D "cn=alice,dc=example,dc=com" -w wrong -b "dc=example,dc=com" "(cn=alice)" cn
+# ldap_bind: Invalid credentials (49)
+```
+
+An unknown DN fails the same way. An entry without a `userPassword`, such as the group, accepts any password.
+
+Mokapi supports only simple authentication, and a bind isn't required for other operations. Without `-D`, the
+client binds anonymously and can still search and write.
+
+## Add an Entry
+
+Create `carol.ldif`:
+
+```ldif tab=carol.ldif
+dn: cn=carol,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: carol
+sn: Miller
+userPassword: s3cret
+```
+
+Add it with `ldapadd`:
+
+```bash
+ldapadd -x -H ldap://localhost:389 -f carol.ldif
+# adding new entry "cn=carol,dc=example,dc=com"
+```
+
+A search for `(cn=carol)` now returns the entry, and you can bind as carol. The change only lives in the running
+directory. When you save `ldap.yaml` or `users.ldif`, Mokapi rebuilds the directory from the files and carol is gone.
+To keep an entry, put it in the LDIF file.
+
+## Inspect Requests in the Dashboard
+
+1. Open the dashboard, by default at http://localhost:8080.
+2. Click **LDAP** in the sidebar and then **Company Directory**.
+3. The **Requests** sub tab lists every request with operation, DN, status and duration. `ldapsearch` and `ldapadd` also show up as an anonymous bind and an unbind around the actual operation.
+4. Click a request to see its details next to the table. For a search, the **Response** sub tab shows the entries
+   that Mokapi returned. For the bind with the wrong password, the status is `InvalidCredentials`.
+
+See [Analyze your mocked LDAP API in Dashboard](/docs/ldap/dashboard.md) for filters, pausing the log and sharing a
+request by its address.
+
+## Next Steps
+
+- [Mocking an LDAP Server](/docs/ldap/overview.md): Bind rules, search filters, write operations and the full configuration reference.
+- [Mock LDAP Authentication in Node.js](/resources/tutorials/mock-ldap-authentication-in-node): Test the login of a Node.js backend against Mokapi.
+- [Mocking LDAP using Group Permission](/resources/tutorials/mock-ldap-group-permission-in-node): Test group-based permissions with a mocked directory.
+- [JavaScript API](/docs/javascript-api/overview.md): `on('ldap', ...)` lets a script change the response of a search request. It isn't called for bind or write requests.

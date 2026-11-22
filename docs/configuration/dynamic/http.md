@@ -17,16 +17,16 @@ providers:
     url: http://127.0.0.1/api
 ```
 ```bash tab=CLI
---providers-file-directory http://127.0.0.1/api
+--providers-http-url http://127.0.0.1/api
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_FILE_DIRECTORY=http://127.0.0.1/api
+MOKAPI_PROVIDERS_HTTP_URL=http://127.0.0.1/api
 ```
 
 ## Provider Configuration
 
 A list of all options that can be used with the HTTP provider, refer to
-the [reference page](/docs/configuration/reference.md).
+the [CLI Flags](/docs/configuration/static/cli-flags#providers-http) page.
 
 ``` box=tip
 You can also use CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli-usage.md)
@@ -100,9 +100,13 @@ providers:
 MOKAPI_PROVIDERS_HTTP_PROXY=http://localhost:3128
 ```
 
+For a complete setup with an internal certificate authority, see
+[Running Mokapi Behind a Corporate Proxy](/docs/configuration/use-cases/corporate-proxy.md).
+
 ### CA (Certificate Authority)
 Path to the certificate authority used for secure connection. By default, the system 
-certification pool is used.
+certification pool is used. The certificate can be PEM or DER encoded. A PEM file can contain
+several certificates, for example a bundle with intermediate and root CA.
 
 ``` box=warning
 This switch is only intended to be used against known hosts using self-signed certificate.
@@ -118,7 +122,7 @@ providers:
 --providers-http-ca=/path/to/mycert.pem
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_CA=/path/to/mycert.pem
+MOKAPI_PROVIDERS_HTTP_CA=/path/to/mycert.pem
 ```
 
 ### Skip TLS Verification

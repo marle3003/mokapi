@@ -1,32 +1,14 @@
-import { on, sleep } from 'mokapi'
-import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka.ts'
-import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './http'
-import { services as mailServices, mailEvents, getMail, getAttachment } from './mail'
-import { server as ldapServers, searches } from './ldap'
-import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
-import { services as websocketServices, events as websocketEvents } from './websocket'
-import { metrics, sum, max } from './metrics.ts'
-import { get, post, fetch } from 'mokapi/http'
+import { on } from 'mokapi'
+import { configs as kafkaConfigs } from './kafka.ts'
+import { configs as httpConfigs } from './http'
+import { fetch } from 'mokapi/http'
 
 const configs = {}
 
 export default async function() {
-    const apiBaseUrl = `http://localhost:8091/mokapi`
-
     on('http', function(request, response) {
 
         switch (request.operationId) {
-            case 'fakerTree': {
-                const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
-                response.body = resp.body
-                return
-            }
-            case 'fakerNodeFake': {
-                const resp = get(`${apiBaseUrl}/mokapi/api/faker/node/${request.path.name}/fake`)
-                response.statusCode = resp.statusCode
-                response.body = resp.body
-                return
-            }
             case 'search':
                 switch (request.query.q) {
                     case 'bad':
@@ -35,6 +17,9 @@ export default async function() {
                         break
                     case 'empty':
                         response.data = { results: [], total: 0}
+                        break
+                    case 'many':
+                        response.data = getManySearchResults(request.query)
                         break
                     default:
                         response.data = getSearchResults()
@@ -51,38 +36,6 @@ export default async function() {
                 'Content-Disposition': `inline; filename="${config.filename}"`
             }
         }
-    }
-}
-
-function getConfig(id) {
-    if (httpConfigs[id]) {
-        return httpConfigs[id]
-    }
-    if (kafkaConfigs[id]) {
-        return kafkaConfigs[id]
-    }
-    if (jobConfig[id]) {
-        return jobConfig[id]
-    }
-    return null
-}
-
-function getConfigs() {
-    return [
-        ...Object.values(httpConfigs),
-        ...Object.values(kafkaConfigs),
-        ...Object.values(jobConfig)
-    ]
-}
-
-const jobConfig = {
-    '6f5cab53-9f51-4bbe-bb32-fe41ee71d542': {
-        id: '6f5cab53-9f51-4bbe-bb32-fe41ee71d542',
-        url: 'file://cron.js',
-        provider: 'file',
-        time: '2025-05-01T08:49:25.482366+01:00',
-        data: "import { every } from 'mokapi'; export default function() { every('1s', function() {}); }",
-        filename: 'cron.js'
     }
 }
 
@@ -265,5 +218,107 @@ function getSearchResults() {
             type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Mail', count: 1}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
         },
         total: 15
+    }
+}
+
+const manyTotal = 57
+const manyTypes = ['HTTP', 'Kafka', 'Mail', 'LDAP', 'Config', 'Event']
+const manyEventKinds = ['http', 'kafka', 'mail', 'ldap', 'httpLog']
+const manyStatusCodes = ['200', '201', '404', '500']
+
+// q=many: 57 deterministic results, cycling through all six types; pages by `index` and `limit`
+// (from = index * limit) and is restricted by the facet `type`, like api/handler_search.go.
+// The facet counts ignore the type filter, so the select keeps all its options.
+function getManySearchResults(query) {
+    const all = Array.from({ length: manyTotal }, (_, i) => manyResult(i))
+    const limit = query.limit ? parseInt(query.limit) : 10
+    const index = query.index ? parseInt(query.index) : 0
+    const matching = query.type ? all.filter(r => r.type === query.type) : all
+    return {
+        results: matching.slice(index * limit, (index + 1) * limit),
+        facets: { type: manyTypes.map(value => ({ value, count: all.filter(r => r.type === value).length })) },
+        total: matching.length
+    }
+}
+
+function manyResult(i) {
+    const type = manyTypes[i % manyTypes.length]
+    const n = Math.floor(i / manyTypes.length) + 1
+    const time = new Date(Date.UTC(2025, 4, 23, 8, 0, i)).toISOString()
+    const fragments = [`match <mark>many</mark> ${i + 1}`]
+    switch (type) {
+        case 'HTTP':
+            return {
+                type, domain: 'Swagger Petstore', title: `/pet/${i + 1}`, fragments,
+                params: {
+                    type: 'http', service: 'Swagger Petstore', path: `/pet/${i + 1}`,
+                    method: i % 2 === 0 ? 'get' : 'post', statusCode: manyStatusCodes[i % manyStatusCodes.length]
+                }
+            }
+        case 'Kafka':
+            return {
+                type, domain: 'Kafka World', title: `mokapi.shop.topic${n}`, fragments,
+                params: { type: 'kafka', service: 'Kafka World', topic: `mokapi.shop.topic${n}` }
+            }
+        case 'Mail':
+            return {
+                type, domain: 'Mail Testserver', title: `Mailbox ${n}`, fragments,
+                params: { type: 'mail', service: 'Mail Testserver', mailbox: `mailbox${n}` }
+            }
+        case 'LDAP':
+            return {
+                type, domain: 'LDAP Testserver', title: `LDAP Testserver ${n}`, fragments,
+                params: { type: 'ldap', service: 'LDAP Testserver' }
+            }
+        case 'Config':
+            return {
+                type, domain: 'FILE', title: `file://root/path/to/config${n}.json`, fragments,
+                params: { type: 'config', id: `config-${n}` }
+            }
+        default:
+            return manyEvent(i, n, time, fragments)
+    }
+}
+
+function manyEvent(i, n, time, fragments) {
+    const kind = manyEventKinds[n % manyEventKinds.length]
+    const id = `event-${i + 1}`
+    switch (kind) {
+        case 'http':
+            return {
+                type: 'Event', domain: 'Swagger Petstore', title: `http://127.0.0.1:18080/pet/${i + 1}`, fragments, time,
+                params: {
+                    type: 'event', 'traits.namespace': 'http', 'traits.name': 'Swagger Petstore', 'traits.method': 'POST',
+                    'traits.path': `/pet/${i + 1}`, statusCode: '500', id
+                }
+            }
+        case 'kafka':
+            return {
+                type: 'Event', domain: 'Kafka World', title: `KEY${i + 1}`, fragments, time,
+                params: {
+                    type: 'event', 'traits.namespace': 'kafka', 'traits.name': 'Kafka World',
+                    'traits.topic': 'mokapi.shop.products', 'traits.type': 'message', 'traits.partition': '0', id
+                }
+            }
+        case 'mail':
+            return {
+                type: 'Event', domain: 'Mail Testserver', title: `Mail ${i + 1}`, fragments, time,
+                params: { type: 'event', 'traits.namespace': 'mail', 'traits.name': 'Mail Testserver', messageId: `${id}@mokapi.io` }
+            }
+        case 'ldap':
+            return {
+                type: 'Event', domain: 'LDAP Testserver', title: `(objectClass=user${i + 1})`, fragments, time,
+                params: {
+                    type: 'event', 'traits.namespace': 'ldap', 'traits.name': 'LDAP Testserver',
+                    'traits.operation': 'search', baseDn: 'dc=example,dc=org', id
+                }
+            }
+        default:
+            return {
+                type: 'Event', domain: 'Swagger Petstore', title: `script error ${i + 1}`, fragments, time,
+                params: {
+                    type: 'event', 'traits.namespace': 'http', 'traits.name': 'Swagger Petstore', 'traits.type': 'log', id
+                }
+            }
     }
 }

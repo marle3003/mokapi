@@ -53,10 +53,10 @@ test('Visit Guides', async ({ page }) => {
 
         await test.step('meta information are available', async () => {
             await expect(page).toHaveURL('/docs/http/quick-start')
-            await expect(page).toHaveTitle('HTTP Quick Start - Mock an HTTP API that don\'t exists yet')
+            await expect(page).toHaveTitle('HTTP API Mocking: Mock the Swagger Petstore with Mokapi')
             await expect(page.locator('meta[name="description"]')).toHaveAttribute(
                 'content',
-                'A quick tutorial how to run Swagger\'s Petstore in Mokapi'
+                'Start a mocked REST API from an OpenAPI specification, send requests, inspect them in the dashboard and return your own response with a Mokapi Script.'
             )
             await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/http/quick-start')
         })
@@ -74,7 +74,7 @@ test('Visit Guides', async ({ page }) => {
         })
     
         await test.step('page has h1', async () => {
-            await expect(page.getByRole('heading', { level: 1})).toHaveText('Quick Start')
+            await expect(page.getByRole('heading', { level: 1})).toHaveText('Mocking the Petstore REST API')
         })
     })
 })

@@ -113,6 +113,36 @@
     --footer-background:   #0f0e11;
  
     --color-emphasis:      #f7e9e0;
+
+    /* Dashboard layout with tabs (activity bar, sidebar, tab bar) */
+    --layout-border:                 #2a2935;
+    --layout-chrome-background:      #0f0e11;
+    --layout-sidebar-background:     #131216;
+    --layout-tab-bar-background:     #1b1a20;
+    --layout-input-background:       #161518;
+    --layout-input-border:           #3a3848;
+    --layout-hover-background:       #24232c;
+    --layout-selected-background:    #2c2a3a;
+    /* a selected log row lies on a card, which already has --layout-selected-background */
+    --layout-row-selected-background: #413d57;
+    --layout-icon-hover-background:  #1b1a20;
+    --layout-icon-active-background: #21202a;
+    --layout-icon-color:             #8a7f78;
+    --layout-text:                   #f7e9e0;
+    --layout-text-muted:             #c5b2a4;
+    --layout-text-subtle:            #a99a8f;
+    --layout-accent:                 #eabaab;
+    --layout-error-dot:              #ff4d64;
+    --layout-row-separator:          #1e1d25;
+    --layout-status-error:           #ff7a8c;
+    --layout-status-other:           #f5a524;
+
+    /* HTTP request log: detail panel, filter chips and popover */
+    --layout-panel-width:            440px;
+    --layout-panel-background:       #1b1a20;
+    --layout-chip-background:        #24232c;
+    --layout-popover-background:     #1b1a20;
+    --layout-popover-shadow:         0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] {
@@ -202,4 +232,31 @@
     --footer-background: rgb(244 244 246);
 
     --color-emphasis: rgb(8,109,215);
+
+    /* Dashboard layout with tabs: derived from the dark theme, the sidebar is set apart from the content */
+    --layout-border:                 rgba(0, 0, 0, 0.14);
+    --layout-chrome-background:      rgb(228, 231, 236);
+    --layout-sidebar-background:     rgb(234, 236, 240);
+    --layout-tab-bar-background:     rgb(228, 231, 236);
+    --layout-input-background:       #fff;
+    --layout-input-border:           rgba(0, 0, 0, 0.2);
+    --layout-hover-background:       rgb(220, 224, 231);
+    --layout-selected-background:    rgb(210, 216, 226);
+    --layout-row-selected-background: rgb(210, 216, 226);
+    --layout-icon-hover-background:  rgb(218, 222, 229);
+    --layout-icon-active-background: rgb(255, 255, 255);
+    --layout-icon-color:             rgb(87, 96, 106);
+    --layout-text:                   rgb(3, 6, 11);
+    --layout-text-muted:             rgb(55, 63, 72);
+    --layout-text-subtle:            rgb(87, 96, 106);
+    --layout-accent:                 rgb(8, 109, 215);
+    --layout-error-dot:              rgb(208, 35, 59);
+    --layout-row-separator:          rgba(0, 0, 0, 0.08);
+    --layout-status-error:           #b3122e;
+    --layout-status-other:           #7a4a00;
+
+    --layout-panel-background:       #fff;
+    --layout-chip-background:        rgb(234, 236, 240);
+    --layout-popover-background:     #fff;
+    --layout-popover-shadow:         0 6px 16px rgba(0, 0, 0, 0.18);
 }

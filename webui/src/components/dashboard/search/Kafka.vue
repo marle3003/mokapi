@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
+import { resultRoute } from '@/composables/search-result';
 
 const props = defineProps<{
     item: SearchItem
@@ -9,15 +10,11 @@ const props = defineProps<{
 const { adaptiveTruncate } = usePrettyText()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
-const route = computed(() => {
-    if (props.item.params.topic) {
-        return { name: 'kafkaTopic', params: props.item.params }
-    }
-    return { name: 'kafkaService', params: props.item.params }
-})
+// the type of this card always has a detail page
+const route = computed(() => resultRoute(props.item)!)
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-import type { MarkdownIt, MarkdownItOptions, Renderer, Token } from "markdown-it"
+import type { Env, MarkdownIt, MarkdownItOptions, Token } from "markdown-it"
 import container from 'markdown-it-container'
 
 export function MarkdownItTabContent(md: MarkdownIt) {
@@ -85,8 +85,8 @@ export function MarkdownItTabContent(md: MarkdownIt) {
     const tabs: TabsState[] = []
 
     md.use(container, 'tabs', {
-        validate: (params: any) => params.trim() === 'tabs',
-        render: (tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer) => {
+        validate: (params: string) => params.trim() === 'tabs',
+        render: (tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: Env | undefined) => {
             const token = tokens[idx];
             if (token?.nesting === 1) {
                 return ''
@@ -120,7 +120,7 @@ export function MarkdownItTabContent(md: MarkdownIt) {
 
         t.hidden = false
         if(token.attrs) {
-            t.attrs = token.attrs.map((a: any) => [...a])
+            t.attrs = token.attrs.map((a) => [...a])
         }
 
         if (token.children) {

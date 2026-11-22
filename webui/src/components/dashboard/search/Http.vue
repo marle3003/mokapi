@@ -2,7 +2,7 @@
 import { usePrettyHttp } from '@/composables/http';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { resultRoute } from '@/composables/search-result';
 
 const props = defineProps<{
     item: SearchItem
@@ -12,7 +12,7 @@ const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
 
 const title = computed(() => {
-    let title = props.item.title
+    const title = props.item.title
     return adaptiveTruncate(title)
 })
 const type = computed(() => {
@@ -30,19 +30,8 @@ const methods = computed(() => {
     }
     return props.item.params.methods.split(',')
 })
-const route = computed(() => {
-    if (props.item.params.path) {
-        const endpoint = props.item.params.path.split('/')
-        endpoint.shift() // path starts with a slash: remove first empty entry
-        if (props.item.params.method) {
-          endpoint.push(props.item.params.method.toLowerCase())
-        }
-        return { name: 'httpEndpoint', params: { endpoint, ...props.item.params } }
-    }
-    else {
-        return { name: 'httpService', params: props.item.params }
-    }
-})
+// the type of this card always has a detail page
+const route = computed(() => resultRoute(props.item)!)
 </script>
 
 <template>

@@ -19,25 +19,38 @@ type LogInfo struct {
 }
 
 // SearchLog is pushed to the event store before the search has finished. The response is
-// filled while searching, so it is only changed through AddResult and SetStatus.
+// filled when the search ends, so it is only changed through SetResponse and SetStatus, which
+// ask the event store to index the event again.
 type SearchLog struct {
 	common.EventLog
 	Request  *SearchRequest
 	Response *SearchResponse
 	// m guards Response
-	m sync.Mutex
+	m  sync.Mutex
+	eh events.Handler
 }
 
-func (l *SearchLog) AddResult(result SearchResult) {
+// SetResponse logs what is sent to the client, including changes made by a JavaScript handler.
+func (l *SearchLog) SetResponse(res *ldap.SearchResponse) {
+	var results []SearchResult
+	for _, r := range res.Results {
+		results = append(results, SearchResult{Dn: r.Dn, Attributes: r.Attributes})
+	}
+
 	l.m.Lock()
-	defer l.m.Unlock()
-	l.Response.Results = append(l.Response.Results, result)
+	l.Response.Status = ldap.StatusText[res.Status]
+	l.Response.Results = results
+	l.m.Unlock()
+
+	l.eh.Update(l)
 }
 
 func (l *SearchLog) SetStatus(status string) {
 	l.m.Lock()
-	defer l.m.Unlock()
 	l.Response.Status = status
+	l.m.Unlock()
+
+	l.eh.Update(l)
 }
 
 type SearchRequest struct {
@@ -67,6 +80,7 @@ func NewSearchLogEvent(r *ldap.SearchRequest, eh events.Handler, traits events.T
 	event := &SearchLog{
 		Request:  fromRequest(r),
 		Response: &SearchResponse{},
+		eh:       eh,
 	}
 	_ = eh.Push(event, traits.WithNamespace("ldap").With("operation", "search"))
 	return event
@@ -335,7 +349,7 @@ func (l *SearchLog) Title() string {
 }
 
 // IndexFields returns a copy of the response, because the index reads it after the
-// lock is released while results may still be added.
+// lock is released while SetResponse may still replace it.
 func (l *SearchLog) IndexFields() map[string]any {
 	l.m.Lock()
 	defer l.m.Unlock()
