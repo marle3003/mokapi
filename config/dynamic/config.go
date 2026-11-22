@@ -57,7 +57,7 @@ type Config struct {
 // viewOf returns a config for running a parse hook on data that is not published yet.
 // References and listeners are registered on the real config, see AddRef.
 func (c *Config) viewOf(data any) *Config {
-	v := &Config{Info: c.Info, Raw: c.Raw, Scope: c.Scope, SourceType: c.SourceType, origin: c}
+	v := &Config{Info: c.Info, Raw: c.Raw, SourceType: c.SourceType, origin: c}
 	v.SetData(data)
 	return v
 }

@@ -38,11 +38,10 @@ func Parse(c *Config, r Reader) error {
 		return err
 	}
 
-	c.Scope.SetName(c.Info.Path())
-
 	// The hook fills the fresh object on a view of the config and the result is published
 	// as a whole afterwards, so readers that still hold the previous object never see it change.
 	view := c.viewOf(data)
+	view.Scope.SetName(c.Info.Path())
 	if p, ok := data.(Parser); ok {
 		if err = p.Parse(view, r); err != nil {
 			return errors.Wrapf(err, "parsing file %v", c.Info.Path())

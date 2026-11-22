@@ -516,3 +516,77 @@ type parseError struct{}
 func (d *parseError) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	return fmt.Errorf("TEST ERROR")
 }
+
+func TestParse_ReparseScope(t *testing.T) {
+	dynamic.Register("scopehook", nil, &scopeHook{})
+	newConfig := func(raw string) *dynamic.Config {
+		return &dynamic.Config{
+			Info: dynamic.ConfigInfo{Url: &url.URL{Path: "/scope.yaml"}},
+			Raw:  []byte(raw),
+		}
+	}
+
+	t.Run("hook sees a fresh scope with the name of the config", func(t *testing.T) {
+		c := newConfig(`scopehook: first`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		c.Raw = []byte(`scopehook: second`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		hook := c.Data().(*scopeHook)
+		require.Equal(t, "/scope.yaml", hook.nameSeen)
+		require.False(t, hook.anchorSeenBefore, "anchor of the previous parse must not be visible")
+	})
+
+	t.Run("dynamic anchor refers to the object of the latest parse", func(t *testing.T) {
+		c := newConfig(`scopehook: first`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+		c.Raw = []byte(`scopehook: second`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		v, err := c.Scope.GetDynamic("anchor")
+		require.NoError(t, err)
+		require.Same(t, c.Data(), v)
+	})
+
+	t.Run("failed hook keeps the scope of the previous parse", func(t *testing.T) {
+		c := newConfig(`scopehook: first`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		c.Raw = []byte(`scopehook: fail`)
+		require.Error(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		v, err := c.Scope.GetLexical("anchor")
+		require.NoError(t, err)
+		require.Equal(t, "first", v.(*scopeHook).Scopehook)
+		_, err = c.Scope.GetLexical("partial")
+		require.Error(t, err, "entries of the failed parse must not be published")
+	})
+}
+
+// scopeHook registers its anchors in the scope of the config it is parsed for,
+// a failing parse additionally registers "partial".
+type scopeHook struct {
+	Scopehook        string
+	nameSeen         string
+	anchorSeenBefore bool
+}
+
+func (h *scopeHook) Parse(c *dynamic.Config, _ dynamic.Reader) error {
+	h.nameSeen = c.Scope.Name()
+	c.Scope.OpenIfNeeded(c.Info.Path())
+	_, err := c.Scope.GetLexical("anchor")
+	h.anchorSeenBefore = err == nil
+
+	if err = c.Scope.SetLexical("anchor", h); err != nil {
+		return err
+	}
+	if err = c.Scope.SetDynamic("anchor", h); err != nil {
+		return err
+	}
+	if h.Scopehook == "fail" {
+		_ = c.Scope.SetLexical("partial", h)
+		return fmt.Errorf("TEST ERROR")
+	}
+	return nil
+}
