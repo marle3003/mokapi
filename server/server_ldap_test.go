@@ -173,8 +173,8 @@ func ldapConfigEvent(port int) dynamic.ConfigEvent {
 	}
 }
 
-// The tests below stop an LDAP host right after it was started and expect its port to be free
-// when the call returns. GOMAXPROCS(1) keeps the Serve goroutine from running in between.
+// The tests below stop an LDAP host right after it was started and expect its port to refuse
+// connections when the call returns. GOMAXPROCS(1) keeps the Serve goroutine from running in between.
 func TestLdapManager_PortIsFreeWhenDeleteReturns(t *testing.T) {
 	requireOldPortIsFree(t, func(m *server.LdapDirectoryManager, port int) {
 		e := ldapConfigEvent(port)
@@ -193,7 +193,9 @@ func TestLdapManager_PortIsFreeWhenStopReturns(t *testing.T) {
 	requireOldPortIsFree(t, func(m *server.LdapDirectoryManager, _ int) { m.Stop() })
 }
 
-// requireOldPortIsFree adds an LDAP host, calls release and binds the host's first port.
+// requireOldPortIsFree adds an LDAP host, calls release and expects that nothing listens on the host's
+// first port anymore. It dials instead of binding the port again, because rebinding a just-released
+// port occasionally fails with "address already in use".
 func requireOldPortIsFree(t *testing.T, release func(m *server.LdapDirectoryManager, port int)) {
 	logrus.SetOutput(io.Discard)
 	defer goruntime.GOMAXPROCS(goruntime.GOMAXPROCS(1))
@@ -204,12 +206,12 @@ func requireOldPortIsFree(t *testing.T, release func(m *server.LdapDirectoryMana
 		m.UpdateConfig(ldapConfigEvent(port))
 		release(m, port)
 
-		ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+		conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", port))
 		if err == nil {
-			_ = ln.Close()
+			_ = conn.Close()
 		}
 		m.Stop()
-		require.NoError(t, err, "iteration %d", i)
+		require.Error(t, err, "port %d still accepts connections in iteration %d", port, i)
 	}
 }
 
