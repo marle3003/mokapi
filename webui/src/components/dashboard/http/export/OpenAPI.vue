@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, useTemplateRef, watch } from 'vue'
 import { Modal } from 'bootstrap'
-import { transformPath } from '@/composables/site-base'
+import { sitePath, transformPath } from '@/composables/site-base'
 import { useRoute } from '@/router'
 
 const props = defineProps({
@@ -72,7 +72,7 @@ function copyToClipboard(event: MouseEvent) {
                 <div class="modal-body">
                     <div v-if="!isLiveMode" class="alert alert-primary py-2 px-3 mb-3 small" role="alert">
                         This is a demo dashboard — OpenAPI exports aren't available here.
-                        <a href="/docs/get-started/installation" >Install Mokapi</a> to try this with your own API.
+                        <a :href="sitePath('/docs/get-started/installation')" >Install Mokapi</a> to try this with your own API.
                     </div>
                     <div v-else>
                         <div class="row">

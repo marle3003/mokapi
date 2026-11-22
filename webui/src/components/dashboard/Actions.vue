@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sitePath } from '@/composables/site-base'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import type { PropType } from 'vue'
 import SourceView from './SourceView.vue'
@@ -201,7 +202,7 @@ function formatParam(raw: string) {
                             </div>
                             <h5>
                                 Tags
-                                <a href="/docs/javascript-api/mokapi/eventhandler/eventargs" class="ms-1" title="Learn how to define tags for your event handler" rel="noopener">
+                                <a :href="sitePath('/docs/javascript-api/mokapi/eventhandler/eventargs')" class="ms-1" title="Learn how to define tags for your event handler" rel="noopener">
                                     <span class="bi bi-question-circle" aria-hidden="true"></span>
                                 </a>
                             </h5>

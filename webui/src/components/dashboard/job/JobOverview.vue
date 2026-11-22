@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sitePath } from '@/composables/site-base'
 import { computed, onUnmounted } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
@@ -30,8 +31,8 @@ function onRowClick(job: JobInfo) {
     <loading v-if="isLoading && !data" />
     <p v-else-if="jobs.length === 0" class="text-center my-4">
         No jobs defined. Create one with
-        <a href="/docs/javascript-api/mokapi/every">mokapi.every</a> or
-        <a href="/docs/javascript-api/mokapi/cron">mokapi.cron</a>.
+        <a :href="sitePath('/docs/javascript-api/mokapi/every')">mokapi.every</a> or
+        <a :href="sitePath('/docs/javascript-api/mokapi/cron')">mokapi.cron</a>.
     </p>
     <div v-else class="table-responsive">
         <table class="table dataTable selectable" aria-label="Jobs">

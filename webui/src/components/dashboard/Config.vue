@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sitePath } from '@/composables/site-base'
 import { computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePrettyDates } from '@/composables/usePrettyDate'
@@ -80,7 +81,7 @@ const provider = computed(() => {
                         <div class="col">
                             <p id="provider" class="label">Provider</p>
                             <p aria-labelledby="provider">
-                                <a :href="'/docs/configuration/dynamic/' + config.provider">{{ provider }}</a>
+                                <a :href="sitePath('/docs/configuration/dynamic/' + config.provider)">{{ provider }}</a>
                             </p>
                         </div>
                         <div class="col">

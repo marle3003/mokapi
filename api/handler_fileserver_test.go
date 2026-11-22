@@ -12,8 +12,10 @@ import (
 	"mokapi/try"
 	"mokapi/webui"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -310,4 +312,34 @@ func mustParse(s string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+// The dashboard can be served under a path prefix (<base href>). Every image the built
+// entry chunk refers to must resolve below that prefix.
+func TestHandler_FileServer_AssetsBelowPathPrefix(t *testing.T) {
+	const prefix = "/mokapi/dashboard"
+	h := api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{Path: prefix, Dashboard: true})
+
+	get := func(p string) (int, string) {
+		rr := httptest.NewRecorder()
+		h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "http://foo.api"+p, nil))
+		return rr.Code, rr.Body.String()
+	}
+
+	_, index := get(prefix + "/")
+	entry := regexp.MustCompile(`src="\./(assets/index-[^"]+\.js)"`).FindStringSubmatch(index)
+	require.Len(t, entry, 2, "entry chunk not found in index.html")
+	_, chunk := get(prefix + "/" + entry[1])
+
+	t.Run("images referenced by the entry chunk", func(t *testing.T) {
+		refs := regexp.MustCompile("new URL\\(`(\\.\\./[^`]+)`,import\\.meta\\.url\\)").FindAllStringSubmatch(chunk, -1)
+		require.NotEmpty(t, refs)
+		for _, ref := range refs {
+			u, err := url.Parse("http://foo.api" + prefix + "/" + entry[1])
+			require.NoError(t, err)
+			resolved := u.ResolveReference(&url.URL{Path: ref[1]})
+			code, _ := get(resolved.Path)
+			require.Equal(t, 200, code, "%v -> %v", ref[1], resolved.Path)
+		}
+	})
 }

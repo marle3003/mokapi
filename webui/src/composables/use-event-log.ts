@@ -1,18 +1,12 @@
 import { computed, reactive, ref, watch } from 'vue'
-import { useRoute, type RouteLocationNormalizedLoaded } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { refreshIntervalSeconds } from '@/composables/auto-refresh'
 import { useDashboard } from '@/composables/dashboard'
 import { useLogPause } from '@/composables/log-pause'
 import { usePageSize } from '@/composables/paging'
 import type { HttpEventFilter } from '@/types/dashboard'
 
 type LogQuery = { labels: Label[], http?: HttpEventFilter }
-
-// The log only reloads while the auto refresh runs, which needs a refresh interval in the route
-// (?refresh=<seconds>, see refresh-manager.ts). Without it, a pause has nothing to stop.
-function autoRefreshIsOn(route: RouteLocationNormalizedLoaded) {
-    const seconds = Number(route.query.refresh)
-    return Number.isFinite(seconds) && seconds > 0
-}
 
 // The recorded events of a log (requests, messages): the current page, reloaded while the log is
 // shown, and the Pause that stops the reload. `query` is what the log asks for besides the page.
@@ -39,7 +33,7 @@ export function useEventLog(askedFor: () => LogQuery) {
     const { dashboard, getMode } = useDashboard()
     const route = useRoute()
     // The demo has no live events, so there is nothing to pause.
-    const canPause = computed(() => getMode() === 'live' && autoRefreshIsOn(route))
+    const canPause = computed(() => getMode() === 'live' && refreshIntervalSeconds(route) !== undefined)
     const { paused, toggle: togglePause, resume } = useLogPause()
     const result = ref<ServiceEventPage | null>(null)
     const isLoading = ref(true)

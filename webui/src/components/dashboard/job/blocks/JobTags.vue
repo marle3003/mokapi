@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { sitePath } from '@/composables/site-base'
 import { getRouteName } from '@/composables/dashboard'
 
 // The tags of a job. The tag `file` links to the config of the script.
@@ -8,7 +9,7 @@ defineProps<{ tags: JobExecution['tags'] }>()
 <template>
     <h5>
         Tags
-        <a href="/docs/javascript-api/mokapi/eventhandler/scheduledeventargs" class="ms-1" title="Learn how to define tags for your job" rel="noopener">
+        <a :href="sitePath('/docs/javascript-api/mokapi/eventhandler/scheduledeventargs')" class="ms-1" title="Learn how to define tags for your job" rel="noopener">
             <span class="bi bi-question-circle" aria-hidden="true"></span>
         </a>
     </h5>

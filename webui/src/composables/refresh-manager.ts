@@ -1,12 +1,13 @@
 import { computed, onUnmounted, ref } from "vue";
 import router from '@/router';
+import { refreshIntervalSeconds } from '@/composables/auto-refresh';
 
 const tasks = ref(new Map<string, () => void>());
 const progress = ref(0)
 const interval = computed(() => {
-    const route = router.currentRoute.value
-    return Number(route.query.refresh) * 1000
-}) 
+    const seconds = refreshIntervalSeconds(router.currentRoute.value)
+    return seconds === undefined ? undefined : seconds * 1000
+})
 let startTime = Date.now()
 const timer = ref<ReturnType<typeof setInterval> | undefined>();
 const isActive = computed(() => 
@@ -31,6 +32,9 @@ export function useRefreshManager() {
     }
 
     function tick() {
+        if (interval.value === undefined) {
+            return
+        }
         const now = Date.now();
         const elapsed = now - startTime;
         progress.value = Math.min((elapsed / interval.value) * 100, 100);
@@ -49,7 +53,7 @@ export function useRefreshManager() {
     }
 
     function start() {
-        if (!timer.value) {
+        if (!timer.value && interval.value !== undefined) {
             timer.value = setInterval(tick, 100);
         }
         onUnmounted(stop)
