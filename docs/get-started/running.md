@@ -57,6 +57,7 @@ You can analyze your request and the corresponding response by clicking on the l
 
 ## Next Steps
 
+- [HTTP Quick Start](/docs/http/quick-start.md): return your own data and errors with a Mokapi Script
 - [Test-Data](/docs/get-started/test-data.md)
 - [Dashboard](/docs/get-started/dashboard.md)
 - [Mocking HTTP API](/docs/http/overview)

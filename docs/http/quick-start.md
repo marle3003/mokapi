@@ -122,8 +122,7 @@ curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 {"id":4,"name":"Garfield","category":{"id":3,"name":"Cats"},"photoUrls":[],"status":"available"}
 ```
 
-Every other pet ID still returns generated data. Mokapi watches the script, so you can change
-it while Mokapi is running.
+Every other pet ID still returns generated data.
 
 ## Return an Error
 
