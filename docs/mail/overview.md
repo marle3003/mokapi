@@ -275,8 +275,8 @@ autoCreateMailbox: true
 
 #### Rules Object
 
-The rules object defines message acceptance policies for the mock server.
-Each rule is keyed by a unique name and specifies criteria for allowing or denying incoming messages.
+The rules object defines which mails the server accepts. Each rule is keyed by a unique name.
+See [Mail Rules](/docs/mail/rules.md) for how rules are evaluated and more examples.
 
 | Field Pattern      | Type        | Description              |
 |--------------------|-------------|--------------------------|
@@ -286,38 +286,39 @@ Each rule is keyed by a unique name and specifies criteria for allowing or denyi
 
 ```yaml
 allowSender:
-  sender: alice@example.com
+  sender: '^alice@example\.com$'
   action: allow
 denySubject:
-  subject: Hello.*
+  subject: '^Hello'
   action: deny
 ```
 
 #### Rule Object
 
-A Rule Object defines a pattern-based rule that determines whether a message is accepted or rejected.
-The value of each matching field (e.g., sender, subject, body) can be either an exact string or a regular
-expression pattern for more flexible filtering.
+A Rule Object checks a mail against a regular expression and decides whether the server accepts
+or rejects it. The expression is not anchored, so `example.com` matches any address that contains
+it. Use `^` and `$` to match the whole value.
 
-| Field Name      | Type                   | Description                                   |
-|-----------------|------------------------|-----------------------------------------------|
-| sender          | string                 | (Optional) Match against the sender's address |
-| recipient       | string                 | (Optional) Match against recipient's address  |
-| subject         | string                 | (Optional) Match subject line                 |
-| body            | string                 | (Optional) Match against message body         |
-| action          | string                 | (Optional) Required: either allow or deny     |
-| rejectResponse  | Reject Response Object | Optional custom rejection response            |
+| Field Name      | Type                   | Description                                                            |
+|-----------------|------------------------|------------------------------------------------------------------------|
+| description     | string                 | (Optional) Description of the rule. Supports **CommonMark syntax**.     |
+| sender          | string                 | (Optional) Regular expression for the sender address                   |
+| recipient       | string                 | (Optional) Regular expression for a recipient address                  |
+| subject         | string                 | (Optional) Regular expression for the subject                          |
+| body            | string                 | (Optional) Regular expression for the message body                     |
+| action          | string                 | `allow` rejects mails that don't match, `deny` rejects mails that match |
+| rejectResponse  | Reject Response Object | (Optional) Custom response when the rule rejects a mail                |
 
-##### Server Object Example
+##### Rule Object Example
 
 ```yaml
-sender: alice@example.com
+sender: '^alice@example\.com$'
 action: allow
 ```
 
 #### Reject Response Object
 
-A Reject Response Object defines a detailed response when an incoming message is denied based on a rule.
+A Reject Response Object defines the response the server sends when a rule rejects a mail.
 
 | Field Name         | Type                   | Description                                       |
 |--------------------|------------------------|---------------------------------------------------|
@@ -330,5 +331,5 @@ A Reject Response Object defines a detailed response when an incoming message is
 ```yaml
 statusCode: 550
 enhancedStatusCode: 5.7.1
-text: Your error message
+message: Your error message
 ```
