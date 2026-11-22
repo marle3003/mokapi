@@ -9,7 +9,7 @@ require (
 	github.com/brianvoe/gofakeit/v7 v7.18.3
 	github.com/cbroglie/mustache v1.4.2
 	github.com/coder/websocket v1.8.15
-	github.com/dop251/goja v0.0.0-20261118204651-8dfece3d1e1d
+	github.com/dop251/goja v0.0.0-20261122121755-dcce7f63c23a
 	github.com/evanw/esbuild v0.28.2
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-co-op/gocron/v2 v2.23.1
