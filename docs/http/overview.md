@@ -260,6 +260,9 @@ export default function() {
 }
 ```
 
+To read credentials from `security` schemes (Basic, Bearer, API keys) or to return `401` for
+invalid ones, see [Mocking OpenAPI Security Schemes](/docs/http/security.md).
+
 ## Understanding Request Matching
 
 When writing Mokapi Scripts, you'll often need to identify which API endpoint was called.

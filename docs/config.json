@@ -56,6 +56,11 @@
                 "path": "/docs/http/tls"
               },
               {
+                "label": "Security Schemes",
+                "source": "http/security.md",
+                "path": "/docs/http/security"
+              },
+              {
                 "label": "Dashboard",
                 "source": "http/dashboard.md",
                 "path": "/docs/http/dashboard"
