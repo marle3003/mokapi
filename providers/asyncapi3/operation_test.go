@@ -33,7 +33,7 @@ operations:
 	var cfg *asyncapi3.Config
 	err := yaml.Unmarshal([]byte(s), &cfg)
 	require.NoError(t, err)
-	err = cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, &dynamictest.Reader{})
+	err = cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Operations, 1)

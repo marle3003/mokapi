@@ -213,7 +213,7 @@ func (e *Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			}
 
 			dynamic.AddRef(config, f)
-			aList[i] = f.Data.(string)
+			aList[i] = f.Data().(string)
 		}
 	}
 

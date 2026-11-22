@@ -23,10 +23,7 @@ func TestIndex_Config(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c any) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -40,11 +37,7 @@ func TestIndex_Config(t *testing.T) {
 				info := dynamictest.NewConfigInfo()
 				info.Provider = "file"
 
-				cfg := &dynamic.Config{
-					Info: info,
-					Raw:  []byte(`{"name":"test"}`),
-					Data: &openapi.Config{},
-				}
+				cfg := dynamictest.NewConfig(&openapi.Config{}, dynamictest.WithInfo(info), dynamictest.WithRaw([]byte(`{"name":"test"}`)))
 
 				app.UpdateConfig(dynamic.ConfigEvent{
 					Name:   "",

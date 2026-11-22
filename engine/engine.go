@@ -68,7 +68,7 @@ func NewEngine(opts ...Options) *Engine {
 }
 
 func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
-	if _, ok := evt.Config.Data.(string); !ok {
+	if _, ok := evt.Config.Data().(string); !ok {
 		return nil
 	}
 

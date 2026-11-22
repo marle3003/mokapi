@@ -27,7 +27,7 @@ func TestParse(t *testing.T) {
 					),
 				)
 
-				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err := s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				children := s.Properties.Get("children")
@@ -49,7 +49,7 @@ $ref: '#/$defs/a'
 				err := yaml.Unmarshal([]byte(data), &s)
 				require.NoError(t, err)
 
-				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err = s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 				require.NoError(t, err)
 				require.Equal(t, "empty schema", s.String())
 			},
@@ -69,7 +69,7 @@ $ref: '#/$defs/a'
 				err := yaml.Unmarshal([]byte(data), &s)
 				require.NoError(t, err)
 
-				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err = s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{})
 				require.NoError(t, err)
 				require.Equal(t, "schema properties=[part]", s.String())
 			},
@@ -90,22 +90,19 @@ $ref: '#/$defs/a'
 					},
 				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/bar")),
-					Data: &schema.Schema{
-						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/foo"},
-					},
-				}
+				person := dynamictest.NewConfig(&schema.Schema{
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/foo"},
+				}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/bar"))))
 
 				// 1. parsing
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				err := person.Data().(*schema.Schema).Parse(person, reader)
 				require.NoError(t, err)
 
 				// 2. parsing
-				err = person.Data.(*schema.Schema).Parse(person, reader)
+				err = person.Data().(*schema.Schema).Parse(person, reader)
 
 				require.NoError(t, err)
-				require.Equal(t, "integer", person.Data.(*schema.Schema).Items.Type.String())
+				require.Equal(t, "integer", person.Data().(*schema.Schema).Items.Type.String())
 			},
 		},
 	}

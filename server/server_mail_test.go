@@ -34,19 +34,16 @@ func TestSmtp(t *testing.T) {
 			name: "add smtp server",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf("localhost:%d", port),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf("localhost:%d", port),
+								Protocol: "smtp",
 							},
-							Settings: &mail.Settings{AutoCreateMailbox: true},
 						},
-					},
+						Settings: &mail.Settings{AutoCreateMailbox: true},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitForPort(t, port)
 
@@ -62,19 +59,16 @@ func TestSmtp(t *testing.T) {
 			name: "add smtp server only port defined",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf(":%d", port),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf(":%d", port),
+								Protocol: "smtp",
 							},
-							Settings: &mail.Settings{AutoCreateMailbox: true},
 						},
-					},
+						Settings: &mail.Settings{AutoCreateMailbox: true},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitForPort(t, port)
 
@@ -90,36 +84,30 @@ func TestSmtp(t *testing.T) {
 			name: "update smtp server",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf("localhost:%d", port),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf("localhost:%d", port),
+								Protocol: "smtp",
 							},
-							Settings: &mail.Settings{AutoCreateMailbox: true},
 						},
-					},
+						Settings: &mail.Settings{AutoCreateMailbox: true},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 
 				port2 := try.GetFreePort()
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf("localhost:%d", port2),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf("localhost:%d", port2),
+								Protocol: "smtp",
 							},
-							Settings: &mail.Settings{AutoCreateMailbox: true},
 						},
-					},
+						Settings: &mail.Settings{AutoCreateMailbox: true},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				waitForPort(t, port2)
 
@@ -142,27 +130,21 @@ func TestSmtp(t *testing.T) {
 			name: "delete event",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf("localhost:%d", port),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf("localhost:%d", port),
+								Protocol: "smtp",
 							},
 						},
-					},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Event: dynamic.Delete,
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-						},
-					},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 
 				err := smtptest.SendMail("from@foo.bar",
@@ -177,27 +159,21 @@ func TestSmtp(t *testing.T) {
 			name: "delete event imap",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-							Servers: map[string]*mail.Server{
-								"foo": {
-									Host:     fmt.Sprintf("localhost:%d", port),
-									Protocol: "smtp",
-								},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Servers: map[string]*mail.Server{
+							"foo": {
+								Host:     fmt.Sprintf("localhost:%d", port),
+								Protocol: "smtp",
 							},
 						},
-					},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Event: dynamic.Delete,
-					Config: &dynamic.Config{
-						Info: dynamictest.NewConfigInfo(),
-						Data: &mail.Config{
-							Info: mail.Info{Name: "foo"},
-						},
-					},
+					Config: dynamictest.NewConfig(&mail.Config{
+						Info: mail.Info{Name: "foo"},
+					}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 				})
 
 				c := imap.NewClient(fmt.Sprintf("smtp://localhost:%d", port))
@@ -266,16 +242,13 @@ func newMailManager(t *testing.T) *server.MailManager {
 
 func mailConfigEvent(protocol string, port int) dynamic.ConfigEvent {
 	return dynamic.ConfigEvent{
-		Config: &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: &mail.Config{
-				Info: mail.Info{Name: "foo"},
-				Servers: map[string]*mail.Server{
-					"foo": {Host: fmt.Sprintf("localhost:%d", port), Protocol: protocol},
-				},
-				Settings: &mail.Settings{AutoCreateMailbox: true},
+		Config: dynamictest.NewConfig(&mail.Config{
+			Info: mail.Info{Name: "foo"},
+			Servers: map[string]*mail.Server{
+				"foo": {Host: fmt.Sprintf("localhost:%d", port), Protocol: protocol},
 			},
-		},
+			Settings: &mail.Settings{AutoCreateMailbox: true},
+		}, dynamictest.WithInfo(dynamictest.NewConfigInfo())),
 	}
 }
 
@@ -359,15 +332,12 @@ func TestMailManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
 }
 
 func mailFileEvent(file, title string, servers map[string]*mail.Server, rules mail.Rules) dynamic.ConfigEvent {
-	return dynamic.ConfigEvent{Config: &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: try.MustUrl(file)},
-		Data: &mail.Config{
-			Info:     mail.Info{Name: title},
-			Servers:  servers,
-			Settings: &mail.Settings{AutoCreateMailbox: true},
-			Rules:    rules,
-		},
-	}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(&mail.Config{
+		Info:     mail.Info{Name: title},
+		Servers:  servers,
+		Settings: &mail.Settings{AutoCreateMailbox: true},
+		Rules:    rules,
+	}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(file)}))}
 }
 
 func smtpServer(port int) *mail.Server {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
@@ -55,8 +56,8 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c := try.GetConfig(t, ch, 1*time.Second)
 				require.NotNil(t, c)
-				require.IsType(t, &openapi.Config{}, c.Data)
-				require.Equal(t, "foo", c.Data.(*openapi.Config).Info.Name)
+				require.IsType(t, &openapi.Config{}, c.Data())
+				require.Equal(t, "foo", c.Data().(*openapi.Config).Info.Name)
 			},
 		},
 		{
@@ -137,7 +138,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				})
 				processed := make(chan struct{}, 1)
 				w.AddListener(func(e dynamic.ConfigEvent) {
-					require.NotNil(t, e.Config.Data)
+					require.NotNil(t, e.Config.Data())
 					select {
 					case processed <- struct{}{}:
 					default:
@@ -162,7 +163,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				}
 				current, err := w.Read(configPath, nil)
 				require.NoError(t, err)
-				require.Equal(t, "foobar", current.Data)
+				require.Equal(t, "foobar", current.Data())
 			},
 		},
 		{
@@ -190,7 +191,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.NotNil(t, c)
-				require.Equal(t, "foobar", c.Data)
+				require.Equal(t, "foobar", c.Data())
 			},
 		},
 		{
@@ -220,7 +221,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.AddProvider("foo", &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &slow{}}, nil
+						return dynamictest.NewConfig(&slow{}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: u})), nil
 					},
 				})
 
@@ -230,14 +231,14 @@ func TestConfigWatcher_Read(t *testing.T) {
 					c1, err := w.Read(configPath, nil)
 					require.NoError(t, err)
 					require.Equal(t, configPath, c1.Info.Url)
-					ch <- c1.Data
+					ch <- c1.Data()
 				}()
 
 				go func() {
 					c1, err := w.Read(configPath, nil)
 					require.NoError(t, err)
 					require.Equal(t, configPath, c1.Info.Url)
-					ch <- c1.Data
+					ch <- c1.Data()
 				}()
 
 				i1 := <-ch
@@ -270,7 +271,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
-				require.NotNil(t, c.Data)
+				require.NotNil(t, c.Data())
 			},
 		},
 		{
@@ -803,11 +804,7 @@ func sendEvent(t *testing.T, ch chan dynamic.ConfigEvent, c *dynamic.Config) {
 }
 
 func newPanicTestConfig(name, raw string) *dynamic.Config {
-	return &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)},
-		Raw:  []byte(raw),
-		Data: &panicOnParse{},
-	}
+	return dynamictest.NewConfig(&panicOnParse{}, dynamictest.WithInfo(dynamic.ConfigInfo{Url: mustParse(name), Checksum: []byte(raw)}), dynamictest.WithRaw([]byte(raw)))
 }
 
 // panicOnParse panics in Parse when the config contains "panic": true.
@@ -832,7 +829,7 @@ type slow struct{}
 
 func (d *slow) Parse(config *dynamic.Config, _ dynamic.Reader) error {
 	time.Sleep(5 * time.Second)
-	config.Data = "foo"
+	config.SetData("foo")
 	return nil
 }
 

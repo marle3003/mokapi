@@ -66,7 +66,7 @@ components:
 				return
 			}
 
-			err = cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+			err = cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{})
 
 			tc.test(t, cfg, err)
 		})

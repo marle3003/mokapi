@@ -13,6 +13,6 @@ func (c *Config) Parse(config *dynamic.Config, _ dynamic.Reader) error {
 	log.Warnf("Deprecated mail configuration in %s. This format is deprecated and will be removed in future versions. Please migrate to the new format. More info: https://mokapi.io/docs/email/overview", config.Info.Path())
 
 	converted := c.Convert()
-	config.Data = converted
+	config.SetData(converted)
 	return nil
 }

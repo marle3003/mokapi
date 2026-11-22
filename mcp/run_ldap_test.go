@@ -3,7 +3,6 @@ package mcp_test
 import (
 	"context"
 	"io"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
 	"mokapi/mcp"
@@ -145,10 +144,7 @@ func TestService_Run_Ldap_ConfigRemoved(t *testing.T) {
 
 	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
 		app := runtimetest.NewApp()
-		file := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: &directory.Config{Info: directory.Info{Name: "foo"}},
-		}
+		file := dynamictest.NewConfig(&directory.Config{Info: directory.Info{Name: "foo"}}, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		app.Ldap.Add(file, enginetest.NewEngine())
 		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
 		require.NoError(t, err)

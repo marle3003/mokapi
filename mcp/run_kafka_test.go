@@ -3,7 +3,6 @@ package mcp_test
 import (
 	"context"
 	"io"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -610,10 +609,7 @@ func TestService_Run_Kafka_ConfigRemoved(t *testing.T) {
 
 	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
 		app := runtimetest.NewApp()
-		file := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar")),
-		}
+		file := dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar")), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		_, err := app.Kafka.Add(file, enginetest.NewEngine())
 		require.NoError(t, err)
 		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})

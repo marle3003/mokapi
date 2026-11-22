@@ -25,10 +25,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c any) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 

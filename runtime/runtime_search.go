@@ -29,7 +29,7 @@ func (a *App) addConfigToIndex(cfg *dynamic.Config) {
 		Data:          string(cfg.Raw),
 	}
 
-	switch cfg.Data.(type) {
+	switch cfg.Data().(type) {
 	case *openapi.Config:
 		data.Source = "OpenAPI"
 	case *asyncapi3.Config:

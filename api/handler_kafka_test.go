@@ -57,19 +57,13 @@ func TestHandler_Kafka(t *testing.T) {
 			name: "get kafka services",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
-					),
-				}, enginetest.NewEngine())
-				app.Http.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("http.yaml")},
-					Data: openapitest.NewConfig("3.0",
-						openapitest.WithInfo("foo", "bar", "1.0"),
-					),
-				})
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
+				app.Http.Add(dynamictest.NewConfig(openapitest.NewConfig("3.0",
+					openapitest.WithInfo("foo", "bar", "1.0"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("http.yaml")})))
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka",
@@ -91,12 +85,9 @@ func TestHandler_Kafka(t *testing.T) {
 			name: "get cluster info",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-					),
-				}
+				cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = try.MustTime("2023-12-27T13:01:30+00:00")
 
 				_, _ = app.Kafka.Add(cfg, enginetest.NewEngine())
@@ -375,12 +366,9 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get kafka topics but empty",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-					),
-				}, enginetest.NewEngine())
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -400,17 +388,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get kafka topics with one topic",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -430,17 +415,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get specific kafka channel",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -460,17 +442,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get specific kafka topic but not found",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -497,19 +476,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -538,17 +514,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "produce kafka message into topic using binary",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -586,19 +559,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -633,17 +603,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get kafka partitions",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -662,17 +629,14 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			name: "get specific kafka partition",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.WithChannel("topic-1",
-							asyncapi3test.WithChannelDescription("foobar"),
-							asyncapi3test.WithMessage("foo"),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.WithChannel("topic-1",
+						asyncapi3test.WithChannelDescription("foobar"),
+						asyncapi3test.WithMessage("foo"),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -702,19 +666,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -756,19 +717,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -818,19 +776,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -871,19 +826,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 				return app
 			},
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
@@ -929,19 +881,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 
 				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
 				ct := media.ParseContentType("application/json")
@@ -987,19 +936,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
 
-				_, _ = app.Kafka.Add(&dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
-					Data: asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "bar", "1.0"),
-						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
-						asyncapi3test.AddChannel("topic-1", ch),
-						asyncapi3test.WithOperation("sendAction",
-							asyncapi3test.WithOperationAction("send"),
-							asyncapi3test.WithOperationChannel(ch),
-							asyncapi3test.UseOperationMessage(msg),
-						),
+				_, _ = app.Kafka.Add(dynamictest.NewConfig(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+					asyncapi3test.AddChannel("topic-1", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
 					),
-				}, enginetest.NewEngine())
+				), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")})), enginetest.NewEngine())
 
 				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
 				ct := media.ParseContentType("application/json")
@@ -1182,17 +1128,14 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 func TestHandler_Kafka_Topic_Parameter(t *testing.T) {
 	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 	addr := fmt.Sprintf(":%v", try.GetFreePort())
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: asyncapi3test.NewConfig(
-			asyncapi3test.WithInfo("foo", "bar", "1.0"),
-			asyncapi3test.WithServer("foo", "kafka", addr),
-			asyncapi3test.WithChannel("orders.{region}.{eventType}",
-				asyncapi3test.WithParameter("region", &asyncapi3.Parameter{}),
-				asyncapi3test.WithParameter("eventType", &asyncapi3.Parameter{}),
-			),
+	cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+		asyncapi3test.WithInfo("foo", "bar", "1.0"),
+		asyncapi3test.WithServer("foo", "kafka", addr),
+		asyncapi3test.WithChannel("orders.{region}.{eventType}",
+			asyncapi3test.WithParameter("region", &asyncapi3.Parameter{}),
+			asyncapi3test.WithParameter("eventType", &asyncapi3.Parameter{}),
 		),
-	}
+	), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 	cfg.Info.Time = try.MustTime("2023-12-27T13:01:30+00:00")
 
 	mi, err := app.Kafka.Add(cfg, enginetest.NewEngine())
@@ -1275,7 +1218,7 @@ func TestHandler_Kafka_Topic_Parameter(t *testing.T) {
 
 func Test_IsAsyncApiConfig(t *testing.T) {
 	v2 := &asyncapi3.Config{Info: asyncapi3.Info{Name: "foo"}}
-	_, ok := runtime.IsAsyncApiConfig(&dynamic.Config{Data: v2})
+	_, ok := runtime.IsAsyncApiConfig(dynamictest.NewConfig(v2))
 	require.True(t, ok)
 
 }
@@ -1305,7 +1248,7 @@ func newClientContext(addr, clientId, softwareName, softwareVersion string, hear
 
 func TestHandler_Kafka_ServiceItems(t *testing.T) {
 	parsed := func(cfg *asyncapi3.Config) *asyncapi3.Config {
-		require.NoError(t, cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, &dynamictest.Reader{}))
+		require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{}))
 		return cfg
 	}
 

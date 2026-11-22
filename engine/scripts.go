@@ -31,7 +31,7 @@ func NewDefaultScriptLoader(config *static.Config) ScriptLoader {
 }
 
 func (l *DefaultScriptLoader) Load(file *dynamic.Config, host common.Host) (common.Script, error) {
-	s := file.Data.(string)
+	s := file.Data().(string)
 	filename := file.Info.Path()
 	if file.Info.Provider == "git" {
 		gitFile := file.Info.Url.Query()["file"]

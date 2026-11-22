@@ -86,7 +86,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 
 		if !e.parsed.Load() {
 			if v != nil {
-				c.Data = v
+				c.SetData(v)
 			}
 
 			log.Debugf("read processing %v", c.Info.Path())
@@ -97,7 +97,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if err != nil {
 				return nil, err
 			}
-			e.parsed.Store(c.Data != nil)
+			e.parsed.Store(c.Data() != nil)
 		}
 	}
 
@@ -280,9 +280,9 @@ func (w *ConfigWatcher) reload(e *entry, evt *dynamic.ConfigEvent) bool {
 		e.parsed.Store(false)
 		return false
 	}
-	e.parsed.Store(c.Data != nil)
+	e.parsed.Store(c.Data() != nil)
 
-	if c.Data == nil {
+	if c.Data() == nil {
 		log.Debugf("processed %v", c.Info.Path())
 		return false
 	}

@@ -1,7 +1,6 @@
 package asyncapi3_test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -195,7 +194,7 @@ func TestAnalyze_EmptyEntries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var cfg *asyncapi3.Config
 			require.NoError(t, yaml.Unmarshal([]byte(head+tc.body), &cfg))
-			require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+			require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 
 			var a *asyncapi3.Analysis
 			require.NotPanics(t, func() { a = cfg.Analyze() })

@@ -79,7 +79,7 @@ func TestStore(t *testing.T) {
 			cfg: func() *asyncapi3.Config {
 				cfg := asyncapi3test.NewConfig(asyncapi3test.WithChannel("/subscribe"))
 				cfg.Channels["/empty"] = nil
-				require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+				require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 				return cfg
 			}(),
 			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
@@ -692,12 +692,8 @@ export default function() {
 
 			if tc.js != "" {
 				err := e.AddScript(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("./script.ts")},
-						Raw:  []byte(tc.js),
-						Data: tc.js,
-					},
-					Event: dynamic.Create,
+					Config: dynamictest.NewConfig(tc.js, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("./script.ts")}), dynamictest.WithRaw([]byte(tc.js))),
+					Event:  dynamic.Create,
 				})
 				require.NoError(t, err)
 			}
@@ -1024,12 +1020,8 @@ func TestStore_Update_ClosesClientsOfRemovedChannels(t *testing.T) {
 
 		if js != "" {
 			err := e.AddScript(dynamic.ConfigEvent{
-				Config: &dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: try.MustUrl("./script.ts")},
-					Raw:  []byte(js),
-					Data: js,
-				},
-				Event: dynamic.Create,
+				Config: dynamictest.NewConfig(js, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("./script.ts")}), dynamictest.WithRaw([]byte(js))),
+				Event:  dynamic.Create,
 			})
 			require.NoError(t, err)
 		}

@@ -41,10 +41,7 @@ func TestIndex(t *testing.T) {
 			),
 		),
 	)
-	app.Http.Add(&dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: try.MustUrl("petstore.yaml"), Provider: "NPM"},
-		Data: petStore,
-	})
+	app.Http.Add(dynamictest.NewConfig(petStore, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("petstore.yaml"), Provider: "NPM"})))
 
 	result, err := app.Search(search.Request{
 		QueryText: "api:Petstore",

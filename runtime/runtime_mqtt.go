@@ -188,11 +188,11 @@ func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 }
 
 func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
-	if _, ok := c.Data.(*asyncapi3.Config); ok {
-		return c.Data.(*asyncapi3.Config), nil
+	data := c.Data()
+	if cfg, ok := data.(*asyncapi3.Config); ok {
+		return cfg, nil
 	}
-	old := c.Data.(*asyncApi.Config)
-	return old.Convert()
+	return data.(*asyncApi.Config).Convert()
 }
 
 func (s *MqttStore) updateEventStore(k *MqttInfo) {

@@ -206,7 +206,7 @@ func TestApp_AddHttp(t *testing.T) {
 
 func TestApp_AddHttp_Patching(t *testing.T) {
 	newConfig := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		u, _ := url.Parse(name)
 		cfg.Info.Url = u
 		return cfg
@@ -404,7 +404,7 @@ func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 		)
 	}
 	file := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -431,7 +431,7 @@ func TestApp_RemoveHttp_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 	require.Equal(t, "from a", op.Summary)
 	require.NotContains(t, op.Responses.GetResponse(http.StatusOK).Headers, "X-From-B")
 
-	require.Equal(t, newA(), a.Data, "parsed config of a.yml must not be changed by merging")
+	require.Equal(t, newA(), a.Data(), "parsed config of a.yml must not be changed by merging")
 }
 
 func TestApp_AddHttp_SingleFile(t *testing.T) {
@@ -445,7 +445,7 @@ func TestApp_AddHttp_SingleFile(t *testing.T) {
 	}
 	parsed := newFoo()
 	// Parse sets Path and Method of the operations
-	require.NoError(t, parsed.Parse(&dynamic.Config{Data: parsed}, &dynamictest.Reader{}))
+	require.NoError(t, parsed.Parse(dynamictest.NewConfig(parsed), &dynamictest.Reader{}))
 	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 	info := app.Http.Add(newConfig(parsed))
@@ -459,7 +459,7 @@ func TestApp_AddHttp_SingleFile(t *testing.T) {
 
 	t.Run("input config is not changed", func(t *testing.T) {
 		expected := newFoo()
-		require.NoError(t, expected.Parse(&dynamic.Config{Data: expected}, &dynamictest.Reader{}))
+		require.NoError(t, expected.Parse(dynamictest.NewConfig(expected), &dynamictest.Reader{}))
 		require.Equal(t, expected, parsed)
 	})
 
@@ -476,7 +476,7 @@ func TestApp_AddHttp_SingleFile(t *testing.T) {
 
 func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
 	newFile := func(name string, c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -546,14 +546,14 @@ func TestApp_RemoveHttp_StoreAfterRemove(t *testing.T) {
 }
 
 func TestIsHttpConfig(t *testing.T) {
-	_, b := runtime.IsHttpConfig(&dynamic.Config{Data: openapitest.NewConfig("3.0")})
+	_, b := runtime.IsHttpConfig(dynamictest.NewConfig(openapitest.NewConfig("3.0")))
 	require.True(t, b)
-	_, b = runtime.IsHttpConfig(&dynamic.Config{Data: "foo"})
+	_, b = runtime.IsHttpConfig(dynamictest.NewConfig("foo"))
 	require.False(t, b)
 }
 
 func newConfig(config *openapi.Config) *dynamic.Config {
-	c := &dynamic.Config{Data: config}
+	c := dynamictest.NewConfig(config)
 	u, _ := url.Parse("https://mokapi.io")
 	c.Info.Url = u
 	return c
@@ -573,7 +573,7 @@ func TestApp_AddHttp_SameCyclicSchemaInTwoFiles(t *testing.T) {
 	file := func(name string) *dynamic.Config {
 		c := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 			openapitest.WithComponentSchema("Node", newNode()))
-		cfg := &dynamic.Config{Data: c}
+		cfg := dynamictest.NewConfig(c)
 		cfg.Info.Url, _ = url.Parse("file:///" + name)
 		return cfg
 	}
@@ -773,10 +773,10 @@ func TestHttpInfo_Snapshot(t *testing.T) {
 
 		info := app.Http.Add(file)
 
-		require.NotSame(t, file.Data, info.Config())
+		require.NotSame(t, file.Data(), info.Config())
 		require.Len(t, info.Config().Servers, 1, "default server is added to the published config")
 		require.Equal(t, "/", info.Config().Servers[0].Url)
-		require.Empty(t, file.Data.(*openapi.Config).Servers, "but not to the file")
+		require.Empty(t, file.Data().(*openapi.Config).Servers, "but not to the file")
 	})
 
 	t.Run("config is nil after the last file is removed", func(t *testing.T) {

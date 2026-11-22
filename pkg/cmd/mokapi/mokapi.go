@@ -195,7 +195,7 @@ func reportMockability(e dynamic.ConfigEvent) {
 		delete(lastMockability, key)
 		return
 	}
-	m, ok := e.Config.Data.(dynamic.Mockable)
+	m, ok := e.Config.Data().(dynamic.Mockable)
 	if !ok {
 		return
 	}

@@ -61,7 +61,7 @@ func (m *Module) open(file string, args map[string]interface{}) (any, error) {
 }
 
 func (m *Module) resolve(f *dynamic.Config) (any, error) {
-	b, err := json.Marshal(f.Data)
+	b, err := json.Marshal(f.Data())
 	if err != nil {
 		return nil, err
 	}

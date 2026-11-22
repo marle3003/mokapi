@@ -3,7 +3,6 @@ package mcp_test
 import (
 	"context"
 	"io"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/mcp"
 	"mokapi/providers/openapi"
@@ -471,11 +470,8 @@ func TestService_Run_Http_ConfigRemoved(t *testing.T) {
 
 	t.Run("API removed while the object is in use returns not found", func(t *testing.T) {
 		app := runtimetest.NewApp()
-		file := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-				openapitest.WithPath("/bar", openapitest.WithOperation(http.MethodGet, openapitest.WithResponse(http.StatusOK)))),
-		}
+		file := dynamictest.NewConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+			openapitest.WithPath("/bar", openapitest.WithOperation(http.MethodGet, openapitest.WithResponse(http.StatusOK)))), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		app.Http.Add(file)
 		r, err := mcp.NewService(app).GetRunResponse(context.Background(), mcp.RunInput{Code: `mokapi.getApi('foo')`})
 		require.NoError(t, err)

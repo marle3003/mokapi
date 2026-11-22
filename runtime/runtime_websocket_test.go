@@ -43,15 +43,15 @@ func TestWebsocketStore_MergedConfigs(t *testing.T) {
 			name: "merging does not change the files",
 			test: func(t *testing.T, app *runtime.App) {
 				a, b := twoFilesWithSameTitle("ws")
-				beforeA, beforeB := marshal(t, a.Data), marshal(t, b.Data)
+				beforeA, beforeB := marshal(t, a.Data()), marshal(t, b.Data())
 
 				_, err := app.Websocket.Add(a, enginetest.NewEngine())
 				require.NoError(t, err)
 				_, err = app.Websocket.Add(b, enginetest.NewEngine())
 				require.NoError(t, err)
 
-				require.Equal(t, beforeA, marshal(t, a.Data))
-				require.Equal(t, beforeB, marshal(t, b.Data))
+				require.Equal(t, beforeA, marshal(t, a.Data()))
+				require.Equal(t, beforeB, marshal(t, b.Data()))
 			},
 		},
 		{
@@ -205,7 +205,7 @@ func TestWebsocketInfo_Snapshot(t *testing.T) {
 		info, err := app.Websocket.Add(file, enginetest.NewEngine())
 
 		require.NoError(t, err)
-		require.NotSame(t, file.Data, info.Config())
+		require.NotSame(t, file.Data(), info.Config())
 	})
 
 	t.Run("config is nil after the last file is removed", func(t *testing.T) {

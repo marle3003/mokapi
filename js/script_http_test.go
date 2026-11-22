@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
@@ -444,13 +445,9 @@ export default function() {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			e := engine.NewEngine(engine.WithScriptLoader(engine.NewDefaultScriptLoader(&static.Config{})))
-			err := e.AddScript(dynamic.ConfigEvent{Config: &dynamic.Config{
-				Info: dynamic.ConfigInfo{
-					Url: mustParse("test.ts"),
-				},
-				Raw:  []byte(tc.code),
-				Data: "",
-			}})
+			err := e.AddScript(dynamic.ConfigEvent{Config: dynamictest.NewConfig("", dynamictest.WithInfo(dynamic.ConfigInfo{
+				Url: mustParse("test.ts"),
+			}), dynamictest.WithRaw([]byte(tc.code)))})
 			r.NoError(t, err)
 			r.Len(t, hook.Entries, 3)
 			r.Equal(t, fmt.Sprintf("Stopped after 5 redirects, original URL was %s", server.URL), hook.Entries[1].Message)

@@ -145,14 +145,14 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 }
 
 func TestIsLdapConfig(t *testing.T) {
-	_, ok := runtime.IsLdapConfig(&dynamic.Config{Data: &directory.Config{}})
+	_, ok := runtime.IsLdapConfig(dynamictest.NewConfig(&directory.Config{}))
 	require.True(t, ok)
-	_, ok = runtime.IsLdapConfig(&dynamic.Config{Data: "foo"})
+	_, ok = runtime.IsLdapConfig(dynamictest.NewConfig("foo"))
 	require.False(t, ok)
 }
 
 func newLdapConfig(name string, config *directory.Config) *dynamic.Config {
-	c := &dynamic.Config{Data: config}
+	c := dynamictest.NewConfig(config)
 	u, _ := url.Parse(name)
 	c.Info.Url = u
 	return c
@@ -279,7 +279,7 @@ func TestLdapStore_MergedConfigs(t *testing.T) {
 
 		app.Ldap.Add(b, enginetest.NewEngine())
 
-		fileA := a.Data.(*directory.Config)
+		fileA := a.Data().(*directory.Config)
 		require.Equal(t, 1, fileA.Entries.Len(), "entry of b.yml is not added to the file a.yml")
 		alice, _ := fileA.Entries.Get("cn=alice")
 		require.Equal(t, []string{"a@foo.bar"}, alice.Attributes["mail"], "attribute of b.yml is not added to the file a.yml")
@@ -316,7 +316,7 @@ func TestLdapInfo_Snapshot(t *testing.T) {
 
 		info := app.Ldap.Add(file, enginetest.NewEngine())
 
-		fileConfig := file.Data.(*directory.Config)
+		fileConfig := file.Data().(*directory.Config)
 		require.NotSame(t, fileConfig, info.Config())
 		require.NotSame(t, fileConfig.Entries, info.Config().Entries)
 		require.Equal(t, 1, info.Config().Entries.Len())
@@ -395,7 +395,7 @@ func TestLdapInfo_Snapshot(t *testing.T) {
 		}))
 		require.Equal(t, uint8(ldap.Success), rr.Message.(*ldap.ModifyResponse).ResultCode)
 
-		fileConfig := file.Data.(*directory.Config)
+		fileConfig := file.Data().(*directory.Config)
 		require.Equal(t, 1, fileConfig.Entries.Len())
 		e, _ := fileConfig.Entries.Get("cn=alice")
 		require.Equal(t, []string{"alice@foo.bar"}, e.Attributes["mail"])

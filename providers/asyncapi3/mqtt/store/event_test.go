@@ -3,6 +3,7 @@ package store_test
 import (
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
@@ -39,12 +40,8 @@ export default function() {
 
 				e := enginetest.NewEngine()
 				err := e.AddScript(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.js")},
-						Raw:  []byte(script),
-						Data: script,
-					},
-					Event: dynamic.Create,
+					Config: dynamictest.NewConfig(script, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.js")}), dynamictest.WithRaw([]byte(script))),
+					Event:  dynamic.Create,
 				})
 				require.NoError(t, err)
 				return e
@@ -93,12 +90,8 @@ export default function() {
 
 				e := enginetest.NewEngine()
 				err := e.AddScript(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.js")},
-						Raw:  []byte(script),
-						Data: script,
-					},
-					Event: dynamic.Create,
+					Config: dynamictest.NewConfig(script, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.js")}), dynamictest.WithRaw([]byte(script))),
+					Event:  dynamic.Create,
 				})
 				require.NoError(t, err)
 				return e

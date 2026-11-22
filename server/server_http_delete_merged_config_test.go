@@ -32,7 +32,7 @@ func TestHttpManager_DeleteOneOfTwoFilesWithSameTitle(t *testing.T) {
 			openapitest.WithServer(fmt.Sprintf("http://127.0.0.1:%d", port), ""),
 			openapitest.WithPath(path, openapitest.WithOperation("GET", openapitest.WithResponse(200))),
 		)
-		return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl(file)}, Data: cfg}}
+		return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(file)}))}
 	}
 	a := newFile("a.yml", portA, "/fromA")
 	b := newFile("b.yml", portB, "/fromB")

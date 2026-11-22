@@ -311,7 +311,7 @@ func parseSchema(c *dynamic.Config, inputType string, r dynamic.Reader) (any, er
 		return nil, err
 	}
 
-	c.Data = s
+	c.SetData(s)
 	return s, s.Parse(c, r)
 }
 

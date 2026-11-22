@@ -20,7 +20,7 @@ func TestResolve(t *testing.T) {
 	t.Run("empty should not error", func(t *testing.T) {
 		reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) { return nil, nil })
 		config := &openapi.Config{}
-		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+		err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 		require.NoError(t, err)
 	})
 }
@@ -178,10 +178,7 @@ func TestConfig_Parse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.config.Parse(&dynamic.Config{
-				Data: tc.config,
-				Info: dynamictest.NewConfigInfo(),
-			}, &dynamictest.Reader{})
+			err := tc.config.Parse(dynamictest.NewConfig(tc.config, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			tc.test(t, tc.config, err)
 		})
 	}
@@ -311,7 +308,7 @@ components:
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.Content), c)
 			require.NoError(t, err)
-			err = c.Parse(&dynamic.Config{Data: c}, nil)
+			err = c.Parse(dynamictest.NewConfig(c), nil)
 			require.NoError(t, err)
 			d.f(t, c)
 		})
@@ -322,7 +319,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	require.NoError(t, err)
-	err = config.Parse(&dynamic.Config{Data: config}, nil)
+	err = config.Parse(dynamictest.NewConfig(config), nil)
 	require.NoError(t, err)
 
 	require.Nil(t, config.Components.Schemas.Get("foo"))
@@ -375,7 +372,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	require.NoError(t, err)
-	err = config.Parse(&dynamic.Config{Data: config}, nil)
+	err = config.Parse(dynamictest.NewConfig(config), nil)
 	require.NoError(t, err)
 
 	endpoint := config.Paths.Lookup("/pet")
@@ -408,7 +405,7 @@ func TestPetStore_Response(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	require.NoError(t, err)
-	err = config.Parse(&dynamic.Config{Data: config}, nil)
+	err = config.Parse(dynamictest.NewConfig(config), nil)
 	require.NoError(t, err)
 
 	endpoint := config.Paths.Lookup("/pet/{petId}")
@@ -426,7 +423,7 @@ func TestPetStore_Parameters(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	require.NoError(t, err)
-	err = config.Parse(&dynamic.Config{Data: config}, nil)
+	err = config.Parse(dynamictest.NewConfig(config), nil)
 	require.NoError(t, err)
 
 	endpoint := config.Paths.Lookup("/pet/{petId}")
@@ -522,7 +519,7 @@ func TestConfig_Patch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			c := tc.configs[0]
 			for _, p := range tc.configs {
-				err := p.Parse(&dynamic.Config{Data: p, Info: dynamictest.NewConfigInfo()}, &dynamictest.Reader{})
+				err := p.Parse(dynamictest.NewConfig(p, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 				require.NoError(t, err)
 			}
 			for _, p := range tc.configs[1:] {

@@ -5,6 +5,7 @@ import (
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"net/url"
@@ -25,7 +26,7 @@ func (tr *testReader) Read(u *url.URL, _ any) (*dynamic.Config, error) {
 	if err := tr.readFunc(cfg); err != nil {
 		return cfg, err
 	}
-	if p, ok := cfg.Data.(dynamic.Parser); ok {
+	if p, ok := cfg.Data().(dynamic.Parser); ok {
 		return cfg, p.Parse(cfg, tr)
 	}
 	return cfg, nil
@@ -75,7 +76,7 @@ func TestServerResolve(t *testing.T) {
 				config := &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 					"foo": {Value: &asyncApi.Server{Description: "foo"}},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
@@ -93,7 +94,7 @@ func TestServerResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
 				config := &asyncApi.Config{Components: &asyncApi.Components{Servers: map[string]*asyncApi.ServerRef{"foo": {Value: &asyncApi.Server{Description: "foo"}}}}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
@@ -113,7 +114,7 @@ func TestServerResolve(t *testing.T) {
 				config := &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 					"foo": {},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
@@ -146,7 +147,7 @@ func TestServerResolve(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			reader := &testReader{readFunc: tc.read}
-			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
+			c := dynamictest.NewConfig(tc.cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}}))
 			err := tc.cfg.Parse(c, reader)
 			if err != nil {
 				tc.test(t, nil, err)
@@ -193,7 +194,7 @@ func TestChannelResolve(t *testing.T) {
 				config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 					"foo": {Value: target},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
@@ -211,7 +212,7 @@ func TestChannelResolve(t *testing.T) {
 				config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 					"foo": {},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
@@ -242,7 +243,7 @@ func TestChannelResolve(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			reader := &testReader{readFunc: tc.read}
-			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
+			c := dynamictest.NewConfig(tc.cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}}))
 			err := tc.cfg.Parse(c, reader)
 			if err != nil {
 				tc.test(t, nil, err)
@@ -301,7 +302,7 @@ func TestMessage(t *testing.T) {
 				config := &asyncApi.Config{Components: &asyncApi.Components{
 					Messages: map[string]*asyncApi.MessageRef{"foo": {Value: &asyncApi.Message{Description: "foo"}}},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
@@ -319,7 +320,7 @@ func TestMessage(t *testing.T) {
 				config := &asyncApi.Config{Components: &asyncApi.Components{
 					Messages: map[string]*asyncApi.MessageRef{"foo": {Value: &asyncApi.Message{Description: "foo"}}},
 				}}
-				cfg.Data = config
+				cfg.SetData(config)
 				return nil
 			},
 			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
@@ -375,7 +376,7 @@ func TestMessage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			reader := &testReader{readFunc: tc.read}
-			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
+			c := dynamictest.NewConfig(tc.cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}}))
 			err := tc.cfg.Parse(c, reader)
 			if err != nil {
 				tc.test(t, nil, err)
@@ -405,7 +406,7 @@ func TestSchema(t *testing.T) {
 
 	t.Run("nil should not error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *dynamic.Config) error { return nil }}
-		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+		err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 		require.NoError(t, err)
 	})
 	t.Run("reference inside", func(t *testing.T) {
@@ -416,7 +417,7 @@ func TestSchema(t *testing.T) {
 		message.Payload = &asyncapi3.SchemaRef{Reference: dynamic.Reference[*asyncapi3.SchemaRef]{Ref: "#/components/schemas/foo"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
 
-		c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}
+		c := dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}}))
 		err := config.Parse(c, reader)
 		require.NoError(t, err)
 		cfg, err := config.Convert()
@@ -428,11 +429,11 @@ func TestSchema(t *testing.T) {
 		target := &schema.Schema{}
 		message.Payload = &asyncapi3.SchemaRef{Reference: dynamic.Reference[*asyncapi3.SchemaRef]{Ref: "foo.yml"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error {
-			cfg.Data = target
+			cfg.SetData(target)
 			return nil
 		}}
 
-		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+		err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, message.Payload.Value)
 	})
@@ -440,16 +441,16 @@ func TestSchema(t *testing.T) {
 		target := &schema.Schema{}
 		message.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &asyncapi3.SchemaRef{Reference: dynamic.Reference[*asyncapi3.SchemaRef]{Ref: "foo.yml"}}}}
 		reader := &testReader{readFunc: func(file *dynamic.Config) error {
-			file.Data = target
+			file.SetData(target)
 			return nil
 		}}
 
-		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+		err := config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 		require.NoError(t, err)
 
 		// modify
 		target = &schema.Schema{Description: "TARGET"}
-		err = config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+		err = config.Parse(dynamictest.NewConfig(config, dynamictest.WithInfo(dynamic.ConfigInfo{Url: &url.URL{}})), reader)
 
 		require.NoError(t, err)
 		s, err := message.Payload.GetSchema()

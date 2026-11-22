@@ -189,7 +189,7 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 }
 
 func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	switch v := c.Data.(type) {
+	switch v := c.Data().(type) {
 	case *asyncapi3.Config:
 		return v, true
 	case *asyncApi.Config:

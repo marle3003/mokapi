@@ -34,14 +34,14 @@ components:
       $ref: 'test.yaml#/components/servers/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/servers/foo' failed: resolve reference '/test.yaml#/components/servers/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentServer("foo", &asyncapi3.Server{Title: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentServer("foo", &asyncapi3.Server{Title: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.Servers["foo"].Value.Title)
@@ -56,14 +56,14 @@ components:
       $ref: 'test.yaml#/components/tags/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, `resolve reference '/test.yaml#/components/tags/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentTag("foo", &asyncapi3.Tag{Name: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentTag("foo", &asyncapi3.Tag{Name: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.Tags["foo"].Value.Name)
@@ -77,14 +77,14 @@ channels:
     $ref: 'test.yaml#/components/channels/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, `resolve reference '/test.yaml#/components/channels/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentChannel("foo", &asyncapi3.Channel{Title: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentChannel("foo", &asyncapi3.Channel{Title: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Channels["foo"].Value.Title)
@@ -105,14 +105,14 @@ components:
       $ref: 'test.yaml#/components/schemas/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/schemas/foo' failed: resolve reference '/test.yaml#/components/schemas/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.New("string")))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.New("string")))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "string", cfg.Components.Schemas["foo"].Value.(*schema.Schema).Type[0])
@@ -132,14 +132,14 @@ components:
       $ref: 'test.yaml#/components/messages/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/messages/foo' failed: resolve reference '/test.yaml#/components/messages/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentMessage("foo", &asyncapi3.Message{Title: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentMessage("foo", &asyncapi3.Message{Title: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Channels["foo"].Value.Messages["msg"].Value.Title)
@@ -157,14 +157,14 @@ components:
       $ref: 'test.yaml#/components/operations/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/operations/foo' failed: resolve reference '/test.yaml#/components/operations/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentOperation("foo", &asyncapi3.Operation{Title: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentOperation("foo", &asyncapi3.Operation{Title: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.Operations["foo"].Value.Title)
@@ -184,14 +184,14 @@ components:
       $ref: 'test.yaml#/components/parameters/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/parameters/foo' failed: resolve reference '/test.yaml#/components/parameters/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentParameter("foo", &asyncapi3.Parameter{Description: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentParameter("foo", &asyncapi3.Parameter{Description: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.Parameters["foo"].Value.Description)
@@ -212,14 +212,14 @@ components:
       $ref: 'test.yaml#/components/correlationIds/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/correlationIds/foo' failed: resolve reference '/test.yaml#/components/correlationIds/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentCorrelationId("foo", &asyncapi3.CorrelationId{Description: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentCorrelationId("foo", &asyncapi3.CorrelationId{Description: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.CorrelationIds["foo"].Value.Description)
@@ -240,14 +240,14 @@ components:
       $ref: 'test.yaml#/components/externalDocs/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/externalDocs/foo' failed: resolve reference '/test.yaml#/components/externalDocs/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentExternalDoc("foo", &asyncapi3.ExternalDoc{Description: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentExternalDoc("foo", &asyncapi3.ExternalDoc{Description: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.ExternalDocs["foo"].Value.Description)
@@ -266,14 +266,14 @@ components:
       $ref: 'test.yaml#/components/operationTraits/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/operationTraits/foo' failed: resolve reference '/test.yaml#/components/operationTraits/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentOperationTrait("foo", &asyncapi3.OperationTrait{Description: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentOperationTrait("foo", &asyncapi3.OperationTrait{Description: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.OperationTraits["foo"].Value.Description)
@@ -294,14 +294,14 @@ components:
       $ref: 'test.yaml#/components/messageTraits/foo'
 `,
 			test: func(cfg *asyncapi3.Config) {
-				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("/foo")}))
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "resolve reference '#/components/messageTraits/foo' failed: resolve reference '/test.yaml#/components/messageTraits/foo' failed: TestReader: config not found")
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
-					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentMessageTrait("foo", &asyncapi3.MessageTrait{Description: "FOO"}))}, nil
+					return dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithComponentMessageTrait("foo", &asyncapi3.MessageTrait{Description: "FOO"}))), nil
 				}))
 				require.NoError(t, err)
 				require.Equal(t, "FOO", cfg.Components.MessageTraits["foo"].Value.Description)

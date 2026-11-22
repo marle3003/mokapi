@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
@@ -54,12 +55,10 @@ paths:
 						"/root.yml": {
 							Info: dynamic.ConfigInfo{Url: mustParse("/root.yml"), Provider: "foo"},
 							Raw:  []byte(root),
-							Data: nil,
 						},
 						"/paths.yml": {
 							Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml"), Provider: "foo"},
 							Raw:  []byte(path),
-							Data: nil,
 						},
 					},
 				}
@@ -70,7 +69,7 @@ paths:
 				ch := make(chan *openapi.Config)
 				w.AddListener(func(e dynamic.ConfigEvent) {
 					require.NotNil(t, e.Config)
-					cfg := e.Config.Data.(*openapi.Config)
+					cfg := e.Config.Data().(*openapi.Config)
 					require.NotNil(t, cfg)
 					refs := e.Config.Refs.List(false)
 					require.Len(t, refs, 1)
@@ -87,11 +86,7 @@ paths:
 				}
 
 				path = strings.ReplaceAll(path, "foo", "bar")
-				f := &dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)},
-					Raw:  []byte(path),
-					Data: nil,
-				}
+				f := dynamictest.NewConfig(nil, dynamictest.WithInfo(dynamic.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)}), dynamictest.WithRaw([]byte(path)))
 				p.ch <- dynamic.ConfigEvent{Config: f}
 
 				select {
@@ -130,12 +125,10 @@ paths:
 						"/root.yml": {
 							Info: dynamic.ConfigInfo{Url: mustParse("/root.yml")},
 							Raw:  []byte(root),
-							Data: nil,
 						},
 						"/paths.yml": {
 							Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml")},
 							Raw:  []byte(path),
-							Data: nil,
 						},
 					},
 				}

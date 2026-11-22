@@ -5,6 +5,7 @@ import (
 	"mokapi/sortedmap"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"text/template"
 	"time"
 
@@ -43,12 +44,44 @@ const (
 type Config struct {
 	Info       ConfigInfo
 	Raw        []byte
-	Data       interface{}
 	Refs       Refs
 	Listeners  Listeners
 	Scope      Scope
 	SourceType SourceType
 	resolving  map[string]bool
+	data       atomic.Pointer[dataBox]
+	// origin is set on a view created by Parse and is the config the view stands for.
+	origin *Config
+}
+
+// viewOf returns a config for running a parse hook on data that is not published yet.
+// References and listeners are registered on the real config, see AddRef.
+func (c *Config) viewOf(data any) *Config {
+	v := &Config{Info: c.Info, Raw: c.Raw, Scope: c.Scope, SourceType: c.SourceType, origin: c}
+	v.SetData(data)
+	return v
+}
+
+// dataBox lets the field hold values of changing concrete types, which atomic.Value forbids.
+type dataBox struct {
+	value any
+}
+
+// Data returns the parsed data. The returned object is not changed by a later parse,
+// parsing publishes a new object with SetData.
+func (c *Config) Data() any {
+	if b := c.data.Load(); b != nil {
+		return b.value
+	}
+	return nil
+}
+
+func (c *Config) SetData(v any) {
+	if v == nil {
+		c.data.Store(nil)
+		return
+	}
+	c.data.Store(&dataBox{value: v})
 }
 
 type Refs struct {
@@ -73,6 +106,9 @@ type ConfigEvent struct {
 }
 
 func AddRef(parent, ref *Config) {
+	if parent.origin != nil {
+		parent = parent.origin
+	}
 	if parent.Info.Key() == ref.Info.Key() {
 		return
 	}
@@ -151,10 +187,7 @@ func Wrap(i ConfigInfo, c *Config) {
 }
 
 func Validate(c *Config) error {
-	if c.Data == nil {
-		return nil
-	}
-	if v, ok := c.Data.(Validator); ok {
+	if v, ok := c.Data().(Validator); ok {
 		return v.Validate()
 	}
 	return nil

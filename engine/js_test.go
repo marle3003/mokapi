@@ -457,11 +457,7 @@ func TestJsOpen(t *testing.T) {
 }
 
 func newScript(path, src string) dynamic.ConfigEvent {
-	return dynamic.ConfigEvent{Config: &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: mustParse(path)},
-		Raw:  []byte(src),
-		Data: src,
-	}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(src, dynamictest.WithInfo(dynamic.ConfigInfo{Url: mustParse(path)}), dynamictest.WithRaw([]byte(src)))}
 }
 
 func mustParse(s string) *url.URL {

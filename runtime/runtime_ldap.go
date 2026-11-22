@@ -67,7 +67,7 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*LdapInfo)
 	}
-	cfg := c.Data.(*directory.Config)
+	cfg := c.Data().(*directory.Config)
 	name := cfg.Info.Name
 	li, ok := s.infos[name]
 
@@ -108,7 +108,7 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	cfg := c.Data.(*directory.Config)
+	cfg := c.Data().(*directory.Config)
 	name := cfg.Info.Name
 	li := s.infos[name]
 	if li == nil {
@@ -166,12 +166,12 @@ func (h *ldapHandler) Unbind(ctx context.Context) {
 }
 
 func IsLdapConfig(c *dynamic.Config) (*directory.Config, bool) {
-	li, ok := c.Data.(*directory.Config)
+	li, ok := c.Data().(*directory.Config)
 	return li, ok
 }
 
 func getLdapConfig(c *dynamic.Config) *directory.Config {
-	return c.Data.(*directory.Config)
+	return c.Data().(*directory.Config)
 }
 
 func (s *LdapStore) Len() int {

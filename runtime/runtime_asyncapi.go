@@ -25,7 +25,9 @@ func mergeAsyncApiConfigs(files []*dynamic.Config, reader dynamic.Reader) *async
 	}
 
 	if len(files) > 1 {
-		err := cfg.Parse(&dynamic.Config{Data: cfg}, reader)
+		parent := &dynamic.Config{}
+		parent.SetData(cfg)
+		err := cfg.Parse(parent, reader)
 		if err != nil {
 			log.Errorf("failed to parse config: %s", err)
 		}

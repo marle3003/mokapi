@@ -75,7 +75,7 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*MailInfo)
 	}
-	cfg := c.Data.(*mail.Config)
+	cfg := c.Data().(*mail.Config)
 	name := cfg.Info.Name
 	mi, ok := s.infos[name]
 
@@ -116,7 +116,7 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	cfg := c.Data.(*mail.Config)
+	cfg := c.Data().(*mail.Config)
 	name := cfg.Info.Name
 	mi := s.infos[name]
 	if mi == nil {
@@ -197,7 +197,7 @@ func (h *mailHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 }
 
 func IsSmtpConfig(c *dynamic.Config) (*mail.Config, bool) {
-	cfg, ok := c.Data.(*mail.Config)
+	cfg, ok := c.Data().(*mail.Config)
 	return cfg, ok
 }
 
@@ -274,7 +274,7 @@ func (h *mailHandler) Idle(w imap.UpdateWriter, done chan struct{}, ctx context.
 }
 
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
-	return c.Data.(*mail.Config)
+	return c.Data().(*mail.Config)
 }
 
 func (s *MailStore) Len() int {

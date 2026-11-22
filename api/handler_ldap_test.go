@@ -1,7 +1,6 @@
 package api
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
@@ -47,13 +46,10 @@ func TestHandler_Ldap(t *testing.T) {
 			name: "get ldap service",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: &directory.Config{
-						Info:    directory.Info{Name: "foo", Description: "bar", Version: "1.0"},
-						Address: "0.0.0.0:389",
-					},
-				}
+				cfg := dynamictest.NewConfig(&directory.Config{
+					Info:    directory.Info{Name: "foo", Description: "bar", Version: "1.0"},
+					Address: "0.0.0.0:389",
+				}, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				app.Ldap.Add(cfg, enginetest.NewEngine())
 				return app
@@ -133,10 +129,7 @@ func TestHandler_Ldap_ConfigRemoved(t *testing.T) {
 
 	t.Run("service returns 404 after the file was removed from the store", func(t *testing.T) {
 		app := runtimetest.NewApp()
-		file := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: &directory.Config{Info: directory.Info{Name: "foo"}},
-		}
+		file := dynamictest.NewConfig(&directory.Config{Info: directory.Info{Name: "foo"}}, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		info := app.Ldap.Add(file, enginetest.NewEngine())
 		app.Ldap.Remove(file)
 

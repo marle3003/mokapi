@@ -327,24 +327,21 @@ items:
 					},
 				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/list-of-string")),
-					Data: &schema.Schema{
-						Defs: map[string]*schema.Schema{
-							"string-items": {
-								DynamicAnchor: "T",
-								Type:          schema.Types{"string"},
-							},
+				person := dynamictest.NewConfig(&schema.Schema{
+					Defs: map[string]*schema.Schema{
+						"string-items": {
+							DynamicAnchor: "T",
+							Type:          schema.Types{"string"},
 						},
-						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
 					},
-				}
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
+				}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/list-of-string"))))
 
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				err := person.Data().(*schema.Schema).Parse(person, reader)
 				require.NoError(t, err)
 
 				require.NoError(t, err)
-				require.Equal(t, "string", person.Data.(*schema.Schema).Items.Type.String())
+				require.Equal(t, "string", person.Data().(*schema.Schema).Items.Type.String())
 			},
 		},
 	}

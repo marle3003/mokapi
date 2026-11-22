@@ -24,10 +24,7 @@ func TestIndex_Ldap(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c *directory.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -192,10 +189,7 @@ func TestIndex_Ldap(t *testing.T) {
 
 func TestIndex_Ldap_Event(t *testing.T) {
 	api := &directory.Config{Info: directory.Info{Name: "Test LDAP Events"}}
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: api,
-	}
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 
 	testcases := []struct {
 		name string
@@ -266,10 +260,7 @@ func TestIndex_Ldap_MergedFiles(t *testing.T) {
 			Dn:         dn,
 			Attributes: map[string][]string{"objectclass": {"user"}},
 		})
-		return &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)),
-			Data: &directory.Config{Info: directory.Info{Name: "foo"}, Entries: entries},
-		}
+		return dynamictest.NewConfig(&directory.Config{Info: directory.Info{Name: "foo"}, Entries: entries}, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
 	}
 	found := func(t *testing.T, app *runtime.App, text string) bool {
 		r, err := app.Search(search.Request{QueryText: text, Limit: 10})

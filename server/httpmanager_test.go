@@ -43,7 +43,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(u, ""))
 	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get"))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
-	m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
+	m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 	// give server time to start
 	time.Sleep(time.Second * 1)
@@ -59,14 +59,14 @@ func TestHttpManager_Update(t *testing.T) {
 		{
 			name: "nil config",
 			test: func(t *testing.T, app *runtime.App, m *server.HttpManager, hook *logtest.Hook) {
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: nil}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(nil)})
 				require.Nil(t, hook.LastEntry())
 			}},
 		{
 			name: "app contains config",
 			test: func(t *testing.T, app *runtime.App, m *server.HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				list := app.Http.List()
 				require.Len(t, list, 1)
@@ -80,8 +80,8 @@ func TestHttpManager_Update(t *testing.T) {
 				u := fmt.Sprintf("http://localhost:%v", port)
 				foo := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
 				bar := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: u + "/bar"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: foo, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: bar, Info: dynamic.ConfigInfo{Url: try.MustUrl("bar.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(foo, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(bar, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("bar.yml")}))})
 
 				list := app.Http.List()
 				require.Len(t, list, 2)
@@ -92,7 +92,7 @@ func TestHttpManager_Update(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App, m *server.HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				entries := hook.Entries
 				require.Len(t, entries, 3)
@@ -105,7 +105,7 @@ func TestHttpManager_Update(t *testing.T) {
 			name: "invalid port format",
 			test: func(t *testing.T, app *runtime.App, m *server.HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:foo"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
@@ -116,7 +116,7 @@ func TestHttpManager_Update(t *testing.T) {
 			name: "invalid url format",
 			test: func(t *testing.T, app *runtime.App, m *server.HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "$://"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
@@ -130,9 +130,9 @@ func TestHttpManager_Update(t *testing.T) {
 				port := try.GetFreePort()
 				u := fmt.Sprintf("http://:%v", port)
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				entries := hook.Entries
 				require.Len(t, entries, 5)
@@ -150,10 +150,10 @@ func TestHttpManager_Update(t *testing.T) {
 
 				u := fmt.Sprintf("http://:%v", port1)
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 				u = fmt.Sprintf("http://:%v", port2)
 				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
-				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.Update(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				entries := hook.Entries
 				require.Equal(t, fmt.Sprintf("adding new HTTP host '' on binding :%v", port1), entries[0].Message)
@@ -207,7 +207,7 @@ func newApiEvent(name string, port int, basePath string, event dynamic.Event) dy
 	)
 	return dynamic.ConfigEvent{
 		Event:  event,
-		Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl(name + ".yml")}, Data: c},
+		Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(name + ".yml")})),
 	}
 }
 

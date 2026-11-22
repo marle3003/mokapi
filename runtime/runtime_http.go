@@ -76,7 +76,7 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*HttpInfo)
 	}
-	cfg := c.Data.(*openapi.Config)
+	cfg := c.Data().(*openapi.Config)
 	name := cfg.Info.Name
 	hc, ok := s.infos[name]
 	if !ok {
@@ -131,7 +131,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	cfg := c.Data.(*openapi.Config)
+	cfg := c.Data().(*openapi.Config)
 	name := cfg.Info.Name
 	hc := s.infos[name]
 	if hc == nil {
@@ -171,7 +171,9 @@ func mergeHttpConfigs(reader dynamic.Reader) func(files []*dynamic.Config) *open
 		}
 
 		if len(files) > 1 {
-			err := r.Parse(&dynamic.Config{Data: r}, reader)
+			parent := &dynamic.Config{}
+			parent.SetData(r)
+			err := r.Parse(parent, reader)
 			if err != nil {
 				log.Errorf("failed to parse config: %s", err)
 			}
@@ -191,7 +193,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openap
 }
 
 func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
-	switch v := c.Data.(type) {
+	switch v := c.Data().(type) {
 	case *openapi.Config:
 		return v, true
 	default:
@@ -200,7 +202,7 @@ func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
 }
 
 func getHttpConfig(c *dynamic.Config) *openapi.Config {
-	return c.Data.(*openapi.Config)
+	return c.Data().(*openapi.Config)
 }
 
 func (s *HttpStore) Len() int {

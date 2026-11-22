@@ -21,10 +21,7 @@ import (
 
 func TestIndex_Http(t *testing.T) {
 	toConfig := func(c *openapi.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -570,10 +567,7 @@ func TestIndex_Http_Event(t *testing.T) {
 			),
 		),
 	)
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: api,
-	}
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 
 	testcases := []struct {
 		name string

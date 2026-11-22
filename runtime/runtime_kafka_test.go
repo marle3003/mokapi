@@ -259,12 +259,11 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 			name: "using relative file path",
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 				require.True(t, strings.HasSuffix(u.Path, "path/ref.yaml"))
-				return &dynamic.Config{Data: &asyncapi3.MessageRef{
+				return dynamictest.NewConfig(&asyncapi3.MessageRef{
 					Value: asyncapi3test.NewMessage(
 						asyncapi3test.WithMessageTitle("original"),
 					),
-				},
-				}, nil
+				}), nil
 			}),
 			configs: []*dynamic.Config{
 				getFileConfig("path/foo.yaml", asyncapi3test.NewConfig(
@@ -293,12 +292,11 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 			name: "using relative URL path",
 			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 				require.Equal(t, "https://a.io/bar.yaml", u.String())
-				return &dynamic.Config{Data: &asyncapi3.MessageRef{
+				return dynamictest.NewConfig(&asyncapi3.MessageRef{
 					Value: asyncapi3test.NewMessage(
 						asyncapi3test.WithMessageTitle("original"),
 					),
-				},
-				}, nil
+				}), nil
 			}),
 			configs: []*dynamic.Config{
 				getConfig("https://a.io/a", asyncapi3test.NewConfig(
@@ -333,7 +331,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 			cfg := &static.Config{}
 			app := runtime.New(cfg, r)
 			for _, c := range tc.configs {
-				err := c.Data.(dynamic.Parser).Parse(c, r)
+				err := c.Data().(dynamic.Parser).Parse(c, r)
 				require.NoError(t, err)
 				_, err = app.Kafka.Add(c, enginetest.NewEngine())
 				require.NoError(t, err)
@@ -344,22 +342,22 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 }
 
 func TestIsAsyncApiConfig(t *testing.T) {
-	_, ok := runtime.IsAsyncApiConfig(&dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", ""))})
+	_, ok := runtime.IsAsyncApiConfig(dynamictest.NewConfig(asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", ""))))
 	require.True(t, ok)
-	_, ok = runtime.IsAsyncApiConfig(&dynamic.Config{Data: "foo"})
+	_, ok = runtime.IsAsyncApiConfig(dynamictest.NewConfig("foo"))
 	require.False(t, ok)
 }
 
 func getConfig(name string, c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse(name)
-	cfg := &dynamic.Config{Data: c}
+	cfg := dynamictest.NewConfig(c)
 	cfg.Info.Url = u
 	return cfg
 }
 
 func getFileConfig(name string, c *asyncapi3.Config) *dynamic.Config {
 	u, _ := file.ParseUrl(name)
-	cfg := &dynamic.Config{Data: c}
+	cfg := dynamictest.NewConfig(c)
 	cfg.Info.Url = u
 	return cfg
 }
@@ -416,15 +414,15 @@ func TestKafkaStore_MergedConfigs(t *testing.T) {
 			name: "merging does not change the files",
 			test: func(t *testing.T, app *runtime.App) {
 				a, b := twoFilesWithSameTitle("kafka")
-				beforeA, beforeB := marshal(t, a.Data), marshal(t, b.Data)
+				beforeA, beforeB := marshal(t, a.Data()), marshal(t, b.Data())
 
 				_, err := app.Kafka.Add(a, enginetest.NewEngine())
 				require.NoError(t, err)
 				_, err = app.Kafka.Add(b, enginetest.NewEngine())
 				require.NoError(t, err)
 
-				require.Equal(t, beforeA, marshal(t, a.Data))
-				require.Equal(t, beforeB, marshal(t, b.Data))
+				require.Equal(t, beforeA, marshal(t, a.Data()))
+				require.Equal(t, beforeB, marshal(t, b.Data()))
 			},
 		},
 		{
@@ -622,9 +620,9 @@ func TestKafkaInfo_Snapshot(t *testing.T) {
 		info, err := app.Kafka.Add(file, enginetest.NewEngine())
 
 		require.NoError(t, err)
-		require.NotSame(t, file.Data, info.Config())
+		require.NotSame(t, file.Data(), info.Config())
 		require.NotNil(t, info.Config().Servers.Lookup("mokapi"), "default broker is added to the published config")
-		require.Equal(t, 0, file.Data.(*asyncapi3.Config).Servers.Len(), "but not to the file")
+		require.Equal(t, 0, file.Data().(*asyncapi3.Config).Servers.Len(), "but not to the file")
 	})
 
 	t.Run("config is nil after the last file is removed", func(t *testing.T) {
@@ -731,7 +729,7 @@ func TestKafkaStore_ListSetAndLen(t *testing.T) {
 	t.Run("Add rejects a config that is not AsyncAPI", func(t *testing.T) {
 		app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
-		_, err := app.Kafka.Add(&dynamic.Config{Data: "foo"}, enginetest.NewEngine())
+		_, err := app.Kafka.Add(dynamictest.NewConfig("foo"), enginetest.NewEngine())
 
 		require.EqualError(t, err, "no Kafka config found")
 	})
@@ -749,7 +747,7 @@ func TestShouldStartKafka(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, mode := runtime.ShouldStartKafka(&dynamic.Config{Data: tc.data})
+			_, mode := runtime.ShouldStartKafka(dynamictest.NewConfig(tc.data))
 
 			require.Equal(t, tc.mode, mode)
 		})

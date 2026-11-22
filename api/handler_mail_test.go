@@ -231,7 +231,7 @@ func TestHandler_Smtp(t *testing.T) {
 // newMailApp adds the config as a file with a fixed time, so that the configs of the service are
 // the same in every run.
 func newMailApp(cfg *mail.Config) *runtime.App {
-	file := &dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}
+	file := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 	file.Info.Time = time.Date(2023, 12, 27, 13, 1, 30, 0, time.UTC)
 	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 	app.Mail.Add(file)
@@ -280,7 +280,7 @@ func TestHandler_Mail_Settings(t *testing.T) {
 }
 
 func newSmtpFile(url string, cfg *mail.Config) *dynamic.Config {
-	return &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)), Data: cfg}
+	return dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
 }
 
 // An info without a config snapshot is what a request sees when the last file of a mail service

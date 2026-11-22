@@ -3,7 +3,6 @@ package schema
 import (
 	encodingjson "encoding/json"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	json "mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
@@ -311,7 +310,7 @@ func TestConvert(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 
-			err := tc.s.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.s}, &dynamictest.Reader{})
+			err := tc.s.Parse(dynamictest.NewConfig(tc.s, dynamictest.WithInfo(dynamictest.NewConfigInfo())), &dynamictest.Reader{})
 			require.NoError(t, err)
 
 			js := ConvertToJsonSchema(tc.s)

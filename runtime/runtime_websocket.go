@@ -186,12 +186,11 @@ func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func getWebsocketConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
-	if _, ok := c.Data.(*asyncapi3.Config); ok {
-		return c.Data.(*asyncapi3.Config), nil
-	} else {
-		old := c.Data.(*asyncApi.Config)
-		return old.Convert()
+	data := c.Data()
+	if cfg, ok := data.(*asyncapi3.Config); ok {
+		return cfg, nil
 	}
+	return data.(*asyncApi.Config).Convert()
 }
 
 func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {

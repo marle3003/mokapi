@@ -47,7 +47,7 @@ func TestKafkaServer(t *testing.T) {
 	cfg := &static.Config{}
 	m := server.NewKafkaManager(nil, runtime.New(cfg, &dynamictest.Reader{}))
 	defer m.Stop()
-	m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
+	m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 	// wait for kafka start
 	time.Sleep(500 * time.Millisecond)
@@ -75,7 +75,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithTitle("foo"),
 					asyncapi3test.WithServer("foo", "kafka", addr1),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				port2 := try.GetFreePort()
 				addr2 := fmt.Sprintf("127.0.0.1:%v", port2)
@@ -84,7 +84,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					Protocol: "kafka",
 				}})
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -114,14 +114,14 @@ func TestKafkaServer_Update(t *testing.T) {
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithTitle("foo"),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				cfg.Servers.Set("broker", &asyncapi3.ServerRef{Value: &asyncapi3.Server{
 					Host:     addr,
 					Protocol: "kafka",
 				}})
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -143,7 +143,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithServer("", "kafka", addr),
 					asyncapi3test.WithTitle("foo"),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -156,7 +156,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				require.Len(t, r.Brokers, 1)
 
 				cfg.Servers.Del("")
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				r, err = client.Metadata(0, &metaData.Request{})
 				require.EqualError(t, err, "EOF")
@@ -171,7 +171,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithServer("foo", "kafka", addr1),
 					asyncapi3test.WithTitle("foo"),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -190,10 +190,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithTitle("foo"),
 				)
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Data: cfg,
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")},
-					}},
+					Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))},
 				)
 
 				// wait for new kafka server start
@@ -211,10 +208,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithTitle("foo"),
 				)
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Config: &dynamic.Config{
-						Data: cfg,
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")},
-					}},
+					Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))},
 				)
 
 				r, err = client.Metadata(0, &metaData.Request{})
@@ -234,7 +228,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithTitle("foo"),
 					asyncapi3test.WithServer("kafka", "kafka", addr),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				cfg.Servers.Del("kafka")
 				cfg.Servers.Set("broker", &asyncapi3.ServerRef{Value: &asyncapi3.Server{
@@ -245,7 +239,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -274,7 +268,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				cfg.Channels["bar"] = &asyncapi3.ChannelRef{Value: asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
@@ -283,7 +277,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					))}
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -312,14 +306,14 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
 				delete(cfg.Channels, "foo")
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for update
 				time.Sleep(500 * time.Millisecond)
@@ -341,14 +335,11 @@ func TestKafkaServer_Update(t *testing.T) {
 					asyncapi3test.WithTitle("foo"),
 					asyncapi3test.WithServer("foo", "kafka", addr),
 				)
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				m.UpdateConfig(dynamic.ConfigEvent{
-					Event: dynamic.Delete,
-					Config: &dynamic.Config{
-						Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")},
-						Data: cfg,
-					},
+					Event:  dynamic.Delete,
+					Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")})),
 				})
 
 				// wait for kafka start
@@ -387,7 +378,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						asyncapi3test.AssignToServer("#/servers/kafka"),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -418,7 +409,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -444,7 +435,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						asyncapi3test.WithKafkaChannelBindingFrom(map[string]any{}),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -496,7 +487,7 @@ func kafkaConfigEvent(port int) dynamic.ConfigEvent {
 		asyncapi3test.WithTitle("foo"),
 		asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", port)),
 	)
-	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))}
 }
 
 func TestKafkaManager_DeleteFileStopsBrokerOnlyItDefined(t *testing.T) {
@@ -529,7 +520,7 @@ func TestKafkaManager_DeleteOfUnknownConfigDoesNotPanic(t *testing.T) {
 
 func TestKafkaManager_DeleteOfInfoWithoutConfigSnapshot(t *testing.T) {
 	e := kafkaConfigEvent(try.GetFreePort())
-	cfg := e.Config.Data.(*asyncapi3.Config)
+	cfg := e.Config.Data().(*asyncapi3.Config)
 	st := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer st.Close()
 	app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(nil, st)))

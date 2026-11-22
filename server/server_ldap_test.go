@@ -142,10 +142,7 @@ func TestLdapDirectory(t *testing.T) {
 
 func newConfig(path string, data interface{}) *dynamic.Config {
 	u, _ := url.Parse(path)
-	return &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: u},
-		Data: data,
-	}
+	return dynamictest.NewConfig(data, dynamictest.WithInfo(dynamic.ConfigInfo{Url: u}))
 }
 
 func TestLdapManager_PortIsBoundWhenUpdateConfigReturns(t *testing.T) {

@@ -71,8 +71,8 @@ func TestConfigWatcher_ConfigKey(t *testing.T) {
 	})
 }
 
-// Read must not check c.Data without holding the entry lock while
-// configChanged reparses the same config and thereby writes c.Data.
+// Read must not check c.Data() without holding the entry lock while
+// configChanged reparses the same config and thereby writes c.Data().
 func TestConfigWatcher_ReadWhileConfigIsReparsed(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
@@ -114,7 +114,7 @@ func TestConfigWatcher_ReadWhileConfigIsReparsed(t *testing.T) {
 }
 
 // reparseCalls counts reparseCounter.Parse calls. It is a variable of the test package, because
-// the config parser resets the struct on every parse, so the struct can't hold the state.
+// every parse works on a fresh object, so the object can't hold the state.
 var reparseCalls atomic.Int32
 
 // reparseCounter fails its second Parse call.
@@ -185,7 +185,7 @@ func TestConfigWatcher_ReadProviderDeliveredConfig(t *testing.T) {
 	processed := make(chan any, 1)
 	w.AddListener(func(e dynamic.ConfigEvent) {
 		select {
-		case processed <- e.Config.Data:
+		case processed <- e.Config.Data():
 		default:
 		}
 	})
@@ -207,7 +207,7 @@ func TestConfigWatcher_ReadProviderDeliveredConfig(t *testing.T) {
 
 	c, err := w.Read(configPath, &openapi.Config{})
 	require.NoError(t, err)
-	require.Same(t, parsed, c.Data)
+	require.Same(t, parsed, c.Data())
 }
 
 type plainFile struct {
@@ -242,5 +242,5 @@ func TestConfigWatcher_ReadProviderDeliveredFileWithoutConfigType(t *testing.T) 
 
 	c, err := w.Read(configPath, &plainFile{})
 	require.NoError(t, err)
-	require.Equal(t, &plainFile{Foo: "bar"}, c.Data)
+	require.Equal(t, &plainFile{Foo: "bar"}, c.Data())
 }

@@ -29,7 +29,7 @@ func TestConfig_Parse(t *testing.T) {
 	err = cfg.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
 
-	require.IsType(t, &mail.Config{}, c.Data)
+	require.IsType(t, &mail.Config{}, c.Data())
 
 	require.Len(t, hook.Entries, 1)
 	require.Equal(t, logrus.WarnLevel, hook.Entries[0].Level)

@@ -44,15 +44,15 @@ func TestMqttStore_MergedConfigs(t *testing.T) {
 			name: "merging does not change the files",
 			test: func(t *testing.T, app *runtime.App) {
 				a, b := twoFilesWithSameTitle("mqtt")
-				beforeA, beforeB := marshal(t, a.Data), marshal(t, b.Data)
+				beforeA, beforeB := marshal(t, a.Data()), marshal(t, b.Data())
 
 				_, err := app.Mqtt.Add(a, enginetest.NewEngine())
 				require.NoError(t, err)
 				_, err = app.Mqtt.Add(b, enginetest.NewEngine())
 				require.NoError(t, err)
 
-				require.Equal(t, beforeA, marshal(t, a.Data))
-				require.Equal(t, beforeB, marshal(t, b.Data))
+				require.Equal(t, beforeA, marshal(t, a.Data()))
+				require.Equal(t, beforeB, marshal(t, b.Data()))
 			},
 		},
 		{
@@ -232,9 +232,9 @@ func TestMqttInfo_Snapshot(t *testing.T) {
 		info, err := app.Mqtt.Add(file, enginetest.NewEngine())
 
 		require.NoError(t, err)
-		require.NotSame(t, file.Data, info.Config())
+		require.NotSame(t, file.Data(), info.Config())
 		require.NotNil(t, info.Config().Servers.Lookup("mokapi"), "default broker is added to the published config")
-		require.Equal(t, 0, file.Data.(*asyncapi3.Config).Servers.Len(), "but not to the file")
+		require.Equal(t, 0, file.Data().(*asyncapi3.Config).Servers.Len(), "but not to the file")
 	})
 
 	t.Run("config is nil after the last file is removed", func(t *testing.T) {

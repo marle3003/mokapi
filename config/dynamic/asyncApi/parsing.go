@@ -104,7 +104,7 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 	}
 
 	if r.Value.ContentType == "" {
-		cfg, ok := config.Data.(*Config)
+		cfg, ok := config.Data().(*Config)
 		if ok {
 			r.Value.ContentType = cfg.DefaultContentType
 		}

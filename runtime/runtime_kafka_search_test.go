@@ -24,10 +24,7 @@ func TestIndex_Kafka(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c *asyncapi3.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -204,10 +201,7 @@ func TestIndex_Kafka_Event(t *testing.T) {
 		asyncapi3test.WithInfo("Kafka Test Events", "", ""),
 		asyncapi3test.WithChannel("events"),
 	)
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: api,
-	}
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 
 	testcases := []struct {
 		name string
@@ -319,13 +313,10 @@ func TestIndex_Kafka_MergedFiles(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	file := func(url, channel string) *dynamic.Config {
-		return &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)),
-			Data: asyncapi3test.NewConfig(
-				asyncapi3test.WithInfo("foo", "", ""),
-				asyncapi3test.WithChannel(channel),
-			),
-		}
+		return dynamictest.NewConfig(asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.WithChannel(channel),
+		), dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
 	}
 	found := func(t *testing.T, app *runtime.App, text string) bool {
 		r, err := app.Search(search.Request{QueryText: text, Limit: 10})

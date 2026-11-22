@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"testing"
 )
@@ -126,7 +126,7 @@ components:
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.Content), c)
 			require.NoError(t, err)
-			err = c.Parse(&dynamic.Config{Data: c}, nil)
+			err = c.Parse(dynamictest.NewConfig(c), nil)
 			require.NoError(t, err)
 			d.f(t, c)
 		})
@@ -268,7 +268,7 @@ func TestConfig_Security_Json(t *testing.T) {
 			c := &openapi.Config{}
 			err := json.Unmarshal([]byte(d.Content), c)
 			require.NoError(t, err)
-			err = c.Parse(&dynamic.Config{Data: c}, nil)
+			err = c.Parse(dynamictest.NewConfig(c), nil)
 			require.NoError(t, err)
 			d.f(t, c)
 		})

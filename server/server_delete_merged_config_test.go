@@ -40,7 +40,7 @@ func newMergedFiles(protocol string) mergedFiles {
 }
 
 func mergedFileEvent(file string, cfg *asyncapi3.Config) dynamic.ConfigEvent {
-	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl(file)}, Data: cfg}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl(file)}))}
 }
 
 func (f mergedFiles) deleteB() dynamic.ConfigEvent {

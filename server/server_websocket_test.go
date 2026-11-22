@@ -43,7 +43,7 @@ func TestWebsocketServer(t *testing.T) {
 					),
 				)
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: dynamictest.NewConfig(c, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))})
 
 				// wait for websocket start
 				time.Sleep(500 * time.Millisecond)
@@ -80,7 +80,7 @@ func TestWebsocketServer(t *testing.T) {
 						asyncapi3test.AssignToServer("#/servers/kafka"),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
+				c := dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -137,7 +137,7 @@ func websocketConfigEvent(port int) dynamic.ConfigEvent {
 		asyncapi3test.WithTitle("foo"),
 		asyncapi3test.WithServer("ws", "ws", fmt.Sprintf("127.0.0.1:%d", port)),
 	)
-	return dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}}
+	return dynamic.ConfigEvent{Config: dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}))}
 }
 
 func TestWebsocketManager_DeleteRemovesConfigAndStopsServer(t *testing.T) {
@@ -162,13 +162,10 @@ func TestWebsocketManager_DeleteDoesNotTouchKafkaClusterWithSameName(t *testing.
 	m := server.NewWebsocketManager(nil, app)
 	defer m.Stop()
 
-	kafkaCfg := &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")},
-		Data: asyncapi3test.NewConfig(
-			asyncapi3test.WithTitle("foo"),
-			asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
-		),
-	}
+	kafkaCfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+		asyncapi3test.WithTitle("foo"),
+		asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%d", try.GetFreePort())),
+	), dynamictest.WithInfo(dynamic.ConfigInfo{Url: try.MustUrl("kafka.yml")}))
 	_, err := app.Kafka.Add(kafkaCfg, nil)
 	require.NoError(t, err)
 

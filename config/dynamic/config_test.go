@@ -252,7 +252,7 @@ func TestValidate(t *testing.T) {
 					},
 				}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.True(t, called, "validate is called")
 				require.NoError(t, err)
@@ -267,7 +267,7 @@ func TestValidate(t *testing.T) {
 					},
 				}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.Error(t, err)
 				require.EqualError(t, err, "TEST ERROR")
@@ -279,7 +279,7 @@ func TestValidate(t *testing.T) {
 				v := struct {
 				}{}
 
-				err := dynamic.Validate(&dynamic.Config{Data: v})
+				err := dynamic.Validate(dynamictest.NewConfig(v))
 
 				require.NoError(t, err)
 			},

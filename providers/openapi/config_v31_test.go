@@ -29,7 +29,7 @@ func TestConfig_v31(t *testing.T) {
 	tag := readJsonTestFile(t, "./test/tag.json", &schema.Schema{}, "https://petstore31.swagger.io/api/v31/components/schemas/tag")
 	reader.Data[tag.Info.Url.String()] = tag
 
-	c := root.Data.(*openapi.Config)
+	c := root.Data().(*openapi.Config)
 	err := c.Parse(root, reader)
 	require.NoError(t, err)
 
@@ -44,14 +44,10 @@ func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *
 	err = json.Unmarshal(b, &data)
 	require.NoError(t, err)
 
-	return &dynamic.Config{
-		Info: dynamic.ConfigInfo{
-			Provider: "http",
-			Url:      try.MustUrl(url),
-			Checksum: nil,
-			Time:     time.Time{},
-		},
-		Raw:  b,
-		Data: data,
-	}
+	return dynamictest.NewConfig(data, dynamictest.WithInfo(dynamic.ConfigInfo{
+		Provider: "http",
+		Url:      try.MustUrl(url),
+		Checksum: nil,
+		Time:     time.Time{},
+	}), dynamictest.WithRaw(b))
 }

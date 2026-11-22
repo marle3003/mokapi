@@ -26,7 +26,7 @@ func TestRegister(t *testing.T) {
 	}
 	err := dynamic.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
-	require.Nil(t, c.Data)
+	require.Nil(t, c.Data())
 
 	dynamic.Register("foo", func(v version.Version) bool {
 		return v.String() == "1.0.0"
@@ -34,5 +34,5 @@ func TestRegister(t *testing.T) {
 
 	err = dynamic.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
-	require.Equal(t, &foo{Foo: "1.0"}, c.Data)
+	require.Equal(t, &foo{Foo: "1.0"}, c.Data())
 }

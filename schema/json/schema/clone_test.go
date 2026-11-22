@@ -16,7 +16,7 @@ func parse(t *testing.T, data string) *schema.Schema {
 	t.Helper()
 	s := &schema.Schema{}
 	require.NoError(t, yaml.Unmarshal([]byte(data), &s))
-	require.NoError(t, s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{}))
+	require.NoError(t, s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{}))
 	return s
 }
 
@@ -405,7 +405,7 @@ properties:
 
 				s2 := s.Clone()
 
-				err = s2.Parse(&dynamic.Config{Data: s2}, &dynamictest.Reader{})
+				err = s2.Parse(dynamictest.NewConfig(s2), &dynamictest.Reader{})
 				require.NoError(t, err)
 				a := s2.Properties.Get("a")
 				require.Equal(t, schema.Types{"string"}, a.Type)

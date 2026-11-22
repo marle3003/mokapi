@@ -231,7 +231,7 @@ api.getMailbox('foo@mokapi.io')`,
 }
 
 func mailFile(url string, cfg *mail.Config) *dynamic.Config {
-	return &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(url)), Data: cfg}
+	return dynamictest.NewConfig(cfg, dynamictest.WithInfo(dynamictest.NewConfigInfo(dynamictest.WithUrl(url))))
 }
 
 func getMailApi(t *testing.T, app *runtime.App, name string) *mcp.MailAPI {

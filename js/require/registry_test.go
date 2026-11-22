@@ -356,7 +356,6 @@ func TestRegistry(t *testing.T) {
 								Time:     time.Time{},
 							},
 							Raw:       []byte(src.code),
-							Data:      nil,
 							Refs:      dynamic.Refs{},
 							Listeners: dynamic.Listeners{},
 						}, nil

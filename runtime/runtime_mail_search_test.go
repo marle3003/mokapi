@@ -26,10 +26,7 @@ func TestIndex_Mail(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	toConfig := func(c *mail.Config) *dynamic.Config {
-		cfg := &dynamic.Config{
-			Info: dynamictest.NewConfigInfo(),
-			Data: c,
-		}
+		cfg := dynamictest.NewConfig(c, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 		return cfg
 	}
 
@@ -185,10 +182,7 @@ func TestIndex_Mail_Event(t *testing.T) {
 	api := &mail.Config{
 		Info: mail.Info{Name: "Test Mail Events"},
 	}
-	cfg := &dynamic.Config{
-		Info: dynamictest.NewConfigInfo(),
-		Data: api,
-	}
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 
 	testcases := []struct {
 		name string

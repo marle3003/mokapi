@@ -151,7 +151,7 @@ func TestMessage_Parse(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := tc.cfg.Parse(&dynamic.Config{Data: tc.cfg}, &dynamictest.Reader{})
+			err := tc.cfg.Parse(dynamictest.NewConfig(tc.cfg), &dynamictest.Reader{})
 			tc.test(t, tc.cfg, err)
 		})
 	}

@@ -50,7 +50,9 @@ func resolve[T any](ref string, config *Config, reader Reader) (T, error) {
 	if ok {
 		if !isLocal {
 			// set parent scope hierarchy
-			config = &Config{Raw: config.Raw, Data: copyData(config.Data), Info: config.Info}
+			scoped := &Config{Raw: config.Raw, Info: config.Info}
+			scoped.SetData(copyData(config.Data()))
+			config = scoped
 			config.Scope.SetParent(parent.Scope)
 		}
 		if !config.EnterRef(ref) {
@@ -88,11 +90,11 @@ func ResolveDynamic[T any](ref string, config *Config, reader Reader) (T, error)
 }
 
 func resolveFragment[T any](fragment string, config *Config, dynamic bool) (result T, err error) {
-	val := config.Data
+	val := config.Data()
 	if fragment == "" {
 		// resolve to current (root) element
 	} else if strings.HasPrefix(fragment, "/") {
-		val, err = resolvePath(fragment, config.Data)
+		val, err = resolvePath(fragment, config.Data())
 	} else if dynamic {
 		val, err = config.Scope.GetDynamic(fragment)
 	} else {
@@ -240,7 +242,7 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 		return u, nil
 	}
 
-	id := getId(cfg.Data)
+	id := getId(cfg.Data())
 	if id != "" {
 		var uId *url.URL
 		uId, err = url.Parse(id)
@@ -306,8 +308,8 @@ func resolveResource[T any](ref string, config *Config, reader Reader) (string, 
 	}
 
 	var data interface{}
-	if len(u.Fragment) > 0 && strings.Contains(u.Fragment, "/") && config.Data != nil {
-		val := reflect.ValueOf(config.Data).Elem()
+	if len(u.Fragment) > 0 && strings.Contains(u.Fragment, "/") && config.Data() != nil {
+		val := reflect.ValueOf(config.Data()).Elem()
 		data = reflect.New(val.Type()).Interface()
 	} else {
 		var result T

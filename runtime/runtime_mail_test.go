@@ -146,14 +146,14 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 }
 
 func TestIsSmtpConfig(t *testing.T) {
-	_, ok := runtime.IsSmtpConfig(&dynamic.Config{Data: &mail.Config{}})
+	_, ok := runtime.IsSmtpConfig(dynamictest.NewConfig(&mail.Config{}))
 	require.True(t, ok)
-	_, ok = runtime.IsSmtpConfig(&dynamic.Config{Data: "foo"})
+	_, ok = runtime.IsSmtpConfig(dynamictest.NewConfig("foo"))
 	require.False(t, ok)
 }
 
 func newSmtpConfig(name string, config *mail.Config) *dynamic.Config {
-	c := &dynamic.Config{Data: config}
+	c := dynamictest.NewConfig(config)
 	u, _ := url.Parse(name)
 	c.Info.Url = u
 	return c
@@ -362,7 +362,7 @@ func TestMailInfo_Snapshot(t *testing.T) {
 
 		info := app.Mail.Add(file)
 
-		fileConfig := file.Data.(*mail.Config)
+		fileConfig := file.Data().(*mail.Config)
 		require.NotSame(t, fileConfig, info.Config())
 		info.Config().Mailboxes["alice@foo.bar"].Password = "changed"
 		require.Empty(t, fileConfig.Mailboxes["alice@foo.bar"].Password)

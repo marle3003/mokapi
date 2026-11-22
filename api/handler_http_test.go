@@ -82,11 +82,9 @@ func TestHandler_Http(t *testing.T) {
 			name: "get http service info",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
-				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(), Data: openapitest.NewConfig("3.0.0",
-						openapitest.WithInfo("foo", "1.0", "bar"),
-					),
-				}
+				cfg := dynamictest.NewConfig(openapitest.NewConfig("3.0.0",
+					openapitest.WithInfo("foo", "1.0", "bar"),
+				), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				app.Http.Add(cfg)
 				return app

@@ -1,7 +1,6 @@
 package openapi_test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	json "mokapi/schema/json/schema"
@@ -149,7 +148,7 @@ components:
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(tc.data), c)
 			require.NoError(t, err)
-			err = c.Parse(&dynamic.Config{Data: c}, &dynamictest.Reader{})
+			err = c.Parse(dynamictest.NewConfig(c), &dynamictest.Reader{})
 			require.NoError(t, err)
 			tc.test(t, c)
 		})

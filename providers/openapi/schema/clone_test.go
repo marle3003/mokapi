@@ -1,7 +1,6 @@
 package schema_test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi/schema"
 	jsonSchema "mokapi/schema/json/schema"
@@ -27,7 +26,7 @@ $defs:
 $ref: '#/$defs/node'
 `), &s)
 	require.NoError(t, err)
-	require.NoError(t, s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{}))
+	require.NoError(t, s.Parse(dynamictest.NewConfig(s), &dynamictest.Reader{}))
 
 	node := s.Sub
 	require.Same(t, node, node.Properties.Get("child").Sub, "the graph must be cyclic")

@@ -905,7 +905,7 @@ func readBytes(b kafka.Bytes) []byte {
 
 func getConfig(c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
-	cfg := &dynamic.Config{Data: c}
+	cfg := dynamictest.NewConfig(c)
 	cfg.Info.Url = u
 	err := c.Parse(cfg, &dynamictest.Reader{})
 	if err != nil {

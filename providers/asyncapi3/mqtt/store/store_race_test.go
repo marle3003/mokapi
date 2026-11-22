@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"io"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/mqtt"
@@ -144,7 +143,7 @@ func TestStore_EmptyChannelNextToValidChannel(t *testing.T) {
 		asyncapi3test.WithChannel("foo", asyncapi3test.WithMessage("msg")),
 	)
 	cfg.Channels["empty"] = nil
-	require.NoError(t, cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{}))
+	require.NoError(t, cfg.Parse(dynamictest.NewConfig(cfg), &dynamictest.Reader{}))
 
 	var s *store.Store
 	require.NotPanics(t, func() {
