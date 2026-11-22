@@ -131,6 +131,77 @@ schema:
 ```
 
 This declarative approach requires no JavaScript, just add the `format` field to your schema.
+Besides the formats above, Mokapi also supports `hostname` and `ipv6`.
+
+### Custom Format with Placeholders
+
+If `format` is not one of the built-in formats, Mokapi treats it as a template and replaces
+every placeholder in curly braces with generated data. Text outside the braces is kept as is.
+`#` is replaced by a digit and `?` by a letter.
+
+```yaml
+schema:
+  type: object
+  properties:
+    fullName:
+      type: string
+      format: '{firstname} {lastname}' # Danny Robel
+    orderNumber:
+      type: string
+      format: 'ORD-{number:1000,9999}' # ORD-4821
+    phone:
+      type: string
+      format: '+41 ## ### ## ##' # +41 79 482 17 03
+    price:
+      type: string
+      format: '{price:5,50} {currencyshort}' # 18.35 EUR
+```
+
+Some placeholders take parameters after a colon, separated by commas, such as `{number:1,10}`
+or `{price:5,50}`. If a placeholder is unknown, Mokapi keeps it unchanged in the output.
+A `format` is ignored if the schema also sets `pattern`, `minLength` or `maxLength`. In the
+last two cases Mokapi generates a random string of the requested length instead.
+
+These placeholders are commonly used:
+
+| Category    | Placeholders                                                                              |
+|-------------|-------------------------------------------------------------------------------------------|
+| Person      | `{name}`, `{firstname}`, `{lastname}`, `{gender}`, `{email}`, `{phone}`                   |
+| Auth        | `{username}`, `{password}`                                                                |
+| Address     | `{street}`, `{city}`, `{state}`, `{zip}`, `{country}`, `{latitude}`, `{longitude}`        |
+| Company     | `{company}`, `{jobtitle}`                                                                 |
+| Text        | `{noun}`, `{verb}`, `{sentence}`, `{paragraph}`, `{question}`, `{phrase}`                 |
+| Numbers     | `{number:min,max}`, `{int32}`, `{int64}`, `{uint32}`, `{float32}`, `{float64}`, `{float32range:min,max}` |
+| Payment     | `{price:min,max}`, `{currencyshort}`, `{currencylong}`, `{creditcardnumber}`              |
+| Date/Time   | `{date}`, `{date:format}`, `{year}`, `{month}`, `{day}`, `{weekday}`, `{hour}`, `{minute}`, `{second}` |
+| Internet    | `{url}`, `{domainname}`, `{ipv4address}`, `{ipv6address}`, `{macaddress}`, `{httpstatuscode}`, `{httpmethod}`, `{useragent}` |
+| Colors      | `{color}`, `{hexcolor}`, `{rgbcolor}`, `{safecolor}`                                      |
+| Misc        | `{bool}`, `{uuid}`, `{fileextension}`, `{filemimetype}`, `{language}`                     |
+
+`{date}` formats the value as RFC3339 by default. Pass one of `ANSIC`, `UnixDate`, `RubyDate`,
+`RFC822`, `RFC822Z`, `RFC850`, `RFC1123`, `RFC1123Z`, `RFC3339` or `RFC3339Nano`, or a Go time
+layout, for example `{date:RFC1123}`.
+
+The placeholders come from [gofakeit](https://github.com/brianvoe/gofakeit), so you can use any
+of its lookup functions, including many that this table doesn't list (food, animals, cars,
+beer, emojis and more). See its README for the full list.
+
+### Restrict Values with pattern and enum
+
+Use `pattern` to describe a string with a regular expression, and `enum` to pick from a fixed
+list of values:
+
+```yaml
+schema:
+  type: object
+  properties:
+    ssn:
+      type: string
+      pattern: '^\d{3}-\d{2}-\d{4}$' # 123-45-6789
+    color:
+      type: string
+      enum: [red, green, blue]
+```
 
 ## Customize with JavaScript
 
