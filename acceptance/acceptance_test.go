@@ -32,6 +32,7 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(EmailAddressSuite))
 	suite.Run(t, new(FakerContextSuite))
 	suite.Run(t, new(HttpValidateSuite))
+	suite.Run(t, new(HttpPatchSuite))
 }
 
 // waitForScript waits until the fixture script of a simulation endpoint has run. The script
