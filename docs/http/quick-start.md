@@ -79,6 +79,8 @@ types at random.
 4. Open the **Requests** sub tab and click your request to see its headers, the response and
    the duration next to the table.
 
+<img src="/docs/get-started/petstore-endpoints.png" width="700" alt="The paths of the mocked Petstore API with the number of requests and errors" title="" />
+
 See [Analyze your mocked HTTP API in Dashboard](/docs/http/dashboard.md) for filters and the
 endpoint view.
 

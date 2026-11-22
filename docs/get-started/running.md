@@ -1,6 +1,6 @@
 ---
 title: Running Your First Mocked REST API with Mokapi
-description: Run your first mocked REST API with Mokapi and inspect the HTTP requests and responses in the dashboard.
+description: Start Mokapi with an OpenAPI specification and send your first request to the mocked REST API.
 ---
 # Running Your First Mocked REST API with Mokapi
 
@@ -27,9 +27,7 @@ Mokapi, see [Running Mokapi](/docs/configuration/running-mokapi.md). Every optio
 as a flag, an environment variable or in a configuration file. The
 [CLI Flags](/docs/configuration/static/cli-flags) page lists them all.
 
-## Test Your Mock REST API
-
-Send a request to the mock API:
+## Send a Request
 
 ```bash
 curl --header "Accept: application/json" http://localhost/api/v3/pet/4
@@ -38,25 +36,11 @@ curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 Mokapi generates a random response that matches the OpenAPI specification. The `Accept`
 header makes sure you get JSON, because the Petstore also returns XML.
 
-``` box=info
-Without an Accept header, Mokapi picks one of the content types in the specification at
-random, so you may get a format you didn't expect.
-```
-
-## Analyze API and HTTP Request/Response
-
-Open `http://localhost:8080` in your browser. After opening the Petstore API in the dashboard,
-you see all mocked endpoints with the number of requests and errors, including your request.
-
-<img src="/docs/get-started/petstore-endpoints.png" width="700" alt="The paths of the mocked Petstore API with the number of requests and errors" title="" />
-
-Click the request in the *Recent Requests* table to see the request and its response.
-
-<img src="/docs/get-started/petstore-request.png" width="700" alt="The request log of the Petstore API with the detail panel of a POST request showing its body" title="" />
-
 ## Next Steps
 
-- [HTTP Quick Start](/docs/http/quick-start.md): return your own data and errors with a Mokapi Script
+The [HTTP Quick Start](/docs/http/quick-start.md) continues from here: it shows the request in
+the dashboard and returns your own data and errors with a Mokapi Script.
+
 - [Test Data](/docs/get-started/test-data.md)
 - [Dashboard](/docs/get-started/dashboard.md)
 - [Mocking HTTP API](/docs/http/overview.md)

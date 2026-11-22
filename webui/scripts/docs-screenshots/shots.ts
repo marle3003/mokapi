@@ -132,16 +132,6 @@ const getStarted: Shot[] = [
       await page.getByRole('table', { name: 'Paths' }).locator('tbody tr').first().waitFor()
     },
   },
-  {
-    name: 'petstore-request',
-    file: 'get-started/petstore-request.png',
-    url: `${dashboard}/http/log/${petstore}`,
-    viewport: { width: 1800, height: 1000 },
-    steps: async (page) => {
-      const { panel } = await openRow(page, httpLog, (rows) => rows.filter({ has: page.getByText('http://localhost/v2/pet', { exact: true }) }), 3)
-      await panel.getByRole('tab', { name: 'Request', exact: true }).click()
-    },
-  },
 ]
 
 // ---- http/dashboard.md ----

@@ -5,7 +5,7 @@ cards:
   items:
     - title: Run your first mocked REST API
       href: /docs/get-started/running
-      description: Quickly set up your first mock REST API and view simulated live traffic inside the Mokapi dashboard.
+      description: Start your first mock REST API from an OpenAPI specification and send a request to it.
     - title: Using Mokapi
       href: /docs/configuration/overview
       description: Get a complete overview of core features, configuration options, and how to patch configuration providers effectively.
