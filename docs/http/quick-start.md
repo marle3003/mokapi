@@ -128,20 +128,32 @@ it while Mokapi is running.
 ## Return an Error
 
 The Petstore defines a `404` response for `getPetById`. To test how your application handles a
-missing pet, set the status code in the same handler. Add it to `petstore.js` next to the
-condition for pet 4, or replace the file content if you only want the error case:
+missing pet, set the status code in the same handler. Extend `petstore.js`:
 
 ```javascript tab=petstore.js
 import { on } from 'mokapi'
 
 export default function() {
   on('http', (request, response) => {
-    if (request.key === '/pet/{petId}' && request.path.petId === 999) {
+    if (request.key !== '/pet/{petId}') {
+      return
+    }
+    if (request.path.petId === 4) {
+      response.data = {
+        id: 4,
+        name: 'Garfield',
+        category: { id: 3, name: 'Cats' },
+        photoUrls: [],
+        status: 'available'
+      }
+    } else if (request.path.petId === 999) {
       response.statusCode = 404
     }
   })
 }
 ```
+
+Mokapi reloads the changed script, so you don't need to restart it.
 
 ```bash
 curl -i http://localhost/api/v3/pet/999
