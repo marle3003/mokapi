@@ -306,10 +306,10 @@ func TestConfigScope(t *testing.T) {
 			test: func(t *testing.T) {
 				c := &dynamic.Config{}
 				c.OpenScope("foo")
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 				c.CloseScope()
 				// top scope is never closed
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 			},
 		},
 		{
@@ -318,9 +318,9 @@ func TestConfigScope(t *testing.T) {
 				c := &dynamic.Config{}
 				c.OpenScope("foo")
 				c.OpenScope("bar")
-				require.Equal(t, "bar", c.Scope.Name())
+				require.Equal(t, "bar", c.Scope().Name())
 				c.CloseScope()
-				require.Equal(t, "foo", c.Scope.Name())
+				require.Equal(t, "foo", c.Scope().Name())
 			},
 		},
 	}

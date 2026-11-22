@@ -544,24 +544,68 @@ func TestParse_ReparseScope(t *testing.T) {
 		c.Raw = []byte(`scopehook: second`)
 		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
 
-		v, err := c.Scope.GetDynamic("anchor")
+		v, err := c.Scope().GetDynamic("anchor")
 		require.NoError(t, err)
 		require.Same(t, c.Data(), v)
 	})
 
-	t.Run("failed hook keeps the scope of the previous parse", func(t *testing.T) {
+	t.Run("data and scope of a reparse are published together", func(t *testing.T) {
 		c := newConfig(`scopehook: first`)
 		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+		firstScope := c.Scope()
+
+		c.Raw = []byte(`scopehook: second`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		require.NotSame(t, firstScope, c.Scope())
+		require.Equal(t, "second", c.Data().(*scopeHook).Scopehook)
+		v, err := c.Scope().GetLexical("anchor")
+		require.NoError(t, err)
+		require.Same(t, c.Data(), v)
+	})
+
+	t.Run("failed hook keeps the data and scope of the previous parse", func(t *testing.T) {
+		c := newConfig(`scopehook: first`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+		previousData := c.Data()
+		previousScope := c.Scope()
 
 		c.Raw = []byte(`scopehook: fail`)
 		require.Error(t, dynamic.Parse(c, &dynamictest.Reader{}))
 
-		v, err := c.Scope.GetLexical("anchor")
+		require.Same(t, previousData, c.Data())
+		require.Same(t, previousScope, c.Scope())
+		v, err := c.Scope().GetLexical("anchor")
 		require.NoError(t, err)
 		require.Equal(t, "first", v.(*scopeHook).Scopehook)
-		_, err = c.Scope.GetLexical("partial")
+		_, err = c.Scope().GetLexical("partial")
 		require.Error(t, err, "entries of the failed parse must not be published")
 	})
+
+	t.Run("failed data parse clears data and scope", func(t *testing.T) {
+		c := newConfig(`scopehook: first`)
+		require.NoError(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		c.Raw = []byte(`scopehook: [`)
+		require.Error(t, dynamic.Parse(c, &dynamictest.Reader{}))
+
+		require.Nil(t, c.Data())
+		_, err := c.Scope().GetLexical("anchor")
+		require.Error(t, err, "anchors of the previous parse must not resolve")
+	})
+}
+
+func TestResolveDynamic_ConfigWithoutData(t *testing.T) {
+	_, err := dynamic.ResolveDynamic[*scopeHook]("#anchor", &dynamic.Config{}, &dynamictest.Reader{})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "name 'anchor' not found")
+}
+
+func TestScope_LexicalAnchorOnConfigWithoutData(t *testing.T) {
+	c := &dynamic.Config{}
+	_, err := c.Scope().GetLexical("anchor")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "name 'anchor' not found")
 }
 
 // scopeHook registers its anchors in the scope of the config it is parsed for,
@@ -573,20 +617,60 @@ type scopeHook struct {
 }
 
 func (h *scopeHook) Parse(c *dynamic.Config, _ dynamic.Reader) error {
-	h.nameSeen = c.Scope.Name()
-	c.Scope.OpenIfNeeded(c.Info.Path())
-	_, err := c.Scope.GetLexical("anchor")
+	h.nameSeen = c.Scope().Name()
+	c.Scope().OpenIfNeeded(c.Info.Path())
+	_, err := c.Scope().GetLexical("anchor")
 	h.anchorSeenBefore = err == nil
 
-	if err = c.Scope.SetLexical("anchor", h); err != nil {
+	if err = c.Scope().SetLexical("anchor", h); err != nil {
 		return err
 	}
-	if err = c.Scope.SetDynamic("anchor", h); err != nil {
+	if err = c.Scope().SetDynamic("anchor", h); err != nil {
 		return err
 	}
 	if h.Scopehook == "fail" {
-		_ = c.Scope.SetLexical("partial", h)
+		_ = c.Scope().SetLexical("partial", h)
 		return fmt.Errorf("TEST ERROR")
 	}
 	return nil
+}
+
+// A watcher reparses a published config while another config resolves an anchor of it.
+func TestParse_ReparseScopeWhileResolving(t *testing.T) {
+	dynamic.Register("scopehook", nil, &scopeHook{})
+
+	published := &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: &url.URL{Scheme: "file", Path: "/b.yml"}},
+		Raw:  []byte(`scopehook: first`),
+	}
+	require.NoError(t, dynamic.Parse(published, &dynamictest.Reader{}))
+
+	reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+		return published, nil
+	})
+	referrer := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{Scheme: "file", Path: "/a.yml"}}}
+
+	done := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			published.Raw = []byte(fmt.Sprintf("scopehook: v%v", i))
+			assert.NoError(t, dynamic.Parse(published, &dynamictest.Reader{}))
+		}
+	}()
+
+	for resolving := true; resolving; {
+		select {
+		case <-done:
+			resolving = false
+		default:
+		}
+		v, err := dynamic.ResolveDynamic[*scopeHook]("b.yml#anchor", referrer, reader)
+		require.NoError(t, err)
+		require.NotNil(t, v)
+	}
+	wg.Wait()
 }

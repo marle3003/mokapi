@@ -34,21 +34,21 @@ type Parser interface {
 func Parse(c *Config, r Reader) error {
 	data, err := parse(c)
 	if err != nil {
-		c.SetData(nil)
+		// clears data and scope, anchors of the previous parse must not resolve anymore
+		c.data.Store(nil)
 		return err
 	}
 
 	// The hook fills the fresh object on a view of the config and the result is published
 	// as a whole afterwards, so readers that still hold the previous object never see it change.
 	view := c.viewOf(data)
-	view.Scope.SetName(c.Info.Path())
+	view.Scope().SetName(c.Info.Path())
 	if p, ok := data.(Parser); ok {
 		if err = p.Parse(view, r); err != nil {
 			return errors.Wrapf(err, "parsing file %v", c.Info.Path())
 		}
 	}
-	c.Scope = view.Scope
-	c.SetData(view.Data())
+	c.data.Store(view.data.Load())
 
 	return nil
 }

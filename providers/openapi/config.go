@@ -152,7 +152,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	config.Scope.OpenIfNeeded(config.Info.Path())
+	config.Scope().OpenIfNeeded(config.Info.Path())
 
 	err := c.Paths.Parse(config, reader)
 	if err != nil {

@@ -53,7 +53,7 @@ func resolve[T any](ref string, config *Config, reader Reader) (T, error) {
 			scoped := &Config{Raw: config.Raw, Info: config.Info}
 			scoped.SetData(copyData(config.Data()))
 			config = scoped
-			config.Scope.SetParent(parent.Scope)
+			config.Scope().SetParent(*parent.Scope())
 		}
 		if !config.EnterRef(ref) {
 			return result, nil
@@ -96,9 +96,9 @@ func resolveFragment[T any](fragment string, config *Config, dynamic bool) (resu
 	} else if strings.HasPrefix(fragment, "/") {
 		val, err = resolvePath(fragment, config.Data())
 	} else if dynamic {
-		val, err = config.Scope.GetDynamic(fragment)
+		val, err = config.Scope().GetDynamic(fragment)
 	} else {
-		val, err = config.Scope.GetLexical(fragment)
+		val, err = config.Scope().GetLexical(fragment)
 	}
 	if err != nil {
 		return

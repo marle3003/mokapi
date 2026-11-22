@@ -46,7 +46,6 @@ type Config struct {
 	Raw        []byte
 	Refs       Refs
 	Listeners  Listeners
-	Scope      Scope
 	SourceType SourceType
 	resolving  map[string]bool
 	data       atomic.Pointer[dataBox]
@@ -63,8 +62,11 @@ func (c *Config) viewOf(data any) *Config {
 }
 
 // dataBox lets the field hold values of changing concrete types, which atomic.Value forbids.
+// It also carries the scope of the parse that produced the value, so a reader always
+// gets data and scope of the same parse. A published scope must not be modified.
 type dataBox struct {
 	value any
+	scope *Scope
 }
 
 // Data returns the parsed data. The returned object is not changed by a later parse,
@@ -76,12 +78,21 @@ func (c *Config) Data() any {
 	return nil
 }
 
+// SetData publishes v and keeps the current scope, so a hook can replace the data of
+// its view without losing the scope name set by Parse. It is not safe against a
+// concurrent Parse of the same config.
 func (c *Config) SetData(v any) {
-	if v == nil {
-		c.data.Store(nil)
-		return
+	c.data.Store(&dataBox{value: v, scope: c.Scope()})
+}
+
+// Scope returns the scope published together with the data. It is never nil, a config
+// without data has an empty scope.
+func (c *Config) Scope() *Scope {
+	if b := c.data.Load(); b != nil {
+		return b.scope
 	}
-	c.data.Store(&dataBox{value: v})
+	c.data.CompareAndSwap(nil, &dataBox{scope: &Scope{}})
+	return c.data.Load().scope
 }
 
 type Refs struct {
@@ -268,11 +279,11 @@ func extractUsername(s string) string {
 }
 
 func (c *Config) OpenScope(name string) {
-	c.Scope.Open(name)
+	c.Scope().Open(name)
 }
 
 func (c *Config) CloseScope() {
-	c.Scope.Close()
+	c.Scope().Close()
 }
 
 func (e Event) String() string {
