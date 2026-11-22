@@ -254,6 +254,16 @@
             "path": "/docs/configuration/health-check"
           },
           {
+            "label": "Dashboard",
+            "source": "configuration/dashboard.md",
+            "path": "/docs/configuration/dashboard"
+          },
+          {
+            "label": "Dashboard API",
+            "source": "configuration/dashboard-api.md",
+            "path": "/docs/configuration/dashboard-api"
+          },
+          {
             "label": "Use Cases",
             "items": [
               {
