@@ -187,7 +187,7 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Conte
 			current = mb.Folders["INBOX"]
 			continue
 		}
-		folder := &Folder{Name: part, maxMails: mailboxSize}
+		folder := &Folder{Name: part, maxMails: DefaultMaxInboxMails}
 		if current != nil {
 			current.AddFolder(folder)
 			current = folder

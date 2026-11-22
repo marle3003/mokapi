@@ -125,10 +125,14 @@ func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	return nil
 }
 
+func defaultSettings() *Settings {
+	return &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true, MaxInboxMails: DefaultMaxInboxMails}
+}
+
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
+	tmp.Settings = defaultSettings()
 	err := value.Decode(&tmp)
 	*c = Config(tmp)
 	return err
@@ -138,7 +142,7 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
+	tmp.Settings = defaultSettings()
 	err := dec.Decode(&tmp)
 	*c = Config(tmp)
 	return err

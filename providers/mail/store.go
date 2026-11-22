@@ -12,7 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const mailboxSize = 100
+// DefaultMaxInboxMails is the documented INBOX limit when a config does not set maxInboxMails.
+const DefaultMaxInboxMails = 100
 
 // Store keeps the mailboxes of one mail service. It outlives config reloads: Update changes the
 // mailboxes to the new config without losing their mails. The mailboxes are only reachable
@@ -112,7 +113,7 @@ func (s *Store) GetMail(id string) *smtp.Message {
 
 func maxInboxMails(settings *Settings) int {
 	if settings == nil {
-		return mailboxSize
+		return DefaultMaxInboxMails
 	}
 	return settings.MaxInboxMails
 }

@@ -146,7 +146,7 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, &mail.Settings{
 					MaxRecipients:     0,
 					AutoCreateMailbox: false,
-					MaxInboxMails:     0,
+					MaxInboxMails:     mail.DefaultMaxInboxMails,
 				}, c.Settings)
 			},
 		},

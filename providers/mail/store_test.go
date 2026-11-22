@@ -311,10 +311,10 @@ func TestStore_EnsureMailbox(t *testing.T) {
 		s := NewStore(&Config{})
 		require.NoError(t, s.EnsureMailbox("foo@bar", nil))
 		mb := mustMailbox(t, s, "foo@bar")
-		for i := 0; i < mailboxSize+5; i++ {
+		for i := 0; i < DefaultMaxInboxMails+5; i++ {
 			mb.Append(newMessage("m"))
 		}
-		require.Len(t, mb.Folders["INBOX"].Messages, mailboxSize)
+		require.Len(t, mb.Folders["INBOX"].Messages, DefaultMaxInboxMails)
 	})
 }
 

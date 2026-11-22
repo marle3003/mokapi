@@ -2,6 +2,7 @@ package mail_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"mokapi/providers/mail"
 	"testing"
 )
@@ -395,4 +396,16 @@ func TestConfig_Patch_Fields(t *testing.T) {
 			tc.test(t, c)
 		})
 	}
+}
+
+// A patch with a settings object replaces all settings, so a missing maxInboxMails
+// becomes the default limit (same as autoCreateMailbox and allowUnknownSenders).
+func TestConfig_Patch_SettingsWithoutMaxInboxMailsUsesDefault(t *testing.T) {
+	base := &mail.Config{Settings: &mail.Settings{MaxInboxMails: 0}}
+	patch := &mail.Config{}
+	require.NoError(t, yaml.Unmarshal([]byte("settings:\n  autoCreateMailbox: true\n"), patch))
+
+	base.Patch(patch)
+
+	require.Equal(t, mail.DefaultMaxInboxMails, base.Settings.MaxInboxMails)
 }
