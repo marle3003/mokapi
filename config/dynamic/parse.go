@@ -201,6 +201,8 @@ func getFileName(c *Config) string {
 }
 
 func getConfigType(data map[string]string) *configType {
+	configTypesMu.RLock()
+	defer configTypesMu.RUnlock()
 	for _, ct := range configTypes {
 		if s, ok := data[ct.header]; ok {
 			if ct.checkVersion == nil || ct.checkVersion(version.New(s)) {
