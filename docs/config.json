@@ -3,13 +3,10 @@
     "type": "root",
     "items": [
       {
-        "label": "Welcome",
-        "source": "get-started/welcome.md",
-        "path": "/docs/welcome"
-      },
-      {
         "label": "Get Started",
         "type": "headline",
+        "source": "get-started/welcome.md",
+        "path": "/docs/welcome",
         "items": [
           {
             "label": "Installation",
@@ -39,12 +36,9 @@
         "items": [
           {
             "label": "HTTP",
+            "source": "http/overview.md",
+            "path": "/docs/http/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "http/overview.md",
-                "path": "/docs/http/overview"
-              },
               {
                 "label": "Quick Start",
                 "source": "http/quick-start.md",
@@ -74,12 +68,9 @@
           },
           {
             "label": "Kafka",
+            "source": "kafka/overview.md",
+            "path": "/docs/kafka/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "kafka/overview.md",
-                "path": "/docs/kafka/overview"
-              },
               {
                 "label": "Quick Start",
                 "source": "kafka/quick-start.md",
@@ -99,12 +90,9 @@
           },
           {
             "label": "MQTT",
+            "source": "mqtt/overview.md",
+            "path": "/docs/mqtt/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "mqtt/overview.md",
-                "path": "/docs/mqtt/overview"
-              },
               {
                 "label": "Quick Start",
                 "source": "mqtt/quick-start.md",
@@ -119,12 +107,9 @@
           },
           {
             "label": "Websocket",
+            "source": "websocket/overview.md",
+            "path": "/docs/websocket/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "websocket/overview.md",
-                "path": "/docs/websocket/overview"
-              },
               {
                 "label": "Quick Start",
                 "source": "websocket/quick-start.md",
@@ -139,12 +124,9 @@
           },
           {
             "label": "LDAP",
+            "source": "ldap/intro.md",
+            "path": "/docs/ldap/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "ldap/intro.md",
-                "path": "/docs/ldap/overview"
-              },
               {
                 "label": "Quick Start",
                 "source": "ldap/quick-start.md",
@@ -159,12 +141,9 @@
           },
           {
             "label": "Mail",
+            "source":  "mail/overview.md",
+            "path":  "/docs/mail/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source":  "mail/overview.md",
-                "path":  "/docs/mail/overview"
-              },
               {
                 "label": "Clients",
                 "source":  "mail/client.md",
@@ -187,12 +166,9 @@
       {
         "label": "Configuration",
         "type": "headline",
+        "source": "configuration/overview.md",
+        "path": "/docs/configuration/overview",
         "items": [
-          {
-            "label": "Overview",
-            "source": "configuration/overview.md",
-            "path": "/docs/configuration/overview"
-          },
           {
             "label": "Running Mokapi",
             "source": "configuration/running-mokapi.md",
@@ -220,12 +196,9 @@
           },
           {
             "label": "Dynamic",
+            "source": "configuration/dynamic/overview.md",
+            "path": "/docs/configuration/dynamic/overview",
             "items": [
-              {
-                "label": "Overview",
-                "source": "configuration/dynamic/overview.md",
-                "path": "/docs/configuration/dynamic/overview"
-              },
               {
                 "label": "File",
                 "source": "configuration/dynamic/file.md",
@@ -313,12 +286,9 @@
       {
         "label": "JavaScript API",
         "type": "headline",
+        "source": "javascript-api/overview.md",
+        "path": "/docs/javascript-api/overview",
         "items": [
-          {
-            "label": "Overview",
-            "source": "javascript-api/overview.md",
-            "path": "/docs/javascript-api/overview"
-          },
           {
             "label": "Modules",
             "source": "javascript-api/modules.md",

@@ -112,6 +112,35 @@ test.describe('pre-rendered HTML', () => {
     })
 })
 
+test.describe('pre-rendered docs sidebar', () => {
+
+    function tagWithId(html: string, id: string): string | undefined {
+        return html.match(new RegExp(`<[a-z]+\\s[^>]*\\sid="${id}"[^>]*>`))?.[0]
+    }
+
+    function classesOf(tag: string | undefined): string[] {
+        return (attributeOf(tag, 'class') ?? '').split(/\s+/)
+    }
+
+    // the HTTP group links to its overview page: its link and section are labelled by the same id
+    const httpLink = 'section-nav-docs-http-overview'
+    const httpSection = 'nav-docs-http-overview'
+
+    test('the HTTP overview marks the group link as active and the group as expanded', async ({ request }) => {
+        const html = await (await request.get('/docs/http/overview')).text()
+
+        expect(classesOf(tagWithId(html, httpLink))).toContain('active')
+        expect(classesOf(tagWithId(html, httpSection))).toContain('show')
+    })
+
+    test('a page of the group expands it without marking the group link as active', async ({ request }) => {
+        const html = await (await request.get('/docs/http/quick-start')).text()
+
+        expect(classesOf(tagWithId(html, httpLink))).not.toContain('active')
+        expect(classesOf(tagWithId(html, httpSection))).toContain('show')
+    })
+})
+
 test.describe('without JavaScript', () => {
     test.use({ javaScriptEnabled: false })
 

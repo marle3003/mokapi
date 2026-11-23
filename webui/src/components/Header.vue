@@ -366,7 +366,13 @@ header .container-fluid {
   border-bottom: 1px solid var(--color-border-promo);
   color: var(--color-text);
   text-align: center;
-  padding: 0.5rem 1rem;
+  /* exactly --promo-height, which --header-height and the sticky docs sidebar rely on */
+  height: var(--promo-height);
+  line-height: calc(var(--promo-height) - 1px);
+  padding: 0 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 0.95rem;
 }
 
@@ -567,9 +573,5 @@ header .container-fluid {
     padding-right: 0.7rem;
     font-size: 16px;
   }
-}
-.headline > div {
-  padding: 13px 0;
-  font-weight: 600;
 }
 </style>
