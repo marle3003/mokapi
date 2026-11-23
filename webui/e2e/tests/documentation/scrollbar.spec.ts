@@ -6,9 +6,20 @@ test.use({ launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } })
 
 const dark = { thumb: 'rgba(255, 255, 255, 0.16)', thumbHover: 'rgba(255, 255, 255, 0.32)' }
 const light = { thumb: 'rgba(0, 0, 0, 0.18)', thumbHover: 'rgba(0, 0, 0, 0.38)' }
+const transparent = 'rgba(0, 0, 0, 0)'
 
-const scrollbarThumb = (element: Element) => getComputedStyle(element).getPropertyValue('--scrollbar-thumb').trim()
-const scrollbarThumbHover = (element: Element) => getComputedStyle(element).getPropertyValue('--scrollbar-thumb-hover').trim()
+// Custom properties keep their declared text, and the minified build (vite preview on CI) writes
+// rgba(255, 255, 255, 0.16) as #ffffff29. Resolving the value as a real color makes both comparable.
+const cssColor = (element: Element, name: string) => {
+    const probe = document.createElement('span')
+    probe.style.color = getComputedStyle(element).getPropertyValue(name).trim()
+    document.body.appendChild(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+}
+const scrollbarThumb = '--scrollbar-thumb'
+const scrollbarThumbHover = '--scrollbar-thumb-hover'
 
 async function useLightTheme(page: Page) {
     await page.addInitScript(() => localStorage.setItem('theme', 'light'))
@@ -22,8 +33,8 @@ test.describe('Scrollbars', () => {
 
             const root = page.locator('html')
             await expect(root).toHaveAttribute('data-theme', 'dark')
-            expect(await root.evaluate(scrollbarThumb)).toBe(dark.thumb)
-            expect(await root.evaluate(scrollbarThumbHover)).toBe(dark.thumbHover)
+            expect(await root.evaluate(cssColor, scrollbarThumb)).toBe(dark.thumb)
+            expect(await root.evaluate(cssColor, scrollbarThumbHover)).toBe(dark.thumbHover)
         })
 
         test('light theme uses a muted black thumb, stronger on hover', async ({ page }) => {
@@ -32,8 +43,8 @@ test.describe('Scrollbars', () => {
 
             const root = page.locator('html')
             await expect(root).toHaveAttribute('data-theme', 'light')
-            expect(await root.evaluate(scrollbarThumb)).toBe(light.thumb)
-            expect(await root.evaluate(scrollbarThumbHover)).toBe(light.thumbHover)
+            expect(await root.evaluate(cssColor, scrollbarThumb)).toBe(light.thumb)
+            expect(await root.evaluate(cssColor, scrollbarThumbHover)).toBe(light.thumbHover)
         })
 
         test('code blocks keep the dark thumb in light theme, because they are dark in both themes', async ({ page }) => {
@@ -42,8 +53,8 @@ test.describe('Scrollbars', () => {
 
             await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
             const codeBlock = page.locator('pre').first()
-            expect(await codeBlock.evaluate(scrollbarThumb)).toBe(dark.thumb)
-            expect(await codeBlock.evaluate(scrollbarThumbHover)).toBe(dark.thumbHover)
+            expect(await codeBlock.evaluate(cssColor, scrollbarThumb)).toBe(dark.thumb)
+            expect(await codeBlock.evaluate(cssColor, scrollbarThumbHover)).toBe(dark.thumbHover)
         })
     })
 
@@ -62,10 +73,10 @@ test.describe('Scrollbars', () => {
             const barRegion = { x: Math.floor(box.x + box.width - barWidth), y: Math.ceil(box.y), width: barWidth, height: Math.floor(box.height) }
             const contentPoint = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
             const outside = { x: 5, y: 5 }
-            const thumbColor = () => sidebar.evaluate(el => getComputedStyle(el).getPropertyValue('--scrollbar-thumb-current').trim())
+            const thumbColor = () => sidebar.evaluate(cssColor, '--scrollbar-thumb-current')
 
             await page.mouse.move(outside.x, outside.y)
-            await expect.poll(thumbColor).toBe('transparent')
+            await expect.poll(thumbColor).toBe(transparent)
             const atRest = await page.screenshot({ clip: barRegion })
 
             await page.mouse.move(contentPoint.x, contentPoint.y)
@@ -74,7 +85,7 @@ test.describe('Scrollbars', () => {
                 { message: 'thumb must appear while hovering the sidebar' }).toBe(false)
 
             await page.mouse.move(outside.x, outside.y)
-            await expect.poll(thumbColor).toBe('transparent')
+            await expect.poll(thumbColor).toBe(transparent)
             await expect.poll(async () => (await page.screenshot({ clip: barRegion })).equals(atRest),
                 { message: 'thumb must disappear after leaving the sidebar' }).toBe(true)
         })
