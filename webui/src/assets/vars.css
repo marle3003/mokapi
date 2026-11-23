@@ -145,6 +145,12 @@
     --layout-popover-shadow:         0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
+/* Code blocks are dark in both themes, so they keep the dark thumb colors in the light theme. */
+:root, pre, .code {
+    --scrollbar-thumb:       rgba(255, 255, 255, 0.16);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.32);
+}
+
 [data-theme="light"] {
     --color-background: #fff;
     --color-background-mute: #f0f2f6;
@@ -232,6 +238,9 @@
     --footer-background: rgb(244 244 246);
 
     --color-emphasis: rgb(8,109,215);
+
+    --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.38);
 
     /* Dashboard layout with tabs: derived from the dark theme, the sidebar is set apart from the content */
     --layout-border:                 rgba(0, 0, 0, 0.14);

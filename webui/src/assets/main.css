@@ -118,6 +118,47 @@ pre {
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
 }
 
+/* Thin scrollbars for inner scroll areas, visible only while the pointer is over them. The page
+   scrollbar (html, body) and the overlay scrollbars of touch devices stay native.
+   The thumb colour goes through --scrollbar-thumb-current, set on the element and on its :hover,
+   because Chrome doesn't repaint a thumb styled by `:hover::-webkit-scrollbar-thumb`. Every element
+   redeclares the variable so a hovered ancestor doesn't make nested scroll areas visible. */
+@media (hover: hover) and (pointer: fine) {
+  *:not(html, body) {
+    --scrollbar-thumb-current: transparent;
+  }
+  *:not(html, body):hover {
+    --scrollbar-thumb-current: var(--scrollbar-thumb);
+  }
+  *:not(html, body)::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  *:not(html, body)::-webkit-scrollbar-track,
+  *:not(html, body)::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  *:not(html, body)::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-current);
+    border-radius: 3px;
+  }
+  *:not(html, body)::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  /* Chrome 121+ ignores ::-webkit-scrollbar on an element that sets scrollbar-color or
+     scrollbar-width, so these properties are only for browsers without the WebKit pseudo-elements. */
+  @supports not selector(::-webkit-scrollbar) {
+    *:not(html, body) {
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
+    *:not(html, body):hover {
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+  }
+}
+
 i.icon {
   color: var(--icon-color)
 }
