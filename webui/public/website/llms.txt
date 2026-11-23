@@ -48,6 +48,7 @@ Mokapi is an open-source tool that turns OpenAPI and AsyncAPI specifications int
 - [MQTT Simulation](https://mokapi.io/docs/mqtt/overview)
 - [WebSocket Simulation](https://mokapi.io/docs/websocket/overview)
 - [JavaScript API](https://mokapi.io/docs/javascript-api/overview)
+- [Storybook Addon](https://mokapi.io/docs/integrations/storybook)
 - [MCP Server](https://mokapi.io/resources/blogs/mock-apis-with-mcp)
 - [CLI Reference](https://mokapi.io/docs/configuration/static/cli-flags)
 

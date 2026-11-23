@@ -37,6 +37,8 @@ API would never send. You find out in an integration environment, or in producti
 [mokapi-storybook-addon](https://github.com/marle3003/mokapi-storybook-addon) closes that gap. This article shows
 **how to switch contract validation on with a toolbar button, and how to see the result next to your component.**
 
+The [addon documentation](/docs/integrations/storybook) covers every option and the details this article skips.
+
 ---
 
 ## The Idea: Keep MSW, Let Mokapi Check the Result
@@ -391,13 +393,14 @@ while the tests run.
 
 Render stories on a Docs page in their own iframes (`docs.story.inline: false`, as in the `preview.ts` above). Each story
 then runs with its own MSW worker. Inline stories share one worker, so the addon can't attribute their results to a
-story.
+story. More in [Using the Storybook Addon](/docs/integrations/storybook/usage).
 
 ### Static Builds
 
 The browser calls Mokapi directly, and the addon sets up no proxy. `storybook dev` and `storybook build` use the same
 `dashboardUrl`, so it must be an address that the browser of every viewer can reach. Mokapi's dashboard API allows
-requests from any origin, so you don't need CORS setup.
+requests from any origin, so you don't need CORS setup. See
+[Reference](/docs/integrations/storybook/reference) for HTTPS and mixed content.
 
 A Storybook served over HTTPS can't call Mokapi on a plain `http://` address other than `localhost`, because browsers block
 mixed content. Put Mokapi behind an HTTPS reverse proxy and use its address as `dashboardUrl`.
@@ -460,4 +463,6 @@ Both projects are open source (MIT): [mokapi-storybook-addon](https://github.com
 ([npm](https://www.npmjs.com/package/mokapi-storybook-addon)) and
 [mokapi-msw-adapter](https://github.com/marle3003/mokapi-msw-adapter)
 ([npm](https://www.npmjs.com/package/mokapi-msw-adapter)). New to Mokapi? Start with the
-[installation guide](/docs/get-started/installation).
+[installation guide](/docs/get-started/installation). For the addon, see the
+[Storybook addon docs](/docs/integrations/storybook), including
+[failing stories](/docs/integrations/storybook/failing-stories) in CI.

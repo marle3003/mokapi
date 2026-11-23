@@ -33,6 +33,15 @@ test.describe('Docs navigation', () => {
             await expect(nav.sidebar.getByRole('button', { name: /Protocol/ })).toHaveCount(0)
         })
 
+        test('Integrations is neither a link nor a button', async ({ page }) => {
+            await page.goto('/docs/welcome')
+            const nav = useDocNav(page)
+
+            await expect(nav.sidebar.getByText('Integrations', { exact: true })).toBeVisible()
+            await expect(nav.sidebar.getByRole('link', { name: 'Integrations' })).toHaveCount(0)
+            await expect(nav.sidebar.getByRole('button', { name: /Integrations/ })).toHaveCount(0)
+        })
+
         test('sections are always expanded', async ({ page }) => {
             await page.goto('/docs/welcome')
             const nav = useDocNav(page)
@@ -61,6 +70,7 @@ test.describe('Docs navigation', () => {
             { name: 'LDAP', path: '/docs/ldap/overview' },
             { name: 'Mail', path: '/docs/mail/overview' },
             { name: 'Dynamic', path: '/docs/configuration/dynamic/overview' },
+            { name: 'Storybook Addon', path: '/docs/integrations/storybook' },
         ]
 
         for (const group of groups) {

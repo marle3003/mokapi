@@ -675,6 +675,34 @@
             ]
           }
         ]
+      },
+      {
+        "label": "Integrations",
+        "type": "headline",
+        "items": [
+          {
+            "label": "Storybook Addon",
+            "source": "integrations/storybook/overview.md",
+            "path": "/docs/integrations/storybook",
+            "items": [
+              {
+                "label": "Usage",
+                "source": "integrations/storybook/usage.md",
+                "path": "/docs/integrations/storybook/usage"
+              },
+              {
+                "label": "Failing Stories",
+                "source": "integrations/storybook/failing-stories.md",
+                "path": "/docs/integrations/storybook/failing-stories"
+              },
+              {
+                "label": "Reference",
+                "source": "integrations/storybook/reference.md",
+                "path": "/docs/integrations/storybook/reference"
+              }
+            ]
+          }
+        ]
       }
     ]
   },

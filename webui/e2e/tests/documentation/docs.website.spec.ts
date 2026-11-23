@@ -3,7 +3,7 @@ import { expect, test } from '../models/fixture-website'
 test.describe('docs on the website', () => {
 
     test('images render', async ({ page }) => {
-        for (const path of ['/docs/http/quick-start', '/docs/get-started/dashboard', '/docs/http/dashboard']) {
+        for (const path of ['/docs/http/quick-start', '/docs/get-started/dashboard', '/docs/http/dashboard', '/docs/integrations/storybook']) {
             await test.step(path, async () => {
                 await page.goto(path)
                 const images = page.locator('.content img')
