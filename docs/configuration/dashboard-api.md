@@ -50,6 +50,7 @@ curl -X POST http://localhost:8080/api/services/http/validate \
 | Field                | Required | Description                                                             |
 |----------------------|----------|-------------------------------------------------------------------------|
 | api                  | no       | `info.title` of the OpenAPI specification. Without it, Mokapi searches all HTTP APIs. |
+| partialResponse      | no       | `true` to validate the response body without `required` and `dependentRequired`. Available since Mokapi 0.60.0. See [Partial responses](#partial-responses). |
 | request.method       | yes      | HTTP method, case-insensitive                                           |
 | request.url          | yes      | Path and query string, for example `/pet/1?verbose=true`. An origin is ignored. |
 | request.headers      | no       | Object with header names and string values                              |
@@ -86,6 +87,7 @@ If the request is well-formed, Mokapi answers with status `200`, even if the val
 | Field     | Description                                                                          |
 |-----------|--------------------------------------------------------------------------------------|
 | valid     | `true` if `errors` is empty                                                          |
+| partialResponse | `true` if the request asked for partial responses. Not present otherwise. Mokapi sets it in every result, also if no operation matches or several APIs match. |
 | operation | The matched operation: `api`, `method` in uppercase and `path` as written in the contract. Missing if no operation matches. |
 | errors    | List of violations, an empty array if the request and response are valid             |
 
@@ -103,6 +105,40 @@ JSON pointer to the failed schema keyword.
 | response.status           | No response defined for the status code             |
 | response.header.`<name>`  | Response header                                     |
 | response.body             | Response body                                       |
+
+### Partial responses
+
+Set `"partialResponse": true` if the response is only part of the real one, for example a mock
+in a Storybook story that delivers only the properties it needs. Mokapi then validates the
+response body without `required` and `dependentRequired`, on every nesting level, so a missing
+property is no error. If several `oneOf` subschemas match, the first match wins and the body is
+valid. A body that matches none of them is still an error.
+
+Mokapi still checks everything the body contains: types, formats, enums, `additionalProperties`
+and ranges. The request, including parameters and body, stays strict. Required response headers
+and `response body is required` are still reported.
+
+`oneOf` variants that differ only by their required properties can't be told apart by a partial
+body, so any partial body matches them.
+
+```bash
+curl -X POST http://localhost:8080/api/services/http/validate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api": "Petstore",
+    "partialResponse": true,
+    "request": { "method": "GET", "url": "/pet/1" },
+    "response": {
+      "statusCode": 200,
+      "headers": { "Content-Type": "application/json" },
+      "body": "{\"name\": \"Rex\"}"
+    }
+  }'
+```
+
+The result contains `"partialResponse": true`. A client can use this to detect a Mokapi
+version that doesn't support the option. Mokapi versions before 0.60.0 ignore the field and
+validate strictly.
 
 ### Finding the operation
 

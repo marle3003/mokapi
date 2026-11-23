@@ -22,13 +22,13 @@ func (p *Parser) ParseOne(s *schema.Schema, data any, evaluated map[string]bool)
 			continue
 		}
 		if result != nil {
-			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
-				Field:   "oneOf",
-			}
+			return nil, errMatchesMoreThanOne(validIndex, index)
 		}
 		result = next
 		validIndex = index
+		if p.PartialObjects {
+			break
+		}
 	}
 
 	if result == nil {
@@ -50,13 +50,13 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, any], s *sche
 	for index, one = range s.OneOf {
 		if one == nil {
 			if result != nil {
-				return nil, &ErrorDetail{
-					Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
-					Field:   "oneOf",
-				}
+				return nil, errMatchesMoreThanOne(validIndex, index)
 			}
 			result = m
 			validIndex = index
+			if p.PartialObjects {
+				break
+			}
 			continue
 		}
 
@@ -75,16 +75,16 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, any], s *sche
 		next = v.(*sortedmap.LinkedHashMap[string, any])
 
 		if result != nil {
-			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
-				Field:   "oneOf",
-			}
+			return nil, errMatchesMoreThanOne(validIndex, index)
 		}
 
 		result = next
 		validIndex = index
 
 		maps.Copy(evaluated, eval)
+		if p.PartialObjects {
+			break
+		}
 	}
 
 	if result == nil {
@@ -98,4 +98,11 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, any], s *sche
 	}
 
 	return result, nil
+}
+
+func errMatchesMoreThanOne(first, second int) error {
+	return &ErrorDetail{
+		Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", first, second),
+		Field:   "oneOf",
+	}
 }
