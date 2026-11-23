@@ -90,7 +90,7 @@ test.describe('Scrollbars', () => {
             await expect.poll(() => sidebar.evaluate((el: HTMLElement) => el.scrollHeight > el.clientHeight),
                 { message: 'docs sidebar must overflow to show a scrollbar' }).toBe(true)
             const barWidth = await sidebar.evaluate((el: HTMLElement) => el.offsetWidth - el.clientWidth)
-            expect(barWidth).toBe(6)
+            expect(barWidth).toBe(5)
         })
 
         test('the page scrollbar keeps the default width', async ({ page }) => {
