@@ -67,7 +67,7 @@ matches are not sent to Mokapi.
 | React       | 18 or newer (used for the addon panel; React projects are tested) |
 | Node.js     | 22.12.0 or newer                                                  |
 
-Older Mokapi versions have no validation endpoint. The panel then tells you to update Mokapi.
+Older Mokapi versions have no validation endpoint. The panel then tells you to update Mokapi. Partial responses (see below) need Mokapi 0.60.0 or newer.
 
 ---
 
@@ -189,6 +189,39 @@ export const Invalid = {
   },
 };
 ```
+
+#### Stories That Mock Only Part of a Response
+
+A story often needs only a few properties, for example a long `name` to test the layout. Mokapi reports the missing
+required properties of such a mock as invalid. To skip that check, turn on partial responses in the addon options:
+
+```ts
+// .storybook/main.ts
+export default {
+  addons: [
+    {
+      name: 'mokapi-storybook-addon',
+      options: {
+        defaultPartial: true, // default false
+      },
+    },
+  ],
+};
+```
+
+Mokapi then validates the properties your mock contains (types, formats, enums) but doesn't report missing ones.
+`parameters.mokapi.partial` overrides `defaultPartial` for a single story, like `test` overrides `defaultTest`. A story
+that must deliver the complete response sets it to `false`:
+
+```tsx
+export const Complete = {
+  parameters: { mokapi: { partial: false } },
+};
+```
+
+While a story validates with partial responses, the panel toolbar shows `Partial responses: missing properties are not
+checked.`, so a valid entry isn't read as "complete". A passed story with partial responses shows the green label
+`PARTIAL` instead of `PASS`, also in the Run tests results. This needs Mokapi 0.60.0 or newer.
 
 ### 5. Start Mokapi and Storybook
 

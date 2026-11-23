@@ -381,7 +381,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, any], s *sc
 		})
 	}
 
-	if s.Required != nil {
+	if s.Required != nil && !p.PartialObjects {
 		var required []string
 		for _, p := range s.Required {
 			if _, found := obj.Get(p); !found {
@@ -408,7 +408,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, any], s *sc
 		}
 	}
 
-	for k, required := range s.DependentRequired {
+	for k, required := range p.dependentRequired(s) {
 		if _, found := obj.Get(k); found {
 			var missing []string
 			for _, req := range required {
@@ -438,7 +438,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, any], s *sc
 	}
 
 	if s.If != nil {
-		if _, ifErr := p.parse(obj, s.If); ifErr == nil {
+		if _, ifErr := p.withStrictRequired().parse(obj, s.If); ifErr == nil {
 			if s.Then != nil {
 				if _, thenErr := p.parse(obj, s.Then); thenErr != nil {
 					err = append(err, wrapErrorDetail(thenErr, &ErrorDetail{
@@ -525,4 +525,11 @@ func (p *Parser) parseObjectWithComposition(m *sortedmap.LinkedHashMap[string, a
 		return r, nil
 	}
 	return obj, nil
+}
+
+func (p *Parser) dependentRequired(s *schema.Schema) map[string][]string {
+	if p.PartialObjects {
+		return nil
+	}
+	return s.DependentRequired
 }

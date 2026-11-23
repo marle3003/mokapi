@@ -198,8 +198,8 @@ func flattenViolations(location string, violations []any) []ValidationError {
 
 // ValidateResponse checks status, headers and, for operations other than HEAD, the body against
 // the response the contract defines for statusCode. Only JSON bodies are validated against a
-// schema.
-func (m *OperationMatch) ValidateResponse(statusCode int, headers map[string]string, body string) []ValidationError {
+// schema. With partial set, the body may lack properties, see parser.Parser.PartialObjects.
+func (m *OperationMatch) ValidateResponse(statusCode int, headers map[string]string, body string, partial bool) []ValidationError {
 	res := m.Operation.getResponse(statusCode)
 	if res == nil {
 		return []ValidationError{{Location: "response.status", Message: fmt.Sprintf("no response defined for status code %d", statusCode)}}
@@ -208,7 +208,7 @@ func (m *OperationMatch) ValidateResponse(statusCode int, headers map[string]str
 	h := toHttpHeader(headers)
 	errs := validateResponseHeaders(res.Headers, h)
 	if m.Operation.Method != http.MethodHead {
-		errs = append(errs, validateResponseBody(res, statusCode, h.Get("Content-Type"), body)...)
+		errs = append(errs, validateResponseBody(res, statusCode, h.Get("Content-Type"), body, partial)...)
 	}
 	return errs
 }
@@ -231,12 +231,12 @@ func validateResponseHeaders(definitions Headers, h http.Header) []ValidationErr
 	return errs
 }
 
-func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body string) []ValidationError {
+func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body string, partial bool) []ValidationError {
 	data := []byte(body)
 
 	contentType := media.ParseContentType(contentTypeHeader)
 	if contentType.IsEmpty() {
-		return validateResponseBodyDetectContentType(res, data)
+		return validateResponseBodyDetectContentType(res, data, partial)
 	}
 
 	mt := res.GetContent(contentType)
@@ -246,13 +246,13 @@ func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body
 	if !isJson(contentType) {
 		return nil
 	}
-	if _, err := mt.ParseData(data, contentType); err != nil {
+	if _, err := mt.parseData(data, contentType, partial); err != nil {
 		return newValidationErrors(responseBodyLocation, err)
 	}
 	return nil
 }
 
-func validateResponseBodyDetectContentType(res *Response, data []byte) []ValidationError {
+func validateResponseBodyDetectContentType(res *Response, data []byte, partial bool) []ValidationError {
 	if len(data) == 0 {
 		if len(res.Content) == 0 {
 			return nil
@@ -260,13 +260,13 @@ func validateResponseBodyDetectContentType(res *Response, data []byte) []Validat
 		return []ValidationError{{Location: responseBodyLocation, Message: "response body is required"}}
 	}
 
-	_, err := parseBodyDetectContentType(data, res.Content)
+	_, err := parseBodyDetectContentType(data, res.Content, partial)
 	if err == nil {
 		return nil
 	}
 	// a missing Content-Type must not hide the actual error
 	if mt := singleJsonMediaType(res.Content); mt != nil {
-		_, err = mt.ParseData(data, mt.ContentType)
+		_, err = mt.parseData(data, mt.ContentType, partial)
 	}
 	return newValidationErrors(responseBodyLocation, err)
 }

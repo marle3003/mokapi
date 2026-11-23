@@ -123,14 +123,14 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 		return nil, err
 	}
 
-	return parseBodyDetectContentType(data, op.RequestBody.Value.Content)
+	return parseBodyDetectContentType(data, op.RequestBody.Value.Content, false)
 }
 
 // parseBodyDetectContentType is used if a message has no Content-Type. It takes the first media
 // type of content that parses the data.
-func parseBodyDetectContentType(data []byte, content Content) (*Body, error) {
+func parseBodyDetectContentType(data []byte, content Content, partial bool) (*Body, error) {
 	for _, mt := range content {
-		if b, err := parseBody(data, mt.ContentType, mt); err == nil {
+		if b, err := parseBody(data, mt.ContentType, mt, partial); err == nil {
 			return b, err
 		}
 	}
@@ -144,7 +144,7 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 		return nil, err
 	}
 
-	b, err := parseBody(data, contentType, mt)
+	b, err := parseBody(data, contentType, mt, false)
 	if err != nil {
 		prefix := data
 		if len(prefix) > 256 {
@@ -163,8 +163,8 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 	return b, nil
 }
 
-func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
-	v, err := mt.ParseData(body, contentType)
+func parseBody(body []byte, contentType media.ContentType, mt *MediaType, partial bool) (*Body, error) {
+	v, err := mt.parseData(body, contentType, partial)
 	return &Body{Value: v, Raw: BytesToString(body)}, err
 }
 

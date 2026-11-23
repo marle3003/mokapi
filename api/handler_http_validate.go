@@ -10,8 +10,11 @@ import (
 )
 
 type httpValidateRequest struct {
-	Api     string `json:"api"`
-	Request *struct {
+	Api string `json:"api"`
+	// PartialResponse accepts a response body that lacks properties, see parser.Parser.PartialObjects.
+	// The request is still validated strictly.
+	PartialResponse bool `json:"partialResponse"`
+	Request         *struct {
 		Method  string            `json:"method"`
 		Url     string            `json:"url"`
 		Headers map[string]string `json:"headers"`
@@ -25,9 +28,10 @@ type httpValidateRequest struct {
 }
 
 type httpValidateResult struct {
-	Valid     bool                      `json:"valid"`
-	Operation *httpValidateOperation    `json:"operation,omitempty"`
-	Errors    []openapi.ValidationError `json:"errors"`
+	Valid           bool                      `json:"valid"`
+	PartialResponse bool                      `json:"partialResponse,omitempty"`
+	Operation       *httpValidateOperation    `json:"operation,omitempty"`
+	Errors          []openapi.ValidationError `json:"errors"`
 }
 
 type httpValidateOperation struct {
@@ -67,7 +71,7 @@ func (h *handler) validateHttpExchange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := httpValidateResult{Errors: []openapi.ValidationError{}}
+	result := httpValidateResult{PartialResponse: payload.PartialResponse, Errors: []openapi.ValidationError{}}
 	switch len(matches) {
 	case 0:
 		result.Errors = append(result.Errors, openapi.ValidationError{
@@ -78,7 +82,7 @@ func (h *handler) validateHttpExchange(w http.ResponseWriter, r *http.Request) {
 		m := matches[0]
 		result.Operation = &httpValidateOperation{Api: m.api, Method: m.match.Operation.Method, Path: m.match.Operation.Path.Path}
 		result.Errors = append(result.Errors, m.match.ValidateRequest(payload.Request.Headers, payload.Request.Body)...)
-		result.Errors = append(result.Errors, m.match.ValidateResponse(payload.Response.StatusCode, payload.Response.Headers, payload.Response.Body)...)
+		result.Errors = append(result.Errors, m.match.ValidateResponse(payload.Response.StatusCode, payload.Response.Headers, payload.Response.Body, payload.PartialResponse)...)
 	default:
 		result.Errors = append(result.Errors, openapi.ValidationError{
 			Location: "operation",

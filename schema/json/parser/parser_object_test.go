@@ -549,3 +549,121 @@ func TestParser_ParseObject(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_PartialObjects(t *testing.T) {
+	person := func(opts ...schematest.SchemaOptions) *schema.Schema {
+		return schematest.New("object", append([]schematest.SchemaOptions{
+			schematest.WithProperty("name", schematest.New("string")),
+			schematest.WithProperty("age", schematest.New("integer")),
+			schematest.WithRequired("name", "age"),
+		}, opts...)...)
+	}
+
+	testcases := []struct {
+		name    string
+		partial bool
+		schema  *schema.Schema
+		data    map[string]any
+		err     string
+	}{
+		{
+			name:    "top level required is skipped",
+			partial: true,
+			schema:  person(),
+			data:    map[string]any{"name": "Rex"},
+		},
+		{
+			name:   "strict mode reports missing required",
+			schema: person(),
+			data:   map[string]any{"name": "Rex"},
+			err:    "Validation error count 1:\n\t- #/required: required properties are missing: age",
+		},
+		{
+			name:    "wrong type is still reported",
+			partial: true,
+			schema:  person(),
+			data:    map[string]any{"name": 12},
+			err:     "Validation error count 1:\n\t- #/name/type: invalid type, expected string but got integer",
+		},
+		{
+			name:    "additional properties are still reported",
+			partial: true,
+			schema:  person(schematest.WithFreeForm(false)),
+			data:    map[string]any{"name": "Rex", "foo": 1},
+			err:     "Validation error count 1:\n\t- #/additionalProperties: property 'foo' not defined and the schema does not allow additional properties",
+		},
+		{
+			name:    "nested object",
+			partial: true,
+			schema:  schematest.New("object", schematest.WithProperty("owner", person()), schematest.WithRequired("owner")),
+			data:    map[string]any{"owner": map[string]any{"name": "Jane"}},
+		},
+		{
+			name:    "object in array",
+			partial: true,
+			schema:  schematest.New("array", schematest.WithItemsNew(person())),
+		},
+		{
+			name:    "allOf",
+			partial: true,
+			schema: schematest.NewAllOf(
+				person(),
+				schematest.New("object", schematest.WithProperty("id", schematest.New("integer")), schematest.WithRequired("id")),
+			),
+			data: map[string]any{"name": "Rex"},
+		},
+		{
+			name:    "anyOf",
+			partial: true,
+			schema:  schematest.NewAny(person()),
+			data:    map[string]any{"name": "Rex"},
+		},
+		{
+			name:    "dependentRequired is skipped",
+			partial: true,
+			schema:  schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
+			data:    map[string]any{"foo": "foobar"},
+		},
+		{
+			name:   "strict mode reports dependentRequired",
+			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
+			data:   map[string]any{"foo": "foobar"},
+			err:    "Validation error count 1:\n\t- #/dependentRequired: dependencies for property 'foo' failed: missing required keys: bar.",
+		},
+		{
+			name:    "required in if stays a condition",
+			partial: true,
+			schema: schematest.New("object",
+				schematest.WithIf(schematest.New("object", schematest.WithRequired("a"))),
+				schematest.WithThen(schematest.New("object", schematest.WithProperty("b", schematest.New("string")), schematest.WithRequired("b"))),
+			),
+			data: map[string]any{},
+		},
+		{
+			name:    "then is relaxed",
+			partial: true,
+			schema: schematest.New("object",
+				schematest.WithIf(schematest.New("object", schematest.WithRequired("a"))),
+				schematest.WithThen(schematest.New("object", schematest.WithRequired("b"))),
+			),
+			data: map[string]any{"a": 1},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := &parser.Parser{Schema: tc.schema, ValidateAdditionalProperties: true, PartialObjects: tc.partial}
+
+			var data any = tc.data
+			if tc.schema.Type.IsArray() {
+				data = []any{map[string]any{"name": "Rex"}, map[string]any{"age": 3}}
+			}
+			_, err := p.Parse(data)
+			if tc.err == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.err)
+			}
+		})
+	}
+}

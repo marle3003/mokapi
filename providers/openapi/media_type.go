@@ -97,6 +97,11 @@ func cloneContentType(c media.ContentType) media.ContentType {
 }
 
 func (m *MediaType) ParseData(b []byte, contentType media.ContentType) (interface{}, error) {
+	return m.parseData(b, contentType, false)
+}
+
+// parseData is ParseData with partial set: objects may lack properties, see parser.Parser.PartialObjects.
+func (m *MediaType) parseData(b []byte, contentType media.ContentType, partial bool) (interface{}, error) {
 	if !isDefaultContentType(m.ContentType) {
 		if !contentType.IsDerivedFrom(m.ContentType) {
 			return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
@@ -107,7 +112,7 @@ func (m *MediaType) ParseData(b []byte, contentType media.ContentType) (interfac
 		return schema.UnmarshalXML(bytes.NewReader(b), m.Schema)
 	}
 
-	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(m.Schema), ValidateAdditionalProperties: true}
+	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(m.Schema), ValidateAdditionalProperties: true, PartialObjects: partial}
 	opts := []encoding.DecodeOptions{
 		encoding.WithContentType(contentType),
 		encoding.WithParser(p),

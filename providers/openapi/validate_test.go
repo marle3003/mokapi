@@ -445,6 +445,7 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 		status  int
 		headers map[string]string
 		body    string
+		partial bool
 		test    func(t *testing.T, errs []openapi.ValidationError)
 	}{
 		{
@@ -674,6 +675,76 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 				require.Equal(t, []string{"response.header.X-Total"}, locations(errs))
 			},
 		},
+		{
+			name: "partial: missing required property is valid with Content-Type",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
+						schematest.WithProperty("email", schematest.New("string")),
+						schematest.WithRequired("name", "email")))))),
+			status: 200, headers: jsonHeaders, body: `{"name":"foo"}`, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name: "strict: missing required property is invalid",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, headers: jsonHeaders, body: `{}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.body"}, locations(errs))
+			},
+		},
+		{
+			name: "partial: wrong type is still invalid",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, headers: jsonHeaders, body: `{"name":1}`, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.body"}, locations(errs))
+			},
+		},
+		{
+			name: "partial: missing required property is valid without Content-Type",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, body: `{}`, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name: "partial: wrong type is still invalid without Content-Type",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, body: `{"name":1}`, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.body"}, locations(errs))
+			},
+		},
+		{
+			name: "partial: missing required header is still reported",
+			config: getUser("get", openapitest.WithResponse(200,
+				withRequiredResponseHeader("X-Total", true, schematest.New("integer")),
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, headers: jsonHeaders, body: `{}`, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.header.X-Total"}, locations(errs))
+			},
+		},
+		{
+			name: "partial: empty body is still required",
+			config: getUser("get", openapitest.WithResponse(200,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)))),
+			status: 200, partial: true,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []openapi.ValidationError{
+					{Location: "response.body", Message: "response body is required"},
+				}, errs)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -685,7 +756,7 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 			match, err := tc.config.ResolveOperation(method, "/users")
 			require.NoError(t, err)
 			require.NotNil(t, match)
-			tc.test(t, match.ValidateResponse(tc.status, tc.headers, tc.body))
+			tc.test(t, match.ValidateResponse(tc.status, tc.headers, tc.body, tc.partial))
 		})
 	}
 }

@@ -18,6 +18,20 @@ type Parser struct {
 	ValidateAdditionalProperties bool
 	// JSON schema: By default, format is just an annotation and does not affect validation.
 	SkipValidationFormatKeyword bool
+	// PartialObjects accepts objects with missing properties: the keywords required and
+	// dependentRequired are not checked and oneOf takes the first matching subschema, because
+	// without the missing properties several subschemas may match. Everything else is still
+	// validated. The keywords if and not keep checking required, otherwise their condition
+	// would always hold.
+	PartialObjects bool
+}
+
+// withStrictRequired returns a copy that checks required again. It is used for schemas that
+// act as a condition (if, not).
+func (p *Parser) withStrictRequired() *Parser {
+	strict := *p
+	strict.PartialObjects = false
+	return &strict
 }
 
 type Exportable interface {
@@ -209,7 +223,7 @@ func (p *Parser) parseType(data any, s *schema.Schema, typeName string, evaluate
 	}
 
 	if s.Not != nil {
-		if _, notErr := p.parse(data, s.Not); notErr == nil {
+		if _, notErr := p.withStrictRequired().parse(data, s.Not); notErr == nil {
 			return nil, &ErrorDetail{
 				Message: "is valid against schema",
 				Field:   "not",

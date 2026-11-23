@@ -555,7 +555,7 @@ func (p *Path) RunWebhook(urlString string, args common.WebhookArgs) (*common.We
 			return nil, fmt.Errorf("failed to read response body: %w", err)
 		}
 		var body *Body
-		body, err = parseBody(b, ct, mt)
+		body, err = parseBody(b, ct, mt, false)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse response body: %w", err)
 		}

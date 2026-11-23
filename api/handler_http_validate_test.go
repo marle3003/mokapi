@@ -208,6 +208,67 @@ func TestHandler_Http_Validate(t *testing.T) {
 			result: `{"message":"invalid request.url: invalid url: parse \"http://[::1\": missing ']' in host"}`,
 		},
 		{
+			name: "partialResponse skips missing required properties and is echoed",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(newProfileApi("Profile API", "name", "email"))
+			},
+			body: `{
+				"partialResponse": true,
+				"request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+				"response": { "statusCode": 200, "headers": { "Content-Type": "application/json" }, "body": "{\"name\":\"Jane\"}" }
+			}`,
+			status: 200,
+			result: `{"valid":true,"partialResponse":true,"operation":{"api":"Profile API","method":"GET","path":"/profile"},"errors":[]}`,
+		},
+		{
+			name: "partialResponse validates the request strictly",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(newProfileApi("Profile API", "name", "email"))
+			},
+			body: `{
+				"partialResponse": true,
+				"request": { "method": "GET", "url": "/api/v1/profile" },
+				"response": { "statusCode": 200, "headers": { "Content-Type": "application/json" }, "body": "{\"name\":\"Jane\"}" }
+			}`,
+			status: 200,
+			result: `{"valid":false,"partialResponse":true,"operation":{"api":"Profile API","method":"GET","path":"/profile"},"errors":[
+				{"location":"request.query.id","message":"parameter is required"}
+			]}`,
+		},
+		{
+			name: "partialResponse false is not echoed",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(newProfileApi("Profile API", "name", "email"))
+			},
+			body: `{
+				"partialResponse": false,
+				"request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+				"response": { "statusCode": 200, "headers": { "Content-Type": "application/json" }, "body": "{\"name\":\"Jane\"}" }
+			}`,
+			status: 200,
+			result: `{"valid":false,"operation":{"api":"Profile API","method":"GET","path":"/profile"},"errors":[
+				{"location":"response.body","schema":"#/required","message":"required properties are missing: email"}
+			]}`,
+		},
+		{
+			name: "partialResponse is echoed without operation",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(newProfileApi("Profile API"))
+			},
+			body:   `{"partialResponse":true,"request":{"method":"GET","url":"/api/v1/unknown"},"response":{"statusCode":200}}`,
+			status: 200,
+			result: `{"valid":false,"partialResponse":true,"errors":[{"location":"operation","message":"no operation found for GET /api/v1/unknown"}]}`,
+		},
+		{
+			name: "partialResponse is echoed for ambiguous operation",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(newProfileApi("Profile API v2"), newProfileApi("Profile API"))
+			},
+			body:   `{"partialResponse":true,"request":{"method":"GET","url":"/api/v1/profile?id=1"},"response":{"statusCode":200}}`,
+			status: 200,
+			result: `{"valid":false,"partialResponse":true,"errors":[{"location":"operation","message":"ambiguous operation: GET /api/v1/profile?id=1 matches the APIs 'Profile API', 'Profile API v2'. Set 'api' to select one."}]}`,
+		},
+		{
 			name:   "GET is not allowed",
 			app:    func() *runtime.App { return runtimetest.NewHttpApp() },
 			method: http.MethodGet,

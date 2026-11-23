@@ -333,3 +333,14 @@ func TestParser_Exportable(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_PartialObjects_NotKeepsRequiredStrict(t *testing.T) {
+	s := schematest.New("object", schematest.WithNot(schematest.New("object", schematest.WithRequired("a"))))
+	p := &parser.Parser{Schema: s, PartialObjects: true}
+
+	_, err := p.Parse(map[string]any{})
+	require.NoError(t, err)
+
+	_, err = p.Parse(map[string]any{"a": 1})
+	require.EqualError(t, err, "Validation error count 1:\n\t- #/not: is valid against schema")
+}
