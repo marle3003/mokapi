@@ -14,8 +14,8 @@ should return `401`, you decide that in a script, see
 ## What Mokapi does with a security scheme
 
 For every request, Mokapi looks at the `security` requirements of the operation. If the operation
-has no `security` key, it uses the global `security` of the specification. For each scheme it looks for the
-credential:
+has no `security` key, it uses the global `security` of the specification. For each scheme it looks
+for the credential:
 
 | Scheme                                | Credential Mokapi looks for                              | Key in the script                |
 |---------------------------------------|----------------------------------------------------------|----------------------------------|
@@ -247,5 +247,7 @@ status and set `response.data`.
 
 The **Security** tab of an operation in the [dashboard](/docs/http/dashboard.md) lists the
 security requirement that applies to that operation: the operation's own `security` if it defines
-one, otherwise the global one. For an operation with `security: []` the tab shows no scheme. The request log shows the credentials Mokapi read, such as the
-`Authorization` header or the API key, as parameters of the request.
+one, otherwise the global one. For an operation with `security: []` the tab shows no scheme.
+
+The request log shows the credentials Mokapi read, such as the `Authorization` header or the API
+key, as parameters of the request.

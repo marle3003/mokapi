@@ -54,7 +54,7 @@ func writeXmlElement(name string, i interface{}, s *Schema, b *bytes.Buffer) {
 	wrapped := false
 	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	if s != nil && s.Xml != nil {
-		wrapped = s.Xml.Wrapped
+		wrapped = s.Xml.IsWrapped()
 		if len(s.Xml.Name) > 0 {
 			name = s.Xml.Name
 		}
@@ -107,7 +107,7 @@ func writeXmlElement(name string, i interface{}, s *Schema, b *bytes.Buffer) {
 			prop := s.Properties.Get(propName)
 			if prop != nil {
 				x := prop.Xml
-				if x != nil && x.Attribute {
+				if x != nil && x.IsAttribute() {
 					continue
 				}
 			}
@@ -134,7 +134,7 @@ func getAttributes(m *sortedmap.LinkedHashMap[string, interface{}], r *Schema) *
 		}
 
 		prop := r.Properties.Get(it.Key())
-		if prop == nil || prop.Xml == nil || !prop.Xml.Attribute {
+		if prop == nil || prop.Xml == nil || !prop.Xml.IsAttribute() {
 			continue
 		}
 

@@ -580,25 +580,76 @@ func TestConfig_Patch_Channel(t *testing.T) {
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: new(true)}),
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, true, result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
+				require.Equal(t, true, *result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
 			},
 		},
 		{
 			name: "add channel ValueSchemaValidation overwrite",
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: new(true)}),
 				)),
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: false}),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: new(false)}),
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, false, result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
+				require.Equal(t, false, *result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
+			},
+		},
+		{
+			name: "patch without SchemaValidation keeps false",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
+						Partitions:            1,
+						ValueSchemaValidation: new(false),
+						KeySchemaValidation:   new(false),
+					}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				kafka := result.Channels["foo"].Value.Bindings.Kafka
+				require.Equal(t, 2, kafka.Partitions)
+				require.False(t, kafka.IsValueSchemaValidation())
+				require.False(t, kafka.IsKeySchemaValidation())
+			},
+		},
+		{
+			name: "patch KeySchemaValidation false overwrites true",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{KeySchemaValidation: new(true)}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{KeySchemaValidation: new(false)}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				kafka := result.Channels["foo"].Value.Bindings.Kafka
+				require.False(t, kafka.IsKeySchemaValidation())
+				require.True(t, kafka.IsValueSchemaValidation())
+			},
+		},
+		{
+			name: "patch SchemaValidation does not share the pointer with the patch",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: new(false)}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				kafka := result.Channels["foo"].Value.Bindings.Kafka
+				*kafka.ValueSchemaValidation = true
+				require.True(t, kafka.IsValueSchemaValidation())
 			},
 		},
 	}

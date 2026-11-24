@@ -45,7 +45,7 @@ type Schema struct {
 	MinItems         *int      `yaml:"minItems,omitempty" json:"minItems,omitempty"`
 	MaxItems         *int      `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
 	UniqueItems      *bool     `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
-	ShuffleItems     bool      `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
+	ShuffleItems     *bool     `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Object
 	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
@@ -72,7 +72,7 @@ type Schema struct {
 	Title       string           `yaml:"title,omitempty" json:"title,omitempty"`
 	Description string           `yaml:"description,omitempty" json:"description,omitempty"`
 	Default     interface{}      `yaml:"default,omitempty" json:"default,omitempty"`
-	Deprecated  bool             `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Deprecated  *bool            `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 	Examples    []schema.Example `yaml:"examples,omitempty" json:"examples,omitempty"`
 	Example     *schema.Example  `yaml:"example,omitempty" json:"example,omitempty"`
 
@@ -81,8 +81,8 @@ type Schema struct {
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
 	// OpenAPI
-	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
-	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
+	Xml      *Xml  `yaml:"xml,omitempty" json:"xml,omitempty"`
+	Nullable *bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
 
 	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
 	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
@@ -219,7 +219,7 @@ func (s *Schema) IsDictionary() bool {
 }
 
 func (s *Schema) IsNullable() bool {
-	return s.Nullable || s.Type.IsNullable()
+	return isTrue(s.Nullable) || s.Type.IsNullable()
 }
 
 func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {

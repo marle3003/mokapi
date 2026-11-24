@@ -148,26 +148,52 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch xml overwrite wrapped",
 			schemas: []*schema.Schema{
 				schematest.New("string",
-					schematest.WithXml(&schema.Xml{Wrapped: false})),
+					schematest.WithXml(&schema.Xml{Wrapped: new(false)})),
 				schematest.New("string",
-					schematest.WithXml(&schema.Xml{Wrapped: true})),
+					schematest.WithXml(&schema.Xml{Wrapped: new(true)})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.Xml)
-				require.True(t, result.Xml.Wrapped)
+				require.True(t, result.Xml.IsWrapped())
+			},
+		},
+		{
+			name: "patch xml explicit false overwrites wrapped",
+			schemas: []*schema.Schema{
+				schematest.New("string",
+					schematest.WithXml(&schema.Xml{Wrapped: new(true)})),
+				schematest.New("string",
+					schematest.WithXml(&schema.Xml{Wrapped: new(false)})),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.Xml)
+				require.False(t, result.Xml.IsWrapped())
+			},
+		},
+		{
+			name: "patch xml explicit false overwrites attribute",
+			schemas: []*schema.Schema{
+				schematest.New("string",
+					schematest.WithXml(&schema.Xml{Attribute: new(true)})),
+				schematest.New("string",
+					schematest.WithXml(&schema.Xml{Attribute: new(false)})),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.Xml)
+				require.False(t, result.Xml.IsAttribute())
 			},
 		},
 		{
 			name: "patch xml overwrite attribute",
 			schemas: []*schema.Schema{
 				schematest.New("string",
-					schematest.WithXml(&schema.Xml{Attribute: false})),
+					schematest.WithXml(&schema.Xml{Attribute: new(false)})),
 				schematest.New("string",
-					schematest.WithXml(&schema.Xml{Attribute: true})),
+					schematest.WithXml(&schema.Xml{Attribute: new(true)})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.Xml)
-				require.True(t, result.Xml.Attribute)
+				require.True(t, result.Xml.IsAttribute())
 			},
 		},
 		{
@@ -197,17 +223,17 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.IsNullable(true)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, true, result.Nullable)
+				require.True(t, result.IsNullable())
 			},
 		},
 		{
-			name: "patch overwrite format",
+			name: "patch explicit false overwrites nullable",
 			schemas: []*schema.Schema{
 				schematest.New("", schematest.IsNullable(true)),
 				schematest.New("", schematest.IsNullable(false)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, false, result.Nullable)
+				require.False(t, result.IsNullable())
 			},
 		},
 		{
@@ -464,17 +490,27 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithShuffleItems()),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, result.ShuffleItems)
+				require.True(t, *result.ShuffleItems)
 			},
 		},
 		{
-			name: "patch overwrite uniqueItems",
+			name: "patch without shuffleItems keeps value",
 			schemas: []*schema.Schema{
 				schematest.New("", schematest.WithShuffleItems()),
 				schematest.New(""),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, result.ShuffleItems)
+				require.True(t, *result.ShuffleItems)
+			},
+		},
+		{
+			name: "patch explicit false overwrites shuffleItems",
+			schemas: []*schema.Schema{
+				schematest.New("", schematest.WithShuffleItems()),
+				{ShuffleItems: new(false)},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.False(t, *result.ShuffleItems)
 			},
 		},
 		{
@@ -681,17 +717,17 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithDeprecated(true)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, true, result.Deprecated)
+				require.True(t, *result.Deprecated)
 			},
 		},
 		{
-			name: "patch overwrite default",
+			name: "patch explicit false overwrites deprecated",
 			schemas: []*schema.Schema{
 				schematest.New("", schematest.WithDeprecated(true)),
-				schematest.New(""),
+				schematest.New("", schematest.WithDeprecated(false)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, false, result.Deprecated)
+				require.False(t, *result.Deprecated)
 			},
 		},
 		{
@@ -1176,4 +1212,46 @@ func TestSchemas_Patch_CyclicSchemaIntoCyclicSchema(t *testing.T) {
 	require.Equal(t, "string", target.Get("name").Type.String())
 	require.NotNil(t, target.Get("child"))
 	require.Same(t, target, target.Get("child").Properties)
+}
+
+func TestSchema_Patch_KeepsFlagsNotInPatch(t *testing.T) {
+	testcases := []struct {
+		name string
+		base *schema.Schema
+		test func(t *testing.T, result *schema.Schema)
+	}{
+		{
+			name: "nullable",
+			base: &schema.Schema{Nullable: new(true)},
+			test: func(t *testing.T, r *schema.Schema) { require.True(t, r.IsNullable()) },
+		},
+		{
+			name: "deprecated",
+			base: &schema.Schema{Deprecated: new(true)},
+			test: func(t *testing.T, r *schema.Schema) { require.True(t, *r.Deprecated) },
+		},
+		{
+			name: "x-shuffleItems",
+			base: &schema.Schema{ShuffleItems: new(true)},
+			test: func(t *testing.T, r *schema.Schema) { require.True(t, *r.ShuffleItems) },
+		},
+		{
+			name: "xml wrapped",
+			base: &schema.Schema{Xml: &schema.Xml{Name: "a", Wrapped: new(true)}},
+			test: func(t *testing.T, r *schema.Schema) { require.True(t, r.Xml.IsWrapped()) },
+		},
+		{
+			name: "xml attribute",
+			base: &schema.Schema{Xml: &schema.Xml{Name: "a", Attribute: new(true)}},
+			test: func(t *testing.T, r *schema.Schema) { require.True(t, r.Xml.IsAttribute()) },
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.base.Patch(&schema.Schema{Xml: &schema.Xml{Name: "b"}, Type: jsonSchema.Types{"string"}})
+			tc.test(t, tc.base)
+		})
+	}
 }

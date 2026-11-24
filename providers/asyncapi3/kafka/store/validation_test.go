@@ -32,7 +32,7 @@ func TestValidation(t *testing.T) {
 					),
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
 						Partitions:            1,
-						ValueSchemaValidation: false,
+						ValueSchemaValidation: new(false),
 					}),
 				),
 			),
@@ -117,7 +117,7 @@ func TestValidation(t *testing.T) {
 						asyncapi3test.WithKey(schematest.New("integer")),
 					),
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
-						KeySchemaValidation: false,
+						KeySchemaValidation: new(false),
 						Partitions:          1,
 					}),
 				),
@@ -140,6 +140,33 @@ func TestValidation(t *testing.T) {
 			},
 		},
 		{
+			name: "value and key invalid when binding does not set validation",
+			cfg: asyncapi3test.NewConfig(
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("integer")),
+						asyncapi3test.WithContentType("application/json"),
+					),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}),
+				),
+			),
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				p := s.Topic("foo").Partition(0)
+				wr, err := p.Write(kafka.RecordBatch{
+					Records: []*kafka.Record{
+						{
+							Key:   kafka.NewBytes([]byte("foo")),
+							Value: kafka.NewBytes([]byte("123")),
+						},
+					},
+				})
+				require.NoError(t, err)
+				require.Len(t, wr.Records, 1)
+				require.Len(t, sm.GetEvents(events.NewTraits()), 0)
+			},
+		},
+		{
 			name: "validating value and key",
 			cfg: asyncapi3test.NewConfig(
 				asyncapi3test.WithChannel("foo",
@@ -148,8 +175,8 @@ func TestValidation(t *testing.T) {
 						asyncapi3test.WithKey(schematest.New("string")),
 					),
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
-						KeySchemaValidation:   true,
-						ValueSchemaValidation: true,
+						KeySchemaValidation:   new(true),
+						ValueSchemaValidation: new(true),
 						Partitions:            1,
 					}),
 				),

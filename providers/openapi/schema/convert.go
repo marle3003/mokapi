@@ -56,7 +56,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		MinItems:              s.MinItems,
 		MaxItems:              s.MaxItems,
 		UniqueItems:           s.UniqueItems,
-		ShuffleItems:          s.ShuffleItems,
+		ShuffleItems:          isTrue(s.ShuffleItems),
 		MaxProperties:         s.MaxProperties,
 		MinProperties:         s.MinProperties,
 		Required:              s.Required,
@@ -69,7 +69,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		Else:                  c.Convert(s.Else),
 		Title:                 s.Title,
 		Description:           s.Description,
-		Deprecated:            s.Deprecated,
+		Deprecated:            isTrue(s.Deprecated),
 	}
 	c.history[s] = js
 	js.Ref = s.Ref
@@ -127,7 +127,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		js.AllOf = append(js.AllOf, c.Convert(allOf))
 	}
 
-	if s.Nullable {
+	if isTrue(s.Nullable) {
 		if len(js.Type) > 0 {
 			js.Type = append(js.Type, "null")
 		} else {

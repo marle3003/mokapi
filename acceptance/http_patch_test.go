@@ -20,6 +20,9 @@ type HttpPatchSuite struct {
 	addsPathUrl        string
 	overridesSchemaUrl string
 	responseRefUrl     string
+	keepsFlagsTitle    string
+	clearsFlagTitle    string
+	apiPort            int
 }
 
 const patchBaseSpec = `openapi: 3.0.3
@@ -89,8 +92,27 @@ content:
           $ref: './responses/ok.yml'
 `)
 
+	deprecatedPet := `  /pets:
+    get:
+      deprecated: true
+      responses:
+        '200':
+          description: ok
+`
+	suite.keepsFlagsTitle = "PatchKeepsFlags"
+	suite.writeApi(baseDir, patchDir, suite.keepsFlagsTitle, deprecatedPet, `  /pets:
+    get:
+      summary: patched
+`)
+	suite.clearsFlagTitle = "PatchClearsFlag"
+	suite.writeApi(baseDir, patchDir, suite.clearsFlagTitle, deprecatedPet, `  /pets:
+    get:
+      deprecated: false
+`)
+
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
+	suite.apiPort = cfg.Api.Port
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: baseDir}, {Path: patchDir}}
 	suite.initCmd(cfg)
 }
@@ -134,4 +156,26 @@ func (suite *HttpPatchSuite) TestPatchOverridesInlineSchemaWithRelativeRef() {
 // $ref, and that the schema inside the referenced file resolves relative to that file.
 func (suite *HttpPatchSuite) TestPatchUsesRelativeResponseRef() {
 	suite.assertPet(suite.responseRefUrl)
+}
+
+// TestPatchKeepsFlagsItDoesNotSet verifies that a patch that only changes the summary of an
+// operation does not un-deprecate it.
+func (suite *HttpPatchSuite) TestPatchKeepsFlagsItDoesNotSet() {
+	try.GetRequest(suite.T(), suite.dashboardUrl(suite.keepsFlagsTitle), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.BodyContains(`"summary":"patched"`),
+		try.BodyContains(`"deprecated":true`))
+}
+
+// TestPatchCanClearFlag verifies that an explicit "deprecated: false" in a patch un-deprecates
+// an operation.
+func (suite *HttpPatchSuite) TestPatchCanClearFlag() {
+	try.GetRequest(suite.T(), suite.dashboardUrl(suite.clearsFlagTitle), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.BodyContains(`"method":"get"`),
+		try.BodyContains(`"deprecated":false`))
+}
+
+func (suite *HttpPatchSuite) dashboardUrl(title string) string {
+	return fmt.Sprintf("http://127.0.0.1:%d/api/services/http/%s", suite.apiPort, title)
 }

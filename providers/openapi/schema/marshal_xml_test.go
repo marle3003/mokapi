@@ -127,7 +127,7 @@ func TestMarshal_Xml(t *testing.T) {
 			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true,
+					Wrapped: new(true),
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestMarshal_Xml(t *testing.T) {
 				schematest.WithItems("integer"),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true,
+					Wrapped: new(true),
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
@@ -246,7 +246,7 @@ func TestMarshal_Xml(t *testing.T) {
 				)),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true,
+					Wrapped: new(true),
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
@@ -262,7 +262,7 @@ func TestMarshal_Xml(t *testing.T) {
 				schematest.WithItems("integer"),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true,
+					Wrapped: new(true),
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.EqualError(t, err, "Validation error count 1:\n\t- expected array but got: 4")
@@ -276,7 +276,7 @@ func TestMarshal_Xml(t *testing.T) {
 			schema: schematest.New("array",
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true,
+					Wrapped: new(true),
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
@@ -292,7 +292,7 @@ func TestMarshal_Xml(t *testing.T) {
 				schematest.WithItems("string", schematest.IsNullable(true)),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true, // without wrapped results in invalid xml when on root
+					Wrapped: new(true), // without wrapped results in invalid xml when on root
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
@@ -328,16 +328,16 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.New("object",
 				schematest.WithXml(&schema.Xml{Name: "book"}),
-				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)}))),
 				schematest.WithProperty("title", schematest.New("string",
 					schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					}),
 				)),
 				schematest.WithProperty("x", schematest.New("integer",
 					schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Name:      "year",
 					}),
 				)),
@@ -380,10 +380,10 @@ func TestMarshal_Xml(t *testing.T) {
 			schema: schematest.New("object",
 				schematest.IsNullable(true),
 				schematest.WithXml(&schema.Xml{Name: "book"}),
-				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)}))),
 				schematest.WithProperty("title", schematest.New("string",
 					schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					}),
 				)),
@@ -404,10 +404,10 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.New("object",
 				schematest.WithXml(&schema.Xml{Name: "book"}),
-				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)}))),
 				schematest.WithProperty("title", schematest.New("string", schematest.IsNullable(true),
 					schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					}),
 				)),

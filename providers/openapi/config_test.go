@@ -350,7 +350,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	require.Equal(t, "array", photoUrls.Type.String())
 	require.Equal(t, "string", photoUrls.Items.Type.String())
 	require.Equal(t, "photoUrl", photoUrls.Xml.Name)
-	require.True(t, photoUrls.Xml.Wrapped)
+	require.True(t, photoUrls.Xml.IsWrapped())
 
 	// tags
 	tags := pet.Properties.Get("tags")
@@ -358,7 +358,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	require.Equal(t, "#/components/schemas/Tag", tags.Items.Ref)
 	require.Equal(t, "object", tags.Items.Type.String())
 	require.Equal(t, "tag", tags.Xml.Name)
-	require.True(t, tags.Xml.Wrapped)
+	require.True(t, tags.Xml.IsWrapped())
 
 	// status
 	status := pet.Properties.Get("status")

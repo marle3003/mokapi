@@ -686,7 +686,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -736,7 +736,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -766,7 +766,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -801,7 +801,7 @@ func TestKafkaClient(t *testing.T) {
 									"id",
 									opSchematest.New(
 										"string",
-										opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+										opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 									),
 								),
 								opSchematest.WithRequired("id"),

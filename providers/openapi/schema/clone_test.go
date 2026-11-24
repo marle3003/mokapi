@@ -63,6 +63,23 @@ func TestSchema_Clone(t *testing.T) {
 		require.Equal(t, jsonSchema.Types{"string"}, s.Properties.Get("id").Type)
 	})
 
+	t.Run("copy does not share flags with the original", func(t *testing.T) {
+		s := &schema.Schema{ShuffleItems: new(true), Nullable: new(true), Deprecated: new(true), Xml: &schema.Xml{Wrapped: new(true), Attribute: new(true)}}
+
+		c := s.Clone()
+		*c.ShuffleItems = false
+		*c.Nullable = false
+		*c.Deprecated = false
+		*c.Xml.Wrapped = false
+		*c.Xml.Attribute = false
+
+		require.True(t, *s.ShuffleItems)
+		require.True(t, s.IsNullable())
+		require.True(t, *s.Deprecated)
+		require.True(t, s.Xml.IsWrapped())
+		require.True(t, s.Xml.IsAttribute())
+	})
+
 	t.Run("cyclic schema", func(t *testing.T) {
 		s := parseCyclic(t)
 

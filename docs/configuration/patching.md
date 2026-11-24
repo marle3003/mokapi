@@ -55,11 +55,50 @@ patch can reference files next to it, e.g. `$ref: './schemas/pet.yml'`.
 Mokapi patches any configuration file even if the source comes from a different provider.
 ```
 
+## Patching boolean flags
+
+A boolean flag that is missing in the patch file keeps its value from the base file. Only an explicit
+value in the patch changes it, so `false` overrides a `true` from the base. This applies to flags such as
+`deprecated`, `nullable`, `explode`, `allowReserved`, `requestBody.required` and the Kafka bindings `confluent.value.schema.validation` and
+`confluent.key.schema.validation`.
+
+```yaml tab="Base Config"
+openapi: 3.0.3
+info:
+  title: Petstore
+paths:
+  /pets:
+    get:
+      deprecated: true
+```
+
+```yaml tab="Patch Config"
+openapi: 3.0.3
+info:
+  title: Petstore
+paths:
+  /pets:
+    get:
+      deprecated: false
+```
+
+```yaml tab=Result
+openapi: 3.0.3
+info:
+  title: Petstore
+paths:
+  /pets:
+    get:
+      deprecated: false
+```
+
 ## Patching security
 
 A `security` list in a patch file replaces the existing list instead of adding alternatives. This works
 on the operation level and on the global (top-level) level. An empty list (`security: []`) removes the
-requirement. A patch without a `security` key keeps the existing one.
+requirement. A patch without a `security` key keeps the existing one. Because patches are applied in
+alphabetical order of their file names (see the intro of this page), the `security` of a later patch
+replaces the one of an earlier file.
 
 ```yaml tab="Base Config"
 openapi: 3.0.3
@@ -98,7 +137,31 @@ paths:
         - bearerAuth: []
 ```
 
-To make the operation public, use `security: []` in the patch. See
+To make the operation public, apply a patch with `security: []` to the same Base Config:
+
+```yaml tab="Patch Config"
+openapi: 3.0.3
+info:
+  title: Petstore
+paths:
+  /pets:
+    get:
+      security: []
+```
+
+```yaml tab=Result
+openapi: 3.0.3
+info:
+  title: Petstore
+security:
+  - apiKey: []
+paths:
+  /pets:
+    get:
+      security: []
+```
+
+The global `security` stays, but `GET /pets` no longer requires a scheme. See
 [Mocking OpenAPI Security Schemes](/docs/http/security.md) for how Mokapi evaluates the requirement.
 
 ## Patching Discriminators

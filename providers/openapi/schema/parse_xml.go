@@ -106,7 +106,7 @@ func parseXML(n *node, s *Schema, xpath string) (any, error) {
 	// elements can override attribute values
 	for _, attr := range n.Attrs {
 		name, prop := getProperty(attr.Name, s)
-		if prop != nil && prop.Xml != nil && !prop.Xml.Attribute {
+		if prop != nil && prop.Xml != nil && !prop.Xml.IsAttribute() {
 			continue
 		}
 		v, err := parseValue(attr.Value, prop, fmt.Sprintf("%s[@%s]", xpath, prop))
@@ -118,8 +118,8 @@ func parseXML(n *node, s *Schema, xpath string) (any, error) {
 
 	for _, child := range n.Nodes {
 		name, prop := getProperty(child.XMLName, s)
-		if prop != nil && prop.Xml != nil && prop.Xml.Attribute {
-			if prop.Xml.Attribute && !s.IsFreeForm() {
+		if prop != nil && prop.Xml != nil && prop.Xml.IsAttribute() {
+			if !s.IsFreeForm() {
 				return nil, fmt.Errorf("property '%s' is expected as XML attribute but received as XML node and additionalProperty is not allowed: %v", name, path.Join(xpath, xmlNameAsString(child.XMLName)))
 			}
 			continue
@@ -154,10 +154,10 @@ func parseXML(n *node, s *Schema, xpath string) (any, error) {
 				// here we want to verify only XML
 				continue
 			}
-			if prop.Xml.Attribute && !n.hasAttribute(req) {
+			if prop.Xml.IsAttribute() && !n.hasAttribute(req) {
 				return nil, fmt.Errorf("required attribute '%s' not found in XML", req)
 			}
-			if !prop.Xml.Attribute && n.hasElement(req) {
+			if !prop.Xml.IsAttribute() && n.hasElement(req) {
 				return nil, fmt.Errorf("required element '%s' not found in XML", req)
 			}
 		}
@@ -280,7 +280,7 @@ func isWrapped(ref *Schema) (string, bool) {
 		return "", false
 	}
 	x := ref.Xml
-	return x.Name, x.Wrapped
+	return x.Name, x.IsWrapped()
 }
 
 func (n *node) hasAttribute(name string) bool {

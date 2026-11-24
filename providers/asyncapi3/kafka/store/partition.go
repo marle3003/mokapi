@@ -264,7 +264,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		})
 	}
 
-	if len(result.Records) > 0 && p.Topic.Config().Bindings.Kafka.ValueSchemaValidation {
+	if len(result.Records) > 0 && isValueSchemaValidationEnabled(p.Topic.Config()) {
 		return result, nil
 	}
 

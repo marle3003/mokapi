@@ -747,8 +747,8 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, service string, ch *asyncap
 			RetentionMs:           bindings.RetentionMs,
 			SegmentBytes:          bindings.SegmentBytes,
 			SegmentMs:             bindings.SegmentMs,
-			ValueSchemaValidation: bindings.ValueSchemaValidation,
-			KeySchemaValidation:   bindings.KeySchemaValidation,
+			ValueSchemaValidation: bindings.IsValueSchemaValidation(),
+			KeySchemaValidation:   bindings.IsKeySchemaValidation(),
 		},
 		Groups: getGroupInfos(ki, service, t.Name, m),
 	}

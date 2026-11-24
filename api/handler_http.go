@@ -302,7 +302,7 @@ func (h *handler) getHttpService(s *openapi.Config, configs []*dynamic.Config) h
 					Summary:     o.Summary,
 					Description: o.Description,
 					OperationId: o.OperationId,
-					Deprecated:  o.Deprecated,
+					Deprecated:  o.IsDeprecated(),
 					Tags:        o.Tags,
 					Status:      o.Status.String(),
 					Errors:      getErrors(o.Errors),
@@ -364,7 +364,7 @@ func getOperations(s *openapi.Config, path, method string, monitor *monitor.Http
 				Summary:     o.Summary,
 				Description: o.Description,
 				OperationId: o.OperationId,
-				Deprecated:  o.Deprecated,
+				Deprecated:  o.IsDeprecated(),
 				Tags:        o.Tags,
 				Status:      o.Status.String(),
 			}

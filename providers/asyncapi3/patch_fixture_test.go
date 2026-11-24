@@ -126,8 +126,8 @@ func fullChannel(key string, server *Server) *Channel {
 				RetentionMs:           2,
 				SegmentBytes:          3,
 				SegmentMs:             4,
-				ValueSchemaValidation: true,
-				KeySchemaValidation:   true,
+				ValueSchemaValidation: new(false),
+				KeySchemaValidation:   new(false),
 			},
 			Mqtt: MqttChannelBindings{configs: map[string]any{"qos": 1}},
 			Websocket: WebsocketChannelBindings{

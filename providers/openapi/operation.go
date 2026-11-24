@@ -25,7 +25,7 @@ type Operation struct {
 	// CommonMark syntax MAY be used for rich text representation.
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
-	Deprecated bool `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Deprecated *bool `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 
 	// Unique string used to identify the operation. The id MUST be unique
 	// among all operations described in the API. The operationId value is
@@ -105,6 +105,10 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return o.Responses.parse(config, reader)
 }
 
+func (o *Operation) IsDeprecated() bool {
+	return o.Deprecated != nil && *o.Deprecated
+}
+
 func (o *Operation) patch(patch *Operation) {
 	if patch == nil {
 		return
@@ -119,7 +123,9 @@ func (o *Operation) patch(patch *Operation) {
 	if len(patch.OperationId) > 0 {
 		o.OperationId = patch.OperationId
 	}
-	o.Deprecated = patch.Deprecated
+	if patch.Deprecated != nil {
+		o.Deprecated = clonePointer(patch.Deprecated)
+	}
 
 	for _, tag := range patch.Tags {
 		if !slices.Contains(o.Tags, tag) {
@@ -154,6 +160,7 @@ func (o *Operation) clone() *Operation {
 	}
 	c := *o
 	c.Method, c.Path = "", nil
+	c.Deprecated = clonePointer(o.Deprecated)
 	c.Errors = slices.Clone(o.Errors)
 	c.Tags = slices.Clone(o.Tags)
 	c.Parameters = o.Parameters.clone()

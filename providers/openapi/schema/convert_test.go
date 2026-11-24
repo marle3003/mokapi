@@ -224,7 +224,7 @@ func TestConvert(t *testing.T) {
 			name: "shuffleItems",
 			s:    schematest.New("array", schematest.WithShuffleItems()),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, true, s.ShuffleItems)
+				require.True(t, s.ShuffleItems)
 			},
 		},
 		{
@@ -450,6 +450,20 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("string", schematest.IsNullable(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, jsonSchema.Types{"string", "null"}, s.Type)
+			},
+		},
+		{
+			name: "nullable false",
+			s:    schematest.New("string", schematest.IsNullable(false)),
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, jsonSchema.Types{"string"}, s.Type)
+			},
+		},
+		{
+			name: "deprecated",
+			s:    schematest.New("string", schematest.WithDeprecated(true)),
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.True(t, s.Deprecated)
 			},
 		},
 		{

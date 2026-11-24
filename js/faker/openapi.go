@@ -245,7 +245,7 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 				return nil, fmt.Errorf("unexpected type for 'minContains': got %s, expected Integer", util.JsType(i))
 			}
 		case "x-shuffleItems":
-			s.ShuffleItems = obj.Get(k).ToBoolean()
+			s.ShuffleItems = new(obj.Get(k).ToBoolean())
 		case "properties":
 			s.Properties = &schema.Schemas{}
 			val := obj.Get(k)
@@ -362,11 +362,11 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 				val := o.Get(name)
 				switch name {
 				case "wrapped":
-					xml.Wrapped = val.ToBoolean()
+					xml.Wrapped = new(val.ToBoolean())
 				case "name":
 					xml.Name = val.String()
 				case "attribute":
-					xml.Attribute = val.ToBoolean()
+					xml.Attribute = new(val.ToBoolean())
 				case "prefix":
 					xml.Prefix = val.String()
 				case "namespace":

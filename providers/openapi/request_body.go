@@ -261,7 +261,9 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	if len(patch.Description) > 0 {
 		r.Description = patch.Description
 	}
-	r.Required = clonePointer(patch.Required)
+	if patch.Required != nil {
+		r.Required = clonePointer(patch.Required)
+	}
 
 	if len(r.Content) == 0 {
 		r.Content = patch.Content.clone()
@@ -317,7 +319,7 @@ func (d urlValueDecoder) decode(propName string, val any) (any, error) {
 
 func (d urlValueDecoder) decodeArray(propName string, values []string) (any, error) {
 	enc, ok := d.mt.Encoding[propName]
-	if !ok || enc.Explode {
+	if !ok || enc.IsExplode() {
 		return values, nil
 	}
 	switch enc.Style {

@@ -285,7 +285,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			traits := events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method)
 			if ctx, err := NewLogEventContext(
 				r,
-				op.Deprecated,
+				op.IsDeprecated(),
 				traits,
 			); err != nil {
 				log.Errorf("failed to log http event: %v", err)

@@ -175,7 +175,7 @@ func WithOperationInfo(summary, description, operationId string, deprecated bool
 		o.Summary = summary
 		o.Description = description
 		o.OperationId = operationId
-		o.Deprecated = deprecated
+		o.Deprecated = new(deprecated)
 	}
 }
 

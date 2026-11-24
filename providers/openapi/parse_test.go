@@ -86,7 +86,7 @@ func Test_ParseAndPatch(t *testing.T) {
 			test: func(t *testing.T, c *openapi.Config) {
 				response := c.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
 				require.NotNil(t, response)
-				require.True(t, response.Items.Nullable)
+				require.True(t, response.Items.IsNullable())
 			},
 		},
 	}

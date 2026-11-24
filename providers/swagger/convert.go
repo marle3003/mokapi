@@ -169,7 +169,9 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		Description: o.Description,
 		OperationId: o.OperationID,
 		Responses:   &openapi.Responses{},
-		Deprecated:  o.Deprecated,
+	}
+	if o.Deprecated {
+		result.Deprecated = new(true)
 	}
 
 	if o.Consumes == nil {

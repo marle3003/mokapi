@@ -214,6 +214,22 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name:   "operation deprecated",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"deprecated": true}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				get := config.Paths.Lookup("/foo").Value.Get
+				require.True(t, get.IsDeprecated())
+			},
+		},
+		{
+			name:   "operation not deprecated",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"deprecated": false}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				get := config.Paths.Lookup("/foo").Value.Get
+				require.Nil(t, get.Deprecated)
+			},
+		},
+		{
 			name:   "operation description",
 			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"description": "foo"}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {

@@ -84,7 +84,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "deprecated": true }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.True(t, r.Deprecated)
+				require.True(t, *r.Deprecated)
 			},
 		},
 		{
@@ -147,9 +147,9 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, &schema.Xml{
-					Wrapped:   true,
+					Wrapped:   new(true),
 					Name:      "foo",
-					Attribute: true,
+					Attribute: new(true),
 					Prefix:    "bar",
 					Namespace: "ns1",
 				}, r.Xml)
@@ -168,7 +168,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "nullable": true }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.True(t, r.Nullable)
+				require.True(t, r.IsNullable())
 			},
 		},
 		{
@@ -382,7 +382,7 @@ format: foo
 nullable: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, r.Nullable)
+				require.True(t, r.IsNullable())
 			},
 		},
 		{
@@ -731,7 +731,7 @@ example:
 deprecated: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, r.Deprecated)
+				require.True(t, *r.Deprecated)
 			},
 		},
 		{

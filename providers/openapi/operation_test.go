@@ -59,7 +59,7 @@ func TestOperation_UnmarshalJSON(t *testing.T) {
 				o := openapi.Operation{}
 				err := json.Unmarshal([]byte(`{ "deprecated": true }`), &o)
 				require.NoError(t, err)
-				require.True(t, o.Deprecated)
+				require.True(t, o.IsDeprecated())
 			},
 		},
 		{
@@ -150,7 +150,7 @@ func TestOperation_UnmarshalYAML(t *testing.T) {
 				o := openapi.Operation{}
 				err := yaml.Unmarshal([]byte(`deprecated: true`), &o)
 				require.NoError(t, err)
-				require.True(t, o.Deprecated)
+				require.True(t, o.IsDeprecated())
 			},
 		},
 		{
@@ -682,7 +682,7 @@ func TestConfig_Patch_Operation(t *testing.T) {
 				require.Equal(t, "foo", o.Summary)
 				require.Equal(t, "bar", o.Description)
 				require.Equal(t, "id", o.OperationId)
-				require.True(t, o.Deprecated)
+				require.True(t, o.IsDeprecated())
 			},
 		})
 	}
@@ -703,6 +703,122 @@ func TestConfig_Patch_Operation(t *testing.T) {
 			require.Equal(t, "", o.Summary)
 		},
 	})
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			c := tc.configs[0]
+			for _, p := range tc.configs[1:] {
+				c.Patch(p)
+			}
+			tc.test(t, c)
+		})
+	}
+}
+
+func TestConfig_Patch_Operation_KeepsFieldsNotInPatch(t *testing.T) {
+	testcases := []struct {
+		name    string
+		configs []*openapi.Config
+		test    func(t *testing.T, result *openapi.Config)
+	}{
+		{
+			name: "deprecated",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("get",
+						openapitest.WithOperationInfo("", "", "", true)))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("get"))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.True(t, result.Paths.Lookup("/foo").Value.Get.IsDeprecated())
+			},
+		},
+		{
+			name: "deprecated false in patch overrides true",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("get",
+						openapitest.WithOperationInfo("", "", "", true)))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("get",
+						openapitest.WithOperationInfo("", "", "", false)))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.False(t, result.Paths.Lookup("/foo").Value.Get.IsDeprecated())
+			},
+		},
+		{
+			name: "request body required is not in patch",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true)))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post", func(o *openapi.Operation) {
+						o.RequestBody = &openapi.RequestBodyRef{Value: &openapi.RequestBody{Description: "foo"}}
+					}))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
+			},
+		},
+		{
+			name: "request body required false in patch overrides true",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true)))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", false)))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.False(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
+			},
+		},
+		{
+			name: "encoding explode false in patch overrides true",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true,
+							openapitest.WithRequestContent("application/x-www-form-urlencoded",
+								openapitest.WithEncoding("p", &openapi.Encoding{Explode: new(true), AllowReserved: new(true)})))))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true,
+							openapitest.WithRequestContent("application/x-www-form-urlencoded",
+								openapitest.WithEncoding("p", &openapi.Encoding{Explode: new(false), AllowReserved: new(false)})))))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				e := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Content["application/x-www-form-urlencoded"].Encoding["p"]
+				require.False(t, e.IsExplode(), "explode")
+				require.False(t, e.IsAllowReserved(), "allowReserved")
+			},
+		},
+		{
+			name: "encoding explode and allowReserved",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true,
+							openapitest.WithRequestContent("application/x-www-form-urlencoded",
+								openapitest.WithEncoding("p", &openapi.Encoding{Style: "pipeDelimited", Explode: new(true), AllowReserved: new(true)})))))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post",
+						openapitest.WithRequestBody("", true,
+							openapitest.WithRequestContent("application/x-www-form-urlencoded",
+								openapitest.WithEncoding("p", &openapi.Encoding{ContentType: "text/plain"})))))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				e := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Content["application/x-www-form-urlencoded"].Encoding["p"]
+				require.True(t, e.IsExplode(), "explode")
+				require.True(t, e.IsAllowReserved(), "allowReserved")
+			},
+		},
+	}
 
 	for _, tc := range testcases {
 		tc := tc

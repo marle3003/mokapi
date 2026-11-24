@@ -119,6 +119,21 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `{"name":"foo","servers":[{"url":"https://foo.bar","description":"a foo description"}]`,
 		},
 		{
+			name: "get http service with deprecated operation",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo",
+							openapitest.WithOperation("get", openapitest.WithOperationInfo("", "", "", true)),
+						),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo",
+			responseBody: `[{"method":"get","path":"/foo","deprecated":true,"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
+		},
+		{
 			name: "get http service with parameters",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(

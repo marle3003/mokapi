@@ -90,6 +90,9 @@ func (s *Schema) clone(copies schemaCopies) *Schema {
 	c.Examples = slices.Clone(s.Examples)
 	c.Example = clonePointer(s.Example)
 
+	c.ShuffleItems = clonePointer(s.ShuffleItems)
+	c.Nullable = clonePointer(s.Nullable)
+	c.Deprecated = clonePointer(s.Deprecated)
 	c.Xml = s.Xml.clone()
 
 	c.Definitions = cloneSchemaMap(s.Definitions, copies)
@@ -98,7 +101,13 @@ func (s *Schema) clone(copies schemaCopies) *Schema {
 }
 
 func (x *Xml) clone() *Xml {
-	return clonePointer(x)
+	if x == nil {
+		return nil
+	}
+	c := *x
+	c.Wrapped = clonePointer(x.Wrapped)
+	c.Attribute = clonePointer(x.Attribute)
+	return &c
 }
 
 func cloneSchemas(s []*Schema, copies schemaCopies) []*Schema {

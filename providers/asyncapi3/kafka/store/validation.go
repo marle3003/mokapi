@@ -338,12 +338,12 @@ func isValueSchemaValidationEnabled(ch *asyncapi3.Channel) bool {
 	if ch.Bindings == nil {
 		return true
 	}
-	return ch.Bindings.Kafka.ValueSchemaValidation
+	return ch.Bindings.Kafka.IsValueSchemaValidation()
 }
 
 func isKeySchemaValidationEnabled(ch *asyncapi3.Channel) bool {
 	if ch.Bindings == nil {
 		return true
 	}
-	return ch.Bindings.Kafka.KeySchemaValidation
+	return ch.Bindings.Kafka.IsKeySchemaValidation()
 }

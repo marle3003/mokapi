@@ -165,7 +165,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 		func(log *KafkaMessageLog, _ events.Traits) {
 		}, func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		newTopicWithConfig(&asyncapi3.Channel{Bindings: &asyncapi3.ChannelBindings{
-			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
+			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: new(true)},
 		}}),
 	)
 	p.validator.Store(&validator{
