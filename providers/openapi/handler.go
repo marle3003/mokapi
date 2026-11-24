@@ -387,8 +387,9 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 		var reqError error
 		for name := range req {
 			scheme, ok := h.config.Components.SecuritySchemes[name]
-			if !ok {
+			if !ok || scheme == nil {
 				log.Warnf("%s: no security scheme found for %v", r.URL.String(), name)
+				continue
 			}
 			err := scheme.Serve(r)
 			var notSupported *NotSupportedSecuritySchemeError
