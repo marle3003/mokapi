@@ -15,6 +15,7 @@ paths:
     get:
        parameters:
         - name: status
+          in: query
           explode: false # Use comma-separated values as described
   /store/order/{orderId}:
     delete:
