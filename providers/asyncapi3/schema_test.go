@@ -3,7 +3,9 @@ package asyncapi3_test
 import (
 	"encoding/json"
 	"mokapi/config/dynamic"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/json/schema"
 	"testing"
 
@@ -58,4 +60,51 @@ func TestSchema_Marshal(t *testing.T) {
 			tc.test(t, string(jb), string(yb), err)
 		})
 	}
+}
+
+func TestSchemaRef_GetSchema_Avro(t *testing.T) {
+	avroSchema := &avro.Schema{Type: []interface{}{"record"}, Name: "Order"}
+
+	testcases := []struct {
+		name     string
+		ref      *asyncapi3.SchemaRef
+		expected asyncapi3.Schema
+	}{
+		{
+			name:     "avro ref",
+			ref:      &asyncapi3.SchemaRef{Value: &asyncapi3.AvroRef{Schema: avroSchema}},
+			expected: avroSchema,
+		},
+		{
+			name: "avro ref in multi schema format",
+			ref: &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+				Schema: &asyncapi3.SchemaRef{Value: &asyncapi3.AvroRef{Schema: avroSchema}},
+			}},
+			expected: avroSchema,
+		},
+		{
+			name: "multi schema format without schema",
+			ref:  &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{}},
+		},
+		{
+			name: "avro ref without schema",
+			ref:  &asyncapi3.SchemaRef{Value: &asyncapi3.AvroRef{}},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := tc.ref.GetSchema()
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, s)
+		})
+	}
+}
+
+func TestSchemaRef_Marshal_AvroRef(t *testing.T) {
+	ref := &asyncapi3.SchemaRef{Value: &asyncapi3.AvroRef{Schema: &avro.Schema{Type: []interface{}{"string"}}}}
+
+	b, err := ref.Marshal("foo", media.ParseContentType("avro/binary"))
+	require.NoError(t, err)
+	require.Equal(t, []byte{6, 'f', 'o', 'o'}, b)
 }

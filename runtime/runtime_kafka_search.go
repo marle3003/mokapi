@@ -3,7 +3,9 @@ package runtime
 import (
 	"fmt"
 	"mokapi/providers/asyncapi3"
+	openapi "mokapi/providers/openapi/schema"
 	"mokapi/runtime/search"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/json/schema"
 	"strings"
 
@@ -119,7 +121,7 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 			if err != nil {
 				log.Errorf("indexing message for topic '%v' failed for headers: %v", topic.Value.Name, err)
 			}
-			p, err := getSchema(message.Value.Headers)
+			p, err := getSchema(message.Value.Payload)
 			if err != nil {
 				log.Errorf("indexing message for topic '%v' failed for payload: %v", topic.Value.Name, err)
 			}
@@ -182,13 +184,21 @@ func getKafkaSearchResult(fields map[string]string, discriminator []string) (sea
 	return result, nil
 }
 
-func getSchema(s *asyncapi3.SchemaRef) (*schema.IndexData, error) {
-	if s == nil || s.Value == nil {
+func getSchema(ref *asyncapi3.SchemaRef) (*schema.IndexData, error) {
+	if ref == nil || ref.Value == nil {
 		return nil, nil
 	}
-	switch v := s.Value.(type) {
+	s, err := ref.GetSchema()
+	if err != nil || s == nil {
+		return nil, err
+	}
+	switch v := s.(type) {
 	case *schema.Schema:
 		return schema.NewIndexData(v), nil
+	case *avro.Schema:
+		return schema.NewIndexData(avro.ConvertToJsonSchema(v)), nil
+	case *openapi.Schema:
+		return schema.NewIndexData(openapi.ConvertToJsonSchema(v)), nil
 	default:
 		return nil, fmt.Errorf("unsupported schema type: %T", v)
 	}

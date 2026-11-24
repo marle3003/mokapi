@@ -22,6 +22,7 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/runtimetest"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/try"
 	"net/http"
@@ -211,6 +212,28 @@ func TestHandler_Kafka(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/channels/foo",
 			responseBody: `{"name":"foo","description":"bar","messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`,
+		},
+		{
+			name: "get topic and avro payload read from a spec",
+			app: func() *runtime.App {
+				c := asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithChannelDescription("bar"),
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayloadMulti("application/vnd.apache.avro;version=1.9.0", &asyncapi3.AvroRef{
+								Schema: &avro.Schema{Type: []interface{}{"string"}},
+							}),
+							asyncapi3test.WithContentType("application/json"),
+						),
+					),
+				)
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", runtime.NewKafkaInfo(c, s)))
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo/channels/foo",
+			responseBody: `{"name":"foo","description":"bar","messages":{"foo":{"name":"foo","payload":{"format":"application/vnd.apache.avro;version=1.9.0","schema":{"type":"string"}},"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`,
 		},
 		{
 			name: "get cluster info with group",

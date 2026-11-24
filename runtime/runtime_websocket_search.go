@@ -114,7 +114,7 @@ func (s *WebsocketStore) addToIndex(cfg *asyncapi3.Config) {
 			if message == nil || message.Value == nil {
 				continue
 			}
-			p, err := getSchema(message.Value.Headers)
+			p, err := getSchema(message.Value.Payload)
 			if err != nil {
 				log.Errorf("indexing message for topic '%v' failed for payload: %v", ch.Value.Name, err)
 			}

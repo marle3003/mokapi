@@ -119,7 +119,7 @@ func (s *MqttStore) addToIndex(cfg *asyncapi3.Config) {
 			if err != nil {
 				log.Errorf("indexing message for topic '%v' failed for headers: %v", topic.Value.Name, err)
 			}
-			p, err := getSchema(message.Value.Headers)
+			p, err := getSchema(message.Value.Payload)
 			if err != nil {
 				log.Errorf("indexing message for topic '%v' failed for payload: %v", topic.Value.Name, err)
 			}
