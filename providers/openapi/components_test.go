@@ -606,6 +606,18 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 		},
 		{
+			name: "patch parameter name and location by component key",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &openapi.Parameter{Name: "foo", Type: openapi.ParameterQuery})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &openapi.Parameter{Name: "bar", Type: openapi.ParameterHeader})),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Components.Parameters, 1)
+				require.Equal(t, "bar", result.Components.Parameters["foo"].Value.Name)
+				require.Equal(t, openapi.ParameterHeader, result.Components.Parameters["foo"].Value.Type)
+			},
+		},
+		{
 			name: "add example",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0"),

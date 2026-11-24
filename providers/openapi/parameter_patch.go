@@ -4,13 +4,22 @@ func (p *Parameters) Patch(patch Parameters) {
 Loop:
 	for _, pParam := range patch {
 		for _, param := range *p {
-			if param.Value != nil && pParam.Value != nil && param.Value.Name == pParam.Value.Name {
+			if sameParameter(param, pParam) {
 				param.Patch(pParam)
 				continue Loop
 			}
 		}
 		*p = append(*p, pParam.clone())
 	}
+}
+
+// sameParameter applies the OpenAPI uniqueness rule: a parameter is identified
+// by the combination of name and location (in).
+func sameParameter(a, b *ParameterRef) bool {
+	if a.Value == nil || b.Value == nil {
+		return false
+	}
+	return a.Value.Name == b.Value.Name && a.Value.Type == b.Value.Type
 }
 
 func (r *ParameterRef) Patch(patch *ParameterRef) {

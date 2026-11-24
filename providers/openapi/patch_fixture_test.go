@@ -122,10 +122,11 @@ func operation(bare bool) *openapi.Operation {
 	}
 }
 
-// parameters keeps the name, because parameters are merged by name
+// parameters keeps name and location, because parameters in a list are merged by name and location
 func parameters(bare bool) openapi.Parameters {
 	p := parameter(bare, openapi.ParameterQuery)
 	p.Name = "id"
+	p.Type = openapi.ParameterQuery
 	return openapi.Parameters{{Value: p}}
 }
 
