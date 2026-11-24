@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestIndex_Http(t *testing.T) {
@@ -658,4 +659,53 @@ func waitSearchResult(t *testing.T, f func() (search.Result, error), expectedRes
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
+}
+
+// A self-referencing schema (e.g. a tree node with a parent) must not crash Mokapi
+// while the HTTP config is added to the search index (issue #1402).
+func TestIndex_Http_RecursiveSchema(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: { title: Recursive schema repro, version: "1.0" }
+servers: [ { url: http://localhost:4546 } ]
+paths:
+  /nodes/{id}:
+    get:
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Node" }
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        name: { type: string }
+        parent: { $ref: "#/components/schemas/Node" }
+`
+	var api *openapi.Config
+	require.NoError(t, yaml.Unmarshal([]byte(spec), &api))
+	cfg := dynamictest.NewConfig(api, dynamictest.WithInfo(dynamictest.NewConfigInfo()))
+	require.NoError(t, api.Parse(cfg, &dynamictest.Reader{}))
+
+	app := runtime.New(
+		&static.Config{
+			Api: static.Api{
+				Search: static.Search{Enabled: true, InMemory: true},
+			},
+		}, &dynamictest.Reader{})
+	app.Http.Add(cfg)
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
+
+	r, err := waitSearchResult(t, func() (search.Result, error) {
+		return app.Search(search.Request{QueryText: "Recursive", Limit: 10})
+	}, 1)
+	require.NoError(t, err)
+	require.Equal(t, "Recursive schema repro", r.Results[0].Title)
 }
