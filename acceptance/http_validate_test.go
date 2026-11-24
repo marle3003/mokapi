@@ -41,7 +41,8 @@ const profileContract = `{
                 }
               }
             }
-          }
+          },
+          "503": { "description": "Service Unavailable" }
         }
       }
     }
@@ -391,4 +392,22 @@ func (suite *HttpValidateSuite) TestPartialResponseAcceptsSeveralOneOfMatches() 
 func (suite *HttpValidateSuite) TestPartialResponseRejectsBodyMatchingNoOneOfVariant() {
 	suite.validate(partialOrderPayload(true, orderHeaders, `{"pet":{"bark":1}}`),
 		suite.assertErrors(false, true, "response.body")...)
+}
+
+func serviceUnavailablePayload(body string) string {
+	return fmt.Sprintf(`{
+  "api": "Profile API",
+  "request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+  "response": { "statusCode": 503, "headers": { "Content-Type": "application/json" }, "body": %q }
+}`, body)
+}
+
+// The contract defines 503 with a description only, so the Content-Type of the mocked response
+// (e.g. MSW HttpResponse.json) has no content definition to be checked against.
+func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsJsonBody() {
+	suite.validate(serviceUnavailablePayload(`{"error":"down"}`), suite.assertErrors(true, false)...)
+}
+
+func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsEmptyBodyWithContentType() {
+	suite.validate(serviceUnavailablePayload(""), suite.assertErrors(true, false)...)
 }

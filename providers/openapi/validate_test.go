@@ -576,11 +576,36 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 			},
 		},
 		{
-			name:   "body without defined content",
-			config: getUser("get", openapitest.WithResponse(204)),
-			status: 204, headers: jsonHeaders, body: `{}`,
+			name:   "body and Content-Type are ignored without defined content",
+			config: getUser("get", openapitest.WithResponse(503)),
+			status: 503, headers: jsonHeaders, body: `{}`,
 			test: func(t *testing.T, errs []openapi.ValidationError) {
-				require.Equal(t, []string{"response.body"}, locations(errs))
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "body without Content-Type is ignored without defined content",
+			config: getUser("get", openapitest.WithResponse(503)),
+			status: 503, body: `{}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "range response without defined content ignores body",
+			config: getUser("get", withRangeResponse("5XX")),
+			status: 503, headers: jsonHeaders, body: `{"error":"down"}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name: "headers are still validated without defined content",
+			config: getUser("get", openapitest.WithResponse(503,
+				withRequiredResponseHeader("Retry-After", true, schematest.New("integer")))),
+			status: 503, headers: jsonHeaders, body: `{}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.header.Retry-After"}, locations(errs))
 			},
 		},
 		{

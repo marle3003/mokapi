@@ -197,7 +197,8 @@ func flattenViolations(location string, violations []any) []ValidationError {
 }
 
 // ValidateResponse checks status, headers and, for operations other than HEAD, the body against
-// the response the contract defines for statusCode. Only JSON bodies are validated against a
+// the response the contract defines for statusCode. A response without content is valid with any
+// body and Content-Type, its headers are still checked. Only JSON bodies are validated against a
 // schema. With partial set, the body may lack properties, see parser.Parser.PartialObjects.
 func (m *OperationMatch) ValidateResponse(statusCode int, headers map[string]string, body string, partial bool) []ValidationError {
 	res := m.Operation.getResponse(statusCode)
@@ -232,6 +233,10 @@ func validateResponseHeaders(definitions Headers, h http.Header) []ValidationErr
 }
 
 func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body string, partial bool) []ValidationError {
+	if len(res.Content) == 0 {
+		// the contract specifies no body, so neither body nor Content-Type are checked
+		return nil
+	}
 	data := []byte(body)
 
 	contentType := media.ParseContentType(contentTypeHeader)
@@ -254,9 +259,6 @@ func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body
 
 func validateResponseBodyDetectContentType(res *Response, data []byte, partial bool) []ValidationError {
 	if len(data) == 0 {
-		if len(res.Content) == 0 {
-			return nil
-		}
 		return []ValidationError{{Location: responseBodyLocation, Message: "response body is required"}}
 	}
 
