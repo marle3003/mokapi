@@ -128,7 +128,8 @@ Storybook's status store:
 | `failed` (mode `'error'`) | error |
 | `warning` (mode `'warning'`) | warning |
 | `passed` with at least one valid response | success |
-| skipped (`passed`, but no response was checked), mode `'off'`, validation off, `disable: true` | none, an earlier status stays |
+| skipped (`passed`, but no response was checked), validation off | none, an earlier status stays |
+| `disable: true`, mode `'off'` | none, an earlier status is removed when the story is mounted (validation on or off) |
 
 The status has the title `Mokapi`. For an error or a warning, its description is
 the headline of the [error message](#error-message), for example
@@ -142,7 +143,10 @@ in the panel.
 A new result of the story replaces its status. A mount that checks no response
 (skipped) neither replaces nor removes it: the last result stays, in the panel as
 well, until a newer result exists, also after you switch to another story and
-back. A story that has never checked a response has no status.
+back. Mounting a story with `disable: true` or test mode `'off'` (also through
+`defaultTest`) is different: it removes the remembered panel result and a test
+run result as well. Switching the validation toggle removes nothing. A story that
+has never checked a response has no status.
 Switching to another story keeps the status. **Clear all statuses** in the
 testing module removes all Mokapi statuses, the success statuses included.
 Without a new report, a status stays when you switch validation off.
@@ -180,7 +184,8 @@ disabled.
 **Run tests** sets Mokapi statuses as well, see [Vitest](#vitest). A test run
 replaces the status of every story that took part in it. Stories outside the run
 keep theirs. The status of a test run stays until you mount the story with
-validation on or the preview reports a newer result.
+validation on, mount it with `disable: true` or test mode `'off'`, or the preview
+reports a newer result.
 
 ### Run tests widget
 
