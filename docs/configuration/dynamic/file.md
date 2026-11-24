@@ -106,10 +106,10 @@ providers:
     exclude: ["debug.json"]
 ```
 ```bash tab=CLI
---providers-file-include debug.json
+--providers-file-exclude debug.json
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_FILE_INCLUDE="debug.json"
+MOKAPI_PROVIDERS_FILE_EXCLUDE="debug.json"
 ```
 
 ### Include + Exclude together
