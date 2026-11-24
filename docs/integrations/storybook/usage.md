@@ -70,6 +70,9 @@ export const ThirdParty = {
 ```
 
 The addon sends nothing to Mokapi for this story, also when the toggle is on.
+The Mokapi panel shows the hint
+`Validation is disabled for this story with parameters.mokapi.disable.` for
+such a story.
 
 
 ## Partial responses
@@ -160,7 +163,9 @@ has:
 - The line `Partial responses: missing properties are not checked.`, only while
   the story validates with [partial responses](#partial-responses). It is shown
   in every state, also next to `WARN` and `FAIL`.
-- The **Rerun** icon button and a link to the Mokapi dashboard, on the right.
+- On the right: the **Rerun** icon button, a help icon that opens the
+  [addon documentation](https://mokapi.io/docs/integrations/storybook), and a
+  link to the Mokapi dashboard.
 
 The badge depends on the test mode of the story, see
 [Failing stories](/docs/integrations/storybook/failing-stories.md):
