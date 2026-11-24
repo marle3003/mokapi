@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -350,50 +351,85 @@ func (p *Provider) watchResolvedPath(path string) {
 	}
 }
 
-// unresolve returns the paths a provider knows the file of an event by: the event path itself,
-// if it is watched, and the path under every link that leads to it.
+// unresolve returns the paths a provider knows the file of an event by. A watch reports its events
+// under one path only (inotify: the path added first), so the event is expanded to the same file under
+// every link and the resolved path of the group it belongs to, as far as they are watched.
 func (p *Provider) unresolve(path string) []string {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	names := []string{path}
 	for resolved, links := range p.aliases {
-		if !isSub(resolved, path) {
-			continue
-		}
-		rel, _ := filepath.Rel(resolved, path)
-		for _, link := range links {
-			names = append(names, filepath.Join(link, rel))
+		members := append([]string{resolved}, links...)
+		for _, member := range members {
+			if !isSub(member, path) {
+				continue
+			}
+			rel, _ := filepath.Rel(member, path)
+			if rel == "." && isSymlinkTo(member, resolved) {
+				// the symlink itself, e.g. removed: it does not concern the other links
+				break
+			}
+			for _, m := range members {
+				name := filepath.Join(m, rel)
+				if p.isWatchedLocked(name) && !slices.Contains(names, name) {
+					names = append(names, name)
+				}
+			}
+			break
 		}
 	}
-	if len(names) == 1 {
-		return names
-	}
-
-	_, isWatched := p.watched[path]
-	_, isDirWatched := p.watched[filepath.Dir(path)]
-	if !isWatched && !isDirWatched {
-		names = names[1:]
+	if len(names) > 1 && !p.isWatchedLocked(path) {
+		return names[1:]
 	}
 	return names
 }
 
-// unwatchAlias forgets a removed link and stops watching its resolved path when no other link uses it.
+// isSymlinkTo reports whether path is a symlink that led to resolved, as opposed to a directory that is
+// only reachable through the symlink of one of its parents. The path might be removed already, so the
+// answer is derived from its parent.
+func isSymlinkTo(path, resolved string) bool {
+	parent, err := filepath.EvalSymlinks(filepath.Dir(path))
+	return err == nil && filepath.Join(parent, filepath.Base(path)) != resolved
+}
+
+func (p *Provider) isWatchedLocked(path string) bool {
+	_, isWatched := p.watched[path]
+	_, isDirWatched := p.watched[filepath.Dir(path)]
+	return isWatched || isDirWatched
+}
+
+// unwatchAlias forgets a removed link, the links below it and stops watching a resolved path when no other
+// link uses it. inotify shares one watch between all paths to a directory, so removing the watch of a link
+// also drops it for the remaining paths: they are added again.
 func (p *Provider) unwatchAlias(link string) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	for resolved, links := range p.aliases {
-		if !slices.Contains(links, link) {
+		remaining := slices.DeleteFunc(slices.Clone(links), func(l string) bool { return isSub(link, l) })
+		if len(remaining) == len(links) {
 			continue
 		}
-		links = slices.DeleteFunc(links, func(l string) bool { return l == link })
-		if len(links) > 0 {
-			p.aliases[resolved] = links
-			continue
+		for _, l := range links {
+			if isSub(link, l) {
+				_ = p.watcher.Remove(l)
+			}
 		}
-		delete(p.aliases, resolved)
-		_ = p.watcher.Remove(resolved)
+		maps.DeleteFunc(p.watched, func(path string, _ watch) bool { return isSub(link, path) })
+
+		if len(remaining) == 0 {
+			delete(p.aliases, resolved)
+		} else {
+			p.aliases[resolved] = remaining
+		}
+		if _, isWatched := p.watched[resolved]; len(remaining) > 0 || isWatched {
+			for _, path := range slices.Concat(remaining, []string{resolved}) {
+				_ = p.watcher.Add(path)
+			}
+		} else {
+			_ = p.watcher.Remove(resolved)
+		}
 	}
 }
 

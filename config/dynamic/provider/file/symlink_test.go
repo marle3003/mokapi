@@ -224,9 +224,25 @@ func TestSymlink_UpdateWhenSameTargetViaTwoLinks(t *testing.T) {
 	}, updatedNames(events))
 }
 
-// The watcher is fed by hand: kqueue (macOS) reports no event when a symlink to a directory is removed.
-func TestSymlink_RemovedLinkReleasesResolvedWatch(t *testing.T) {
-	root, external := t.TempDir(), t.TempDir()
+// resolvedTempDir returns a temp dir without symlinks in its path (e.g. /tmp on macOS), so that the
+// events fed by hand are reported under the same path the provider resolves to.
+func resolvedTempDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	return dir
+}
+
+// processEventsAsync feeds the provider by hand and returns what it sends. The watcher on Linux (inotify)
+// reports the events of a directory under the path that was added first, even if it is reachable via
+// several paths.
+func processEventsAsync(p *Provider, ch chan dynamic.ConfigEvent, events ...fsnotify.Event) []dynamic.ConfigEvent {
+	go p.processEvents(context.Background(), events)
+	return collectEvents(ch, time.Second)
+}
+
+func TestSymlink_EventUnderFirstLinkUpdatesAllLinks(t *testing.T) {
+	root, external := resolvedTempDir(t), resolvedTempDir(t)
 	require.NoError(t, createFile(filepath.Join(external, "foo.js"), "foo"))
 	a, b := filepath.Join(root, "a"), filepath.Join(root, "b")
 	mustSymlink(t, external, a)
@@ -234,15 +250,117 @@ func TestSymlink_RemovedLinkReleasesResolvedWatch(t *testing.T) {
 
 	p, ch := startProviderWithHandle(t, root)
 	require.Len(t, collectEvents(ch, time.Second), 2)
-	resolved, err := filepath.EvalSymlinks(external)
-	require.NoError(t, err)
-	require.Contains(t, p.watcher.WatchList(), resolved)
 
+	events := processEventsAsync(p, ch, fsnotify.Event{Name: filepath.Join(a, "foo.js"), Op: fsnotify.Write})
+
+	require.ElementsMatch(t, []string{
+		filepath.Join(a, "foo.js"),
+		filepath.Join(b, "foo.js"),
+	}, updatedNames(events))
+}
+
+func TestSymlink_EventUnderLinkToDirectoryInsideRootUpdatesRealPath(t *testing.T) {
+	root := resolvedTempDir(t)
+	real := filepath.Join(root, "sub", "foo.js")
+	require.NoError(t, createFile(real, "foo"))
+	a := filepath.Join(root, "a")
+	mustSymlink(t, filepath.Join(root, "sub"), a)
+
+	p, ch := startProviderWithHandle(t, root)
+	require.Len(t, collectEvents(ch, time.Second), 2)
+
+	events := processEventsAsync(p, ch, fsnotify.Event{Name: filepath.Join(a, "foo.js"), Op: fsnotify.Write})
+
+	require.ElementsMatch(t, []string{real, filepath.Join(a, "foo.js")}, updatedNames(events))
+}
+
+func TestSymlink_EventUnderRealPathUpdatesLinkToDirectoryInsideRoot(t *testing.T) {
+	root := resolvedTempDir(t)
+	real := filepath.Join(root, "sub", "foo.js")
+	require.NoError(t, createFile(real, "foo"))
+	a := filepath.Join(root, "a")
+	mustSymlink(t, filepath.Join(root, "sub"), a)
+
+	p, ch := startProviderWithHandle(t, root)
+	require.Len(t, collectEvents(ch, time.Second), 2)
+
+	events := processEventsAsync(p, ch, fsnotify.Event{Name: real, Op: fsnotify.Write})
+
+	require.ElementsMatch(t, []string{real, filepath.Join(a, "foo.js")}, updatedNames(events))
+}
+
+// aliasesOf returns the links of a resolved path, the provider's watch loop might change them concurrently.
+func aliasesOf(p *Provider, resolved string) []string {
+	p.m.Lock()
+	defer p.m.Unlock()
+	return slices.Clone(p.aliases[resolved])
+}
+
+// The watcher is fed by hand: kqueue (macOS) reports no event when a symlink to a directory is removed.
+// Which path an event is reported under depends on the backend: inotify reports the path added first,
+// kqueue the resolved path.
+func TestSymlink_RemovedLinkReleasesResolvedWatch(t *testing.T) {
+	root, external := resolvedTempDir(t), resolvedTempDir(t)
+	require.NoError(t, createFile(filepath.Join(external, "foo.js"), "foo"))
+	require.NoError(t, createFile(filepath.Join(external, "sub", "bar.js"), "bar"))
+	a, b := filepath.Join(root, "a"), filepath.Join(root, "b")
+	mustSymlink(t, external, a)
+	mustSymlink(t, external, b)
+
+	p, ch := startProviderWithHandle(t, root)
+	require.Len(t, collectEvents(ch, time.Second), 4)
+
+	require.NoError(t, os.Remove(a))
 	p.processEvents(context.Background(), []fsnotify.Event{{Name: a, Op: fsnotify.Remove}})
-	require.Equal(t, []string{b}, p.aliases[resolved], "still used by the other link")
-	require.Contains(t, p.watcher.WatchList(), resolved)
+	require.Equal(t, []string{b}, aliasesOf(p, external), "still used by the other link")
+	require.Equal(t, []string{filepath.Join(b, "sub")}, aliasesOf(p, filepath.Join(external, "sub")), "links below the removed link are forgotten")
+	for _, reported := range []string{filepath.Join(b, "foo.js"), filepath.Join(external, "foo.js")} {
+		events := processEventsAsync(p, ch, fsnotify.Event{Name: reported, Op: fsnotify.Write})
+		require.Equal(t, []string{filepath.Join(b, "foo.js")}, updatedNames(events), reported)
+	}
 
+	require.NoError(t, os.Remove(b))
 	p.processEvents(context.Background(), []fsnotify.Event{{Name: b, Op: fsnotify.Remove}})
-	require.NotContains(t, p.aliases, resolved)
-	require.NotContains(t, p.watcher.WatchList(), resolved)
+	require.Empty(t, aliasesOf(p, external))
+	require.Empty(t, aliasesOf(p, filepath.Join(external, "sub")))
+	require.NotContains(t, p.watcher.WatchList(), external, "released with the last link")
+	require.Empty(t, processEventsAsync(p, ch, fsnotify.Event{Name: filepath.Join(b, "foo.js"), Op: fsnotify.Write}))
+}
+
+// inotify registers a directory under the path added first, which is the link here (a is walked before sub).
+func TestSymlink_RemovedLinkToDirectoryInsideRootKeepsWatchingIt(t *testing.T) {
+	root := resolvedTempDir(t)
+	real := filepath.Join(root, "sub", "foo.js")
+	require.NoError(t, createFile(real, "foo"))
+	a := filepath.Join(root, "a")
+	mustSymlink(t, filepath.Join(root, "sub"), a)
+
+	p, ch := startProviderWithHandle(t, root)
+	require.Len(t, collectEvents(ch, time.Second), 2)
+
+	require.NoError(t, os.Remove(a))
+	p.processEvents(context.Background(), []fsnotify.Event{{Name: a, Op: fsnotify.Remove}})
+	collectEvents(ch, time.Second)
+
+	require.NoError(t, createFile(real, "bar"))
+	events := collectEvents(ch, 2*time.Second)
+	require.Equal(t, []string{real}, updatedNames(events))
+}
+
+func TestSymlink_EventForDirectoryBelowLinkUpdatesAllLinks(t *testing.T) {
+	root, external := resolvedTempDir(t), resolvedTempDir(t)
+	require.NoError(t, createFile(filepath.Join(external, "sub", "foo.js"), "foo"))
+	a, b := filepath.Join(root, "a"), filepath.Join(root, "b")
+	mustSymlink(t, external, a)
+	mustSymlink(t, external, b)
+
+	p, ch := startProviderWithHandle(t, root)
+	require.Len(t, collectEvents(ch, time.Second), 2)
+
+	// not a symlink: the directory is reachable through the symlinks a and b only
+	for range 20 {
+		require.ElementsMatch(t, []string{
+			filepath.Join(a, "sub"), filepath.Join(b, "sub"),
+		}, p.unresolve(filepath.Join(a, "sub")))
+	}
 }

@@ -317,6 +317,78 @@ func TestHandler_Security(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "operation security references unknown scheme",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{"missing": {}}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+			},
+		},
+		{
+			name: "global security references unknown scheme",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				openapitest.WithGlobalSecurity(map[string][]string{"missing": {}})(c)
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+			},
+		},
+		{
+			name: "security scheme is nil",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{"foo": {}}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{"foo": nil}
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+			},
+		},
+		{
+			name: "requirement with unknown and declared scheme still evaluates declared scheme",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{"missing": {}, "foo": {}}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.HttpSecurityScheme{Scheme: "basic"},
+				}
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("Authorization", "Basic 123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				logs := eh.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Basic 123", httpLog.Request.Parameters[0].Value)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
