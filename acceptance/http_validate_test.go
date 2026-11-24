@@ -42,7 +42,8 @@ const profileContract = `{
               }
             }
           },
-          "503": { "description": "Service Unavailable" }
+          "503": { "description": "Service Unavailable" },
+          "500": { "description": "Internal Error", "content": { "application/json": {} } }
         }
       }
     }
@@ -410,4 +411,22 @@ func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsJsonBody
 
 func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsEmptyBodyWithContentType() {
 	suite.validate(serviceUnavailablePayload(""), suite.assertErrors(true, false)...)
+}
+
+func internalErrorPayload(headers string) string {
+	return fmt.Sprintf(`{
+  "api": "Profile API",
+  "request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+  "response": { "statusCode": 500, "headers": %s, "body": "" }
+}`, headers)
+}
+
+// The contract defines 500 with a media type but no schema, so any body is accepted, also an empty
+// one like MSW produces with new HttpResponse(null, { status: 500 }).
+func (suite *HttpValidateSuite) TestMediaTypeWithoutSchemaAcceptsEmptyBodyWithoutContentType() {
+	suite.validate(internalErrorPayload(`{}`), suite.assertErrors(true, false)...)
+}
+
+func (suite *HttpValidateSuite) TestMediaTypeWithoutSchemaAcceptsEmptyBodyWithContentType() {
+	suite.validate(internalErrorPayload(`{ "Content-Type": "application/json" }`), suite.assertErrors(true, false)...)
 }
