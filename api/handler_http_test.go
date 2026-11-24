@@ -241,6 +241,54 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
+			name: "operation security replaces global security",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithGlobalSecurity(map[string][]string{"bar": {}}),
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo",
+							openapitest.WithOperation("get",
+								openapitest.WithSecurity(map[string][]string{"foo": {}}),
+							),
+						),
+						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
+							Type: "apiKey",
+							In:   "header",
+							Name: "X-API-Key",
+						}),
+						openapitest.WithComponentSecurity("bar", &openapi.HttpSecurityScheme{
+							Type:   "http",
+							Scheme: "bearer",
+						}),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo",
+			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
+		},
+		{
+			name: "operation with empty security",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo",
+							openapitest.WithOperation("get", openapitest.WithEmptySecurity()),
+						),
+						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
+							Type: "apiKey",
+							In:   "header",
+							Name: "X-API-Key",
+						}),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo",
+			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
+		},
+		{
 			name: "get http service with response",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(

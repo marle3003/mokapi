@@ -127,11 +127,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		drainRequestBody(r)
 	}
 
-	if len(op.Security) > 0 {
-		h.serveSecurity(r, op.Security)
-	} else if len(h.config.Security) > 0 {
-		h.serveSecurity(r, h.config.Security)
-	}
+	h.serveSecurity(r, h.config.SecurityOf(op))
 
 	response := NewEventResponse(status, contentType)
 	setResponseRebuild(response, request, op)

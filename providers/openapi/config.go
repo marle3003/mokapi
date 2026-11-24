@@ -179,7 +179,9 @@ func (c *Config) Patch(patch *Config) {
 	}
 	c.Components.patch(patch.Components)
 
-	c.Security = append(c.Security, cloneSecurityRequirements(patch.Security)...)
+	if patch.Security != nil {
+		c.Security = cloneSecurityRequirements(patch.Security)
+	}
 	if c.ExternalDocs == nil {
 		c.ExternalDocs = clonePointer(patch.ExternalDocs)
 	} else {
@@ -242,6 +244,15 @@ func getName(cfg *dynamic.Config) string {
 		return c.Info.Name
 	}
 	return ""
+}
+
+// SecurityOf returns the security requirements that apply to the operation. An operation's
+// security replaces the global one, even if it is empty (security: []), which means no security.
+func (c *Config) SecurityOf(o *Operation) []SecurityRequirement {
+	if o.Security != nil {
+		return o.Security
+	}
+	return c.Security
 }
 
 func (c *Config) GetStatus() Status {

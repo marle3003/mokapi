@@ -141,7 +141,9 @@ func (o *Operation) patch(patch *Operation) {
 
 	o.Parameters.Patch(patch.Parameters)
 
-	o.Security = append(o.Security, cloneSecurityRequirements(patch.Security)...)
+	if patch.Security != nil {
+		o.Security = cloneSecurityRequirements(patch.Security)
+	}
 }
 
 // clone leaves Method and Path empty: they belong to the Path that holds the clone,

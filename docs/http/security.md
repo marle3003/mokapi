@@ -14,7 +14,7 @@ should return `401`, you decide that in a script, see
 ## What Mokapi does with a security scheme
 
 For every request, Mokapi looks at the `security` requirements of the operation. If the operation
-has none, it uses the global `security` of the specification. For each scheme it looks for the
+has no `security` key, it uses the global `security` of the specification. For each scheme it looks for the
 credential:
 
 | Scheme                                | Credential Mokapi looks for                              | Key in the script                |
@@ -132,9 +132,20 @@ paths:
           description: Successful response
 ```
 
-If the operation defines a non-empty `security`, Mokapi ignores the global one for this operation.
-An empty list (`security: []`) does not switch the global requirement off in Mokapi, because it is
-treated like an operation without `security`.
+If the operation defines `security`, Mokapi ignores the global one for this operation. An operation
+without a `security` key inherits the global requirement. An empty list (`security: []`) switches
+the global requirement off: Mokapi evaluates no security scheme for this operation, so no credential
+is copied into `request` and the request log shows no security parameter.
+
+```yaml
+paths:
+  /health:
+    get:
+      security: [] # public, even if a global security is defined
+      responses:
+        '200':
+          description: OK
+```
 
 Entries in the list are alternatives (OR). Mokapi uses the first entry whose credentials are all
 present and ignores the remaining ones, so their credentials do not show up in `request`. Schemes
@@ -235,6 +246,6 @@ status and set `response.data`.
 ## Security in the dashboard
 
 The **Security** tab of an operation in the [dashboard](/docs/http/dashboard.md) lists the
-security schemes of that operation and of the specification root, even when the operation's own
-`security` replaces the global one at runtime. The request log shows the credentials Mokapi read, such as the
+security requirement that applies to that operation: the operation's own `security` if it defines
+one, otherwise the global one. For an operation with `security: []` the tab shows no scheme. The request log shows the credentials Mokapi read, such as the
 `Authorization` header or the API key, as parameters of the request.

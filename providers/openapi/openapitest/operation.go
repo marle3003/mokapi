@@ -220,6 +220,13 @@ func WithSecurity(s map[string][]string) OperationOptions {
 	}
 }
 
+// WithEmptySecurity sets "security: []" on the operation, which removes the global requirement.
+func WithEmptySecurity() OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Security = []openapi.SecurityRequirement{}
+	}
+}
+
 func WithGlobalSecurity(s map[string][]string) ConfigOptions {
 	return func(c *openapi.Config) {
 		c.Security = append(c.Security, s)

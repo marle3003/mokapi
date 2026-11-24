@@ -113,6 +113,7 @@
     --footer-background:   #0f0e11;
  
     --color-emphasis:      #f7e9e0;
+    --color-code-inline:   #f4a7a0;
 
     /* Dashboard layout with tabs (activity bar, sidebar, tab bar) */
     --layout-border:                 #2a2935;
@@ -238,6 +239,7 @@
     --footer-background: rgb(244 244 246);
 
     --color-emphasis: rgb(8,109,215);
+    --color-code-inline: #c92a3a;
 
     --scrollbar-thumb: rgba(0, 0, 0, 0.18);
     --scrollbar-thumb-hover: rgba(0, 0, 0, 0.38);

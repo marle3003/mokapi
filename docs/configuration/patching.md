@@ -55,6 +55,52 @@ patch can reference files next to it, e.g. `$ref: './schemas/pet.yml'`.
 Mokapi patches any configuration file even if the source comes from a different provider.
 ```
 
+## Patching security
+
+A `security` list in a patch file replaces the existing list instead of adding alternatives. This works
+on the operation level and on the global (top-level) level. An empty list (`security: []`) removes the
+requirement. A patch without a `security` key keeps the existing one.
+
+```yaml tab="Base Config"
+openapi: 3.0.3
+info:
+  title: Petstore
+security:
+  - apiKey: []
+paths:
+  /pets:
+    get:
+      security:
+        - apiKey: []
+```
+
+```yaml tab="Patch Config"
+openapi: 3.0.3
+info:
+  title: Petstore
+paths:
+  /pets:
+    get:
+      security:
+        - bearerAuth: []
+```
+
+```yaml tab=Result
+openapi: 3.0.3
+info:
+  title: Petstore
+security:
+  - apiKey: []
+paths:
+  /pets:
+    get:
+      security:
+        - bearerAuth: []
+```
+
+To make the operation public, use `security: []` in the patch. See
+[Mocking OpenAPI Security Schemes](/docs/http/security.md) for how Mokapi evaluates the requirement.
+
 ## Patching Discriminators
 
 | Type     | Discriminator |

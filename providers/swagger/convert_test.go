@@ -671,3 +671,33 @@ parameters:
 		})
 	}
 }
+
+// "security: []" on an operation removes the global requirement and must survive the conversion.
+func TestConvert_OperationWithEmptySecurity(t *testing.T) {
+	c := &Config{}
+	err := yaml.Unmarshal([]byte(`swagger: '2.0'
+security:
+  - api_key: []
+paths:
+  /public:
+    get:
+      security: []
+      responses:
+        200:
+          description: ok
+  /protected:
+    get:
+      responses:
+        200:
+          description: ok
+`), &c)
+	require.NoError(t, err)
+
+	converted, err := Convert(c)
+	require.NoError(t, err)
+
+	public := converted.Paths.Lookup("/public").Value.Get
+	require.NotNil(t, public.Security)
+	require.Empty(t, public.Security)
+	require.Nil(t, converted.Paths.Lookup("/protected").Value.Get.Security)
+}

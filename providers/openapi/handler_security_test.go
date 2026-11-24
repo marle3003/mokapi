@@ -350,6 +350,86 @@ func TestHandler_Security(t *testing.T) {
 			},
 		},
 		{
+			name: "operation without security uses global security",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				openapitest.WithGlobalSecurity(map[string][]string{"foo": {}})(c)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.HttpSecurityScheme{Scheme: "bearer"},
+				}
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("Authorization", "Bearer 123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, `"Bearer 123"`, rr.Body.String())
+				logs := eh.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Len(t, httpLog.Request.Parameters, 1)
+				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
+			},
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["Authorization"]
+				return nil
+			},
+		},
+		{
+			name: "operation with empty security removes global security",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				openapitest.WithGlobalSecurity(map[string][]string{"foo": {}})(c)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.HttpSecurityScheme{Scheme: "bearer"},
+				}
+				op := openapitest.NewOperation(
+					openapitest.WithEmptySecurity(),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("Authorization", "Bearer 123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Empty(t, rr.Body.String(), "script must not see the credentials")
+				logs := eh.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				// the raw header is always logged, only a security scheme sets the parsed value
+				for _, p := range httpLog.Request.Parameters {
+					require.Empty(t, p.Value, "no security parameter for an operation without security")
+				}
+			},
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["Authorization"]
+				return nil
+			},
+		},
+		{
+			name: "operation security [{}] serves without credentials",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
+				openapitest.WithGlobalSecurity(map[string][]string{"foo": {}})(c)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.HttpSecurityScheme{Scheme: "bearer"},
+				}
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+			},
+		},
+		{
 			name: "security scheme is nil",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(

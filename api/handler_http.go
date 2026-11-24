@@ -429,8 +429,7 @@ func getOperations(s *openapi.Config, path, method string, monitor *monitor.Http
 				}
 			}
 
-			requirements := append(o.Security, s.Security...)
-			for _, sec := range requirements {
+			for _, sec := range s.SecurityOf(o) {
 				req := securityRequirement{}
 				for n, scopes := range sec {
 					secConfig := s.Components.SecuritySchemes[n]
