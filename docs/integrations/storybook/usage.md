@@ -44,7 +44,7 @@ names of the matching APIs. To fix it, set the API's `info.title`:
 // .storybook/preview.ts, a story file or a single story
 export default {
   parameters: {
-    mokapi: { api: 'Profile API' },
+    mokapi: { api: 'Shop API' },
   },
 };
 ```
@@ -130,6 +130,25 @@ isn't read as "complete", see [Toolbar](#toolbar). Mokapi describes the checks i
 [Partial responses](/docs/configuration/dashboard-api.md#partial-responses).
 Requires Mokapi 0.60.0. With an older Mokapi, the panel shows a notice, see
 [Notices](#notices).
+
+In this story the mock returns only `id` and `status` of an order:
+
+```ts
+export const Partial = {
+  parameters: {
+    mokapi: { partial: true },
+    msw: {
+      handlers: [
+        http.get('/orders/:id', () => HttpResponse.json({ id: 1, status: 'in_transit' })),
+      ],
+    },
+  },
+};
+```
+
+The panel shows the `PARTIAL` badge and the partial line in its toolbar.
+
+<img src="/docs/integrations/storybook/partial.png" width="700" alt="Partial story: the mock contains only id and status, the Mokapi panel shows the PARTIAL badge and the line Partial responses: missing properties are not checked" />
 
 ## Panel and badge
 
@@ -248,9 +267,9 @@ on the right. The result is one of these:
 | Mokapi not reachable   | empty circle | The request to Mokapi failed. The entry shows the URL and a hint to `dashboardUrl` |
 
 In valid and invalid entries, the URL of the request (for example
-`/api/profile/1`) links to the page of the operation Mokapi matched in the Mokapi
+`/orders/1`) links to the page of the operation Mokapi matched in the Mokapi
 dashboard and opens in a new tab. The method badge in front of it is not part of
-the link. Hover the link to see the operation, for example `GET /profile/{id}`.
+the link. Hover the link to see the operation, for example `GET /orders/{id}`.
 Entries that are not in the contract or not reachable have no link.
 
 The method is a badge with the method in upper case, colored by method:
@@ -280,6 +299,17 @@ Client error or Server error. For a code outside 100-599 (for example `0` for
 `HttpResponse.error()`), the tooltip shows only the code. A method and a status
 can have the same color, for example `GET` and a 3xx status are both blue. The
 time is `HH:mm:ss` in the time zone of your browser.
+
+The panel below shows three requests of one story: a valid response, an invalid
+one and a request that is not in the contract.
+
+<img src="/docs/integrations/storybook/panel-entries.png" width="700" alt="Mokapi panel of the Order page story with three entries: a valid GET /orders/1, an invalid GET /orders/2 with the enum error and GET /v1/orders/1, which is not in the contract" />
+
+An invalid request is listed like an invalid response, with the location
+`request.body`. In the Request bug story, the form sends `quantity` as a string
+and no `currency`:
+
+<img src="/docs/integrations/storybook/request-invalid.png" width="700" alt="Mokapi panel of the Request bug story: the POST /orders entry is invalid, with the error invalid type, expected integer but got string at request.body" />
 
 Under each entry, **Request / Response** is collapsed. Its **Request** heading
 shows the method badge and its **Response** heading shows the status badge. Open

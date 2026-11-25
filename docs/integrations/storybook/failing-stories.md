@@ -74,7 +74,7 @@ matches are dropped, so they don't block the story. The wait is capped at 4 s by
 default, including the short quiet window described in
 [Limitations](/docs/integrations/storybook/reference.md#limitations). If MSW had answered a request and its validation is
 still open then, the story fails with
-`Mokapi validation did not finish within 4 s (GET /api/profile/1). Increase parameters.mokapi.timeout or defaultTimeout.`,
+`Mokapi validation did not finish within 4 s (GET /orders/1). Increase parameters.mokapi.timeout or defaultTimeout.`,
 one request per line if several.
 
 ## Wait limit
@@ -85,7 +85,7 @@ Two things can still be open when the limit is reached, and they end differently
   above.
 - The handler did not answer in time: nothing was validated and nothing failed.
   The story passes, the panel shows `SKIP` with the notice
-  `No response from the MSW handler within 4 s (GET /api/profile), not validated. If the response is delayed on purpose, increase parameters.mokapi.timeout or defaultTimeout.`
+  `No response from the MSW handler within 4 s (GET /orders), not validated. If the response is delayed on purpose, increase parameters.mokapi.timeout or defaultTimeout.`
 
 Change the limit for all stories with `defaultTimeout` and for a story, a
 component or the whole project with `parameters.mokapi.timeout`, both in
@@ -107,7 +107,7 @@ export default {
 
 ```ts
 // A story whose handler delays the response on purpose
-export const SlowProfile = {
+export const SlowOrders = {
   parameters: {
     mokapi: { timeout: 10000 },
     msw: { handlers: [/* ... */] },
@@ -150,6 +150,8 @@ has never checked a response has no status.
 Switching to another story keeps the status. **Clear all statuses** in the
 testing module removes all Mokapi statuses, the success statuses included.
 Without a new report, a status stays when you switch validation off.
+
+<img src="/docs/integrations/storybook/sidebar-status.png" width="700" alt="Storybook sidebar with the Orders stories in test mode error: stories with a contract error show the error icon, the valid story shows the green success icon" />
 
 ### Context menu
 
@@ -223,14 +225,21 @@ in `.storybook/main.ts`, Mokapi's box comes first and Storybook's divider stays.
 The error message looks like this. Under Vitest a failed story throws it as a
 `MokapiContractError`. The text after `Mokapi contract validation failed: ` is
 the headline. The panel and the description of the sidebar status show the
-headline alone:
+headline alone. The example is the Renamed field story, whose mock still has
+`customer.name` while the contract has `firstName` and `lastName`:
 
 ```
 MokapiContractError: Mokapi contract validation failed: 1 response does not match the contract.
 
-GET /api/profile/1 -> GET /profile/{id} (http://localhost:8080/dashboard/http/services/Profile%20API/profile/%7Bid%7D/get)
-  response.body: missing required property 'name'
+GET /orders/1 -> GET /orders/{id} (http://localhost:8080/dashboard/http/services/Shop%20API/orders/%7Bid%7D/get)
+  response.body: required properties are missing: firstName, lastName
 ```
+
+In test mode `error` the panel shows the `FAIL` badge, the headline and the
+entry with the same error text. A Vitest run throws the whole message as the
+error of the failed test.
+
+<img src="/docs/integrations/storybook/error-message.png" width="700" alt="Mokapi panel of the Renamed field story in test mode error: FAIL badge, the headline 1 response does not match the contract and the entry with the error required properties are missing: firstName, lastName" />
 
 With several invalid responses, the headline reads
 `N responses do not match the contract.` The headline counts invalid
@@ -263,7 +272,7 @@ test('a drifted mock fails the story', async ({ page }) => {
       },
     });
   });
-  await page.goto('http://localhost:6006/iframe.html?id=profile--invalid&viewMode=story&globals=mokapiValidation:on');
+  await page.goto('http://localhost:6006/iframe.html?id=orders--renamed-field&viewMode=story&globals=mokapiValidation:on');
 
   await expect
     .poll(() => page.evaluate(() => window.__storyFinished.at(-1)?.status))
