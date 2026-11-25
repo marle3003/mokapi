@@ -102,5 +102,7 @@ func decodeModifyDnResponse(p *ber.Packet) (*ModifyDNResponse, error) {
 func (r *ModifyDNResponse) encode(envelope *ber.Packet) {
 	body := ber.Encode(ber.ClassApplication, ber.TypeConstructed, modifyDNResponse, nil, "Modify DN Response")
 	body.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagEnumerated, uint64(r.ResultCode), "ResultCode"))
+	body.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, r.MatchedDn, "MatchedDN"))
+	body.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, r.Message, "DiagnosticMessage"))
 	envelope.AppendChild(body)
 }

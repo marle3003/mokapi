@@ -14,7 +14,8 @@ type CompareRequest struct {
 
 type CompareResponse struct {
 	ResultCode uint8  `json:"resultCode"`
-	Message    string `josn:"message"`
+	MatchedDn  string `json:"matchedDn"`
+	Message    string `json:"message"`
 }
 
 func decodeCompareRequest(body *ber.Packet) (*CompareRequest, error) {
@@ -77,7 +78,10 @@ func decodeCompareResponse(p *ber.Packet) (*CompareResponse, error) {
 		ResultCode: uint8(code),
 	}
 	if len(p.Children) > 1 {
-		r.Message = p.Children[1].Value.(string)
+		r.MatchedDn = p.Children[1].Value.(string)
+	}
+	if len(p.Children) > 2 {
+		r.Message = p.Children[2].Value.(string)
 	}
 
 	return r, nil
@@ -86,6 +90,7 @@ func decodeCompareResponse(p *ber.Packet) (*CompareResponse, error) {
 func (r *CompareResponse) encode(envelope *ber.Packet) {
 	body := ber.Encode(ber.ClassApplication, ber.TypeConstructed, compareResponse, nil, "Compare Response")
 	body.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagEnumerated, uint64(r.ResultCode), "ResultCode"))
+	body.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, r.MatchedDn, "MatchedDN"))
 	body.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, r.Message, "DiagnosticMessage"))
 	envelope.AppendChild(body)
 }
