@@ -23,7 +23,7 @@ Set in `.storybook/main.ts`. Restart Storybook after changing them.
 |-----------|-----------|-----------------------------------------------------------------------------|
 | `api`     | `string`  | OpenAPI `info.title` of the story's API. Optional, see [Choosing the API](/docs/integrations/storybook/usage.md#choosing-the-api) |
 | `disable` | `boolean` | Sends nothing to Mokapi for this story                                      |
-| `test`    | `'error' \| 'warning' \| 'off'` | Overrides `defaultTest` for this story, see [Failing stories](/docs/integrations/storybook/failing-stories.md) |
+| `test`    | `'error' \| 'warning' \| 'off'` | Overrides `defaultTest` and the global `mokapiTest` for this story, see [Failing stories](/docs/integrations/storybook/failing-stories.md) |
 | `partial` | `boolean` | Overrides `defaultPartial` for this story, see [Partial responses](/docs/integrations/storybook/usage.md#partial-responses) |
 | `timeout` | `number`  | Overrides `defaultTimeout` for this story, in milliseconds, see [Wait limit](/docs/integrations/storybook/failing-stories.md#wait-limit) |
 
@@ -39,6 +39,23 @@ the initial value with `defaultValidation`, with the URL parameter
 `globals=mokapiValidation:on`, or for component tests with
 `storybookTest({ initialGlobals: { mokapiValidation: 'on' } })`, see
 [Vitest](/docs/integrations/storybook/failing-stories.md#vitest).
+
+## Global `mokapiTest`
+
+| Value       | Description                                          |
+|-------------|------------------------------------------------------|
+| `'error'`   | A story with a failing result fails                  |
+| `'warning'` | A failing result shows as a warning, the story stays green |
+| `'off'`     | Judge nothing, the story stays green                 |
+
+The initial value is `defaultTest`. There is no toolbar control. A story uses
+`parameters.mokapi.test` first, then this global, then `defaultTest`. You can
+override the global with the URL parameter `globals=mokapiTest:warning`, which
+you can combine with the validation global (`globals=mokapiValidation:on;mokapiTest:off`),
+or for component tests with
+`storybookTest({ initialGlobals: { mokapiValidation: 'on', mokapiTest: 'warning' } })`,
+see [Vitest](/docs/integrations/storybook/failing-stories.md#vitest).
+Any other value falls back to `defaultTest` and the panel shows a notice.
 
 ## TypeScript
 
@@ -67,7 +84,8 @@ result, see [Failing stories](/docs/integrations/storybook/failing-stories.md):
 | `Mokapi at <url> does not support /api/services/http/validate. Update Mokapi to 0.58.0.` | Your Mokapi is older than 0.58.0 |
 | Mokapi's message, for example for an unknown API | `parameters.mokapi.api` names an API that Mokapi doesn't serve. Use the `info.title` of your contract |
 | `Mokapi answered HTTP <status>: <message>` | Any other unexpected answer from Mokapi. Mokapi's message is added if it sent one |
-| `Mokapi: parameters.mokapi.test must be 'error', 'warning' or 'off'.` | A story, component or preview sets an invalid test mode. The story uses `defaultTest` |
+| `Mokapi: parameters.mokapi.test must be 'error', 'warning' or 'off'.` | A story, component or preview sets an invalid test mode. The story uses the global `mokapiTest` |
+| `Mokapi: global mokapiTest must be 'error', 'warning' or 'off'.` | The global `mokapiTest` has an invalid value, for example from `initialGlobals` or the URL. Shown on every story while validation is on. Counts as a configuration error. The stories use `defaultTest` |
 | `Mokapi: parameters.mokapi.partial must be true or false.` | A story, component or preview sets a `partial` that isn't a boolean. Counts as a configuration error. The story uses `defaultPartial` |
 | `Mokapi: parameters.mokapi.timeout must be a positive number.` | A story, component or preview sets a `timeout` that isn't a finite number greater than 0. Counts as a configuration error. The story uses `defaultTimeout` |
 | `The Mokapi at <dashboardUrl> doesn't support partial responses and must be updated to 0.60.0.` | A story with partial responses met a Mokapi older than 0.60.0. It ignores the option and validates strictly. Update Mokapi or set `partial: false` |

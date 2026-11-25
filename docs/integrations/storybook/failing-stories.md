@@ -48,6 +48,12 @@ export const Legacy = {
 };
 ```
 
+A story gets its test mode in this order: `parameters.mokapi.test`, the global
+`mokapiTest`, then `defaultTest`. The global starts with the value of
+`defaultTest`. Override it with `globals=mokapiTest:warning` in the URL or with
+`initialGlobals` in `storybookTest`, see [Vitest](#vitest). An invalid
+`parameters.mokapi.test` falls back to the global.
+
 The test mode only applies while validation is on. It never turns validation on
 by itself. In CI, set `defaultValidation: true`, set
 `initialGlobals: { mokapiValidation: 'on' }` in `storybookTest` (see
@@ -60,7 +66,7 @@ A failing result is:
 - an invalid response
 - Mokapi is not reachable, or the Mokapi at `dashboardUrl` has no validation endpoint
 - a story with partial responses and a Mokapi older than 0.60.0, which ignores the option
-- a configuration error, for example an unknown `api`, an invalid `parameters.mokapi.test`, `parameters.mokapi.partial` or `parameters.mokapi.timeout`
+- a configuration error, for example an unknown `api`, an invalid `parameters.mokapi.test`, `parameters.mokapi.partial` or `parameters.mokapi.timeout`, or an invalid global `mokapiTest`
 - a validation that did not finish within the [wait limit](#wait-limit), although MSW had answered the request
 
 These don't count, they only show in the panel: responses that are not in the
@@ -306,7 +312,9 @@ passes, because nothing was validated in it.
 
 To validate in the tests, set `defaultValidation: true`, or turn validation on
 for the Vitest project only with `initialGlobals` of `storybookTest`. Then the
-Storybook UI starts with validation off and the tests always validate:
+Storybook UI starts with validation off and the tests always validate. The same
+option sets the test mode with `mokapiTest`, so the example below also changes
+the mode for the Vitest project only:
 
 ```ts
 // vitest.config.ts
@@ -322,7 +330,7 @@ export default defineConfig({
         plugins: [
           storybookTest({
             configDir: fileURLToPath(new URL('./.storybook', import.meta.url)),
-            initialGlobals: { mokapiValidation: 'on' },
+            initialGlobals: { mokapiValidation: 'on', mokapiTest: 'warning' },
           }),
         ],
         // test: { name: 'storybook', browser: { ... } }
@@ -347,8 +355,10 @@ export default {
 };
 ```
 
-With this setup a contract error fails the component test in `'error'` mode,
-whatever the toolbar shows.
+With this setup Storybook runs with `defaultTest: 'error'`, while the Vitest run
+uses `'warning'`. That keeps CI green while you fix existing mock violations.
+Drop `mokapiTest` from `initialGlobals` and a contract error fails the component
+test in `'error'` mode, whatever the toolbar shows.
 
 The wait limit counts inside Vitest's own limit. If you set a large
 `parameters.mokapi.timeout` or `defaultTimeout`, raise `testTimeout` of the
