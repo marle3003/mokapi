@@ -55,7 +55,9 @@ you can combine with the validation global (`globals=mokapiValidation:on;mokapiT
 or for component tests with
 `storybookTest({ initialGlobals: { mokapiValidation: 'on', mokapiTest: 'warning' } })`,
 see [Vitest](/docs/integrations/storybook/failing-stories.md#vitest).
-Any other value falls back to `defaultTest` and the panel shows a notice.
+Any other value falls back to `defaultTest`, and every story shows a
+configuration error in the panel while validation is on. Like any configuration
+error it is a [failing result](/docs/integrations/storybook/failing-stories.md#what-fails).
 
 ## TypeScript
 
