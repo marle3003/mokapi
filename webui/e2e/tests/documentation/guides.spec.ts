@@ -1,4 +1,5 @@
 import { expect, test } from "../models/fixture-website"
+import { useDocNav } from "../models/doc-nav"
 import { config } from "./config"
 
 test('Visit Guides', async ({ page }) => {
@@ -15,7 +16,7 @@ test('Visit Guides', async ({ page }) => {
     })
 
     await test.step('navigation is open', async () => {
-        const link = page.getByRole('link', { name: 'Welcome' })
+        const link = useDocNav(page).link('Get Started')
         await expect(link).toBeVisible()
         await expect(link).toHaveCSS('color', config.colorLinkActive)
 
@@ -29,27 +30,27 @@ test('Visit Guides', async ({ page }) => {
         await expect(page.getByRole('heading', { level: 1})).toHaveText('Mocking APIs with Mokapi')
     })
 
-    await test.step('click on Welcome change to canonical url', async () => {
-        await page.getByRole('link', { name: 'Welcome' }).click()
+    await test.step('click on Get Started change to canonical url', async () => {
+        await useDocNav(page).link('Get Started').click()
         await expect(page).toHaveURL('/docs/welcome')
     })
 
     await test.step('navigation collapse works', async () => {
-        const nav = page.getByRole('navigation', { name: 'Sidebar' });
-        await nav.getByRole('button', { name: 'HTTP', exact: true }).click()
-        await expect(nav.getByRole('link', { name: 'Quick Start', exact: true })).toBeVisible()
+        const nav = useDocNav(page)
+        await nav.chevron('HTTP').click()
+        await expect(nav.sidebar.getByRole('link', { name: 'Quick Start', exact: true })).toBeVisible()
 
-        await nav.getByRole('button', { name: 'Mail', exact: true }).click()
-        const mail = nav.getByRole('region', { name: 'Mail' })
+        await nav.chevron('Mail').click()
+        const mail = nav.group('Mail')
         await expect(mail.getByRole('link', { name: 'Clients' })).toBeVisible()
-        await expect(nav.getByRole('region', { name: 'HTTP' }).getByRole('link', { name: 'Quick Start' })).toBeVisible()
+        await expect(nav.group('HTTP').getByRole('link', { name: 'Quick Start' })).toBeVisible()
 
-        await nav.getByRole('button', { name: 'Mail'}).click()
+        await nav.chevron('Mail').click()
         await expect(mail.getByRole('link', { name: 'Clients' })).not.toBeVisible()
     })
 
     await test.step('visit HTTP Quick Start page', async () => {
-        await page.getByRole('region', { name: 'HTTP' }).getByRole('link', { name: 'Quick Start' }).click()
+        await useDocNav(page).group('HTTP').getByRole('link', { name: 'Quick Start' }).click()
 
         await test.step('meta information are available', async () => {
             await expect(page).toHaveURL('/docs/http/quick-start')
@@ -62,7 +63,7 @@ test('Visit Guides', async ({ page }) => {
         })
 
         await test.step('navigation is open', async () => {
-            await expect(page.getByRole('navigation', { name: 'sidebar' }).getByRole('button', { name: 'HTTP', exact: true })).not.toHaveCSS('color', config.colorLinkActive)
+            await expect(useDocNav(page).link('HTTP')).not.toHaveCSS('color', config.colorLinkActive)
             const link = page.getByRole('link', { name: 'Quick Start' })
             await expect(link).toBeVisible()
             await expect(link).toHaveCSS('color', config.colorLinkActive)

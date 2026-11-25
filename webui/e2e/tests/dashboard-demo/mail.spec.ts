@@ -157,7 +157,7 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
                 }
 
                 await expect(page.getByLabel('Content-Type')).toHaveText('text/html');
-                await expect(page.getByLabel('Encoding')).not.toBeVisible();
+                await expect(page.getByLabel('Encoding', { exact: true })).not.toBeVisible();
                 await expect(page.getByLabel('Message-ID')).not.toBeEmpty();
             });
         });

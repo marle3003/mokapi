@@ -169,7 +169,9 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		Description: o.Description,
 		OperationId: o.OperationID,
 		Responses:   &openapi.Responses{},
-		Deprecated:  o.Deprecated,
+	}
+	if o.Deprecated {
+		result.Deprecated = new(true)
 	}
 
 	if o.Consumes == nil {
@@ -266,6 +268,10 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		}
 	}
 
+	// an empty list removes the global requirement and must not become nil (inherit)
+	if o.Security != nil {
+		result.Security = make([]openapi.SecurityRequirement, 0, len(o.Security))
+	}
 	for _, security := range o.Security {
 		req := openapi.SecurityRequirement{}
 		for k, v := range security {

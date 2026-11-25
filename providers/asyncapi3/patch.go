@@ -355,7 +355,12 @@ func (t *TopicBindings) Patch(patch TopicBindings) {
 		t.SegmentMs = patch.SegmentMs
 	}
 
-	t.ValueSchemaValidation = patch.ValueSchemaValidation
+	if patch.ValueSchemaValidation != nil {
+		t.ValueSchemaValidation = clonePointer(patch.ValueSchemaValidation)
+	}
+	if patch.KeySchemaValidation != nil {
+		t.KeySchemaValidation = clonePointer(patch.KeySchemaValidation)
+	}
 }
 
 func (m *KafkaMessageBinding) Patch(patch KafkaMessageBinding) {

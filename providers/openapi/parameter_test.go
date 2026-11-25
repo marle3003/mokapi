@@ -398,14 +398,57 @@ func TestParameters_Patch(t *testing.T) {
 			},
 		},
 		{
-			name: "patch type",
+			name: "same name but different location only patches the matching parameter",
 			configs: []openapi.Parameters{
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Type: openapi.ParameterHeader}}},
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Type: openapi.ParameterCookie}}},
+				{
+					&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterPath, Description: "path id"}},
+					&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterQuery, Description: "query id"}},
+				},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterQuery, Description: "patched"}}},
+			},
+			test: func(t *testing.T, result openapi.Parameters) {
+				require.Len(t, result, 2)
+				require.Equal(t, openapi.ParameterPath, result[0].Value.Type)
+				require.Equal(t, "path id", result[0].Value.Description)
+				require.Equal(t, openapi.ParameterQuery, result[1].Value.Type)
+				require.Equal(t, "patched", result[1].Value.Description)
+			},
+		},
+		{
+			name: "same name with new location is appended",
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterPath, Description: "path id"}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterQuery, Description: "query id"}}},
+			},
+			test: func(t *testing.T, result openapi.Parameters) {
+				require.Len(t, result, 2)
+				require.Equal(t, openapi.ParameterPath, result[0].Value.Type)
+				require.Equal(t, "path id", result[0].Value.Description)
+				require.Equal(t, openapi.ParameterQuery, result[1].Value.Type)
+				require.Equal(t, "query id", result[1].Value.Description)
+			},
+		},
+		{
+			name: "parameter without value is not matched",
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Description: "foo"}}},
+			},
+			test: func(t *testing.T, result openapi.Parameters) {
+				require.Len(t, result, 2)
+				require.Equal(t, "foo", result[1].Value.Description)
+			},
+		},
+		{
+			name: "same name and location is merged",
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterHeader, Description: "foo"}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterHeader, Description: "bar"}}},
 			},
 			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
-				require.Equal(t, openapi.ParameterCookie, result[0].Value.Type)
+				require.Equal(t, openapi.ParameterHeader, result[0].Value.Type)
+				require.Equal(t, "bar", result[0].Value.Description)
 			},
 		},
 		{

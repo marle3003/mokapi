@@ -7,6 +7,12 @@ type IndexData struct {
 }
 
 func NewIndexData(s *Schema) *IndexData {
+	return newIndexData(s, map[*Schema]bool{})
+}
+
+// newIndexData indexes s and its properties. path holds the schemas
+// currently being indexed; a schema already on it is a cycle and becomes a leaf.
+func newIndexData(s *Schema, path map[*Schema]bool) *IndexData {
 	if s == nil {
 		return nil
 	}
@@ -17,10 +23,14 @@ func NewIndexData(s *Schema) *IndexData {
 		Children:    make(map[string]*IndexData),
 	}
 
-	if s.Properties != nil {
-		for it := s.Properties.Iter(); it.Next(); {
-			d.Children[it.Key()] = NewIndexData(it.Value())
-		}
+	if path[s] || s.Properties == nil {
+		return d
+	}
+	path[s] = true
+	defer delete(path, s)
+
+	for it := s.Properties.Iter(); it.Next(); {
+		d.Children[it.Key()] = newIndexData(it.Value(), path)
 	}
 
 	return d

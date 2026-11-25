@@ -576,11 +576,36 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 			},
 		},
 		{
-			name:   "body without defined content",
-			config: getUser("get", openapitest.WithResponse(204)),
-			status: 204, headers: jsonHeaders, body: `{}`,
+			name:   "body and Content-Type are ignored without defined content",
+			config: getUser("get", openapitest.WithResponse(503)),
+			status: 503, headers: jsonHeaders, body: `{}`,
 			test: func(t *testing.T, errs []openapi.ValidationError) {
-				require.Equal(t, []string{"response.body"}, locations(errs))
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "body without Content-Type is ignored without defined content",
+			config: getUser("get", openapitest.WithResponse(503)),
+			status: 503, body: `{}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "range response without defined content ignores body",
+			config: getUser("get", withRangeResponse("5XX")),
+			status: 503, headers: jsonHeaders, body: `{"error":"down"}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name: "headers are still validated without defined content",
+			config: getUser("get", openapitest.WithResponse(503,
+				withRequiredResponseHeader("Retry-After", true, schematest.New("integer")))),
+			status: 503, headers: jsonHeaders, body: `{}`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Equal(t, []string{"response.header.Retry-After"}, locations(errs))
 			},
 		},
 		{
@@ -599,6 +624,40 @@ func TestOperationMatch_ValidateResponse(t *testing.T) {
 			status: 200, headers: map[string]string{"Content-Type": "text/html"}, body: `x`,
 			test: func(t *testing.T, errs []openapi.ValidationError) {
 				require.Equal(t, []string{"response.body"}, locations(errs))
+			},
+		},
+		{
+			name:   "media type without schema accepts an empty body without Content-Type",
+			config: getUser("get", openapitest.WithResponse(500, openapitest.WithContent("application/json"))),
+			status: 500,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "media type without schema accepts an empty body with Content-Type",
+			config: getUser("get", openapitest.WithResponse(500, openapitest.WithContent("application/json"))),
+			status: 500, headers: jsonHeaders,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name:   "media type without schema accepts a non-JSON body with JSON Content-Type",
+			config: getUser("get", openapitest.WithResponse(500, openapitest.WithContent("application/json"))),
+			status: 500, headers: jsonHeaders, body: `not json`,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
+			},
+		},
+		{
+			name: "empty body without Content-Type is valid if one media type has no schema",
+			config: getUser("get", openapitest.WithResponse(500,
+				openapitest.WithContent("application/json", openapitest.WithSchema(user)),
+				openapitest.WithContent("text/plain"))),
+			status: 500,
+			test: func(t *testing.T, errs []openapi.ValidationError) {
+				require.Empty(t, errs)
 			},
 		},
 		{

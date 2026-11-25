@@ -300,6 +300,8 @@ func (b *ChannelBindings) clone() *ChannelBindings {
 	}
 	d := *b
 	d.Kafka.configs = maps.Clone(b.Kafka.configs)
+	d.Kafka.ValueSchemaValidation = clonePointer(b.Kafka.ValueSchemaValidation)
+	d.Kafka.KeySchemaValidation = clonePointer(b.Kafka.KeySchemaValidation)
 	d.Mqtt.configs = maps.Clone(b.Mqtt.configs)
 	d.Websocket.Query = b.Websocket.Query.Clone()
 	d.Websocket.Headers = b.Websocket.Headers.Clone()

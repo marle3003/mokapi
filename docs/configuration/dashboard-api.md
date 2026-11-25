@@ -106,6 +106,12 @@ JSON pointer to the failed schema keyword.
 | response.header.`<name>`  | Response header                                     |
 | response.body             | Response body                                       |
 
+If the contract defines no `content` for the response's status code, for example
+`'503': { description: Service Unavailable }`, Mokapi validates only the status and the headers.
+It ignores the body and the `Content-Type` header, so they cause no `response.body` error.
+A media type without `schema`, for example `application/json: {}`, accepts any body, including
+an empty one, when the `Content-Type` header matches it. Without the header, see below.
+
 ### Partial responses
 
 Set `"partialResponse": true` if the response is only part of the real one, for example a mock
@@ -167,10 +173,11 @@ of other types, such as XML or plain text, are not checked.
 A `HEAD` operation must be defined as `head:` in the specification. Mokapi doesn't validate its
 response body.
 
-If the response has no `Content-Type` header, Mokapi works as follows:
+If the response has no `Content-Type` header and the status code defines content, Mokapi works
+as follows:
 
-- An empty body is valid if the status code defines no content, otherwise the error is
-  `response body is required`.
+- An empty body gives the error `response body is required`, unless one of the media types has
+  no `schema`.
 - Otherwise Mokapi tries each media type defined for the status code. If none fits, the error is
   `no matching content type defined`. If the status code defines exactly one JSON media type,
   Mokapi reports the schema errors of that type instead.

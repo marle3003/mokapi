@@ -713,6 +713,40 @@ func TestConfig_Patch_Path(t *testing.T) {
 				require.Equal(t, "number", e.Parameters[0].Value.Schema.Type.String())
 			},
 		},
+		{
+			name: "path parameter with same name but different location is not merged",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo/{id}", openapitest.WithPathParam("id", openapitest.WithParamInfo("path id")))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo/{id}", func(p *openapi.Path) {
+						p.Parameters = append(p.Parameters, &openapi.ParameterRef{
+							Value: &openapi.Parameter{Name: "id", Type: openapi.ParameterQuery, Description: "query id"}})
+					})),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				e := result.Paths.Lookup("/foo/{id}").Value
+				require.Len(t, e.Parameters, 2)
+				require.Equal(t, openapi.ParameterPath, e.Parameters[0].Value.Type)
+				require.Equal(t, "path id", e.Parameters[0].Value.Description)
+				require.Equal(t, openapi.ParameterQuery, e.Parameters[1].Value.Type)
+				require.Equal(t, "query id", e.Parameters[1].Value.Description)
+			},
+		},
+		{
+			name: "path parameter with same name and location is merged",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo/{id}", openapitest.WithPathParam("id", openapitest.WithParamInfo("foo")))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo/{id}", openapitest.WithPathParam("id", openapitest.WithParamInfo("bar")))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				e := result.Paths.Lookup("/foo/{id}").Value
+				require.Len(t, e.Parameters, 1)
+				require.Equal(t, "bar", e.Parameters[0].Value.Description)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

@@ -51,7 +51,7 @@ operation directly. The path view shows the summary and description of the path 
 operations. The operation view shows:
 
 - **Request** lists the parameters, the request body with its content types and the security
-  schemes of the operation.
+  schemes that apply to the operation (its own `security`, otherwise the global one).
 - **Response** lists the status codes with their body and headers.
 - Below, the log shows only the requests for this operation.
 

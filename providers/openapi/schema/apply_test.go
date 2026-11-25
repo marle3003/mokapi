@@ -339,6 +339,33 @@ $ref: "#/$defs/foo"
 				require.Equal(t, jsonSchema.Types{"string"}, s.AllOf[0].Type)
 			},
 		},
+		{
+			name: "shuffleItems used from ref",
+			input: `
+$defs:
+  foo:
+    x-shuffleItems: true
+$ref: "#/$defs/foo"
+`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.NoError(t, err)
+				require.True(t, *s.ShuffleItems)
+			},
+		},
+		{
+			name: "shuffleItems of the referencing schema is not overwritten by ref",
+			input: `
+$defs:
+  foo:
+    x-shuffleItems: true
+x-shuffleItems: false
+$ref: "#/$defs/foo"
+`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.NoError(t, err)
+				require.False(t, *s.ShuffleItems)
+			},
+		},
 	}
 
 	t.Parallel()

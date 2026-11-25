@@ -15,6 +15,13 @@ func TestKafkaBindingsServer_JSON(t *testing.T) {
 		test   func(t *testing.T, config *asyncapi3.ServerBindings, err error)
 	}{
 		{
+			name:   "bindings are not an object",
+			config: `{"kafka":"foo"}`,
+			test: func(t *testing.T, config *asyncapi3.ServerBindings, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
 			name: "log.retention.bytes",
 			config: `{
 "kafka": { 
@@ -437,6 +444,31 @@ func TestKafkaBindingsTopic_JSON(t *testing.T) {
 			},
 		},
 		{
+			name:   "bindings are not an object",
+			config: `{"kafka":"foo"}`,
+			test: func(t *testing.T, config *asyncapi3.ChannelBindings, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
+			name:   "retention.ms invalid type",
+			config: `{"kafka":{"retention.ms": true}}`,
+			test: func(t *testing.T, config *asyncapi3.ChannelBindings, err error) {
+				require.EqualError(t, err, "invalid retention.ms: cannot unmarshal bool to int64: true")
+			},
+		},
+		{
+			name:   "schema validation not set",
+			config: `{"kafka":{"partitions": 2}}`,
+			test: func(t *testing.T, config *asyncapi3.ChannelBindings, err error) {
+				require.NoError(t, err)
+				require.Nil(t, config.Kafka.ValueSchemaValidation)
+				require.Nil(t, config.Kafka.KeySchemaValidation)
+				require.True(t, config.Kafka.IsValueSchemaValidation())
+				require.True(t, config.Kafka.IsKeySchemaValidation())
+			},
+		},
+		{
 			name: "confluent.value.schema.validation",
 			config: `{
 "kafka":{
@@ -444,7 +476,7 @@ func TestKafkaBindingsTopic_JSON(t *testing.T) {
 }}`,
 			test: func(t *testing.T, config *asyncapi3.ChannelBindings, err error) {
 				require.NoError(t, err)
-				require.False(t, config.Kafka.ValueSchemaValidation)
+				require.False(t, *config.Kafka.ValueSchemaValidation)
 			},
 		},
 		{
@@ -465,7 +497,7 @@ func TestKafkaBindingsTopic_JSON(t *testing.T) {
 }}`,
 			test: func(t *testing.T, config *asyncapi3.ChannelBindings, err error) {
 				require.NoError(t, err)
-				require.False(t, config.Kafka.KeySchemaValidation)
+				require.False(t, *config.Kafka.KeySchemaValidation)
 			},
 		},
 		{

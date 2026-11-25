@@ -175,7 +175,7 @@ func WithOperationInfo(summary, description, operationId string, deprecated bool
 		o.Summary = summary
 		o.Description = description
 		o.OperationId = operationId
-		o.Deprecated = deprecated
+		o.Deprecated = new(deprecated)
 	}
 }
 
@@ -217,6 +217,13 @@ func WithParamSchema(s *schema.Schema) ParamOptions {
 func WithSecurity(s map[string][]string) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Security = append(o.Security, s)
+	}
+}
+
+// WithEmptySecurity sets "security: []" on the operation, which removes the global requirement.
+func WithEmptySecurity() OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Security = []openapi.SecurityRequirement{}
 	}
 }
 

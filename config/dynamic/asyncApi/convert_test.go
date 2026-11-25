@@ -180,6 +180,23 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "channel kafka schema validation",
+			cfg: &asyncApi.Config{
+				Channels: map[string]*asyncApi.ChannelRef{
+					"foo": {Value: &asyncApi.Channel{Bindings: asyncApi.ChannelBindings{Kafka: asyncApi.TopicBindings{
+						ValueSchemaValidation: false,
+						KeySchemaValidation:   true,
+					}}}},
+				},
+			},
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				kafka := config.Channels["foo"].Value.Bindings.Kafka
+				require.False(t, kafka.IsValueSchemaValidation())
+				require.True(t, kafka.IsKeySchemaValidation())
+			},
+		},
+		{
 			name: "channel ref",
 			cfg: &asyncApi.Config{
 				Channels: map[string]*asyncApi.ChannelRef{

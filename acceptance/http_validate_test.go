@@ -41,7 +41,9 @@ const profileContract = `{
                 }
               }
             }
-          }
+          },
+          "503": { "description": "Service Unavailable" },
+          "500": { "description": "Internal Error", "content": { "application/json": {} } }
         }
       }
     }
@@ -391,4 +393,40 @@ func (suite *HttpValidateSuite) TestPartialResponseAcceptsSeveralOneOfMatches() 
 func (suite *HttpValidateSuite) TestPartialResponseRejectsBodyMatchingNoOneOfVariant() {
 	suite.validate(partialOrderPayload(true, orderHeaders, `{"pet":{"bark":1}}`),
 		suite.assertErrors(false, true, "response.body")...)
+}
+
+func serviceUnavailablePayload(body string) string {
+	return fmt.Sprintf(`{
+  "api": "Profile API",
+  "request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+  "response": { "statusCode": 503, "headers": { "Content-Type": "application/json" }, "body": %q }
+}`, body)
+}
+
+// The contract defines 503 with a description only, so the Content-Type of the mocked response
+// (e.g. MSW HttpResponse.json) has no content definition to be checked against.
+func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsJsonBody() {
+	suite.validate(serviceUnavailablePayload(`{"error":"down"}`), suite.assertErrors(true, false)...)
+}
+
+func (suite *HttpValidateSuite) TestResponseWithoutDefinedContentAcceptsEmptyBodyWithContentType() {
+	suite.validate(serviceUnavailablePayload(""), suite.assertErrors(true, false)...)
+}
+
+func internalErrorPayload(headers string) string {
+	return fmt.Sprintf(`{
+  "api": "Profile API",
+  "request": { "method": "GET", "url": "/api/v1/profile?id=1" },
+  "response": { "statusCode": 500, "headers": %s, "body": "" }
+}`, headers)
+}
+
+// The contract defines 500 with a media type but no schema, so any body is accepted, also an empty
+// one like MSW produces with new HttpResponse(null, { status: 500 }).
+func (suite *HttpValidateSuite) TestMediaTypeWithoutSchemaAcceptsEmptyBodyWithoutContentType() {
+	suite.validate(internalErrorPayload(`{}`), suite.assertErrors(true, false)...)
+}
+
+func (suite *HttpValidateSuite) TestMediaTypeWithoutSchemaAcceptsEmptyBodyWithContentType() {
+	suite.validate(internalErrorPayload(`{ "Content-Type": "application/json" }`), suite.assertErrors(true, false)...)
 }

@@ -22,7 +22,7 @@ func TestParseXML(t *testing.T) {
 			s: schematest.New("object",
 				schematest.WithProperty(
 					"id",
-					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)})),
 				),
 			),
 			test: func(t *testing.T, v any, err error) {
@@ -38,7 +38,7 @@ func TestParseXML(t *testing.T) {
 			s: schematest.New("object",
 				schematest.WithProperty(
 					"id",
-					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)})),
 				),
 				schematest.WithFreeForm(false),
 			),
@@ -52,7 +52,7 @@ func TestParseXML(t *testing.T) {
 			s: schematest.New("object",
 				schematest.WithProperty(
 					"id",
-					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: new(true)})),
 				),
 				schematest.WithRequired("id"),
 			),
@@ -67,7 +67,7 @@ func TestParseXML(t *testing.T) {
 				schematest.WithProperty(
 					"id",
 					schematest.New("integer", schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					})),
 				),
@@ -85,7 +85,7 @@ func TestParseXML(t *testing.T) {
 				schematest.WithProperty(
 					"id",
 					schematest.New("integer", schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					})),
 				),
@@ -102,7 +102,7 @@ func TestParseXML(t *testing.T) {
 				schematest.WithProperty(
 					"id",
 					schematest.New("integer", schematest.WithXml(&schema.Xml{
-						Attribute: true,
+						Attribute: new(true),
 						Prefix:    "ns",
 					})),
 				),
@@ -237,7 +237,7 @@ func TestUnmarshalXML(t *testing.T) {
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<person name="alice"></person>`),
 					schematest.New("object",
-						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: true})))))
+						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: new(true)})))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"name": "alice"}, v)
 			},
@@ -247,7 +247,7 @@ func TestUnmarshalXML(t *testing.T) {
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<person firstname="alice"></person>`),
 					schematest.New("object",
-						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: true, Name: "firstname"})))))
+						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: new(true), Name: "firstname"})))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"name": "alice"}, v)
 			},
@@ -298,7 +298,7 @@ func TestUnmarshalXML(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<person><children><name>bob</name><name>sarah</name></children></person>"),
 					schematest.New("object", schematest.WithProperty("children", schematest.New("array",
 						schematest.WithItems("string", schematest.WithXml(&schema.Xml{Name: "name"})),
-						schematest.WithXml(&schema.Xml{Wrapped: true}),
+						schematest.WithXml(&schema.Xml{Wrapped: new(true)}),
 					))),
 				)
 				require.NoError(t, err)
@@ -311,7 +311,7 @@ func TestUnmarshalXML(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<root><books> <books>one</books> <books>two</books>  <books>three</books> </books> </root>"),
 					schematest.New("array",
 						schematest.WithItems("string"),
-						schematest.WithXml(&schema.Xml{Wrapped: true, Name: "person"}),
+						schematest.WithXml(&schema.Xml{Wrapped: new(true), Name: "person"}),
 					),
 				)
 				require.NoError(t, err)
@@ -412,7 +412,7 @@ func TestUnmarshalXML_Old(t *testing.T) {
 			name: "wrapped array",
 			xml:  "<root><books><books>one</books><books>two</books></books></root>",
 			schema: schematest.New("array", schematest.WithItems("string"), schematest.WithXml(&schema.Xml{
-				Wrapped: true,
+				Wrapped: new(true),
 			})),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)

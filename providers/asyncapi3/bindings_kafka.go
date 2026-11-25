@@ -75,8 +75,10 @@ type TopicBindings struct {
 	// the segment file isn’t full to ensure that retention can delete or compact old data.
 	SegmentMs int64
 
-	ValueSchemaValidation bool
-	KeySchemaValidation   bool
+	// ValueSchemaValidation and KeySchemaValidation are nil when the specification doesn't
+	// set them, so a patch can tell "not mentioned" from an explicit false.
+	ValueSchemaValidation *bool
+	KeySchemaValidation   *bool
 }
 
 func (b *BrokerBindings) Configs() map[string]any {
@@ -89,6 +91,18 @@ func (m *KafkaMessageBinding) IsSet() bool {
 
 func (t *TopicBindings) IsSet() bool {
 	return t.configs != nil
+}
+
+// IsValueSchemaValidation reports whether produced values are validated against the message payload schema.
+// Validation is on unless the specification turns it off.
+func (t *TopicBindings) IsValueSchemaValidation() bool {
+	return t.ValueSchemaValidation == nil || *t.ValueSchemaValidation
+}
+
+// IsKeySchemaValidation reports whether produced keys are validated against the message key schema.
+// Validation is on unless the specification turns it off.
+func (t *TopicBindings) IsKeySchemaValidation() bool {
+	return t.KeySchemaValidation == nil || *t.KeySchemaValidation
 }
 
 func (o *KafkaOperationBinding) IsSet() bool {
@@ -193,18 +207,16 @@ func (t *TopicBindings) marshal() map[string]any {
 	if t.SegmentMs != 0 {
 		m["segment.ms"] = t.SegmentMs
 	}
-	if !t.ValueSchemaValidation {
-		m["confluent.value.schema.validation"] = false
+	if t.ValueSchemaValidation != nil {
+		m["confluent.value.schema.validation"] = *t.ValueSchemaValidation
 	}
-	if !t.KeySchemaValidation {
-		m["confluent.key.schema.validation"] = false
+	if t.KeySchemaValidation != nil {
+		m["confluent.key.schema.validation"] = *t.KeySchemaValidation
 	}
 	return m
 }
 
 func (t *TopicBindings) unmarshal(m map[string]any) error {
-	t.ValueSchemaValidation = true
-	t.KeySchemaValidation = true
 	var err error
 
 	if _, ok := m["partitions"]; !ok {
@@ -300,17 +312,16 @@ func getInt64(m map[string]any, keys ...string) (int64, error) {
 	return 0, nil
 }
 
-func getBool(m map[string]any, keys ...string) (bool, error) {
+func getBool(m map[string]any, keys ...string) (*bool, error) {
 	i := getValue(m, keys...)
-	if i != nil {
-		switch v := i.(type) {
-		case bool:
-			return v, nil
-		default:
-			return true, fmt.Errorf("cannot unmarshal %T to bool: %v", i, i)
-		}
+	if i == nil {
+		return nil, nil
 	}
-	return true, nil
+	v, ok := i.(bool)
+	if !ok {
+		return nil, fmt.Errorf("cannot unmarshal %T to bool: %v", i, i)
+	}
+	return &v, nil
 }
 
 func getValue(m map[string]any, keys ...string) any {

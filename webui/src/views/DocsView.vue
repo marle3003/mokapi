@@ -357,9 +357,9 @@ pre {
   }
 }
 .content code:not(pre code) {
-  color: #e63946;
+  color: var(--color-code-inline);
 
-  font-weight: 600
+  font-weight: 500
 }
 .content .code {
   margin-bottom: 8px;
@@ -408,7 +408,7 @@ pre {
 }
 .box.info, .box.tip{
   border-color: var(--bs-primary-border-subtle);
-  background-color: var(--bs-primary-bg-subtle);
+  background-color: var(--card-background);
 }
 .box.info .box-heading, .box.tip .box-heading {
   color: var(--bs-primary-text-emphasis);
@@ -417,11 +417,11 @@ pre {
   border-color: var(--color-orange);
 }
 .box.limitation .box-heading {
-  background-color: var(--color-orange-shadow);
+  background-color: var(--card-background);
 }
 .box.warning{
   border-color: var(--bs-warning-border-subtle);
-  background-color: var(--bs-warning-bg-subtle);
+  background-color: var(--card-background);
 }
 .box.warning .box-heading {
   color: var(--bs-warning-text-emphasis);

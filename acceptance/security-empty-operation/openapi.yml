@@ -1,0 +1,44 @@
+openapi: 3.0.0
+info:
+  title: Operation without security
+  version: 1.0.0
+servers:
+  - url: http://localhost:18111
+security:
+  - bearerAuth: []
+paths:
+  /protected:
+    get:
+      responses:
+        '200':
+          description: Inherits the global requirement
+          content:
+            text/plain:
+              schema:
+                type: string
+  /public:
+    get:
+      security: []
+      responses:
+        '200':
+          description: Removes the global requirement
+          content:
+            text/plain:
+              schema:
+                type: string
+  /sim/ready:
+    get:
+      security: []
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

@@ -319,6 +319,22 @@ func TestClone(t *testing.T) {
 			},
 		},
 		{
+			name: "kafka schema validation flags are not shared",
+			test: func(t *testing.T) {
+				yes, no := true, false
+				b := &ChannelBindings{Kafka: TopicBindings{ValueSchemaValidation: &yes, KeySchemaValidation: &no}}
+
+				d := b.clone()
+
+				require.Equal(t, b, d)
+				*d.Kafka.ValueSchemaValidation = false
+				*d.Kafka.KeySchemaValidation = true
+
+				require.True(t, *b.Kafka.ValueSchemaValidation)
+				require.False(t, *b.Kafka.KeySchemaValidation)
+			},
+		},
+		{
 			name: "channel and operation bindings",
 			test: func(t *testing.T) {
 				b := &ChannelBindings{

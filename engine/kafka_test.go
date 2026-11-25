@@ -22,6 +22,7 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/runtimetest"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
@@ -686,7 +687,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -736,7 +737,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -766,7 +767,7 @@ func TestKafkaClient(t *testing.T) {
 							"id",
 							opSchematest.New(
 								"string",
-								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+								opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 							),
 						),
 						opSchematest.WithRequired("id"),
@@ -791,6 +792,32 @@ func TestKafkaClient(t *testing.T) {
 			},
 		},
 		{
+			name: "avro payload read from a spec generates a value",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("avro/binary"),
+					asyncapi3test.WithPayloadMulti("application/vnd.apache.avro;version=1.9.0", &asyncapi3.AvroRef{
+						Schema: &avro.Schema{Type: []interface{}{"string"}},
+					}),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ messages: [{ }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.NotEmpty(t, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
 			name: "using data=nil",
 			cfg: func() *asyncapi3.Config {
 				msg := asyncapi3test.NewMessage(
@@ -801,7 +828,7 @@ func TestKafkaClient(t *testing.T) {
 									"id",
 									opSchematest.New(
 										"string",
-										opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+										opSchematest.WithXml(&opSchema.Xml{Attribute: new(true)}),
 									),
 								),
 								opSchematest.WithRequired("id"),

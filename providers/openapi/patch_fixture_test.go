@@ -113,7 +113,7 @@ func operation(bare bool) *openapi.Operation {
 		Tags:        ifFull(bare, []string{"pets"}),
 		Summary:     text(bare, "summary"),
 		Description: text(bare, "description"),
-		Deprecated:  !bare,
+		Deprecated:  pointer(bare, true),
 		OperationId: text(bare, "operationId"),
 		Parameters:  parameters(bare),
 		RequestBody: &openapi.RequestBodyRef{Value: requestBody(bare)},
@@ -122,10 +122,11 @@ func operation(bare bool) *openapi.Operation {
 	}
 }
 
-// parameters keeps the name, because parameters are merged by name
+// parameters keeps name and location, because parameters in a list are merged by name and location
 func parameters(bare bool) openapi.Parameters {
 	p := parameter(bare, openapi.ParameterQuery)
 	p.Name = "id"
+	p.Type = openapi.ParameterQuery
 	return openapi.Parameters{{Value: p}}
 }
 
@@ -185,8 +186,8 @@ func mediaType(bare bool, contentType string, withExamples bool) *openapi.MediaT
 				ContentType:   text(bare, "image/png"),
 				Headers:       map[string]openapi.Header{"X-Part": {Parameter: *parameterWithoutContent(bare, openapi.ParameterHeader)}},
 				Style:         text(bare, "form"),
-				Explode:       !bare,
-				AllowReserved: !bare,
+				Explode:       pointer(bare, true),
+				AllowReserved: pointer(bare, true),
 			},
 		},
 	}
@@ -301,7 +302,7 @@ func schemaWithAllKeywords(bare bool) *schema.Schema {
 		MinItems:         pointer(bare, 1),
 		MaxItems:         pointer(bare, 5),
 		UniqueItems:      pointer(bare, true),
-		ShuffleItems:     !bare,
+		ShuffleItems:     pointer(bare, true),
 
 		PatternProperties:     map[string]*schema.Schema{"^x-": nested()},
 		MinProperties:         pointer(bare, 1),
@@ -324,15 +325,15 @@ func schemaWithAllKeywords(bare bool) *schema.Schema {
 		Title:       text(bare, "Pet"),
 		Description: text(bare, "A pet"),
 		Default:     ifFull[any](bare, "a"),
-		Deprecated:  !bare,
+		Deprecated:  pointer(bare, true),
 		Examples:    ifFull(bare, []jsonSchema.Example{{Value: "a"}}),
 		Example:     ifFull(bare, &jsonSchema.Example{Value: "b"}),
 
 		ContentMediaType: text(bare, "application/json"),
 		ContentEncoding:  text(bare, "base64"),
 
-		Xml:      &schema.Xml{Name: text(bare, "pet"), Prefix: text(bare, "p"), Namespace: text(bare, "https://xml.io"), Wrapped: !bare, Attribute: !bare},
-		Nullable: !bare,
+		Xml:      &schema.Xml{Name: text(bare, "pet"), Prefix: text(bare, "p"), Namespace: text(bare, "https://xml.io"), Wrapped: pointer(bare, true), Attribute: pointer(bare, true)},
+		Nullable: pointer(bare, true),
 
 		Definitions: map[string]*schema.Schema{"d": nested()},
 		Defs:        map[string]*schema.Schema{"d": nested()},

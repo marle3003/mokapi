@@ -54,11 +54,7 @@ nav.nav-tree {
 
   .nav,
   .nav .btn {
-    font-size: var(--bs-nav-link-font-size)
-  }
-
-  .nav-title {
-    font-size: var(--bs-nav-link-font-size)
+    font-size: 0.875rem;
   }
 
   .chapter > section > ul > .nav-item {
@@ -67,8 +63,8 @@ nav.nav-tree {
 
   .nav-item a,
   .nav-item .chapter>div {
-    padding-top: 6px;
-    padding-bottom: 6px;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 
   .nav-item .chapter>div a, .btn-link {
@@ -117,8 +113,32 @@ nav.nav-tree {
       10px 0px 0.5rem rgba(0, 0, 0, 0.3);
   }
 
-  .headline>div {
-    padding: 13px 0;
+  .headline {
+    margin-top: 1.5rem;
+  }
+
+  .nav-item:first-child > .headline {
+    margin-top: 0;
+  }
+
+  .headline > div,
+  .headline > .nav-link {
+    padding: 0.25rem 0;
+    font-size: 0.95rem;
     font-weight: 600;
+  }
+
+  .headline > div,
+  .headline > .nav-link:not(.active) {
+    color: var(--color-text);
+  }
+
+  .headline > .nav-link:not(.disabled):hover {
+    color: var(--nav-color-active);
+  }
+
+  /* a section is a heading, not a pill: only the color marks it as the open page */
+  .headline > .nav-link.active {
+    background-color: transparent;
   }
 }

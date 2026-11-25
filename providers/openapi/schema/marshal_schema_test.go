@@ -67,6 +67,16 @@ func TestSchema_MarshalJSON(t *testing.T) {
 			exp:    `{"type":"integer","exclusiveMinimum":true}`,
 		},
 		{
+			name:   "nullable not set is not written",
+			schema: schematest.New("string"),
+			exp:    `{"type":"string"}`,
+		},
+		{
+			name:   "nullable false is written",
+			schema: schematest.New("string", schematest.IsNullable(false)),
+			exp:    `{"type":"string","nullable":false}`,
+		},
+		{
 			name: "integer",
 			schema: schematest.New("integer",
 				schematest.WithFormat("int64"),

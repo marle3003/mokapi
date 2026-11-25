@@ -124,6 +124,8 @@ func (r *SchemaRef) Marshal(v any, ct media.ContentType) ([]byte, error) {
 		return s.Marshal(v)
 	case *openapi.Schema:
 		return s.Marshal(v, ct)
+	case *AvroRef:
+		return s.Schema.Marshal(v)
 	case *SchemaRef:
 		return s.Marshal(v, ct)
 	case *MultiSchemaFormat:
@@ -134,13 +136,18 @@ func (r *SchemaRef) Marshal(v any, ct media.ContentType) ([]byte, error) {
 }
 
 func (r *SchemaRef) GetSchema() (Schema, error) {
-	if r.Value == nil {
+	if r == nil || r.Value == nil {
 		return nil, nil
 	}
 
 	switch s := r.Value.(type) {
 	case *jsonSchema.Schema, *avro.Schema, *openapi.Schema:
 		return s, nil
+	case *AvroRef:
+		if s.Schema == nil {
+			return nil, nil
+		}
+		return s.Schema, nil
 	case *SchemaRef:
 		return s.GetSchema()
 	case *MultiSchemaFormat:

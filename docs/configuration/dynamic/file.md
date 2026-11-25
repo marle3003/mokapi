@@ -106,10 +106,10 @@ providers:
     exclude: ["debug.json"]
 ```
 ```bash tab=CLI
---providers-file-include debug.json
+--providers-file-exclude debug.json
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_FILE_INCLUDE="debug.json"
+MOKAPI_PROVIDERS_FILE_EXCLUDE="debug.json"
 ```
 
 ### Include + Exclude together
@@ -138,4 +138,32 @@ Example to exclude everything except a specific directory `foo`
 ```
 /*
 !/foo
+```
+
+### Symbolic Links
+The file provider follows symbolic links to directories, both inside the
+watched directory and when the configured `directory` or `filename` path
+is itself a link. Files behind a link are reported under the link path, so
+relative references in them resolve against the link path.
+
+- A link that points back to a directory that is currently being read (for
+  example to a parent directory) is skipped to avoid endless loops.
+- If the same target is reached through two different links, it is
+  loaded once per link.
+- Broken links are skipped. You only see them in the debug log.
+
+Mokapi does not skip `node_modules` by default. In a pnpm workspace, linked
+dependencies in `node_modules` are therefore read as well. To keep them out,
+add the directory to a `.mokapiignore` file:
+
+```
+node_modules/
+```
+
+or exclude its files with the `exclude` option:
+
+```yaml
+providers:
+  file:
+    exclude: ["node_modules"]
 ```

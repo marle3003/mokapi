@@ -1,8 +1,9 @@
 import { expect, test } from "../models/fixture-website";
+import { useDocNav } from "../models/doc-nav";
 
 test('Visit Configuration', async ({ page }) => {
     await page.goto('/docs/welcome')
-    await page.getByRole('navigation').getByRole('region', { name: 'Configuration' }).getByRole('link', { name: 'Overview' }).click()
+    await useDocNav(page).link('Configuration').click()
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/configuration/overview')
@@ -15,19 +16,20 @@ test('Visit Configuration', async ({ page }) => {
     })
 
     await test.step('navigation section providers', async () => {
-        await page.getByRole('button', { name: 'Dynamic' }).click()
+        const nav = useDocNav(page)
+        await nav.chevron('Dynamic').click()
 
-        const region = page.getByRole('region', { name: 'Dynamic' })
+        const region = nav.group('Dynamic')
         const link = page.getByRole('link', { name: 'File' })
         await expect(region).toBeVisible()
         await expect(link).toBeVisible()
-        await page.getByRole('button', { name: 'Dynamic' }).click()
+        await nav.chevron('Dynamic').click()
         await expect(region).not.toBeVisible()
         await expect(link).not.toBeVisible()
     })
 
     await test.step('Visit File', async () => {
-        await page.getByRole('button', { name: 'Dynamic' }).click()
+        await useDocNav(page).chevron('Dynamic').click()
         await page.getByRole('link', { name: 'File' }).click()
 
         await test.step('meta information are available', async () => {
@@ -45,10 +47,12 @@ test('Visit Configuration', async ({ page }) => {
 
 test.describe('Configuration navigation', () => {
 
-    test('Configuration section offers Overview and Running Mokapi', async ({ page }) => {
+    test('Configuration section links to its overview and offers Running Mokapi', async ({ page }) => {
         await page.goto('/docs/configuration/overview')
-        const configuration = page.getByRole('navigation').getByRole('region', { name: 'Configuration' })
-        await expect(configuration.getByRole('link', { name: 'Overview' })).toBeVisible()
+        const nav = useDocNav(page)
+        const configuration = nav.group('Configuration')
+        await expect(nav.link('Configuration')).toHaveAttribute('href', '/docs/configuration/overview')
+        await expect(configuration.getByRole('link', { name: 'Overview' })).toHaveCount(0)
 
         await configuration.getByRole('link', { name: 'Running Mokapi' }).click()
 
@@ -58,9 +62,10 @@ test.describe('Configuration navigation', () => {
 
     test('Static group lists CLI Syntax and CLI Flags', async ({ page }) => {
         await page.goto('/docs/configuration/overview')
-        await page.getByRole('button', { name: 'Static' }).click()
+        const nav = useDocNav(page)
+        await nav.chevron('Static').click()
 
-        const region = page.getByRole('region', { name: 'Static' })
+        const region = nav.group('Static')
         await expect(region.getByRole('link', { name: 'CLI Syntax' })).toHaveAttribute('href', '/docs/configuration/static/cli-usage')
         await expect(region.getByRole('link', { name: 'CLI Flags' })).toBeVisible()
         await expect(region.getByRole('link', { name: 'CLI Usage' })).toHaveCount(0)
@@ -68,9 +73,10 @@ test.describe('Configuration navigation', () => {
 
     test('Dynamic group has no Reference link', async ({ page }) => {
         await page.goto('/docs/configuration/overview')
-        await page.getByRole('button', { name: 'Dynamic' }).click()
+        const nav = useDocNav(page)
+        await nav.chevron('Dynamic').click()
 
-        const region = page.getByRole('region', { name: 'Dynamic' })
+        const region = nav.group('Dynamic')
         await expect(region.getByRole('link', { name: 'File' })).toBeVisible()
         await expect(region.getByRole('link', { name: 'Reference' })).toHaveCount(0)
     })

@@ -12,6 +12,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/search"
 	"mokapi/safe"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -224,4 +225,35 @@ func TestIndex_Websocket_MergedFiles(t *testing.T) {
 	waitSearchIndex(t, func() bool {
 		return found(t, app, "foo") && found(t, app, "alpha") && !found(t, app, "beta")
 	})
+}
+
+func TestIndex_Websocket_MessagePayload(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	cfg := dynamictest.NewConfig(asyncapi3test.NewConfig(
+		asyncapi3test.WithInfo("foo", "", ""),
+		asyncapi3test.WithChannel("orders",
+			asyncapi3test.WithMessage("order",
+				asyncapi3test.WithPayload(schematest.New("object",
+					schematest.WithProperty("id", schematest.New("string", schematest.WithDescription("quokkadescription"))),
+				)),
+			),
+		),
+	), dynamictest.WithInfo(dynamictest.NewConfigInfo()))
+
+	app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, InMemory: true}}}, &dynamictest.Reader{})
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
+
+	_, err := app.Websocket.Add(cfg, enginetest.NewEngine())
+	require.NoError(t, err)
+
+	var r search.Result
+	waitSearchIndex(t, func() bool {
+		r, err = app.Search(search.Request{QueryText: "quokkadescription", Limit: 10})
+		require.NoError(t, err)
+		return len(r.Results) == 1
+	})
+	require.Len(t, r.Results, 1)
 }

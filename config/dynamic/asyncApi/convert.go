@@ -374,7 +374,8 @@ func convertChannelBinding(b ChannelBindings) *asyncapi3.ChannelBindings {
 		RetentionMs:           b.Kafka.RetentionMs,
 		SegmentBytes:          b.Kafka.SegmentBytes,
 		SegmentMs:             b.Kafka.SegmentMs,
-		ValueSchemaValidation: b.Kafka.ValueSchemaValidation,
+		ValueSchemaValidation: new(b.Kafka.ValueSchemaValidation),
+		KeySchemaValidation:   new(b.Kafka.KeySchemaValidation),
 	}}
 }
 

@@ -197,8 +197,9 @@ func flattenViolations(location string, violations []any) []ValidationError {
 }
 
 // ValidateResponse checks status, headers and, for operations other than HEAD, the body against
-// the response the contract defines for statusCode. Only JSON bodies are validated against a
-// schema. With partial set, the body may lack properties, see parser.Parser.PartialObjects.
+// the response the contract defines for statusCode. A response without content is valid with any
+// body and Content-Type, its headers are still checked. A media type without schema accepts any
+// body. Only JSON bodies are validated against a schema. With partial set, the body may lack properties, see parser.Parser.PartialObjects.
 func (m *OperationMatch) ValidateResponse(statusCode int, headers map[string]string, body string, partial bool) []ValidationError {
 	res := m.Operation.getResponse(statusCode)
 	if res == nil {
@@ -232,6 +233,10 @@ func validateResponseHeaders(definitions Headers, h http.Header) []ValidationErr
 }
 
 func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body string, partial bool) []ValidationError {
+	if len(res.Content) == 0 {
+		// the contract specifies no body, so neither body nor Content-Type are checked
+		return nil
+	}
 	data := []byte(body)
 
 	contentType := media.ParseContentType(contentTypeHeader)
@@ -243,7 +248,7 @@ func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body
 	if mt == nil {
 		return []ValidationError{{Location: responseBodyLocation, Message: fmt.Sprintf("content type '%s' is not defined for status code %d", contentType, statusCode)}}
 	}
-	if !isJson(contentType) {
+	if mt.Schema == nil || !isJson(contentType) {
 		return nil
 	}
 	if _, err := mt.parseData(data, contentType, partial); err != nil {
@@ -254,7 +259,7 @@ func validateResponseBody(res *Response, statusCode int, contentTypeHeader, body
 
 func validateResponseBodyDetectContentType(res *Response, data []byte, partial bool) []ValidationError {
 	if len(data) == 0 {
-		if len(res.Content) == 0 {
+		if hasMediaTypeWithoutSchema(res.Content) {
 			return nil
 		}
 		return []ValidationError{{Location: responseBodyLocation, Message: "response body is required"}}
@@ -269,6 +274,15 @@ func validateResponseBodyDetectContentType(res *Response, data []byte, partial b
 		_, err = mt.parseData(data, mt.ContentType, partial)
 	}
 	return newValidationErrors(responseBodyLocation, err)
+}
+
+func hasMediaTypeWithoutSchema(content Content) bool {
+	for _, mt := range content {
+		if mt.Schema == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func singleJsonMediaType(content Content) *MediaType {

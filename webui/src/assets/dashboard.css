@@ -260,9 +260,9 @@ main.connection-lost .dashboard-content {
 }
 
 .table-markdown code {
-  color: #e63946;
+  color: var(--color-code-inline);
 
-  font-weight: 600
+  font-weight: 500
 }
 
 .status {

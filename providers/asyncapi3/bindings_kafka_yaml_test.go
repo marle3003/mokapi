@@ -15,6 +15,18 @@ func TestKafkaBindingsServer_Yaml(t *testing.T) {
 		test   func(t *testing.T, config *asyncapi3.Config, err error)
 	}{
 		{
+			name: "bindings are not an object",
+			config: `
+servers:
+  test:
+    bindings:
+      kafka: foo
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
 			name: "log.retention.bytes",
 			config: `
 servers:
@@ -546,7 +558,7 @@ channels:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.False(t, config.Channels["test"].Value.Bindings.Kafka.ValueSchemaValidation)
+				require.False(t, *config.Channels["test"].Value.Bindings.Kafka.ValueSchemaValidation)
 			},
 		},
 		{
@@ -573,7 +585,7 @@ channels:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.False(t, config.Channels["test"].Value.Bindings.Kafka.KeySchemaValidation)
+				require.False(t, *config.Channels["test"].Value.Bindings.Kafka.KeySchemaValidation)
 			},
 		},
 		{
@@ -587,6 +599,70 @@ channels:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.EqualError(t, err, "invalid confluent.key.schema.validation: cannot unmarshal string to bool: foo")
+			},
+		},
+		{
+			name: "bindings are not an object",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka: foo
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "schema validation not set",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        partitions: 2
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				kafka := config.Channels["test"].Value.Bindings.Kafka
+				require.Nil(t, kafka.ValueSchemaValidation)
+				require.Nil(t, kafka.KeySchemaValidation)
+				require.True(t, kafka.IsValueSchemaValidation())
+				require.True(t, kafka.IsKeySchemaValidation())
+			},
+		},
+		{
+			name: "explicit false turns validation off",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        confluent.value.schema.validation: false
+        confluent.key.schema.validation: false
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				kafka := config.Channels["test"].Value.Bindings.Kafka
+				require.False(t, kafka.IsValueSchemaValidation())
+				require.False(t, kafka.IsKeySchemaValidation())
+			},
+		},
+		{
+			name: "validation in legacy topicConfiguration",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        topicConfiguration:
+          confluent.key.schema.validation: false
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				kafka := config.Channels["test"].Value.Bindings.Kafka
+				require.False(t, *kafka.KeySchemaValidation)
+				require.Nil(t, kafka.ValueSchemaValidation)
 			},
 		},
 		{
@@ -635,6 +711,42 @@ channels:
 			err := yaml.Unmarshal([]byte(tc.config), &cfg)
 
 			tc.test(t, cfg, err)
+		})
+	}
+}
+
+func TestKafkaBindingsTopic_Yaml_Marshal(t *testing.T) {
+	testcases := []struct {
+		name     string
+		bindings asyncapi3.TopicBindings
+		expected string
+	}{
+		{
+			name:     "validation not set is omitted",
+			bindings: asyncapi3.TopicBindings{Partitions: 2},
+			expected: "partitions: 2\n",
+		},
+		{
+			name:     "explicit true is kept",
+			bindings: asyncapi3.TopicBindings{Partitions: 1, KeySchemaValidation: new(true)},
+			expected: "confluent.key.schema.validation: true\n",
+		},
+		{
+			name:     "explicit false is kept",
+			bindings: asyncapi3.TopicBindings{Partitions: 1, ValueSchemaValidation: new(false)},
+			expected: "confluent.value.schema.validation: false\n",
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			b, err := yaml.Marshal(&tc.bindings)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, string(b))
 		})
 	}
 }

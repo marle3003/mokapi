@@ -1,0 +1,36 @@
+openapi: 3.0.0
+info:
+  title: Security requirement without scheme
+  version: 1.0.0
+servers:
+  - url: http://localhost:18110
+security:
+  - globalMissing: []
+paths:
+  /global:
+    get:
+      responses:
+        '200':
+          description: Uses the global requirement that has no scheme
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [ok]
+  /operation:
+    get:
+      security:
+        - operationMissing: []
+      responses:
+        '200':
+          description: Uses an operation requirement that has no scheme
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [ok]
+components:
+  securitySchemes:
+    declared:
+      type: http
+      scheme: bearer

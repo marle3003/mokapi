@@ -316,3 +316,28 @@ func TestModule_FakeAsync(t *testing.T) {
 		})
 	}
 }
+
+func TestToOpenAPISchema_ShuffleItems(t *testing.T) {
+	testcases := []struct {
+		name     string
+		schema   string
+		expected *bool
+	}{
+		{name: "not set", schema: "({ type: 'array' })", expected: nil},
+		{name: "true", schema: "({ type: 'array', 'x-shuffleItems': true })", expected: new(true)},
+		{name: "false", schema: "({ type: 'array', 'x-shuffleItems': false })", expected: new(false)},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := goja.New()
+			v, err := rt.RunString(tc.schema)
+			r.NoError(t, err)
+
+			s, err := faker.ToOpenAPISchema(v, rt)
+
+			r.NoError(t, err)
+			r.Equal(t, tc.expected, s.ShuffleItems)
+		})
+	}
+}

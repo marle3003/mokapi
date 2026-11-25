@@ -569,9 +569,26 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 			},
 		},
 		{
+			name: "array with encoding without explode is exploded",
+			mt: openapitest.NewContent(
+				openapitest.WithEncoding("array_name", &openapi.Encoding{ContentType: "text/plain"}),
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("array_name",
+							schematest.New("array", schematest.WithItems("string"))),
+					),
+				),
+			),
+			body: "array_name=value1&array_name=value2",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"array_name": []any{"value1", "value2"}}, result.Value)
+			},
+		},
+		{
 			name: "array with encoding explode false",
 			mt: openapitest.NewContent(
-				openapitest.WithEncoding("array_name", &openapi.Encoding{Explode: false}),
+				openapitest.WithEncoding("array_name", &openapi.Encoding{Explode: new(false)}),
 				openapitest.WithSchema(
 					schematest.New("object",
 						schematest.WithProperty("array_name",

@@ -127,11 +127,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		drainRequestBody(r)
 	}
 
-	if len(op.Security) > 0 {
-		h.serveSecurity(r, op.Security)
-	} else if len(h.config.Security) > 0 {
-		h.serveSecurity(r, h.config.Security)
-	}
+	h.serveSecurity(r, h.config.SecurityOf(op))
 
 	response := NewEventResponse(status, contentType)
 	setResponseRebuild(response, request, op)
@@ -289,7 +285,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			traits := events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method)
 			if ctx, err := NewLogEventContext(
 				r,
-				op.Deprecated,
+				op.IsDeprecated(),
 				traits,
 			); err != nil {
 				log.Errorf("failed to log http event: %v", err)
@@ -387,8 +383,9 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 		var reqError error
 		for name := range req {
 			scheme, ok := h.config.Components.SecuritySchemes[name]
-			if !ok {
+			if !ok || scheme == nil {
 				log.Warnf("%s: no security scheme found for %v", r.URL.String(), name)
+				continue
 			}
 			err := scheme.Serve(r)
 			var notSupported *NotSupportedSecuritySchemeError

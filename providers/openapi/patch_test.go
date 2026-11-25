@@ -168,7 +168,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			},
 		},
 		{
-			name: "patch config security add scope",
+			name: "patch config security replaces existing",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0",
 					openapitest.WithGlobalSecurity(map[string][]string{"foo": {"foo"}}),
@@ -178,9 +178,36 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Security, 2)
-				require.Equal(t, []string{"foo"}, result.Security[0]["foo"])
-				require.Equal(t, []string{"foo", "bar"}, result.Security[1]["foo"])
+				require.Len(t, result.Security, 1)
+				require.Equal(t, []string{"foo", "bar"}, result.Security[0]["foo"])
+			},
+		},
+		{
+			name: "patch config security [] removes security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0",
+					openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
+				),
+				openapitest.NewConfig("1.0", func(c *openapi.Config) {
+					c.Security = []openapi.SecurityRequirement{}
+				}),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.NotNil(t, result.Security)
+				require.Empty(t, result.Security)
+			},
+		},
+		{
+			name: "patch without security keeps config security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0",
+					openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
+				),
+				openapitest.NewConfig("1.0"),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Security, 1)
+				require.Contains(t, result.Security[0], "foo")
 			},
 		},
 		{
@@ -204,7 +231,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			},
 		},
 		{
-			name: "patch operation security add scope",
+			name: "patch operation security replaces existing",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.WithOperation(
@@ -221,9 +248,48 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths.Lookup("/foo").Value.Post.Security, 2)
-				require.Equal(t, []string{"foo"}, result.Paths.Lookup("/foo").Value.Post.Security[0]["foo"])
-				require.Equal(t, []string{"foo", "bar"}, result.Paths.Lookup("/foo").Value.Post.Security[1]["foo"])
+				require.Len(t, result.Paths.Lookup("/foo").Value.Post.Security, 1)
+				require.Equal(t, []string{"foo", "bar"}, result.Paths.Lookup("/foo").Value.Post.Security[0]["foo"])
+			},
+		},
+		{
+			name: "patch operation security [] removes security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithSecurity(map[string][]string{"foo": {}}),
+					),
+				),
+				),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post", openapitest.WithEmptySecurity())),
+				),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				security := result.Paths.Lookup("/foo").Value.Post.Security
+				require.NotNil(t, security)
+				require.Empty(t, security)
+			},
+		},
+		{
+			name: "patch without security keeps operation security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithSecurity(map[string][]string{"foo": {}}),
+					),
+				),
+				),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.WithOperation("post")),
+				),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				security := result.Paths.Lookup("/foo").Value.Post.Security
+				require.Len(t, security, 1)
+				require.Contains(t, security[0], "foo")
 			},
 		},
 	}

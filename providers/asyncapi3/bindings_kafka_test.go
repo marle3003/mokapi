@@ -187,9 +187,7 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "kafka default",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					Partitions:            1,
+					Partitions: 1,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -202,9 +200,7 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "partition",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					Partitions:            5,
+					Partitions: 5,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -231,10 +227,8 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "retention.bytes",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					Partitions:            1,
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					RetentionBytes:        5,
+					Partitions:     1,
+					RetentionBytes: 5,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -247,10 +241,8 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "retention.ms",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					Partitions:            1,
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					RetentionMs:           5,
+					Partitions:  1,
+					RetentionMs: 5,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -263,10 +255,8 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "segment.bytes",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					Partitions:            1,
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					SegmentBytes:          5,
+					Partitions:   1,
+					SegmentBytes: 5,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -279,10 +269,8 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "segment.ms",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					Partitions:            1,
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   true,
-					SegmentMs:             5,
+					Partitions: 1,
+					SegmentMs:  5,
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -292,12 +280,26 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			},
 		},
 		{
+			name: "explicit true is kept",
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: new(true),
+					KeySchemaValidation:   new(true),
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"confluent.key.schema.validation":true,"confluent.value.schema.validation":true}}`, json)
+				require.Equal(t, "kafka:\n    confluent.key.schema.validation: true\n    confluent.value.schema.validation: true\n", yaml)
+			},
+		},
+		{
 			name: "confluent.value.schema.validation",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
 					Partitions:            1,
-					ValueSchemaValidation: false,
-					KeySchemaValidation:   true,
+					ValueSchemaValidation: new(false),
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -310,9 +312,8 @@ func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 			name: "confluent.key.schema.validation",
 			s: &asyncapi3.ChannelBindings{
 				Kafka: asyncapi3.TopicBindings{
-					Partitions:            1,
-					ValueSchemaValidation: true,
-					KeySchemaValidation:   false,
+					Partitions:          1,
+					KeySchemaValidation: new(false),
 				},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {

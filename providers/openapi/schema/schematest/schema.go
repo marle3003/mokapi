@@ -92,7 +92,7 @@ func WithUniqueItems(b bool) SchemaOptions {
 
 func WithShuffleItems() SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ShuffleItems = true
+		s.ShuffleItems = new(true)
 	}
 }
 
@@ -363,7 +363,7 @@ func WithMultipleOf(f float64) SchemaOptions {
 
 func IsNullable(b bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Nullable = b
+		s.Nullable = &b
 	}
 }
 
@@ -399,7 +399,7 @@ func WithConst(c interface{}) SchemaOptions {
 
 func WithDeprecated(b bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Deprecated = b
+		s.Deprecated = &b
 	}
 }
 

@@ -95,7 +95,9 @@ func (s *Schema) patch(patch *Schema, visited patchedPairs) {
 		s.Format = patch.Format
 	}
 
-	s.Nullable = patch.Nullable
+	if patch.Nullable != nil {
+		s.Nullable = clonePointer(patch.Nullable)
+	}
 
 	if len(patch.Pattern) > 0 {
 		s.Pattern = patch.Pattern
@@ -154,7 +156,9 @@ func (s *Schema) patch(patch *Schema, visited patchedPairs) {
 		s.MaxItems = clonePointer(patch.MaxItems)
 	}
 
-	s.ShuffleItems = patch.ShuffleItems
+	if patch.ShuffleItems != nil {
+		s.ShuffleItems = clonePointer(patch.ShuffleItems)
+	}
 
 	if s.Properties == nil {
 		s.Properties = patch.Properties.Clone()
@@ -198,7 +202,9 @@ func (s *Schema) patch(patch *Schema, visited patchedPairs) {
 		s.Default = patch.Default
 	}
 
-	s.Deprecated = patch.Deprecated
+	if patch.Deprecated != nil {
+		s.Deprecated = clonePointer(patch.Deprecated)
+	}
 
 	if patch.Examples != nil {
 		s.Examples = slices.Clone(patch.Examples)
@@ -257,8 +263,12 @@ func (x *Xml) patch(patch *Xml) {
 		x.Namespace = patch.Namespace
 	}
 
-	x.Wrapped = patch.Wrapped
-	x.Attribute = patch.Attribute
+	if patch.Wrapped != nil {
+		x.Wrapped = clonePointer(patch.Wrapped)
+	}
+	if patch.Attribute != nil {
+		x.Attribute = clonePointer(patch.Attribute)
+	}
 }
 
 func (s *Schemas) Patch(patch *Schemas) {

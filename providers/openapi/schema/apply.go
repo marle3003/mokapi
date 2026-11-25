@@ -90,7 +90,7 @@ func (s *Schema) apply(ref *Schema) {
 	if !s.isSet("uniqueItems") {
 		s.UniqueItems = ref.UniqueItems
 	}
-	if !s.isSet("shuffleItems") {
+	if !s.isSet("x-shuffleItems") {
 		s.ShuffleItems = ref.ShuffleItems
 	}
 

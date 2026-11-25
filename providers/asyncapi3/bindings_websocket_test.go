@@ -22,7 +22,7 @@ func TestChannelBindings_Websocket_Marshal(t *testing.T) {
 			name: "websocket default",
 			s: &asyncapi3.ChannelBindings{
 				// required to set default to be empty
-				Kafka:     asyncapi3.TopicBindings{Partitions: 1, KeySchemaValidation: true, ValueSchemaValidation: true},
+				Kafka:     asyncapi3.TopicBindings{Partitions: 1},
 				Websocket: asyncapi3.WebsocketChannelBindings{},
 			},
 			test: func(t *testing.T, json, yaml string, err error) {
@@ -35,7 +35,7 @@ func TestChannelBindings_Websocket_Marshal(t *testing.T) {
 			name: "method",
 			s: &asyncapi3.ChannelBindings{
 				// required to set default to be empty
-				Kafka: asyncapi3.TopicBindings{Partitions: 1, KeySchemaValidation: true, ValueSchemaValidation: true},
+				Kafka: asyncapi3.TopicBindings{Partitions: 1},
 				Websocket: asyncapi3.WebsocketChannelBindings{
 					Method: "POST",
 				},
@@ -50,7 +50,7 @@ func TestChannelBindings_Websocket_Marshal(t *testing.T) {
 			name: "query",
 			s: &asyncapi3.ChannelBindings{
 				// required to set default to be empty
-				Kafka: asyncapi3.TopicBindings{Partitions: 1, KeySchemaValidation: true, ValueSchemaValidation: true},
+				Kafka: asyncapi3.TopicBindings{Partitions: 1},
 				Websocket: asyncapi3.WebsocketChannelBindings{
 					Query: schematest.New("string"),
 				},
@@ -65,7 +65,7 @@ func TestChannelBindings_Websocket_Marshal(t *testing.T) {
 			name: "header",
 			s: &asyncapi3.ChannelBindings{
 				// required to set default to be empty
-				Kafka: asyncapi3.TopicBindings{Partitions: 1, KeySchemaValidation: true, ValueSchemaValidation: true},
+				Kafka: asyncapi3.TopicBindings{Partitions: 1},
 				Websocket: asyncapi3.WebsocketChannelBindings{
 					Headers: schematest.New("string"),
 				},
