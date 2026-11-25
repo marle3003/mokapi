@@ -224,9 +224,12 @@ in `.storybook/main.ts`, Mokapi's box comes first and Storybook's divider stays.
 
 The error message looks like this. Under Vitest a failed story throws it as a
 `MokapiContractError`. The text after `Mokapi contract validation failed: ` is
-the headline. The panel and the description of the sidebar status show the
-headline alone. The example is the Renamed field story, whose mock still has
-`customer.name` while the contract has `firstName` and `lastName`:
+the headline. The description of the sidebar status shows the headline alone.
+The panel shows it as well for invalid responses. For a notice, the panel shows a
+short headline and the full text in the notice row below it, see
+[Toolbar](/docs/integrations/storybook/usage.md#toolbar). The example is the
+Renamed field story, whose mock still has `customer.name` while the contract
+has `firstName` and `lastName`:
 
 ```
 MokapiContractError: Mokapi contract validation failed: 1 response does not match the contract.
@@ -248,7 +251,8 @@ configuration error, timeout) follow as lines with the same text as in the
 panel. Without an invalid response, the headline is the text of the first
 failing notice, for example
 `Mokapi is not reachable at http://localhost:8080. Check the dashboardUrl option and that Mokapi is running.`
-and the details don't repeat it.
+and the details don't repeat it. The panel shows `Mokapi is not reachable.` as
+the headline and the full text in the notice row.
 
 ## Test with Playwright
 
@@ -383,7 +387,7 @@ widget opens the **Mokapi** panel, see [Run tests widget](#run-tests-widget). Th
 widget row shows the result right after the run.
 
 The panel shows the result of the story as it does after a validation in the
-preview: badge, headline, counts, notices and entries with their Request /
+preview: badge, headline, notices and entries with their Request /
 Response details. This includes a passed run with its valid entries. A line above the notices says `Result of the last test run.`
 A story with [partial responses](/docs/integrations/storybook/usage.md#partial-responses) shows `PARTIAL` and the
 partial line there as well.

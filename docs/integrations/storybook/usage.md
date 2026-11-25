@@ -169,22 +169,35 @@ has:
 
 - A report badge: `PASS`, `PARTIAL`, `WARN`, `FAIL`, `SKIP` or `WAIT`. Hover it to see the
   test mode of the story. See the table below.
-- A headline in bold, only for `WARN`, `FAIL` and `SKIP`. For `WARN` and `FAIL` it
-  is the headline of the [error message](/docs/integrations/storybook/failing-stories.md#error-message), for example
-  `1 response does not match the contract.` For `SKIP` it is
-  `No response was checked against the contract.`, or the message about the
-  missing MSW worker if `context.msw` is not set, or the message about a handler
-  that did not answer in time.
-- The counts in one line, for example
-  `2 responses validated, 1 valid, 1 invalid`. The line counts all entries since
-  the story was mounted and updates as results come in. Kinds that don't occur
-  are left out (`valid`, `invalid`, `not in contract`, `Mokapi not reachable`).
+- A headline in bold, only for `WARN`, `FAIL` and `SKIP`. With an invalid response
+  it is the headline of the [error message](/docs/integrations/storybook/failing-stories.md#error-message), for example
+  `1 response does not match the contract.` Without one, it is a short headline
+  for the first notice, see the table below. For `SKIP` without such a notice it
+  is `No response was checked against the contract.`
 - The line `Partial responses: missing properties are not checked.`, only while
   the story validates with [partial responses](#partial-responses). It is shown
   in every state, also next to `WARN` and `FAIL`.
-- On the right: the **Rerun** icon button, a help icon that opens the
-  [addon documentation](https://mokapi.io/docs/integrations/storybook), and a
-  link to the Mokapi dashboard.
+- On the right: three icon buttons. **Rerun** runs the validation again, the
+  help icon opens the
+  [addon documentation](https://mokapi.io/docs/integrations/storybook), and
+  **Open Mokapi dashboard** opens the dashboard in a new tab. A long headline
+  wraps next to the icons.
+
+The full message of the notice, with its hint, is the first row below the
+toolbar. The headline only names the problem:
+
+| Notice | Headline in the toolbar |
+|--------|-------------------------|
+| Mokapi not reachable | `Mokapi is not reachable.` |
+| Mokapi too old (endpoint missing or no partial support) | `Mokapi needs an update.` |
+| Invalid configuration | `Invalid Mokapi configuration.` |
+| Mokapi did not answer in time | `Mokapi validation timed out.` |
+| MSW handler did not answer in time (`SKIP`) | `No response from the MSW handler.` |
+| MSW worker missing (`SKIP`) | `MSW worker not found.` |
+
+A result that has no notice rows, such as the failed result of a
+[test run](/docs/integrations/storybook/failing-stories.md#results-of-run-tests), shows the full
+text in the toolbar instead, so nothing is lost.
 
 The badge depends on the test mode of the story, see
 [Failing stories](/docs/integrations/storybook/failing-stories.md):
