@@ -150,6 +150,10 @@ The panel shows the `PARTIAL` badge and the partial line in its toolbar.
 
 <img src="/docs/integrations/storybook/partial.png" width="700" alt="Partial story: the mock contains only id and status, the Mokapi panel shows the PARTIAL badge and the line Partial responses: missing properties are not checked" />
 
+The properties the body does contain are still checked. The `PartialInvalid` story is the `Partial` example above with one change: it returns `status: 'shipped'`, which the enum doesn't list. The panel shows the `WARN` badge together with the partial line.
+
+<img src="/docs/integrations/storybook/partial-invalid.png" width="700" alt="PartialInvalid story: the Mokapi panel shows the WARN badge and the line Partial responses: missing properties are not checked, and the response is invalid with the error value 'shipped' does not match one in the enumeration [pending, in_transit, delivered]" />
+
 ## Panel and badge
 
 The **Mokapi** panel shows the responses of the selected story since it was
@@ -176,7 +180,8 @@ has:
   is `No response was checked against the contract.`
 - The line `Partial responses: missing properties are not checked.`, only while
   the story validates with [partial responses](#partial-responses). It is shown
-  in every state, also next to `WARN` and `FAIL`.
+  in every state, also with `WARN` and `FAIL`, in its own row below the badge
+  and the icons.
 - On the right: three icon buttons. **Rerun** runs the validation again, the
   help icon opens the
   [addon documentation](https://mokapi.io/docs/integrations/storybook), and
