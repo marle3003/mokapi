@@ -61,7 +61,7 @@
     "@vitest/coverage-v8": "5.1.1",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
-    "@vue/test-utils": "2.5.1",
+    "@vue/test-utils": "2.6.0",
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.14.0",
     "eslint-plugin-vue": "10.12.1",
