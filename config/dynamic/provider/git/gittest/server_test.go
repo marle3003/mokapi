@@ -1,10 +1,12 @@
 package gittest_test
 
 import (
+	"context"
 	"mokapi/config/dynamic/provider/git/gittest"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -69,6 +71,89 @@ func TestServer(t *testing.T) {
 		_, err := git.PlainClone(t.TempDir(), false, &git.CloneOptions{URL: s.Url("unknown"), Depth: 1})
 		require.Error(t, err)
 		require.Equal(t, 0, s.CloneCount("unknown"))
+	})
+}
+
+func TestServer_HoldClones(t *testing.T) {
+	clone := func(ctx context.Context, url string) error {
+		_, err := git.PlainCloneContext(ctx, t.TempDir(), false, &git.CloneOptions{URL: url, Depth: 1, SingleBranch: true})
+		return err
+	}
+
+	t.Run("clone waits for release and then succeeds", func(t *testing.T) {
+		s := gittest.NewServer(t)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		arrived, release := s.HoldClones("schemas")
+
+		done := make(chan error, 1)
+		go func() { done <- clone(context.Background(), s.Url("schemas")) }()
+
+		select {
+		case <-arrived:
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone request did not arrive")
+		}
+		select {
+		case err := <-done:
+			t.Fatalf("clone finished while held: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+
+		release()
+		release() // idempotent
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone did not finish after release")
+		}
+	})
+
+	t.Run("cancelled context ends a held clone", func(t *testing.T) {
+		s := gittest.NewServer(t)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		arrived, _ := s.HoldClones("schemas")
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		done := make(chan error, 1)
+		go func() { done <- clone(ctx, s.Url("schemas")) }()
+
+		select {
+		case <-arrived:
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone request did not arrive")
+		}
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorContains(t, err, "context canceled")
+		case <-time.After(5 * time.Second):
+			t.Fatal("held clone was not cancelled")
+		}
+	})
+
+	t.Run("other repository is not held", func(t *testing.T) {
+		s := gittest.NewServer(t)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		s.CreateRepo("other", map[string]string{"pet.yaml": "name: Garfield"})
+		s.HoldClones("schemas")
+
+		require.NoError(t, clone(context.Background(), s.Url("other")))
+	})
+
+	t.Run("unreleased hold does not block the test cleanup", func(t *testing.T) {
+		s := gittest.NewServer(t)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		arrived, _ := s.HoldClones("schemas")
+
+		go func() { _ = clone(context.Background(), s.Url("schemas")) }()
+		select {
+		case <-arrived:
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone request did not arrive")
+		}
+		// the cleanup of this test must not hang on the held request
 	})
 }
 

@@ -25,6 +25,19 @@ type Server struct {
 
 	m           sync.Mutex
 	uploadPacks map[string]int
+	holds       map[string]*hold
+}
+
+// hold blocks clone requests of one repository until released.
+type hold struct {
+	arrivedOnce sync.Once
+	arrived     chan struct{}
+	releaseOnce sync.Once
+	released    chan struct{}
+}
+
+func (h *hold) release() {
+	h.releaseOnce.Do(func() { close(h.released) })
 }
 
 // Repo is the working copy of a repository on the Server. Changes are pushed to the Server
@@ -56,6 +69,7 @@ func NewServer(t *testing.T) *Server {
 		t:           t,
 		root:        t.TempDir(),
 		uploadPacks: make(map[string]int),
+		holds:       make(map[string]*hold),
 	}
 	backend := &cgi.Handler{
 		Path: gitPath,
@@ -68,10 +82,15 @@ func NewServer(t *testing.T) *Server {
 		},
 	}
 	s.srv = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.countUploadPack(r)
+		if repo, ok := s.countUploadPack(r); ok {
+			s.waitIfHeld(r, repo)
+		}
 		backend.ServeHTTP(w, r)
 	}))
 	t.Cleanup(s.srv.Close)
+	// httptest.Server.Close waits for running handlers. Cleanups run last in, first out, so
+	// this releases forgotten holds before Close.
+	t.Cleanup(s.releaseAll)
 
 	s.trustCertificate()
 	return s
@@ -84,16 +103,52 @@ func (s *Server) trustCertificate() {
 	s.t.Cleanup(func() { transport.TLSClientConfig = original })
 }
 
-// countUploadPack counts requests that transfer objects (clone and fetch). Refs advertisement
-// requests (GET info/refs) are not counted.
-func (s *Server) countUploadPack(r *http.Request) {
-	repo, ok := strings.CutSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/git-upload-pack")
+// countUploadPack counts requests that transfer objects (clone and fetch) and returns the
+// repository they are for. Refs advertisement requests (GET info/refs) are not counted.
+func (s *Server) countUploadPack(r *http.Request) (repo string, ok bool) {
+	repo, ok = strings.CutSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/git-upload-pack")
 	if r.Method != http.MethodPost || !ok {
-		return
+		return "", false
 	}
 	s.m.Lock()
 	defer s.m.Unlock()
 	s.uploadPacks[repo]++
+	return repo, true
+}
+
+// waitIfHeld blocks the request while the repository is held, until release, the end of the
+// request or the end of the test.
+func (s *Server) waitIfHeld(r *http.Request, repo string) {
+	s.m.Lock()
+	h := s.holds[repo]
+	s.m.Unlock()
+	if h == nil {
+		return
+	}
+	h.arrivedOnce.Do(func() { close(h.arrived) })
+	select {
+	case <-h.released:
+	case <-r.Context().Done():
+	}
+}
+
+func (s *Server) releaseAll() {
+	s.m.Lock()
+	defer s.m.Unlock()
+	for _, h := range s.holds {
+		h.release()
+	}
+}
+
+// HoldClones blocks the next clone requests of the repository, counted like in CloneCount,
+// until release is called. arrived is closed when the first request is held. A pull without
+// news sends no such request and is not held. release is safe to call more than once.
+func (s *Server) HoldClones(repo string) (arrived <-chan struct{}, release func()) {
+	h := &hold{arrived: make(chan struct{}), released: make(chan struct{})}
+	s.m.Lock()
+	s.holds[repo] = h
+	s.m.Unlock()
+	return h.arrived, h.release
 }
 
 // Url is the HTTPS URL of the repository, e.g. https://127.0.0.1:12345/schemas
