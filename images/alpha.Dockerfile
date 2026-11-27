@@ -17,8 +17,8 @@ ARG VERSION=dev
 
 ARG BUILD_TIME=dev
 
-# Install git for GIT tests
-RUN apk add --no-cache git
+# Install git for GIT tests, git-daemon provides git http-backend for the local test server
+RUN apk add --no-cache git git-daemon
 
 COPY . /go/src/github.com/mokapi
 
