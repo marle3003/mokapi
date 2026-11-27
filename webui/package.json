@@ -24,7 +24,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.6",
     "@types/bootstrap": "^5.2.11",
-    "@types/mokapi": "^0.35.0",
+    "@types/mokapi": "^0.55.0",
     "@types/nodemailer": "^8.0.1",
     "@types/whatwg-mimetype": "^5.0.0",
     "ace-builds": "^1.44.0",
