@@ -25,7 +25,8 @@ type Server struct {
 
 	m           sync.Mutex
 	uploadPacks map[string]int
-	holds       map[string]*hold
+	holds       map[string]*hold // the hold new requests wait on
+	allHolds    []*hold          // every hold ever created, for releaseAll
 }
 
 // hold blocks clone requests of one repository until released.
@@ -132,21 +133,26 @@ func (s *Server) waitIfHeld(r *http.Request, repo string) {
 	}
 }
 
+// releaseAll releases all holds ever created, also those that were replaced by a later
+// HoldClones call and still have requests waiting.
 func (s *Server) releaseAll() {
 	s.m.Lock()
 	defer s.m.Unlock()
-	for _, h := range s.holds {
+	for _, h := range s.allHolds {
 		h.release()
 	}
 }
 
 // HoldClones blocks the next clone requests of the repository, counted like in CloneCount,
-// until release is called. arrived is closed when the first request is held. A pull without
-// news sends no such request and is not held. release is safe to call more than once.
+// until release is called. arrived is closed when the first request is held by this hold. A
+// pull without news sends no such request and is not held. release is safe to call more than
+// once. Calling HoldClones again replaces the hold for later requests; requests already held
+// stay held until their own release or the end of the test.
 func (s *Server) HoldClones(repo string) (arrived <-chan struct{}, release func()) {
 	h := &hold{arrived: make(chan struct{}), released: make(chan struct{})}
 	s.m.Lock()
 	s.holds[repo] = h
+	s.allHolds = append(s.allHolds, h)
 	s.m.Unlock()
 	return h.arrived, h.release
 }

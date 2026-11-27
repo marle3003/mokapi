@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic/provider/git/gittest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -133,6 +134,50 @@ func TestServer_HoldClones(t *testing.T) {
 		}
 	})
 
+	t.Run("each hold releases only the clones it caught", func(t *testing.T) {
+		s := gittest.NewServer(t)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		arrivedA, releaseFirst := s.HoldClones("schemas")
+
+		doneA := make(chan error, 1)
+		go func() { doneA <- clone(context.Background(), s.Url("schemas")) }()
+		select {
+		case <-arrivedA:
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone A request did not arrive")
+		}
+
+		arrivedB, releaseSecond := s.HoldClones("schemas")
+		doneB := make(chan error, 1)
+		go func() { doneB <- clone(context.Background(), s.Url("schemas")) }()
+		select {
+		case <-arrivedB:
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone B request did not arrive")
+		}
+
+		releaseFirst()
+		select {
+		case err := <-doneA:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone A did not finish after its release")
+		}
+		select {
+		case err := <-doneB:
+			t.Fatalf("clone B finished while held: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+
+		releaseSecond()
+		select {
+		case err := <-doneB:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("clone B did not finish after its release")
+		}
+	})
+
 	t.Run("other repository is not held", func(t *testing.T) {
 		s := gittest.NewServer(t)
 		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
@@ -143,18 +188,55 @@ func TestServer_HoldClones(t *testing.T) {
 	})
 
 	t.Run("unreleased hold does not block the test cleanup", func(t *testing.T) {
-		s := gittest.NewServer(t)
-		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
-		arrived, _ := s.HoldClones("schemas")
+		requireCleanupDoesNotHang(t, clone, func(s *gittest.Server) {})
+	})
 
-		go func() { _ = clone(context.Background(), s.Url("schemas")) }()
+	t.Run("replaced hold does not block the test cleanup", func(t *testing.T) {
+		requireCleanupDoesNotHang(t, clone, func(s *gittest.Server) { s.HoldClones("schemas") })
+	})
+}
+
+// requireCleanupDoesNotHang holds a clone of "schemas", calls afterArrived and ends the inner
+// test without releasing the first hold. If the cleanup of the inner test hangs, a watchdog
+// releases the hold itself, so a bug fails the test instead of hanging the test binary.
+func requireCleanupDoesNotHang(t *testing.T, clone func(ctx context.Context, url string) error, afterArrived func(s *gittest.Server)) {
+	cloneDone := make(chan struct{})
+	var cleanupHung atomic.Bool
+
+	t.Run("inner", func(inner *testing.T) {
+		cleanupFinished := make(chan struct{})
+		inner.Cleanup(func() { close(cleanupFinished) }) // runs after the server cleanups
+
+		s := gittest.NewServer(inner)
+		s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+		arrived, release := s.HoldClones("schemas")
+		go func() {
+			select {
+			case <-cleanupFinished:
+			case <-time.After(3 * time.Second):
+				cleanupHung.Store(true)
+				release()
+			}
+		}()
+
+		go func() {
+			defer close(cloneDone)
+			_ = clone(context.Background(), s.Url("schemas"))
+		}()
 		select {
 		case <-arrived:
 		case <-time.After(5 * time.Second):
-			t.Fatal("clone request did not arrive")
+			inner.Fatal("clone request did not arrive")
 		}
-		// the cleanup of this test must not hang on the held request
+		afterArrived(s)
 	})
+
+	require.False(t, cleanupHung.Load(), "cleanup hangs on a held request")
+	select {
+	case <-cloneDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("clone goroutine did not end")
+	}
 }
 
 func requireFile(t *testing.T, dir, name, content string) {
