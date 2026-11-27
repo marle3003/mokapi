@@ -19,6 +19,8 @@ github.com/blevesearch/bleve/v2 v2.6.1 h1:47vLskRTqxvQEtxVPYHjf5KpOgzD2msslXFjvU
 github.com/blevesearch/bleve/v2 v2.6.1/go.mod h1:Dvvx6ZoEBTOj6RSzfk0lEz0wce/qhe2yOUubXeuzd2c=
 github.com/blevesearch/bleve/v2 v2.6.3 h1:+TvSTA10Kr5c8Dj7gidTIufor8fg7pIj4rQu2Vmw9L0=
 github.com/blevesearch/bleve/v2 v2.6.3/go.mod h1:cXYhNm5W1L8az+qt5j3D+zoVe268ZR34ymfFy6PDvdg=
+github.com/blevesearch/bleve/v2 v2.6.4 h1:x3AG9hH3IJ7fn8YQBYYyZmJooRhBPiDT2WCfAVl5dCs=
+github.com/blevesearch/bleve/v2 v2.6.4/go.mod h1:cXYhNm5W1L8az+qt5j3D+zoVe268ZR34ymfFy6PDvdg=
 github.com/blevesearch/bleve_index_api v1.4.1 h1:CYIyecFlI+/RYjzUm+NmDjYbSvk870Bb7f+Vl4b12q8=
 github.com/blevesearch/bleve_index_api v1.4.1/go.mod h1:xvd48t5XMeeioWQ5/jZvgLrV98flT2rdvEJ3l/ki4Ko=
 github.com/blevesearch/geo v0.2.6 h1:7K1oyQKYlauC+mJuo2AfNPyjN/4mihEoJMfyClVH1Mo=
