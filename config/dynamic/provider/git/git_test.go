@@ -215,9 +215,7 @@ func TestGitFileUpdate(t *testing.T) {
 	require.Greater(t, e.Config.Info.Time, initTime)
 }
 
-func TestGit_FileUrlKeepsSpellingOfConfiguredUrl(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-
+func TestGit_EventUrlKeepsSpellingOfConfiguredUrl(t *testing.T) {
 	testcases := []struct {
 		name string
 		cfg  func(repoUrl string) static.GitProvider
@@ -255,14 +253,9 @@ func TestGit_FileUrlKeepsSpellingOfConfiguredUrl(t *testing.T) {
 
 			cfg := tc.cfg(repoUrl)
 			cfg.TempDir = t.TempDir()
-			g := New(cfg)
-			p := safe.NewPool(context.Background())
-			defer p.Stop()
-			ch := make(chan dynamic.ConfigEvent)
-			require.NoError(t, g.Start(ch, p))
+			ch := startWithConfig(t, cfg)
 
-			e := wait(ch, 10*time.Second)
-			require.NotNil(t, e)
+			e := nextEvent(t, ch)
 			require.Equal(t, tc.url(repoUrl), e.Config.Info.Url.String())
 			require.Equal(t, []byte("name: Odie"), e.Config.Raw)
 		})
@@ -270,18 +263,11 @@ func TestGit_FileUrlKeepsSpellingOfConfiguredUrl(t *testing.T) {
 }
 
 func TestGit_InvalidUrlIsSkipped(t *testing.T) {
-	logrus.SetOutput(io.Discard)
-
-	g := New(static.GitProvider{
+	// no event is expected, Start must neither fail nor panic
+	startWithConfig(t, static.GitProvider{
 		Urls:         []string{"://invalid"},
 		Repositories: []static.GitRepo{{Url: "git+://invalid"}},
 		TempDir:      t.TempDir(),
-	})
-	p := safe.NewPool(context.Background())
-	defer p.Stop()
-
-	require.NotPanics(t, func() {
-		require.NoError(t, g.Start(make(chan dynamic.ConfigEvent), p))
 	})
 }
 
@@ -327,18 +313,4 @@ func testGit_SparseUrl(t *testing.T) {
 	events := collectEvents(t, ch, 1)
 	require.Len(t, events, 1)
 	require.Equal(t, "foo.txt", filepath.Base(events[0].Config.Info.Url.String()))
-}
-
-func wait(ch chan dynamic.ConfigEvent, timeout time.Duration) *dynamic.ConfigEvent {
-	chTimeout := time.After(timeout)
-Stop:
-	for {
-		select {
-		case <-chTimeout:
-			break Stop
-		case e := <-ch:
-			return &e
-		}
-	}
-	return nil
 }
