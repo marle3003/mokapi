@@ -131,6 +131,17 @@ Files from a package get an `npm://` URL: `npm://<name>/<path>`, for example
 `npm://name/dist/api.json?scope=@scope`. You can use these URLs as `$ref` in a spec. A `$ref`
 reads the file directly, so `files` and `include` don't restrict it.
 
+To reference a part of the file, add a JSON pointer as fragment after the query:
+
+```yaml
+$ref: 'npm://name/dist/api.json?scope=@scope#/components/schemas/Pet'
+```
+
+The query has to come before the `#`, otherwise the scope becomes part of the JSON pointer. The
+path to the file is required, Mokapi doesn't pick a default file of the package. Don't put the
+scope in front of the name (`npm://@scope/name/...`): a URL treats the part before `@` as user
+info, so Mokapi would look for a package named `scope`.
+
 ## NPM Provider and JavaScript Modules
 
 The provider and the `import` of npm packages in a script are two separate mechanisms.
