@@ -47,6 +47,17 @@ providers:
 MOKAPI_PROVIDERS_GIT_URL=https://github.com/PATH-TO/REPOSITORY?ref=branch-name
 ```
 
+Mokapi also accepts the scheme `git+https://`. It clones the repository over HTTPS, so `git+` is
+removed for cloning. The URLs of the repository's files keep the spelling you configured, which
+matters if you reference files with `$ref` (see [Referencing Repository Files](#referencing-repository-files)).
+This works for `url`, `urls` and `repositories[].url`.
+
+```yaml tab=File (YAML)
+providers:
+  git:
+    url: git+https://github.com/PATH-TO/REPOSITORY?ref=branch-name
+```
+
 ### Pull Interval
 Defines in which interval Mokapi pulls possible changes, default 3 minutes.
 Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`.
@@ -159,3 +170,54 @@ your installation id is 123456789
 
 Set content of your private key or path to your private key file. You can download your private key by navigating to
 Settings > Developer Settings > GitHub Apps > Your GitHub App > Edit
+
+## Referencing Repository Files
+
+You can use a file from a GIT repository as `$ref` in a spec, or read it with
+[open()](/docs/javascript-api/open.md) in a script. The URL has this format:
+
+```
+git+https://<host>/<repo-path>?ref=<branch>&file=<path>#<json-pointer>
+```
+
+```yaml
+$ref: 'git+https://github.com/PATH-TO/REPOSITORY?ref=main&file=schemas/pet.yaml#/components/schemas/Pet'
+```
+
+| Part              | Description                                                                                                 |
+|-------------------|-------------------------------------------------------------------------------------------------------------|
+| `ref`             | Optional. A branch name. Without `ref`, Mokapi uses the default branch. Tags and commits are not supported. |
+| `file`            | Required. The path of the file relative to the repository root, with or without a leading `/`.              |
+| `#<json-pointer>` | Optional. References a part of the file.                                                                    |
+
+The query has to come before the `#`, otherwise `ref` and `file` become part of the JSON pointer.
+If `file` is missing, Mokapi reports `git URL requires query parameter 'file'`. A path with `..`
+or a path into `.git` is rejected. A `$ref` reads the file directly, so `files` and `include` of
+a configured repository don't restrict it.
+
+### Clones and Authentication
+
+If the same repository and branch is configured under `providers.git` (with `https://` or
+`git+https://`), a `$ref` reuses that clone and its authentication. A `$ref` without `ref` only
+matches a configured repository without `ref`. The authentication of a configured repository also
+applies to other branches of that repository.
+
+Otherwise Mokapi makes a shallow clone on demand, once per repository and branch, in the
+[tempDir](#tempdir). Mokapi removes these clones on shutdown. If the clone fails, for example
+because of a wrong URL or branch, Mokapi logs the error and tries again the next time the
+referencing file is parsed.
+
+### Updates
+
+Mokapi pulls an on-demand clone of a configured repository with that repository's `pullInterval`.
+Otherwise it uses `providers.git.pullInterval` (default 3 minutes). When a pull changes the
+referenced file, Mokapi parses the referencing file again and updates the mock. If the file is
+removed from the branch, the referencing file is parsed again and reports the missing file.
+
+### URL Spelling
+
+For `git+https`, the order of the query parameters and a leading `/` in `file` don't matter:
+`?ref=main&file=/pet.yaml` and `?file=pet.yaml&ref=main` are the same config entry. Mokapi normalizes only these two, so `./pet.yaml` or `a//pet.yaml` are
+separate entries. An `https`
+URL and a `git+https` URL of the same file are two separate config entries, so use one spelling
+consistently. A `$ref` with the scheme `git://` is not supported and fails with `unsupported scheme`.

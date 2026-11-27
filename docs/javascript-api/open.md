@@ -88,3 +88,15 @@ export default function() {
     console.log(api.info.title)
 }
 ```
+
+## Example: Reading from a Git Repository
+
+Use a `git+https` URL to read a file from a Git repository. The `file` parameter is required,
+`ref` selects a branch. See [GIT](/docs/configuration/dynamic/git.md#referencing-repository-files).
+
+```javascript
+export default function() {
+    const users = JSON.parse(open('git+https://github.com/PATH-TO/REPOSITORY?ref=main&file=data/users.json'))
+    console.log(users.length)
+}
+```

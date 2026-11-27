@@ -27,30 +27,31 @@ func (t *transport) Add(prefixUrl string, transport http.RoundTripper) {
 }
 
 func (t *transport) RoundTrip(r *http.Request) (*http.Response, error) {
-	if t.trans == nil {
-		return http.DefaultTransport.RoundTrip(r)
-	}
-	t.m.RLock()
+	return t.transportFor(r.URL.String()).RoundTrip(r)
+}
 
-	s := r.URL.String()
-	for k, v := range t.trans {
-		if strings.HasPrefix(s, k) {
-			t.m.RUnlock()
-			return v.RoundTrip(r)
+// transportFor returns the transport registered for the first matching URL prefix,
+// requests to other repositories go to http.DefaultTransport.
+func (t *transport) transportFor(url string) http.RoundTripper {
+	t.m.RLock()
+	defer t.m.RUnlock()
+
+	for prefix, rt := range t.trans {
+		if strings.HasPrefix(url, prefix) {
+			return rt
 		}
 	}
-	t.m.Unlock()
-	return http.DefaultTransport.RoundTrip(r)
+	return http.DefaultTransport
 }
 
 func (t *transport) addAuth(r *repository) error {
-	if r.auth == nil {
+	if r.config.Auth == nil {
 		return nil
 	}
-	if r.auth.GitHub != nil {
+	if r.config.Auth.GitHub != nil {
 		return addGitHubAuth(t, r)
 	}
-	return fmt.Errorf("not supported auth: %v", r.auth)
+	return fmt.Errorf("not supported auth: %v", r.config.Auth)
 }
 
 func newClient(t *transport) *http.Client {

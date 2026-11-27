@@ -78,7 +78,9 @@ When it changes, Mokapi parses the referencing file again, resolves all referenc
 against the new content and updates the mock. If a script imports the file, the script runs again.
 
 A reference can be a relative path or a URL. Mokapi reads it with the provider for its scheme
-(`file`, `http`, `https` or `npm`). A `$ref` to a `git` URL is not supported.
+(`file`, `http`, `https`, `npm` or `git+https`). Any other scheme, such as `git://`, fails with
+`unsupported scheme`. See [GIT](/docs/configuration/dynamic/git.md#referencing-repository-files)
+for `git+https` URLs.
 
 If the referenced file is deleted, the referencing file is parsed again as well.
 

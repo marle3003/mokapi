@@ -48,7 +48,7 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	h := http.New(cfg.Providers.Http)
 	w.providers["http"] = h
 	w.providers["https"] = h
-	w.providers["git"] = git.New(cfg.Providers.Git)
+	w.providers["git+https"] = git.New(cfg.Providers.Git)
 	w.providers["npm"] = npm.New(cfg.Providers.Npm)
 
 	return w
@@ -60,26 +60,27 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		return nil, fmt.Errorf("unsupported scheme: %v", u.String())
 	}
 	w.m.Lock()
-
-	var err error
-	var c *dynamic.Config
 	e, exists := w.getConfig(u)
 	if !exists {
-		c, err = p.Read(u)
+		// reading can take long (e.g. a clone), so the lock is not held meanwhile
+		w.m.Unlock()
+		c, err := p.Read(u)
 		if err != nil {
-			w.m.Unlock()
 			return nil, err
 		}
-		c.SourceType = dynamic.SourceReference
-		e = &entry{config: c}
-		w.configs[getConfigKey(u)] = e
-		c.Listeners.Add("ConfigWatcher", w.configChanged)
-	} else {
-		c = e.config
+		w.m.Lock()
+		// another Read might have added the config meanwhile, then its config is used
+		if e, exists = w.getConfig(u); !exists {
+			c.SourceType = dynamic.SourceReference
+			e = &entry{config: c}
+			w.configs[getConfigKey(u)] = e
+			c.Listeners.Add("ConfigWatcher", w.configChanged)
+		}
 	}
-
+	c := e.config
 	w.m.Unlock()
 
+	var err error
 	if !e.parsed.Load() {
 		e.m.Lock()
 		defer e.m.Unlock()
@@ -338,7 +339,7 @@ func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
 
 func getConfigKey(u *url.URL) string {
 	// work on a copy: u is often the config's own URL, read concurrently via ConfigInfo.Key()
-	k := *u
+	k := *git.CanonicalUrl(u)
 	if k.Scheme == "file" || k.Host == "" {
 		// Ensures the behavior is always the same for files,
 		// otherwise it is sometimes file:/ or file:///

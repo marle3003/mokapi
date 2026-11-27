@@ -17,7 +17,8 @@ func TestGetConfigKey(t *testing.T) {
 		{name: "file without host", url: "file:/foo/bar.yml", key: "file:/foo/bar.yml"},
 		{name: "http", url: "http://localhost:8080/foo?bar=1", key: "http://localhost:8080/foo?bar=1"},
 		{name: "https with user", url: "https://user:pw@example.com/foo.yml", key: "https://user:pw@example.com/foo.yml"},
-		{name: "git", url: "git+https://github.com/foo/bar?file=a.yml", key: "git+https://github.com/foo/bar?file=a.yml"},
+		{name: "git+https is canonical", url: "git+https://github.com/foo/bar?ref=main&file=a.yml", key: "git+https://github.com/foo/bar?file=%2Fa.yml&ref=main"},
+		{name: "https is not canonical", url: "https://github.com/foo/bar?ref=main&file=a.yml", key: "https://github.com/foo/bar?ref=main&file=a.yml"},
 		{name: "npm", url: "npm://foo?file=a.yml", key: "npm://foo?file=a.yml"},
 		{name: "relative", url: "foo/bar.yml", key: "foo/bar.yml"},
 	}

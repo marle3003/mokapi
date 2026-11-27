@@ -542,6 +542,153 @@ func TestConfigWatcher_Read(t *testing.T) {
 	}
 }
 
+func TestConfigWatcher_ReadDoesNotBlockOtherConfigs(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	newConfig := func(u *url.URL) *dynamic.Config {
+		return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u, Checksum: []byte{1}}, Raw: []byte("{}")}
+	}
+
+	t.Run("slow read of one URL", func(t *testing.T) {
+		w := server.NewConfigWatcher(&static.Config{})
+		release := make(chan struct{})
+		started := make(chan struct{})
+		var events chan dynamic.ConfigEvent
+		added := make(chan dynamic.ConfigEvent, 1)
+		dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
+		w.AddListener(func(e dynamic.ConfigEvent) { added <- e })
+		w.AddProvider("foo", &testprovider{
+			start: func(ch chan dynamic.ConfigEvent, _ *safe.Pool) error {
+				events = ch
+				return nil
+			},
+			read: func(u *url.URL) (*dynamic.Config, error) {
+				if u.Opaque == "slow" {
+					close(started)
+					<-release
+				}
+				return newConfig(u), nil
+			},
+		})
+		pool := safe.NewPool(context.Background())
+		defer pool.Stop()
+		require.NoError(t, w.Start(pool))
+		slow := make(chan error, 1)
+		go func() {
+			_, err := w.Read(mustParse("foo:slow"), nil)
+			slow <- err
+		}()
+		<-started
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			_, err := w.Read(mustParse("foo:fast"), nil)
+			require.NoError(t, err)
+			// an event of a provider is handled while Read waits: the config is known afterwards
+			events <- dynamic.ConfigEvent{Event: dynamic.Create, Name: "foo:event", Config: &dynamic.Config{
+				Info: dynamic.ConfigInfo{Url: mustParse("foo:event"), Checksum: []byte{1}},
+				Raw:  []byte(`{"openapi":"3.0","info":{"title":"event"}}`),
+			}}
+			<-added
+		}()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			t.Fatal("a slow Read blocks the config watcher")
+		}
+
+		close(release)
+		require.NoError(t, <-slow)
+	})
+
+	t.Run("parallel reads of the same URL give the same config", func(t *testing.T) {
+		w := server.NewConfigWatcher(&static.Config{})
+		var calls atomic.Int32
+		gate := make(chan struct{})
+		w.AddProvider("foo", &testprovider{
+			read: func(u *url.URL) (*dynamic.Config, error) {
+				if calls.Add(1) == 2 {
+					close(gate)
+				}
+				<-gate
+				return newConfig(u), nil
+			},
+		})
+
+		results := make(chan *dynamic.Config, 2)
+		for i := 0; i < 2; i++ {
+			go func() {
+				c, err := w.Read(mustParse("foo:file.yml"), nil)
+				require.NoError(t, err)
+				results <- c
+			}()
+		}
+		first, second := <-results, <-results
+		require.Same(t, first, second)
+		require.Equal(t, int32(2), calls.Load(), "both reads were in the provider at the same time")
+	})
+}
+
+func TestConfigWatcher_ReadKeyOfGitUrls(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name   string
+		scheme string
+		urls   []string
+		reads  int32
+	}{
+		{
+			name:   "git+https spellings are one config",
+			scheme: "git+https",
+			urls: []string{
+				"git+https://host/org/repo?ref=main&file=/pet.yaml",
+				"git+https://host/org/repo?file=pet.yaml&ref=main",
+				"git+https://host/org/repo?file=%2Fpet.yaml&ref=main",
+			},
+			reads: 1,
+		},
+		{
+			name:   "git+https with different branches are different configs",
+			scheme: "git+https",
+			urls: []string{
+				"git+https://host/org/repo?file=pet.yaml&ref=main",
+				"git+https://host/org/repo?file=pet.yaml&ref=develop",
+			},
+			reads: 2,
+		},
+		{
+			name:   "https keys are unchanged",
+			scheme: "https",
+			urls: []string{
+				"https://host/org/repo?ref=main&file=/pet.yaml",
+				"https://host/org/repo?file=pet.yaml&ref=main",
+			},
+			reads: 2,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := server.NewConfigWatcher(&static.Config{})
+			var reads atomic.Int32
+			w.AddProvider(tc.scheme, &testprovider{
+				read: func(u *url.URL) (*dynamic.Config, error) {
+					reads.Add(1)
+					return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u, Checksum: []byte{1}}, Raw: []byte("{}")}, nil
+				},
+			})
+
+			for _, u := range tc.urls {
+				_, err := w.Read(mustParse(u), nil)
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.reads, reads.Load())
+		})
+	}
+}
+
 func TestConfigWatcher_Start(t *testing.T) {
 	testcases := []struct {
 		name string

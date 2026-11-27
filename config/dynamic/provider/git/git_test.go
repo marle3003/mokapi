@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/provider/git/gittest"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -261,6 +262,76 @@ func TestGitFileUpdate(t *testing.T) {
 	require.Equal(t, []byte("bar"), e.Config.Raw)
 	require.NotEqual(t, initChecksum, e.Config.Info.Checksum)
 	require.Greater(t, e.Config.Info.Time, initTime)
+}
+
+func TestGit_FileUrlKeepsSpellingOfConfiguredUrl(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	testcases := []struct {
+		name string
+		cfg  func(repoUrl string) static.GitProvider
+		url  func(repoUrl string) string
+	}{
+		{
+			name: "https url",
+			cfg:  func(u string) static.GitProvider { return static.GitProvider{Urls: []string{u}} },
+			url:  func(u string) string { return u + "?file=%2Fpet.yaml" },
+		},
+		{
+			name: "git+https url",
+			cfg:  func(u string) static.GitProvider { return static.GitProvider{Urls: []string{"git+" + u}} },
+			url:  func(u string) string { return "git+" + u + "?file=%2Fpet.yaml" },
+		},
+		{
+			name: "git+https repository",
+			cfg: func(u string) static.GitProvider {
+				return static.GitProvider{Repositories: []static.GitRepo{{Url: "git+" + u}}}
+			},
+			url: func(u string) string { return "git+" + u + "?file=%2Fpet.yaml" },
+		},
+		{
+			name: "git+https url with branch",
+			cfg:  func(u string) static.GitProvider { return static.GitProvider{Urls: []string{"git+" + u + "?ref=main"}} },
+			url:  func(u string) string { return "git+" + u + "?file=%2Fpet.yaml&ref=main" },
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := gittest.NewServer(t)
+			s.CreateRepo("schemas", map[string]string{"pet.yaml": "name: Odie"})
+			repoUrl := s.Url("schemas")
+
+			cfg := tc.cfg(repoUrl)
+			cfg.TempDir = t.TempDir()
+			g := New(cfg)
+			p := safe.NewPool(context.Background())
+			defer p.Stop()
+			ch := make(chan dynamic.ConfigEvent)
+			require.NoError(t, g.Start(ch, p))
+
+			e := wait(ch, 10*time.Second)
+			require.NotNil(t, e)
+			require.Equal(t, tc.url(repoUrl), e.Config.Info.Url.String())
+			require.Equal(t, []byte("name: Odie"), e.Config.Raw)
+		})
+	}
+}
+
+func TestGit_InvalidUrlIsSkipped(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
+	g := New(static.GitProvider{
+		Urls:         []string{"://invalid"},
+		Repositories: []static.GitRepo{{Url: "git+://invalid"}},
+		TempDir:      t.TempDir(),
+	})
+	p := safe.NewPool(context.Background())
+	defer p.Stop()
+
+	require.NotPanics(t, func() {
+		require.NoError(t, g.Start(make(chan dynamic.ConfigEvent), p))
+	})
 }
 
 func TestGitSimpleUrl(t *testing.T) {
