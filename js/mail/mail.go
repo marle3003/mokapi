@@ -132,11 +132,9 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 		host = u.Host
 	}
 
-	if len(sender) == 0 {
-		sender, err = envelopeSender(from)
-		if err != nil {
-			toJsError(m.rt, err)
-		}
+	sender, err = smtp.EnvelopeSender(sender, from)
+	if err != nil {
+		toJsError(m.rt, err)
 	}
 
 	if len(msg.Attachments) == 0 {
@@ -265,8 +263,9 @@ func (m *Mail) ToMessage(host common.Host) (*smtp.Message, error) {
 		if a, ok := m.Sender.(map[string]interface{}); ok && a["name"] != nil {
 			msg.Sender.Name = fmt.Sprintf("%s", a["name"])
 		}
-	} else if len(from) > 1 {
-		return nil, fmt.Errorf("sender required if using multiple from addresses")
+	}
+	if _, err := msg.EnvelopeSender(); err != nil {
+		return nil, err
 	}
 
 	if msg.MessageId == "" {
@@ -321,16 +320,6 @@ func toAddresses(i interface{}) ([]smtp.Address, error) {
 		result = append(result, smtp.Address{Name: a.Name, Address: a.Address})
 	}
 	return result, nil
-}
-
-func envelopeSender(from []string) (string, error) {
-	if len(from) == 0 {
-		return "", fmt.Errorf(" A sender or from address must be specified.")
-	}
-	if len(from) > 1 {
-		return "", fmt.Errorf("sender required if using multiple from addresses")
-	}
-	return from[0], nil
 }
 
 // parseSender accepts the sender as plain address or as address object. A plain address is

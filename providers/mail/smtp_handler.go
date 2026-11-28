@@ -64,7 +64,8 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 		return
 	}
 
-	h.deliver(r.Message, clientContext, event, m)
+	h.runHandlers(r.Message, clientContext, event)
+	h.appendToInboxes(r.Message, clientContext, m)
 
 	_ = rw.Write(&smtp.DataResponse{Result: smtp.Ok})
 }

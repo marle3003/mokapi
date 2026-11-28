@@ -480,6 +480,16 @@ func (suite *MailScriptSuite) TestSendRejected() {
 			error:   "Unknown mailbox ghost@b.io",
 		},
 		{
+			name: "no recipient",
+			api:  "Mail A",
+			message: func() map[string]any {
+				m := message("sender@x.io", "x@a.io", "no recipient")
+				delete(m, "to")
+				return m
+			}(),
+			error: "at least one recipient is required",
+		},
+		{
 			name: "recipient rule rejects the second recipient",
 			api:  "Mail A",
 			message: func() map[string]any {

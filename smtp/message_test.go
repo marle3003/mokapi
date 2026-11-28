@@ -61,3 +61,40 @@ func TestMessage_UpdateSize(t *testing.T) {
 	msg.UpdateSize()
 	require.Equal(t, withoutAttachment+8, msg.Size)
 }
+
+func TestEnvelopeSender(t *testing.T) {
+	testcases := []struct {
+		name   string
+		sender string
+		from   []string
+		want   string
+		err    string
+	}{
+		{name: "sender wins", sender: "s@foo.bar", from: []string{"a@foo.bar", "b@foo.bar"}, want: "s@foo.bar"},
+		{name: "single from", from: []string{"a@foo.bar"}, want: "a@foo.bar"},
+		{name: "nothing", err: "a sender or from address must be specified"},
+		{name: "several from", from: []string{"a@foo.bar", "b@foo.bar"}, err: "sender required if using multiple from addresses"},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := smtp.EnvelopeSender(tc.sender, tc.from)
+			if tc.err != "" {
+				require.EqualError(t, err, tc.err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, got)
+		})
+	}
+}
+
+func TestMessage_EnvelopeSender(t *testing.T) {
+	msg := &smtp.Message{From: []smtp.Address{{Address: "a@foo.bar"}, {Address: "b@foo.bar"}}}
+	_, err := msg.EnvelopeSender()
+	require.EqualError(t, err, "sender required if using multiple from addresses")
+
+	msg.Sender = &smtp.Address{Address: "b@foo.bar"}
+	got, err := msg.EnvelopeSender()
+	require.NoError(t, err)
+	require.Equal(t, "b@foo.bar", got)
+}

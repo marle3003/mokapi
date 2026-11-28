@@ -206,6 +206,17 @@ func TestMailClient_Send(t *testing.T) {
 			},
 		},
 		{
+			name: "no recipient without api scope",
+			apis: []*mail.Config{newMailApi("A", true), newMailApi("B", true)},
+			args: func() *common.MailSendArgs {
+				msg := newMessage()
+				return &common.MailSendArgs{Message: msg}
+			}(),
+			test: func(t *testing.T, app *runtime.App, err error) {
+				require.EqualError(t, err, "at least one recipient is required")
+			},
+		},
+		{
 			name: "delivery rejection is returned",
 			apis: []*mail.Config{{
 				Info:     mail.Info{Name: "A"},

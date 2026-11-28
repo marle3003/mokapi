@@ -39,11 +39,15 @@ func (t mailTarget) hasMailboxFor(recipients []string) bool {
 }
 
 func (c *MailClient) Send(args *common.MailSendArgs) error {
-	from, err := envelopeSender(args.Message)
+	from, err := args.Message.EnvelopeSender()
 	if err != nil {
 		return err
 	}
 	recipients := envelopeRecipients(args.Message)
+	if len(recipients) == 0 {
+		// before resolving: without recipients no API can be chosen
+		return mail.ErrNoRecipient
+	}
 
 	target, err := c.resolve(args.Api, recipients)
 	if err != nil {
@@ -119,20 +123,6 @@ func titles(targets []mailTarget) string {
 	}
 	slices.Sort(list)
 	return strings.Join(list, ", ")
-}
-
-// envelopeSender is the sender, else the only from address.
-func envelopeSender(m *smtp.Message) (string, error) {
-	switch {
-	case m.Sender != nil:
-		return m.Sender.Address, nil
-	case len(m.From) == 1:
-		return m.From[0].Address, nil
-	case len(m.From) == 0:
-		return "", errors.New("a sender or from address must be specified")
-	default:
-		return "", errors.New("sender required if using multiple from addresses")
-	}
 }
 
 // envelopeRecipients are to, cc and bcc without duplicates, so that a mailbox receives one copy.

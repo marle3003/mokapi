@@ -11,6 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// ErrNoRecipient is returned for a mail without envelope recipients.
+var ErrNoRecipient = errors.New("at least one recipient is required")
+
 const scriptClient = "mokapi-script"
 
 // Deliver stores a mail in the mail API without an SMTP connection, as a script does with
@@ -26,14 +29,19 @@ func (h *Handler) Deliver(from string, msg *smtp.Message, rcpts []string, monito
 		return errors.New(rej.Message)
 	}
 
-	msg.UpdateSize()
 	event := NewLogEvent(msg, clientContext, h.eh, h.logTraits())
-	h.deliver(msg, clientContext, event, monitor)
+	h.runHandlers(msg, clientContext, event)
+	// the size of a script mail is not read from a connection, so it must reflect the handlers' changes
+	msg.UpdateSize()
+	h.appendToInboxes(msg, clientContext, monitor)
 	event.SetDuration(time.Since(start).Milliseconds())
 	return nil
 }
 
 func (h *Handler) checkDelivery(from string, msg *smtp.Message, rcpts []string) *RejectResponse {
+	if len(rcpts) == 0 {
+		return rejectionOf(smtp.BadDestinationAddress, ErrNoRecipient.Error())
+	}
 	if rej := h.checkSender(from); rej != nil {
 		return rej
 	}
@@ -79,16 +87,19 @@ func rejectionOf(status smtp.Status, message string) *RejectResponse {
 	}
 }
 
-// deliver runs the event handlers, which may change the mail, then appends it to the INBOX
-// of every recipient. Recipients are the envelope in clientContext.To, not the mail headers.
-func (h *Handler) deliver(msg *smtp.Message, clientContext *smtp.ClientContext, event *Log, m *monitor.Mail) {
+// runHandlers runs the event handlers, which may change the mail, and writes the changes back.
+func (h *Handler) runHandlers(msg *smtp.Message, clientContext *smtp.ClientContext, event *Log) {
 	event.SetActions(h.eventEmitter.EmitSmtp(&common.MailEvent{
 		Api:        h.config.Info.Name,
 		Recipients: clientContext.To,
 		Message:    msg,
 	}))
 	event.UpdateContent(msg)
+}
 
+// appendToInboxes appends the mail to the INBOX of every recipient. Recipients are the envelope in
+// clientContext.To, not the mail headers.
+func (h *Handler) appendToInboxes(msg *smtp.Message, clientContext *smtp.ClientContext, m *monitor.Mail) {
 	for _, rcpt := range clientContext.To {
 		box, ok := h.mailboxFor(rcpt)
 		if !ok {

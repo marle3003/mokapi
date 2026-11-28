@@ -248,3 +248,33 @@ func TestDeliver_NoAuthentication(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, f.inbox(t, "bob@foo.bar"), 1)
 }
+
+func TestDeliver_NoRecipientIsRejected(t *testing.T) {
+	f := newDeliverFixture(&mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}, nil)
+	m := monitor.NewMail()
+
+	err := f.handler.Deliver("sender@foo.bar", aMail("hi"), nil, m)
+
+	require.EqualError(t, err, "at least one recipient is required")
+	require.Empty(t, f.store.Mailboxes())
+	require.Equal(t, 0.0, m.Mails.WithLabel("Mail A", "sender@foo.bar").Value())
+	require.Equal(t, "at least one recipient is required", f.logs()[0].Error)
+}
+
+func TestDeliver_SizeIncludesChangesOfHandler(t *testing.T) {
+	emitter := enginetest.MailEventHandlerFunc(func(e *common.MailEvent) []*common.Action {
+		e.Message.Body = "a much longer body than the original one"
+		return []*common.Action{{Duration: 1}}
+	})
+	f := newDeliverFixture(&mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}, emitter)
+	msg := aMail("hello")
+	msg.Body = "short"
+	expected := &smtp.Message{}
+	*expected = *msg
+	expected.Body = "a much longer body than the original one"
+	expected.UpdateSize()
+
+	require.NoError(t, f.handler.Deliver("sender@foo.bar", msg, []string{"bob@foo.bar"}, nil))
+
+	require.Equal(t, expected.Size, f.inbox(t, "bob@foo.bar")[0].Size)
+}

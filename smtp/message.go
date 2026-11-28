@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -221,6 +222,33 @@ func (m *Message) UpdateSize() {
 	for _, a := range m.Attachments {
 		m.Size += len(a.Data)
 	}
+}
+
+// EnvelopeSender is the sender if set, else the only from address.
+func EnvelopeSender(sender string, from []string) (string, error) {
+	switch {
+	case sender != "":
+		return sender, nil
+	case len(from) == 1:
+		return from[0], nil
+	case len(from) == 0:
+		return "", errors.New("a sender or from address must be specified")
+	default:
+		return "", errors.New("sender required if using multiple from addresses")
+	}
+}
+
+// EnvelopeSender is the sender of the message if set, else its only from address.
+func (m *Message) EnvelopeSender() (string, error) {
+	var sender string
+	if m.Sender != nil {
+		sender = m.Sender.Address
+	}
+	from := make([]string, len(m.From))
+	for i, a := range m.From {
+		from[i] = a.Address
+	}
+	return EnvelopeSender(sender, from)
 }
 
 func joinAddresses(addresses []Address) string {

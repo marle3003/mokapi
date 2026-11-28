@@ -214,6 +214,13 @@ func TestMail_ToMessage(t *testing.T) {
 			},
 		},
 		{
+			name: "no from and no sender",
+			mail: &mod.Mail{To: "bob@mokapi.io"},
+			test: func(t *testing.T, msg *smtp.Message, err error) {
+				r.EqualError(t, err, "a sender or from address must be specified")
+			},
+		},
+		{
 			name: "invalid address",
 			mail: &mod.Mail{From: "alice@mokapi.io", To: []interface{}{map[string]interface{}{"name": "Bob"}}},
 			test: func(t *testing.T, msg *smtp.Message, err error) {

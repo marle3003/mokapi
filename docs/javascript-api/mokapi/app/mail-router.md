@@ -158,6 +158,7 @@ Other errors you can get:
 |-------------------------------------------------|--------------------------------------------------------------------|
 | `mail API 'Mail Server' not found`              | `app.api( title )` names no mail API                               |
 | `a sender or from address must be specified`    | The mail has neither `sender` nor `from`                           |
+| `at least one recipient is required`            | `to`, `cc` and `bcc` are all empty                                 |
 | `sender required if using multiple from addresses` | The mail has several `from` addresses and no `sender`          |
 
 ### Choosing the mail API
