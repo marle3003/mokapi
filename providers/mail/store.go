@@ -89,7 +89,7 @@ func (s *Store) EnsureMailbox(name string, settings *Settings) error {
 		s.m.Unlock()
 		return nil
 	}
-	if settings != nil && !settings.AutoCreateMailbox {
+	if !settings.AutoCreatesMailboxes() {
 		s.m.Unlock()
 		return fmt.Errorf("mailbox can not be created")
 	}

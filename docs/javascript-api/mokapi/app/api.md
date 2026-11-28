@@ -1,6 +1,6 @@
 ---
 title: app.api( title )
-description: Scope HTTP, Kafka, MQTT and WebSocket handlers to a single API by its info.title.
+description: Scope HTTP, Kafka, MQTT, WebSocket and mail handlers to a single API by its info.title.
 ---
 # app.api( title )
 
@@ -21,6 +21,7 @@ An `ApiScope` object with the following methods:
 | `kafka()`     | [KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md)         | Kafka router scoped to this API              |
 | `mqtt()`      | [MqttRouter](/docs/javascript-api/mokapi/app/mqtt-router.md)           | MQTT router scoped to this API               |
 | `websocket()` | [WebsocketRouter](/docs/javascript-api/mokapi/app/websocket-router.md) | WebSocket router scoped to this API          |
+| `mail()`      | [MailRouter](/docs/javascript-api/mokapi/app/mail-router.md)           | Mail router scoped to this API               |
 
 ## When to Use
 

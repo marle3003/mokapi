@@ -6,15 +6,18 @@ import (
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/smtp"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Log is pushed to the event store before the request has been processed. Duration and
-// actions are set afterwards (see common.EventLog), all other fields are final after
+// actions are set afterwards (see common.EventLog). MessageId and Subject follow changes of
+// the event handlers (see UpdateContent), so readers lock mu. Other fields are final after
 // NewLogEvent.
 type Log struct {
 	common.EventLog
+	mu        sync.Mutex
 	From      string
 	To        []string
 	MessageId string
@@ -23,6 +26,8 @@ type Log struct {
 }
 
 func (l *Log) MarshalJSON() ([]byte, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	return json.Marshal(struct {
 		From      string           `json:"from"`
 		To        []string         `json:"to"`
@@ -49,25 +54,37 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 	}
 
 	if msg != nil {
-		event.MessageId = msg.MessageId
-		subject, err := smtp.DecodeHeaderValue(msg.Subject)
-		if err != nil {
-			log.Errorf("failed to decode subject: %v", err)
-			event.Subject = msg.Subject
-		} else {
-			event.Subject = subject
-		}
+		event.UpdateContent(msg)
 	}
 
 	_ = eh.Push(event, traits.WithNamespace("mail"))
 	return event
 }
 
+// UpdateContent takes the mail fields shown in the log from msg, e.g. after event handlers
+// changed the mail.
+func (l *Log) UpdateContent(msg *smtp.Message) {
+	subject, err := smtp.DecodeHeaderValue(msg.Subject)
+	if err != nil {
+		log.Errorf("failed to decode subject: %v", err)
+		subject = msg.Subject
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.MessageId = msg.MessageId
+	l.Subject = subject
+}
+
 func (l *Log) Title() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	return fmt.Sprintf("%s", l.Subject)
 }
 
 func (l *Log) IndexFields() map[string]any {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	m := map[string]any{
 		"from":               l.From,
 		"to":                 l.To,

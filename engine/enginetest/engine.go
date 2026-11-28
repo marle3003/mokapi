@@ -9,7 +9,6 @@ import (
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"mokapi/runtime"
-	"mokapi/smtp"
 	"path"
 )
 
@@ -60,8 +59,8 @@ func (f WebsocketEventHandlerFunc) EmitWebsocket(message *common.WebsocketEvent)
 	return f(message)
 }
 
-type MailEventHandlerFunc func(message *smtp.Message, status *smtp.Status) []*common.Action
+type MailEventHandlerFunc func(event *common.MailEvent) []*common.Action
 
-func (f MailEventHandlerFunc) EmitSmtp(message *smtp.Message, status *smtp.Status) []*common.Action {
-	return f(message, status)
+func (f MailEventHandlerFunc) EmitSmtp(event *common.MailEvent) []*common.Action {
+	return f(event)
 }

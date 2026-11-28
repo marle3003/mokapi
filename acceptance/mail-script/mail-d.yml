@@ -1,0 +1,7 @@
+mail: 1.0
+info:
+  title: Mail D
+servers:
+  smtp:
+    host: 127.0.0.1:__SMTP_D__
+    protocol: smtp

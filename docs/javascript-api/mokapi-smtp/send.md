@@ -6,6 +6,11 @@ description: Sends an email message to an SMTP server for delivery.
 
 Sends an email message to an SMTP server for delivery.
 
+``` box=tip url=[See MailRouter](/docs/javascript-api/mokapi/app/mail-router.md)
+To put a mail straight into a mail API without a network connection, use
+`app.api('My API').mail().send(message)`. It applies the mail API's rules and limits and needs no SMTP URL.
+```
+
 | Parameter       | Type    | Description                                                                                                  |
 |-----------------|---------|--------------------------------------------------------------------------------------------------------------|
 | host            | string  | String that contains the URL, name or IP address of the host computer used for SMTP transactions.            |

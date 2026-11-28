@@ -1,0 +1,15 @@
+mail: 1.0
+info:
+  title: Mail A
+servers:
+  smtp:
+    host: 127.0.0.1:__SMTP_A__
+    protocol: smtp
+rules:
+  blockRecipient:
+    recipient: ^blocked@a\.io$
+    action: deny
+    rejectResponse:
+      statusCode: 550
+      enhancedStatusCode: 5.7.1
+      message: Recipient blocked by Mail A

@@ -1,0 +1,15 @@
+mail: 1.0
+info:
+  title: Mail C
+servers:
+  imap:
+    host: 127.0.0.1:__IMAP_C__
+    protocol: imap
+settings:
+  autoCreateMailbox: false
+mailboxes:
+  carol@c.io:
+    username: carol
+    password: secret
+    folders:
+      INBOX: {}

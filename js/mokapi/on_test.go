@@ -10,6 +10,7 @@ import (
 	"mokapi/js/eventloop"
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
+	"mokapi/smtp"
 	"testing"
 	"time"
 
@@ -40,6 +41,40 @@ func TestModule_On(t *testing.T) {
 				r.Equal(t, false, b)
 				v, _ := evalOnLoop(loop, "result")
 				r.Equal(t, int64(1), v)
+			},
+		},
+		{
+			name: "smtp handler gets time as Date and changes the mail in place",
+			test: func(t *testing.T, loop *eventloop.EventLoop, host *enginetest.Host) {
+				var handler common.EventHandlerFunc
+				host.OnMailFunc = func(filter common.MailFilter, do common.EventHandlerFunc, args common.EventArgs) {
+					handler = do
+				}
+				_, err := evalOnLoop(loop, `
+					const m = require('mokapi')
+					m.on('smtp', (mail) => {
+						result = [mail.api, mail.encoding, mail.time instanceof Date, mail.time.getTime()].join()
+						mail.subject = 'changed'
+						mail.to = [{ address: 'other@foo.bar' }]
+						mail.time = new Date(5000)
+					})
+				`)
+				r.NoError(t, err)
+
+				mail := common.NewMailEventMessage("Mail A", &smtp.Message{
+					Subject:                 "original",
+					ContentTransferEncoding: "7bit",
+					Date:                    time.UnixMilli(1000),
+				})
+				b, err := handler(&common.EventContext{Args: []any{mail}})
+				r.NoError(t, err)
+				r.True(t, b, "changes are reported to the dispatcher")
+
+				v, _ := evalOnLoop(loop, "result")
+				r.Equal(t, "Mail A,7bit,true,1000", v)
+				r.Equal(t, "changed", mail.Subject)
+				r.Equal(t, []smtp.Address{{Address: "other@foo.bar"}}, mail.To)
+				r.Equal(t, int64(5000), mail.Time.UnixMilli())
 			},
 		},
 		{

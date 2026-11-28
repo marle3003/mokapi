@@ -1,0 +1,34 @@
+mail: 1.0
+info:
+  title: Mail B
+servers:
+  smtp:
+    host: 127.0.0.1:__SMTP_B__
+    protocol: smtp
+  imap:
+    host: 127.0.0.1:__IMAP_B__
+    protocol: imap
+settings:
+  maxRecipients: 2
+  autoCreateMailbox: false
+  allowUnknownSenders: false
+mailboxes:
+  alice@b.io:
+    username: alice
+    password: secret
+    folders:
+      INBOX: {}
+  bob@b.io:
+    folders:
+      INBOX: {}
+  dave@b.io:
+    folders:
+      INBOX: {}
+rules:
+  rejectForbidden:
+    subject: .*forbidden.*
+    action: deny
+    rejectResponse:
+      statusCode: 554
+      enhancedStatusCode: 5.7.1
+      message: Subject not allowed by Mail B

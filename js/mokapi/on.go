@@ -10,6 +10,7 @@ import (
 	"mokapi/js/util"
 	"net/http"
 	"reflect"
+	"time"
 
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
@@ -209,9 +210,40 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 				return vm.NewDynamicObject(p)
 			},
 		})
+	case *common.MailEventMessage:
+		return mailEventMessageToJs(v, vm)
 	default:
 		return vm.ToValue(v)
 	}
+}
+
+// mailEventMessageToJs exposes the mail as the Go struct, so that handlers change it in
+// place, but returns time as a JavaScript Date, because goja converts time.Time to a Go
+// object.
+func mailEventMessageToJs(m *common.MailEventMessage, vm *goja.Runtime) goja.Value {
+	return vm.ToValue(vm.NewProxy(vm.ToValue(m).ToObject(vm), &goja.ProxyTrapConfig{
+		Get: func(target *goja.Object, prop string, _ goja.Value) goja.Value {
+			if prop != "time" {
+				return target.Get(prop)
+			}
+			date, err := vm.New(vm.Get("Date").ToObject(vm), vm.ToValue(m.Time.UnixMilli()))
+			if err != nil {
+				panic(vm.ToValue(err.Error()))
+			}
+			return date
+		},
+		Set: func(target *goja.Object, prop string, value goja.Value, _ goja.Value) bool {
+			if prop != "time" {
+				return target.Set(prop, value) == nil
+			}
+			t, ok := value.Export().(time.Time)
+			if !ok {
+				panic(vm.NewTypeError("time must be a Date"))
+			}
+			m.Time = t
+			return true
+		},
+	}))
 }
 
 func rebuild(vm *goja.Runtime, res *common.HttpEventResponse) goja.Value {

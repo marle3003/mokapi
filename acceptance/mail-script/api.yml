@@ -1,0 +1,44 @@
+openapi: 3.0.0
+info:
+  title: Mail Script Control
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:__HTTP__
+paths:
+  /sim/ready:
+    get:
+      responses:
+        '200':
+          description: Answers 'ready' once the script is loaded
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [not-ready]
+  /received:
+    get:
+      description: Every mail the handlers of script.js have seen
+      responses:
+        '200':
+          description: The recorded mails
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /send:
+    post:
+      description: Calls send() or sendAsync() of app.mail() or app.api(scope).mail()
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: ok is false and error is set when send() threw or sendAsync() rejected
+          content:
+            application/json:
+              schema:
+                type: object

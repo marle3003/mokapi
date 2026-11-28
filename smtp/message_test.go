@@ -3,6 +3,7 @@ package smtp_test
 import (
 	"mokapi/smtp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -40,4 +41,23 @@ func TestDecodeHeaderValue(t *testing.T) {
 			require.Equal(t, tc.want, act)
 		})
 	}
+}
+
+func TestMessage_UpdateSize(t *testing.T) {
+	msg := &smtp.Message{
+		MessageId: "id@mokapi.io",
+		Date:      time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC),
+		Subject:   "hi",
+		From:      []smtp.Address{{Address: "a@foo.bar"}},
+		To:        []smtp.Address{{Name: "Bob", Address: "b@foo.bar"}},
+		Body:      "hello",
+	}
+
+	msg.UpdateSize()
+	withoutAttachment := msg.Size
+	require.Greater(t, withoutAttachment, len("hello"))
+
+	msg.Attachments = []smtp.Attachment{{Data: []byte("12345678")}}
+	msg.UpdateSize()
+	require.Equal(t, withoutAttachment+8, msg.Size)
 }

@@ -28,6 +28,10 @@ func (a *App) Mqtt() *Mqtt {
 	return &Mqtt{filter: common.MqttFilter{Api: a.api}, m: a.m}
 }
 
+func (a *App) Mail() *Mail {
+	return &Mail{filter: common.MailFilter{Api: a.api}, m: a.m}
+}
+
 func (a *App) Websocket() *Websocket {
 	return &Websocket{filter: common.WebsocketFilter{Api: a.api}, m: a.m}
 }

@@ -327,6 +327,10 @@ func (sh *scriptHost) MqttClient() common.MqttClient {
 	return sh.engine.mqttClient
 }
 
+func (sh *scriptHost) MailClient() common.MailClient {
+	return sh.engine.mailClient
+}
+
 func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 

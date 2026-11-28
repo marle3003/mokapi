@@ -98,8 +98,8 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 
 	m.MessageId = header.Get("Message-ID")
 	if len(m.MessageId) == 0 {
-		m.MessageId = newMessageId()
-		m.Size += len("Message-ID") + 2 + len(m.MessageId) + 2
+		m.MessageId = NewMessageId()
+		m.Size += headerLineSize("Message-ID", m.MessageId)
 	}
 
 	if date := header.Get("Date"); date != "" {
@@ -110,7 +110,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	} else {
 		m.Date = time.Now()
 	}
-	m.Size += len("Date") + 2 + len(m.Date.Format(DateTimeLayout)) + 2
+	m.Size += headerLineSize("Date", m.Date.Format(DateTimeLayout))
 
 	m.Size += 2 // Extra CRLF before body
 
@@ -193,6 +193,46 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	}
 
 	return nil
+}
+
+// UpdateSize sets Size for a message that was not read from an SMTP connection, so there is
+// no raw data to count. It adds up the header lines, the separator before the body, the body
+// and the attachments.
+func (m *Message) UpdateSize() {
+	headers := map[string]string{
+		"Message-ID":                m.MessageId,
+		"Date":                      m.Date.Format(DateTimeLayout),
+		"Subject":                   m.Subject,
+		"In-Reply-To":               m.InReplyTo,
+		"Content-Type":              m.ContentType,
+		"Content-Transfer-Encoding": m.ContentTransferEncoding,
+		"From":                      joinAddresses(m.From),
+		"To":                        joinAddresses(m.To),
+		"Cc":                        joinAddresses(m.Cc),
+		"Reply-To":                  joinAddresses(m.ReplyTo),
+	}
+
+	m.Size = 2 + len(m.Body) // CRLF before body
+	for key, value := range headers {
+		if value != "" {
+			m.Size += headerLineSize(key, value)
+		}
+	}
+	for _, a := range m.Attachments {
+		m.Size += len(a.Data)
+	}
+}
+
+func joinAddresses(addresses []Address) string {
+	var list []string
+	for _, a := range addresses {
+		list = append(list, a.String())
+	}
+	return strings.Join(list, ",")
+}
+
+func headerLineSize(key, value string) int {
+	return len(key) + 2 + len(value) + 2 // "Key: Value\r\n"
 }
 
 func (m *Message) WriteTo(w io.WriteCloser) error {
@@ -347,7 +387,7 @@ func newAttachment(part *multipart.Part) (Attachment, error) {
 	return att, nil
 }
 
-func newMessageId() string {
+func NewMessageId() string {
 	name, err := os.Hostname()
 	if err != nil {
 		name = "mokapi.io"

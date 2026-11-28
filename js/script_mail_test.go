@@ -213,8 +213,8 @@ func Test_Mail(t *testing.T) {
 
 			var received *smtp.Message
 			c := &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}
-			h := mail.NewHandler(c, mail.NewStore(c), enginetest.MailEventHandlerFunc(func(message *smtp.Message, status *smtp.Status) []*common.Action {
-				received = message
+			h := mail.NewHandler(c, mail.NewStore(c), enginetest.MailEventHandlerFunc(func(event *common.MailEvent) []*common.Action {
+				received = event.Message
 				return nil
 			}), &eventstest.Handler{})
 

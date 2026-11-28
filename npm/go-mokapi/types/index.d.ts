@@ -10,6 +10,7 @@
  */
 
 import "./global";
+import type { Message } from "./mail";
 
 /**
  * Attaches an event handler for the given event.
@@ -983,6 +984,8 @@ export enum LdapResultStatus {
 export type SmtpEventHandler = (message: SmtpEventMessage) => void | Promise<void>;
 
 export interface SmtpEventMessage {
+    /** The `info.title` of the mail API that accepted the mail */
+    readonly api: string;
     server: string;
     sender?: Address;
     from: Address[];
@@ -1552,6 +1555,30 @@ export interface App {
     mqtt(): MqttRouter
 
     /**
+     * Returns a `MailRouter` not bound to any specific API.
+     * Handlers registered here will run for all mail APIs.
+     *
+     * Use this for cross-cutting concerns such as logging every incoming mail.
+     * Without scope, `send()` picks the mail API for you and throws if the
+     * choice is ambiguous.
+     *
+     * Use `app.api('My API').mail()` instead when multiple mail APIs exist,
+     * to avoid unintended matches.
+     *
+     * @returns A `MailRouter` with no API scope.
+     *
+     * @example
+     * // Handle all incoming mails across all mail APIs
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.mail().message((mail) => {
+     *     console.log(`[${mail.api}] ${mail.subject}`)
+     *   })
+     * }
+     */
+    mail(): MailRouter
+
+    /**
      * Returns a `WebsocketRouter` not bound to any specific API.
      * Handlers registered here will run for all WebSocket APIs
      * that match the given channel.
@@ -1687,6 +1714,25 @@ export interface ApiScope {
      * }
      */
     mqtt(): MqttRouter
+
+    /**
+     * Returns a `MailRouter` scoped to this API.
+     *
+     * Handlers and `send()` calls on this router only apply to the mail API
+     * identified by this scope's title, as defined in the `info.title`
+     * field of the mail configuration.
+     *
+     * @returns A `MailRouter` bound to this API scope.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Mail Server').mail()
+     *     .mailbox('alice@example.com')
+     *       .message((mail) => { console.log(`alice got: ${mail.subject}`) })
+     * }
+     */
+    mail(): MailRouter
 
     /**
      * Returns a `WebsocketRouter` scoped to this API.
@@ -3613,4 +3659,173 @@ export interface WebsocketSendResult {
      * The message payload that was sent to the connected clients.
      */
     readonly message: any;
+}
+
+/**
+ * Handler for mails accepted by a mail API, received over SMTP or delivered with `send()`.
+ */
+export type MailEventHandler = (message: MailEventMessage) => void | Promise<void>;
+
+/**
+ * A mail as seen by a mail event handler.
+ *
+ * Changes to the content fields are written back before the mail is stored.
+ * The envelope recipients stay fixed: changing `to`, `cc` or `bcc` only
+ * changes the headers.
+ */
+export interface MailEventMessage extends SmtpEventMessage {
+    /** The `info.title` of the mail API that accepted the mail */
+    readonly api: string;
+}
+
+/**
+ * Configuration options for mail event handlers.
+ *
+ * These arguments control execution behavior such as
+ * priority, tagging, and dashboard tracking.
+ */
+export type MailEventArgs = SmtpEventArgs;
+
+/**
+ * A mail to deliver with `MailRouter.send()`. It has the fields of `Message`
+ * from `mokapi/smtp` without `server`. The envelope recipients are
+ * `to`, `cc` and `bcc`.
+ *
+ * `messageId` and `time` are generated if missing. `contentType`, `encoding`
+ * and `attachments` are optional, a mail without them has no content type,
+ * encoding or attachments.
+ */
+export type MailMessage = Omit<Message, 'server' | 'messageId' | 'contentType' | 'encoding' | 'attachments'> &
+    Partial<Pick<Message, 'messageId' | 'contentType' | 'encoding' | 'attachments'>>;
+
+/**
+ * Registers mail handlers by mailbox and delivers mails into the store of a mail API.
+ *
+ * Get a `MailRouter` via `app.mail()` or `app.api('My API').mail()`.
+ *
+ * @example
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Mail Server').mail()
+ *     .message((mail) => { console.log(mail.subject) })
+ *     .mailbox('alice@example.com')
+ *       .message((mail) => { console.log(`alice got: ${mail.subject}`) })
+ * }
+ */
+export interface MailRouter {
+    /**
+     * Returns a `MailboxRouter` for the given mailbox address.
+     *
+     * Handlers on it run only for mails whose envelope recipients (`to`, `cc`,
+     * `bcc`) contain the address. The match is exact, like Mokapi's mailbox lookup.
+     * A mail to two watched mailboxes runs each mailbox's handler once.
+     *
+     * @param address The mailbox address, e.g. `alice@example.com`.
+     * @returns A `MailboxRouter` scoped to the given address.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Mail Server').mail()
+     *     .mailbox('alice@example.com')
+     *       .message((mail) => { console.log(`alice got: ${mail.subject}`) })
+     * }
+     */
+    mailbox(address: string): MailboxRouter
+
+    /**
+     * Registers a handler for every mail accepted by a mail API.
+     *
+     * The handler runs after the delivery checks and before the mail is stored.
+     * It can modify the content of the mail. Use `mailbox()` to scope the
+     * handler to a recipient.
+     *
+     * @param handler The event handler to invoke for each mail.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `MailRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.mail().message((mail) => {
+     *     console.log(`[${mail.api}] ${mail.subject}`)
+     *   })
+     * }
+     */
+    message(handler: MailEventHandler, opts?: MailEventArgs): MailRouter
+
+    /**
+     * Delivers a mail into the store of the mail API.
+     *
+     * No SMTP server is needed and no authentication is applied. The checks of
+     * a real SMTP client still apply (rules, `allowUnknownSenders`,
+     * `maxRecipients`, unknown recipients without `autoCreateMailbox`). If one
+     * rejects the mail, it is not stored and an error is thrown.
+     *
+     * Without API scope, the API is resolved from the recipients and
+     * `autoCreateMailbox`. Use `app.api('My API').mail()` to be explicit.
+     *
+     * @param message The mail to deliver.
+     * @returns This `MailRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Mail Server').mail().send({
+     *     from: [{ address: 'bob@example.com' }],
+     *     to: [{ address: 'alice@example.com' }],
+     *     subject: 'Hello',
+     *     body: 'Hi Alice'
+     *   })
+     * }
+     */
+    send(message: MailMessage): MailRouter
+
+    /**
+     * Delivers a mail into the store of the mail API asynchronously.
+     *
+     * Use this instead of `send()` when sending from within a handler.
+     *
+     * @param message The mail to deliver.
+     * @returns A `Promise` resolving to this `MailRouter` instance for chaining,
+     *          rejected with the error that rejected the mail.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Mail Server').mail()
+     *     .sendAsync({
+     *       from: [{ address: 'bob@example.com' }],
+     *       to: [{ address: 'alice@example.com' }],
+     *       subject: 'Hello',
+     *       body: 'Hi Alice'
+     *     })
+     *     .catch((err) => console.log(err))
+     * }
+     */
+    sendAsync(message: MailMessage): Promise<MailRouter>
+}
+
+/**
+ * Represents a single mailbox within a `MailRouter`.
+ *
+ * Get a `MailboxRouter` via `router.mailbox(address)`. It has no `send()`:
+ * recipients belong in the message.
+ */
+export interface MailboxRouter {
+    /**
+     * Registers a handler for mails delivered to this mailbox.
+     *
+     * @param handler The event handler to invoke for each mail.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `MailboxRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.mail().mailbox('alice@example.com')
+     *     .message((mail) => { console.log(`alice got: ${mail.subject}`) })
+     * }
+     */
+    message(handler: MailEventHandler, opts?: MailEventArgs): MailboxRouter
 }

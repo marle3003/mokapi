@@ -23,6 +23,7 @@ type Engine struct {
 	reader          dynamic.Reader
 	kafkaClient     common.KafkaClient
 	mqttClient      common.MqttClient
+	mailClient      common.MailClient
 	websocketClient common.WebsocketClient
 	m               sync.Mutex
 	loader          ScriptLoader
@@ -38,7 +39,7 @@ type Store struct {
 }
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
-	return &Engine{
+	e := &Engine{
 		app:             app,
 		scripts:         make(map[string]*scriptHost),
 		scheduler:       NewDefaultScheduler(),
@@ -52,6 +53,8 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		cfgEvent:        config.Event,
 		store:           &Store{data: make(map[string]any)},
 	}
+	e.mailClient = NewMailClient(app, e)
+	return e
 }
 
 func NewEngine(opts ...Options) *Engine {

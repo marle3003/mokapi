@@ -50,6 +50,11 @@ type Settings struct {
 	AllowUnknownSenders bool `yaml:"allowUnknownSenders" json:"allowUnknownSenders"`
 }
 
+// AutoCreatesMailboxes is true without settings, as for the default configuration.
+func (s *Settings) AutoCreatesMailboxes() bool {
+	return s == nil || s.AutoCreateMailbox
+}
+
 type MailboxConfig struct {
 	Username    string                   `yaml:"username" json:"username"`
 	Password    string                   `yaml:"password" json:"password"`

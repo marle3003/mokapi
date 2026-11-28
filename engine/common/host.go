@@ -39,7 +39,7 @@ type WebsocketEventEmitter interface {
 }
 
 type MailEventEmitter interface {
-	EmitSmtp(message *smtp.Message, status *smtp.Status) []*Action
+	EmitSmtp(event *MailEvent) []*Action
 }
 
 type LdapEventEmitter interface {
@@ -84,6 +84,7 @@ type Host interface {
 
 	KafkaClient() KafkaClient
 	MqttClient() MqttClient
+	MailClient() MailClient
 	HttpClient(HttpClientOptions) HttpClient
 	WebsocketClient() WebsocketClient
 
@@ -191,6 +192,17 @@ type MqttPublishResult struct {
 	Api   string
 	Topic string
 	Value string
+}
+
+type MailClient interface {
+	Send(args *MailSendArgs) error
+}
+
+// MailSendArgs is a mail to deliver into a mail API. An empty Api lets the client choose
+// the API from the recipients.
+type MailSendArgs struct {
+	Api     string
+	Message *smtp.Message
 }
 
 type Action struct {

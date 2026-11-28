@@ -1,14 +1,11 @@
 package mail
 
 import (
-	"fmt"
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Handler struct {
@@ -52,8 +49,8 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	ctx := r.Context()
 	clientContext := smtp.ClientFromContext(ctx)
-	m, doMonitor := monitor.SmtpFromContext(ctx)
-	event := NewLogEvent(r.Message, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
+	m, _ := monitor.SmtpFromContext(ctx)
+	event := NewLogEvent(r.Message, clientContext, h.eh, h.logTraits())
 	defer func() {
 		i := ctx.Value("time")
 		if i != nil {
@@ -62,102 +59,79 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 		}
 	}()
 
-	if res := h.config.Rules.runMail(r.Message); res != nil {
-		h.writeRuleResponse(rw, r, res)
+	if rej := h.config.Rules.runMail(r.Message); rej != nil {
+		h.writeRejection(rw, r, rej)
 		return
 	}
 
-	for _, rcpt := range clientContext.To {
-		box, ok := h.store.Mailbox(rcpt)
-		if !ok {
-			// removed by a reload between RCPT and DATA
-			log.Warnf("mailbox '%v' of '%v' no longer exists, mail not delivered to it", rcpt, h.config.Info.Name)
-			continue
-		}
-		box.Append(r.Message)
-	}
+	h.deliver(r.Message, clientContext, event, m)
 
-	log.Infof("received new mail on %v from client %v (%v)",
-		h.config.Info.Name, clientContext.Client, clientContext.Addr)
-
-	if doMonitor {
-		m.Mails.WithLabel(h.config.Info.Name, clientContext.From).Add(1)
-		m.LastMail.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
-	}
-
-	res := &smtp.DataResponse{Result: smtp.Ok}
-	event.SetActions(h.eventEmitter.EmitSmtp(r.Message, res.Result))
-
-	_ = rw.Write(res)
+	_ = rw.Write(&smtp.DataResponse{Result: smtp.Ok})
 }
 
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
-	if len(h.config.Mailboxes) > 0 {
-
-		if mb, ok := h.store.Mailbox(r.From); !ok {
-			if !h.AllowUnknownSenders() {
-				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.From))
-				return
-			}
-		} else if username, _ := mb.Credentials(); len(username) > 0 && len(ctx.Auth) == 0 {
-			h.writeErrorResponse(rw, r, smtp.AuthRequired, "")
-			return
-		}
+	if h.requiresAuth(r.From, ctx) {
+		h.writeErrorResponse(rw, r, smtp.AuthRequired, "")
+		return
 	}
 
-	res := h.config.Rules.RunSender(r.From)
-	if res != nil {
-		h.writeRuleResponse(rw, r, res)
-	} else {
-		ctx.From = r.From
-		_ = rw.Write(&smtp.MailResponse{Result: smtp.Ok})
+	if rej := h.checkSender(r.From); rej != nil {
+		h.writeRejection(rw, r, rej)
+		return
 	}
+
+	ctx.From = r.From
+	_ = rw.Write(&smtp.MailResponse{Result: smtp.Ok})
 }
 
 func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *smtp.ClientContext) {
-	if err := h.store.EnsureMailbox(r.To, h.config.Settings); err != nil {
-		h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
+	if rej := h.checkRcpt(r.To, len(ctx.To)); rej != nil {
+		h.writeRejection(rw, r, rej)
 		return
-	}
-
-	res := h.config.Rules.runRcpt(r.To)
-	if res != nil {
-		h.writeRuleResponse(rw, r, res)
-		return
-	}
-
-	if h.config.Settings != nil {
-		if h.config.Settings.MaxRecipients > 0 && len(ctx.To)+1 > h.config.Settings.MaxRecipients {
-			h.writeErrorResponse(rw, r, smtp.TooManyRecipients, fmt.Sprintf("Too many recipients of %v reached", h.config.Settings.MaxRecipients))
-			return
-		}
 	}
 
 	ctx.To = append(ctx.To, r.To)
 	_ = rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
 }
 
+// requiresAuth is true for a known sender whose mailbox has credentials, but the client
+// has not logged in. Only SMTP clients authenticate, so Deliver doesn't call it.
+func (h *Handler) requiresAuth(from string, ctx *smtp.ClientContext) bool {
+	if len(h.config.Mailboxes) == 0 {
+		return false
+	}
+	mb, ok := h.store.Mailbox(from)
+	if !ok {
+		return false
+	}
+	username, _ := mb.Credentials()
+	return len(username) > 0 && len(ctx.Auth) == 0
+}
+
 func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, status smtp.Status, message string) {
-	clientContext := smtp.ClientFromContext(r.Context())
 	if len(message) > 0 {
 		status.Message = message
 	}
-	res := r.NewResponse(&status)
-	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
-	l.Error = status.Message
-	_ = rw.Write(res)
+	h.logError(smtp.ClientFromContext(r.Context()), status.Message)
+	_ = rw.Write(r.NewResponse(&status))
 }
 
-func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, response *RejectResponse) {
-	clientContext := smtp.ClientFromContext(r.Context())
-	res := r.NewResponse(&smtp.Status{
-		StatusCode:         response.StatusCode,
-		EnhancedStatusCode: response.EnhancedStatusCode,
-		Message:            response.Message,
-	})
-	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
-	l.Error = response.Message
-	_ = rw.Write(res)
+func (h *Handler) writeRejection(rw smtp.ResponseWriter, r smtp.Request, rej *RejectResponse) {
+	h.logError(smtp.ClientFromContext(r.Context()), rej.Message)
+	_ = rw.Write(r.NewResponse(&smtp.Status{
+		StatusCode:         rej.StatusCode,
+		EnhancedStatusCode: rej.EnhancedStatusCode,
+		Message:            rej.Message,
+	}))
+}
+
+func (h *Handler) logError(clientContext *smtp.ClientContext, message string) {
+	l := NewLogEvent(nil, clientContext, h.eh, h.logTraits())
+	l.Error = message
+}
+
+func (h *Handler) logTraits() events.Traits {
+	return events.NewTraits().WithName(h.config.Info.Name)
 }
 
 func (h *Handler) AllowUnknownSenders() bool {

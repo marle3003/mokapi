@@ -29,9 +29,10 @@ func TestHandler_LogIsReadWhileHandlerIsRunning(t *testing.T) {
 	sm.SetStore(10, events.NewTraits().WithNamespace("mail"))
 
 	handlerRunning := make(chan struct{})
-	emitter := enginetest.MailEventHandlerFunc(func(_ *smtp.Message, _ *smtp.Status) []*common.Action {
+	emitter := enginetest.MailEventHandlerFunc(func(e *common.MailEvent) []*common.Action {
 		close(handlerRunning)
 		time.Sleep(10 * time.Millisecond)
+		e.Message.Subject = "changed by handler"
 		return []*common.Action{{Duration: 1}}
 	})
 	h := mail.NewHandler(config, mail.NewStore(config), emitter, sm)
@@ -65,4 +66,5 @@ func TestHandler_LogIsReadWhileHandlerIsRunning(t *testing.T) {
 
 	log := sm.GetEvents(events.NewTraits().WithNamespace("mail"))[0].Data.(*mail.Log)
 	require.Len(t, log.GetActions(), 1)
+	require.Equal(t, "changed by handler", log.Subject, "SMTP path: the log shows the changed mail")
 }

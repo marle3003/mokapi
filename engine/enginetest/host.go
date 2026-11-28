@@ -28,6 +28,7 @@ type Host struct {
 	HttpClientFunc      func(opts common.HttpClientOptions) common.HttpClient
 	KafkaClientTest     *KafkaClient
 	MqttClientTest      *MqttClient
+	MailClientTest      *MailClient
 	WebsocketClientTest *WebsocketClient
 	EveryFunc           func(every string, do func(), opt common.JobOptions)
 	CronFunc            func(every string, do func(), opt common.JobOptions)
@@ -57,6 +58,10 @@ type KafkaClient struct {
 
 type MqttClient struct {
 	PublishFunc func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error)
+}
+
+type MailClient struct {
+	SendFunc func(args *common.MailSendArgs) error
 }
 
 func (h *Host) Info(args ...interface{}) {
@@ -206,6 +211,8 @@ func (h *Host) KafkaClient() common.KafkaClient {
 
 func (h *Host) MqttClient() common.MqttClient { return h.MqttClientTest }
 
+func (h *Host) MailClient() common.MailClient { return h.MailClientTest }
+
 func (h *Host) Store() common.Store {
 	if h.StoreTest == nil {
 		h.StoreTest = engine.NewStore()
@@ -233,6 +240,13 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		return c.PublishFunc(args)
 	}
 	return nil, nil
+}
+
+func (c *MailClient) Send(args *common.MailSendArgs) error {
+	if c.SendFunc != nil {
+		return c.SendFunc(args)
+	}
+	return nil
 }
 
 func (h *Host) AddCleanupFunc(f func()) {

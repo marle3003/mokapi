@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type Module struct {
@@ -28,13 +29,14 @@ type Module struct {
 
 type Mail struct {
 	MessageId   string        `json:"messageId"`
-	Sender      string        `json:"sender"`
+	Sender      interface{}   `json:"sender"`
 	From        interface{}   `json:"from"`
 	To          interface{}   `json:"to"`
 	Cc          interface{}   `json:"cc"`
 	Bcc         interface{}   `json:"bcc"`
 	ReplyTo     interface{}   `json:"replyTo"`
 	InReplyTo   string        `json:"inReplyTo"`
+	Time        time.Time     `json:"time"`
 	Subject     string        `json:"subject"`
 	Body        string        `json:"body"`
 	ContentType string        `json:"contentType"`
@@ -69,8 +71,12 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 		_ = w.PrintfLine("Message-ID: %s", msg.MessageId)
 	}
 
-	if len(msg.Sender) > 0 {
-		_ = w.PrintfLine("Sender: %s", msg.Sender)
+	sender, senderHeader, err := parseSender(msg.Sender)
+	if err != nil {
+		toJsError(m.rt, err)
+	}
+	if len(sender) > 0 {
+		_ = w.PrintfLine("Sender: %s", senderHeader)
 	}
 
 	from, fromHeader, err := parseAddressList(toList(msg.From))
@@ -126,15 +132,11 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 		host = u.Host
 	}
 
-	sender := msg.Sender
 	if len(sender) == 0 {
-		if len(from) == 0 {
-			toJsError(m.rt, fmt.Errorf(" A sender or from address must be specified."))
+		sender, err = envelopeSender(from)
+		if err != nil {
+			toJsError(m.rt, err)
 		}
-		if len(from) > 1 {
-			toJsError(m.rt, fmt.Errorf("sender required if using multiple from addresses"))
-		}
-		sender = from[0]
 	}
 
 	if len(msg.Attachments) == 0 {
@@ -224,6 +226,127 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 	if err = c.Quit(); err != nil {
 		toJsError(m.rt, err)
 		return
+	}
+}
+
+// ToMessage converts the mail of a script into a message to deliver. A missing messageId and
+// time are generated. Several from addresses need a sender, as for send(). Attachment
+// paths are read with host.
+func (m *Mail) ToMessage(host common.Host) (*smtp.Message, error) {
+	from, err := toAddresses(m.From)
+	if err != nil {
+		return nil, err
+	}
+	msg := &smtp.Message{
+		From:                    from,
+		MessageId:               m.MessageId,
+		InReplyTo:               m.InReplyTo,
+		Date:                    m.Time,
+		Subject:                 m.Subject,
+		ContentType:             m.ContentType,
+		ContentTransferEncoding: m.Encoding,
+		Body:                    m.Body,
+	}
+	for _, target := range []struct {
+		list *[]smtp.Address
+		from interface{}
+	}{{&msg.To, m.To}, {&msg.Cc, m.Cc}, {&msg.Bcc, m.Bcc}, {&msg.ReplyTo, m.ReplyTo}} {
+		if *target.list, err = toAddresses(target.from); err != nil {
+			return nil, err
+		}
+	}
+
+	if m.Sender != nil {
+		sender, _, err := parseSender(m.Sender)
+		if err != nil {
+			return nil, err
+		}
+		msg.Sender = &smtp.Address{Address: sender}
+		if a, ok := m.Sender.(map[string]interface{}); ok && a["name"] != nil {
+			msg.Sender.Name = fmt.Sprintf("%s", a["name"])
+		}
+	} else if len(from) > 1 {
+		return nil, fmt.Errorf("sender required if using multiple from addresses")
+	}
+
+	if msg.MessageId == "" {
+		msg.MessageId = smtp.NewMessageId()
+	}
+	if msg.Date.IsZero() {
+		msg.Date = time.Now()
+	}
+	for _, a := range m.Attachments {
+		att, err := a.toAttachment(host)
+		if err != nil {
+			return nil, err
+		}
+		msg.Attachments = append(msg.Attachments, att)
+	}
+	return msg, nil
+}
+
+func (a *Attachment) toAttachment(host common.Host) (smtp.Attachment, error) {
+	content := []byte(a.Data)
+	name := a.Name
+	if len(a.Path) > 0 {
+		f, err := host.OpenFile(a.Path, "")
+		if err != nil {
+			return smtp.Attachment{}, err
+		}
+		content = f.Raw
+		if len(name) == 0 {
+			name = filepath.Base(a.Path)
+		}
+	}
+	contentType := a.ContentType
+	if len(contentType) == 0 {
+		contentType = http.DetectContentType(content)
+	}
+	return smtp.Attachment{
+		Name:                    name,
+		ContentType:             contentType,
+		ContentTransferEncoding: "base64",
+		Disposition:             a.Disposition,
+		Data:                    content,
+	}, nil
+}
+
+func toAddresses(i interface{}) ([]smtp.Address, error) {
+	var result []smtp.Address
+	for _, item := range toList(i) {
+		a, err := toMailAddress(item)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, smtp.Address{Name: a.Name, Address: a.Address})
+	}
+	return result, nil
+}
+
+func envelopeSender(from []string) (string, error) {
+	if len(from) == 0 {
+		return "", fmt.Errorf(" A sender or from address must be specified.")
+	}
+	if len(from) > 1 {
+		return "", fmt.Errorf("sender required if using multiple from addresses")
+	}
+	return from[0], nil
+}
+
+// parseSender accepts the sender as plain address or as address object. A plain address is
+// kept as written for the Sender header.
+func parseSender(sender interface{}) (address string, header string, err error) {
+	switch v := sender.(type) {
+	case nil:
+		return "", "", nil
+	case string:
+		return v, v, nil
+	default:
+		a, err := toMailAddress(v)
+		if err != nil {
+			return "", "", err
+		}
+		return a.Address, a.String(), nil
 	}
 }
 

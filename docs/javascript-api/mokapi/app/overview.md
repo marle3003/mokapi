@@ -1,6 +1,6 @@
 ---
 title: app
-description: Register handlers for HTTP, Kafka, MQTT and WebSocket in a structured, route-oriented style using protocol routers.
+description: Register handlers for HTTP, Kafka, MQTT, WebSocket and mail in a structured, route-oriented style using protocol routers.
 ---
 # app
 
@@ -31,6 +31,7 @@ offers matching methods, for example `get()` for HTTP or `produce()` for Kafka.
 | `app.kafka()`                                                        | [KafkaRouter](/docs/javascript-api/mokapi/app/kafka-router.md)                | Handle and produce Kafka messages                 |
 | `app.mqtt()`                                                         | [MqttRouter](/docs/javascript-api/mokapi/app/mqtt-router.md)                  | Handle and publish MQTT messages                  |
 | `app.websocket()`                                                    | [WebsocketRouter](/docs/javascript-api/mokapi/app/websocket-router.md)        | Handle WebSocket connections and send messages    |
+| `app.mail()`                                                         | [MailRouter](/docs/javascript-api/mokapi/app/mail-router.md)                  | Handle mails per mailbox and deliver mails        |
 | [`app.api( title )`](/docs/javascript-api/mokapi/app/api.md)         | [ApiScope](/docs/javascript-api/mokapi/app/api.md)                            | Scope all routers to a single API                 |
 
 ## Scoping to an API
@@ -108,5 +109,4 @@ short, avoids `if` chains and gives you route-scoped features such as middleware
 [`response.context`](/docs/javascript-api/mokapi/eventhandler/httpresponse.md) and
 [`response.stopPropagation()`](/docs/javascript-api/mokapi/eventhandler/httpresponse.md).
 
-Use [`on()`](/docs/javascript-api/mokapi/on.md) for protocols without a router, such as LDAP and
-SMTP.
+Use [`on()`](/docs/javascript-api/mokapi/on.md) for protocols without a router, such as LDAP.

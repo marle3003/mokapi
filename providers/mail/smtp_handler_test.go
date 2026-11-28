@@ -509,3 +509,35 @@ func TestHandler_MailboxRemovedBetweenRcptAndData(t *testing.T) {
 	carol, _ := s.Mailbox("carol@foo.bar")
 	require.Len(t, carol.Folders["INBOX"].Messages, 1)
 }
+
+// A recipient is accepted at RCPT, but its mailbox is created on delivery, so a recipient
+// rejected by a rule leaves no mailbox behind.
+func TestHandler_RejectedRecipientCreatesNoMailbox(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	cfg := &mail.Config{
+		Settings: &mail.Settings{AutoCreateMailbox: true},
+		Rules:    map[string]*mail.Rule{"rcpt": {Recipient: mail.NewRuleExpr("^blocked"), Action: mail.Deny}},
+	}
+	s := mail.NewStore(cfg)
+	sm := events.NewStoreManager(nil)
+	sm.SetStore(10, events.NewTraits().WithNamespace("mail"))
+	h := mail.NewHandler(cfg, s, enginetest.NewEngine(), sm)
+	ctx := smtp.NewClientContext(context.Background(), "")
+
+	rejected := sendThisRcpt(t, h, ctx, "blocked@foo.bar")
+	require.Equal(t, smtp.AddressRejected.StatusCode, rejected.Result.StatusCode)
+	_, ok := s.Mailbox("blocked@foo.bar")
+	require.False(t, ok)
+
+	accepted := sendThisRcpt(t, h, ctx, "bob@foo.bar")
+	require.Equal(t, smtp.Ok, accepted.Result)
+	_, ok = s.Mailbox("bob@foo.bar")
+	require.False(t, ok, "created on delivery, not at RCPT")
+
+	rr := smtptest.NewRecorder()
+	h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{Subject: "hello"}, ctx))
+	require.Equal(t, smtp.Ok, expectDataesponse(t, rr.Response).Result)
+	box, ok := s.Mailbox("bob@foo.bar")
+	require.True(t, ok)
+	require.Len(t, box.Folders["INBOX"].Messages, 1)
+}
