@@ -130,6 +130,8 @@ github.com/dop251/goja v0.0.0-20261122121755-dcce7f63c23a h1:hIc8woyGWNfebI6xXZF
 github.com/dop251/goja v0.0.0-20261122121755-dcce7f63c23a/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
 github.com/dop251/goja v0.0.0-20261124180248-00ef7861e082 h1:TeTaX4/PnNLpsk+16aweSAN5ROezx2mqcUUqDCsFbz4=
 github.com/dop251/goja v0.0.0-20261124180248-00ef7861e082/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
+github.com/dop251/goja v0.0.0-20261127213540-516d13cfa287 h1:dPTp01JLtpi0G5AVu1/5dEz7+vW2egVIpGBWnPTi3so=
+github.com/dop251/goja v0.0.0-20261127213540-516d13cfa287/go.mod h1:L1yoLBco9M3b2Gdh1UZHg+BIePeAdV1bwknaLLxAgoc=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
 github.com/elazarl/goproxy v1.7.2/go.mod h1:82vkLNir0ALaW14Rc399OTTjyNREgmdL2cVoIbS6XaE=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
